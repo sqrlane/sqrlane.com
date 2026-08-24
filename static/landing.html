@@ -64,8 +64,8 @@
   --r-sm:6px; --r-md:12px; --r-lg:16px;
 
   --shadow-card:0 2px 2px rgba(0,0,0,.04);
-  --shadow-pop:0 1px 1px rgba(0,0,0,.02),0 4px 8px -4px rgba(0,0,0,.04),
-               0 16px 24px -8px rgba(0,0,0,.06);
+  /* One card shadow, and one lift for the single window mock in the hero.
+     A third step existed only so some cards could shout at the others. */
   --shadow-lift:0 1px 1px rgba(0,0,0,.02),0 8px 16px -4px rgba(0,0,0,.04),
                 0 24px 32px -8px rgba(0,0,0,.06);
 
@@ -195,7 +195,11 @@ h1,h2,h3,h4,p{margin:0}
 .shot{margin:56px auto 0; max-width:1000px; position:relative}
 .shot::after{content:""; position:absolute; left:6%; right:6%; bottom:-1px; height:150px;
   background:linear-gradient(to bottom, transparent, var(--bg) 85%); pointer-events:none}
-.frame{background:var(--card); border:1px solid var(--border-strong); border-radius:var(--r-lg);
+/* The one object on the page that is not a card: a browser window standing in
+   for a screenshot. It keeps the lift and the 16px radius because flattening it
+   turns the hero shot into an inline table - but the frame is a hairline now,
+   like everything else. Being the only lifted thing is what makes it read. */
+.frame{background:var(--card); border:1px solid var(--border); border-radius:var(--r-lg);
        box-shadow:var(--shadow-lift); overflow:hidden; text-align:left}
 .frame-bar{height:38px; display:flex; align-items:center; gap:7px; padding:0 14px;
            border-bottom:1px solid var(--border); background:var(--card-muted)}
@@ -316,7 +320,9 @@ h1,h2,h3,h4,p{margin:0}
 .gap-card .n{font-family:"Geist Mono",ui-monospace,monospace; font-size:11px; color:var(--faint)}
 .gap-card .stops{margin-top:auto; padding-top:14px; border-top:1px solid var(--border);
                  font-size:12px; line-height:16px; color:var(--faint)}
-.gap-card.us{border-color:var(--fg); box-shadow:var(--shadow-pop)}
+/* The black border already says which column is ours. The lifted shadow under
+   it was saying the same thing a second time, louder. */
+.gap-card.us{border-color:var(--fg)}
 .gap-card.us .stops{color:var(--fg); font-weight:500}
 
 /* ---------- steps ---------- */
@@ -345,10 +351,10 @@ h1,h2,h3,h4,p{margin:0}
 
 /* ---------- artifacts inside features ---------- */
 .art{background:var(--card); border:1px solid var(--border); border-radius:var(--r-md);
-     box-shadow:var(--shadow-pop); overflow:hidden;
+     box-shadow:var(--shadow-card); overflow:hidden;
      display:flex; flex-direction:column}
 .art-b{flex:1}          /* pushes .mail-foot to the bottom of a stretched card */
-.callout{background:var(--card); border:1px solid var(--border);
+.callout{background:var(--card); border:1px solid var(--border); box-shadow:var(--shadow-card);
          border-radius:var(--r-md); padding:20px 22px}
 .art-h{padding:11px 14px; border-bottom:1px solid var(--border); display:flex;
        align-items:center; gap:9px; background:var(--card-muted)}
@@ -539,13 +545,13 @@ h1,h2,h3,h4,p{margin:0}
 .not .v{font-size:13px; line-height:19px; color:var(--muted); margin-top:3px}
 
 /* ---------- honest band ----------
-   bklit-ui's card anatomy, which is a shadcn registry: one hairline border on
-   the card surface at the 12px radius, and nothing else. The old panel carried
-   a 3px black rule, a lifted shadow, the heavier border and the 16px radius -
-   four kinds of emphasis on the quietest claim on the page. The border alone
-   separates it from the background, so the rest was weight without a job. */
+   The same card rule as everything else on the page - hairline border, 12px
+   radius, --shadow-card - which is bklit-ui's anatomy, it being a shadcn
+   registry. This panel used to carry a 3px black rule down its left edge, a
+   lifted shadow, the heavier border and the 16px radius: four kinds of
+   emphasis at once, on the quietest claim on the page. */
 .honest .panel{padding:32px; border-radius:var(--r-md); border:1px solid var(--border);
-               background:var(--card)}
+               background:var(--card); box-shadow:var(--shadow-card)}
 .honest blockquote{margin:16px 0 0; max-width:52ch}
 /* Each chip stays welded to the words it labels - as a flat run they wrapped
    apart, leaving "Synthetic" on one line and what it applies to on the next. */
@@ -1084,13 +1090,10 @@ h1,h2,h3,h4,p{margin:0}
         quoting Basel barge bookings at all.</p>
       <p class="cs-note">
         <span class="chip synth">Synthetic scenario</span>
-        &nbsp;Authored, not a live reading. The corridor, the gauges and the two routes are the
-        real ones Lanewatch watches &mdash; <code>R-RTM-RHINE</code> against
-        <code>R-RTM-RAIL</code>, with Kaub, Duisburg-Ruhrort and Emmerich read from
-        PEGELONLINE, and the 78&nbsp;cm loading threshold is the one in
-        <code>config.py</code>. The readings, the vessel counts and the dates below are
-        written to show the shape of the call. Nothing here is a product metric, and no
-        outcome is being claimed.
+        &nbsp;Authored, not a live reading. The corridor, the two routes and the gauges are
+        real &mdash; Kaub, Duisburg-Ruhrort and Emmerich from PEGELONLINE, the 78&nbsp;cm
+        loading threshold from <code>config.py</code>. The readings, vessel counts and dates
+        are written to show the shape of the call: no product metric, no outcome claimed.
       </p>
     </div>
 
@@ -1404,11 +1407,10 @@ firm revised ETA as soon as terminals restart.</p>
         <rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
       <div>
         <p class="h16">Human-in-the-loop is the design, not a missing feature.</p>
-        <p class="copy14" style="margin-top:5px">There is no SMTP, no email library and no
-          transport of any kind imported anywhere in the codebase, and a test parses
-          every file in <span class="mono" style="font-size:13px">src/</span> on each run
-          to keep it that way. Approval flips a state in the browser; there is nothing for
-          it to trigger.</p>
+        <p class="copy14" style="margin-top:5px">No SMTP, no email library, no transport of
+          any kind in the codebase — a test re-parses every file in
+          <span class="mono" style="font-size:13px">src/</span> on each run. Approval flips
+          a state in the browser; there is nothing for it to trigger.</p>
       </div>
     </div>
   </div>
@@ -1431,10 +1433,9 @@ firm revised ETA as soon as terminals restart.</p>
         <div class="art-h"><span class="ttl">Inbox Worker</span>
           <span class="r chip synth">SCRIPTED</span></div>
         <div class="art-b">
-          <p class="copy16">Inbound mail read, classified by intent, linked to the booking
-            it concerns, and answered with a draft. What arrives depends on the decision:
-            a rerouted box draws an omit-notice and a status chase, a held one draws berth
-            options.</p>
+          <p class="copy16">Inbound mail read, classified by intent, linked to its booking
+            and answered with a draft. What arrives follows the decision: a rerouted box
+            draws an omit-notice and a status chase, a held one draws berth options.</p>
           <p class="src" style="margin-top:12px">A booking left on plan gets a routine
             milestone and <b style="color:var(--fg);font-weight:500">no drafted reply</b> —
             answering everything is volume, not judgement.</p>
@@ -1445,7 +1446,7 @@ firm revised ETA as soon as terminals restart.</p>
         <div class="art-h"><span class="ttl">RFQ Worker</span>
           <span class="r chip synth">SCRIPTED</span></div>
         <div class="art-b">
-          <p class="copy16">A rate request arrives as prose. It is read into fields — lane,
+          <p class="copy16">A rate request arrives as prose, is read into fields — lane,
             equipment, commodity, ready date — priced against the carriers on that lane, and
             answered with a drafted quote.</p>
           <p class="src" style="margin-top:12px">The active disruption is priced in. A quote
@@ -1459,8 +1460,8 @@ firm revised ETA as soon as terminals restart.</p>
           <span class="r chip synth">DEMO CONNECTOR</span></div>
         <div class="art-b">
           <p class="copy16">Bookings read in; the decision written back out — discharge port,
-            routing code, revised ETA. Each write-back is derived from the decision that was
-            actually made, so a shipment left on plan produces none.</p>
+            routing code, revised ETA. A shipment left on plan produces no write-back at
+            all.</p>
           <p class="src" style="margin-top:12px">No TMS is contacted. There is no client, no
             credential and no endpoint — a write-back is a described change, and it stays
             one.</p>
@@ -1470,12 +1471,11 @@ firm revised ETA as soon as terminals restart.</p>
 
     <div class="callout rv" style="margin-top:32px">
       <p class="copy16"><b style="color:var(--fg);font-weight:500">Everything outbound sits
-        behind the same gate.</b> A drafted reply, a drafted quote and a queued write-back
-        are all actions that leave the building, so all three wait on a person exactly as the
-        carrier and customer emails do — <span class="mono" style="font-size:13px">DRAFT -
-        not sent</span> and <span class="mono" style="font-size:13px">QUEUED - not
-        written</span>. The test that proves the emails cannot be sent now checks these
-        too.</p>
+        behind the same gate.</b> A drafted reply, a drafted quote and a queued write-back all
+        leave the building, so all three wait on a person —
+        <span class="mono" style="font-size:13px">DRAFT - not sent</span>,
+        <span class="mono" style="font-size:13px">QUEUED - not written</span>. The test that
+        proves the emails cannot be sent checks these too.</p>
     </div>
   </div>
 </section>
