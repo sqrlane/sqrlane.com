@@ -524,7 +524,7 @@ h1,h2,h3,h4,p{margin:0}
 .dec-h .r{margin-left:auto}
 
 .dec-t{padding:20px 20px 19px}
-.dec-t h3{margin:0; font-size:22px; line-height:27px; font-weight:600; letter-spacing:-.7px}
+.dec-t h4{margin:0; font-size:22px; line-height:27px; font-weight:600; letter-spacing:-.7px}
 .dec-t .meta{margin:6px 0 0; font-family:"Geist Mono",ui-monospace,monospace;
              font-size:12.5px; line-height:18px; color:var(--faint)}
 
@@ -1372,51 +1372,58 @@ h1,h2,h3,h4,p{margin:0}
     </div>
 
     <!-- The other branch. The trail above is the hold, where there is no good
-         option; this is the same run's clean reroute, laid out as the booked
-         plan against the proposed one. Both halves of the board's behaviour,
-         rather than only the hard half. -->
+         option; these are the same run's two clean reroutes, each laid out as
+         the booked plan against the proposed one. Both halves of the board's
+         behaviour, rather than only the hard half.
+
+         Two cards rather than one because the pair is the argument: same
+         event, same route change, and the reasons are not interchangeable.
+         SHP-001 has a day more slack. SHP-005 has cargo that constrains which
+         ports can take it at all, and a consignee in Hamburg who is still
+         served better by the reroute than by waiting - which is the opposite
+         of the call made for SHP-002, whose consignee is also in Hamburg. A
+         reader who only ever sees one reroute card cannot tell a decision
+         from a rule. -->
     <div class="head rv" style="max-width:none;margin-top:64px">
       <span class="eyebrow">The other branch</span>
-      <h3 class="h32" style="margin-top:12px">And this is the clean one.</h3>
-      <p class="copy16" style="margin-top:12px;max-width:74ch">SHP-001 carries four days of
-        slack and has an alternate on file, so the call is straightforward — which makes it
-        the one worth showing whole: the plan that is booked, the plan the advisor proposes,
-        and the arithmetic that separates them.</p>
+      <h3 class="h32" style="margin-top:12px">And these are the clean ones.</h3>
+      <p class="copy16" style="margin-top:12px;max-width:74ch">Two of the five reroute on the
+        same event, and neither is a copy of the other. Each is worth showing whole: the plan
+        that is booked, the plan the advisor proposes, and the arithmetic that separates
+        them.</p>
     </div>
 
     <div class="dec rv">
       <div class="dec-h">
         <span class="ref">HLCU-2261188</span>
-        <span class="sep">&middot;</span>
-        <span class="lane">Shanghai &rarr; Munich</span>
-        <span class="r"><span class="chip red">Hamburg strike &middot; high</span></span>
+        <span class="sep">·</span>
+        <span class="lane">Shanghai → Munich</span>
+        <span class="r"><span class="chip red">Hamburg strike · high</span></span>
       </div>
 
       <div class="dec-t">
-        <h4 style="margin:0;font-size:22px;line-height:27px;font-weight:600;letter-spacing:-.7px">
-          Reroute the discharge port</h4>
-        <p class="meta">SHP-001 &middot; Automotive parts &middot; Hapag-Lloyd &middot;
-          12 &times; 40HC &middot; 4d slack</p>
+        <h4>Reroute the discharge port</h4>
+        <p class="meta">SHP-001 · Automotive parts · Hapag-Lloyd · 12 x 40HC · 4d slack</p>
       </div>
 
       <div class="dec-cols">
         <div class="dec-col">
           <p class="k">Booked</p>
           <p class="n">Hamburg discharge</p>
-          <p class="d">R-HAM-STD &middot; via Suez &middot; rail ex-Hamburg</p>
+          <p class="d">R-HAM-STD · via Suez · rail ex-Hamburg</p>
           <p class="big">32<u>days transit</u></p>
-          <span class="st-badge st-red"><i></i>Exposed &middot; HAM</span>
+          <span class="st-badge st-red"><i></i>Exposed · HAM</span>
           <p class="why">Terminal handling, gate operations and rail shunting stop for the
             walkout. Staying put projects three to five days of delay against four days of
-            slack &mdash; in the worst case the deadline breaks.</p>
+            slack — in the worst case the deadline breaks.</p>
         </div>
 
         <div class="dec-col rec">
           <p class="k">Recommended</p>
           <p class="n">Rotterdam discharge</p>
-          <p class="d">R-RTM-ALT &middot; via Suez &middot; road ex-Rotterdam</p>
+          <p class="d">R-RTM-ALT · via Suez · road ex-Rotterdam</p>
           <p class="big">34<u>days transit</u></p>
-          <span class="st-badge st-blue"><i></i>Reroute &middot; RTM</span>
+          <span class="st-badge st-blue"><i></i>Reroute · RTM</span>
           <p class="why">Two days longer on paper, and nothing active on any chokepoint it
             passes. Two days of added transit against four of slack, so the deadline holds
             without spending the whole margin.</p>
@@ -1424,19 +1431,73 @@ h1,h2,h3,h4,p{margin:0}
       </div>
 
       <div class="dec-f">
-        <span class="fact">ETA <b>Sep 13 &rarr; Sep 15</b></span>
+        <span class="fact">ETA <b>Sep 13 → Sep 15</b></span>
         <span class="fact">required by <b>Sep 17</b></span>
-        <span class="fact">cost index <b>100 &rarr; 108</b></span>
+        <span class="fact">cost index <b>100 → 108</b></span>
         <span class="fact">alternates weighed <b>2</b></span>
         <span class="fact">decided by <b>model</b></span>
       </div>
     </div>
 
-    <p class="dec-note rv">The Cape routing <code>R-COGH-ALT</code> was the other alternate on
-      file and was refused: ten days longer, and it still discharges at Hamburg, so it carries
-      the disruption it was meant to avoid. The comparison and the refusal both sit in the
-      shipment's reasoning trail &mdash; <code>python -m src.route_advisor --inject --shipment
-      SHP-001</code> prints the same figures this card shows.</p>
+    <!-- The second reroute. Same event, same pair of routes, and deliberately
+         not the same card: the slack is a day tighter, the cargo is
+         out-of-gauge so the alternate has to be a heavy-lift port, and the
+         consignee is in Hamburg - the fact that made SHP-002 hold. -->
+    <div class="dec rv">
+      <div class="dec-h">
+        <span class="ref">HLCU-2264903</span>
+        <span class="sep">·</span>
+        <span class="lane">Busan → Hamburg</span>
+        <span class="r"><span class="chip red">Hamburg strike · high</span></span>
+      </div>
+
+      <div class="dec-t">
+        <h4>Reroute, with the final leg by road</h4>
+        <p class="meta">SHP-005 · Machinery, out-of-gauge · Hapag-Lloyd · 3 x 40FR flatrack ·
+          3d slack</p>
+      </div>
+
+      <div class="dec-cols">
+        <div class="dec-col">
+          <p class="k">Booked</p>
+          <p class="n">Hamburg discharge</p>
+          <p class="d">R-HAM-STD · via Suez · consignee at the port</p>
+          <p class="big">32<u>days transit</u></p>
+          <span class="st-badge st-red"><i></i>Exposed · HAM</span>
+          <p class="why">The same walkout, one day tighter: three to five days of delay against
+            three days of slack. Heavy-lift handling stops with everything else, so out-of-gauge
+            cargo waits out the backlog rather than moving through it.</p>
+        </div>
+
+        <div class="dec-col rec">
+          <p class="k">Recommended</p>
+          <p class="n">Rotterdam discharge</p>
+          <p class="d">R-RTM-ALT · via Suez · road Rotterdam → Hamburg</p>
+          <p class="big">34<u>days transit</u></p>
+          <span class="st-badge st-blue"><i></i>Reroute · RTM</span>
+          <p class="why">Rotterdam takes heavy lift, which is what makes this reroute available
+            to flatrack cargo at all. Two days of added transit against three of slack — it
+            fits, with a day left over.</p>
+        </div>
+      </div>
+
+      <div class="dec-f">
+        <span class="fact">ETA <b>Sep 14 → Sep 16</b></span>
+        <span class="fact">required by <b>Sep 17</b></span>
+        <span class="fact">cost index <b>100 → 108</b></span>
+        <span class="fact">alternates weighed <b>2</b></span>
+        <span class="fact">decided by <b>model</b></span>
+      </div>
+    </div>
+
+    <p class="dec-note rv">Both shipments were offered the Cape routing <code>R-COGH-ALT</code>
+      as well, and both refused it: ten days longer, and it still discharges at Hamburg, so it
+      carries the disruption it was meant to avoid. SHP-005 is the one to read against the hold
+      above — its consignee is in Hamburg too, and it reroutes anyway, because a road leg from
+      Rotterdam is just road for a machine tool and a broken cold chain for a reefer. The
+      comparisons and the refusals all sit in the reasoning trails —
+      <code>python -m src.route_advisor --inject</code> prints the same figures these cards
+      show.</p>
 
   </div>
 </section>
