@@ -233,6 +233,19 @@ def _decision_prompt(assessment: dict) -> str:
     cold_chain = ("YES - every transhipment or extra handling is a cold-chain break "
                   "risk and a compliance event" if shipment.get("cold_chain") else "no")
 
+    selectable = [c["route_id"] for c in assessment["candidates"]]
+    if len(selectable) == 1:
+        choice_rule = (
+            f"This shipment has NO alternate routing on file. The only route_id you "
+            f"may return is {selectable[0]}, and your decision is therefore between "
+            f"'hold' and 'no-action' - 'reroute' is not available to you. If holding "
+            f"is wrong, say so in the reasoning, but do not name another route as the "
+            f"recommendation.")
+    else:
+        choice_rule = (
+            f"\"recommended_route\" MUST be exactly one of: {', '.join(selectable)}. "
+            f"Any other route id will be refused and the recommendation discarded.")
+
     return f"""Decide what to do with this shipment.
 
 SHIPMENT
@@ -267,6 +280,9 @@ Weigh three things against each other: the schedule slack, the transit days an
 alternate adds, and the delay the disruption is expected to cause. For a
 shipment whose final destination IS the disrupted port, remember that rerouting
 elsewhere adds road transit and extra handling on top of the detour.
+
+HARD CONSTRAINT
+{choice_rule}
 
 Return one JSON object:
   "decision": one of {DECISIONS}
@@ -434,6 +450,13 @@ def advise(shipment: dict, routes: dict, events: list[dict], *, use_llm=True) ->
                       "finding": f"Recommended route {route_id!r} is not a candidate "
                                  f"for this shipment - decision downgraded to hold."})
         decision, route_id = "hold", assessment["primary"]["route_id"]
+        # The headline, reasoning and rejected options were all written to argue
+        # for a reroute. Keeping them next to a hold puts a self-contradicting
+        # card on screen and feeds the Comms Agent contradictory facts. Rebuild
+        # the narrative to match the decision that actually stands.
+        verdict = decide_with_rules(assessment)
+        decision, route_id = "hold", assessment["primary"]["route_id"]
+        decided_by = "rule (model named an unavailable route)"
     if route_id not in valid_routes:
         route_id = assessment["primary"]["route_id"]
 

@@ -231,15 +231,46 @@ def _parse_json(text: str):
         return json.loads(cleaned)
     except json.JSONDecodeError:
         pass
-    # Last resort: grab the outermost {...} or [...] in the reply.
-    for opener, closer in (("[", "]"), ("{", "}")):
-        start, end = cleaned.find(opener), cleaned.rfind(closer)
-        if start != -1 and end > start:
-            try:
-                return json.loads(cleaned[start:end + 1])
-            except json.JSONDecodeError:
-                continue
+    # Models that "think out loud" - gpt-oss and the reasoning families - put
+    # prose before the answer, and that prose often contains braces. Taking the
+    # outermost span therefore swallows the preamble and fails to parse. Collect
+    # every balanced span instead and try them last-first, because the answer is
+    # what comes last.
+    for span in reversed(_balanced_spans(cleaned)):
+        try:
+            return json.loads(span)
+        except json.JSONDecodeError:
+            continue
     raise ValueError(f"no JSON found in reply: {text[:200]!r}")
+
+
+def _balanced_spans(text: str) -> list[str]:
+    """Every complete {...} or [...] in the text, in the order they close.
+
+    Quotes and escapes are tracked so a brace inside a string does not throw the
+    depth count off.
+    """
+    spans, stack = [], []
+    in_string = escaped = False
+    quote = ""
+    for index, char in enumerate(text):
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == quote:
+                in_string = False
+            continue
+        if char in "\"'":
+            in_string, quote = True, char
+        elif char in "{[":
+            stack.append(index)
+        elif char in "}]" and stack:
+            start = stack.pop()
+            if not stack:
+                spans.append(text[start:index + 1])
+    return spans
 
 
 # --- Provider implementations (private) ------------------------------------
