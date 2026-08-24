@@ -591,6 +591,20 @@ claims were written and tested but unwitnessed. Most are now confirmed.
 
   The lesson is worth keeping: **any hard-coded model name is a scheduled outage.**
   Don't reintroduce one.
+- **PEGELONLINE is real, and it has now been witnessed.** The landing page's gauge
+  panel reads the three Rhine gauges on load. Confirmed against the live host from
+  the deployed instance: Kaub 73 cm, Duisburg-Ruhrort 167 cm, Emmerich 14 cm — two
+  `restricted`, one `critical`, every one banded by the same `GAUGE_BANDS` table the
+  risk monitor uses. A real third-party source was fetched, parsed and classified in
+  production. It had only ever been tested against a local stand-in, because the
+  build sandbox's egress policy blocks `pegelonline.wsv.de` with a 403 at the proxy.
+
+  Worth knowing before a demo: **the Rhine really was low that day.** The authored
+  `rhine` scenario puts Kaub at 44 cm; the live panel above the write-up was reading
+  73, with Emmerich past its critical threshold. A scenario and the world can land in
+  the same regime, and the page then reads as uncannily well-timed — which is exactly
+  the situation the `Synthetic scenario` label exists for. Never quietly let a live
+  reading stand in for the authored one, and never move that label.
 
 **Still open — and it needs judgement, not a test:**
 
@@ -600,20 +614,15 @@ claims were written and tested but unwitnessed. Most are now confirmed.
   centrepiece and cannot be asserted in a test. Read them aloud. If they sound
   robotic, tune `ADVISOR_SYSTEM` in `route_advisor.py` and `CARRIER_SYSTEM` /
   `CUSTOMER_SYSTEM` in `comms_agent.py` — the prompts, not the plumbing.
-- **Whether live news sources return anything useful.** The fail-closed path is well
-  tested and the deployed run completes, but nobody has confirmed a real
-  GDELT/RSS/PEGELONLINE response was parsed. This is the credibility anchor — "the
-  risk detection is real" is the demo's central honest claim, and the `LIVE` chip on
-  the risk feed asserts it. The dashboard's source line ("N of 14 sources read")
-  settles it at a glance; `python -m src.risk_monitor` on a real connection answers
-  it in detail. **If N is 0 or 1, the live claim is currently decoration.**
-
-  The **landing page's gauge panel is now the cheapest way to settle half of this**:
-  it reads PEGELONLINE on load and prints three numbers or says why it could not.
-  Open `/` on a machine with outbound access — three readings means a real
-  third-party source was fetched and parsed. It was built in a sandbox whose egress
-  policy blocks `pegelonline.wsv.de` (403 at the proxy), so every path is tested
-  against a local stand-in and none against the real host.
+- **Whether the live *news* sources return anything useful.** PEGELONLINE is
+  confirmed (above), which settles the gauge third of this. The other seventeen
+  sources are not: nobody has confirmed a real GDELT or RSS item was fetched,
+  prefiltered and classified. That is the credibility anchor — "the risk detection is
+  real" is the demo's central honest claim, and the `LIVE` chip on the risk feed
+  asserts it. The dashboard's source line ("N of 20 sources read") settles it at a
+  glance; `python -m src.risk_monitor` on a real connection answers it in detail.
+  **If N is 3 — the gauges alone — the news half of the live claim is still
+  decoration.**
 - **The two reroute cards have never been read.** Every review so far has been
   SHP-002, the hold. SHP-001 and SHP-005 take the other branch in both the advisor
   and the comms prompts, so the reroute emails have never been seen by anyone.
@@ -713,6 +722,12 @@ have a hard timeout, so the live pull drops to 10s and the classifier cap to 16 
 
 `GROQ_API_KEY` lives in Vercel's environment variables. **Adding it requires a redeploy** —
 Vercel bakes env vars in at deploy time, so an existing deployment will not pick it up.
+
+It is live at **https://logistics-freight-forwarding.vercel.app**, git-linked to this
+repo, so every push to `main` deploys itself. `GROQ_API_KEY` is already set there —
+`/api/health` reports `ai_provider: groq`, so the model decides rather than the rules.
+The `*-git-main-*` branch alias sits behind Vercel Authentication; the bare production
+domain above is the public one.
 
 Deploy for sharing a link; run `uvicorn` locally for a demo you are presenting.
 
