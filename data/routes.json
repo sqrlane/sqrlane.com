@@ -1,0 +1,50 @@
+{
+  "_comment": "Candidate routes from DATASET.md. cost_index is relative (100 = baseline), not real money. The Route Advisor CHOOSES among these and justifies the choice - it never computes a route.",
+  "routes": [
+    {
+      "route_id": "R-HAM-STD",
+      "description": "Asia -> Suez -> Hamburg",
+      "discharge_port": "HAM",
+      "inland_leg": "rail/road ex-Hamburg",
+      "transit_days": 32,
+      "cost_index": 100,
+      "chokepoints": ["SUEZ", "REDSEA", "HAM"]
+    },
+    {
+      "route_id": "R-RTM-ALT",
+      "description": "Asia -> Suez -> Rotterdam",
+      "discharge_port": "RTM",
+      "inland_leg": "road ex-Rotterdam",
+      "transit_days": 34,
+      "cost_index": 108,
+      "chokepoints": ["SUEZ", "REDSEA", "RTM"]
+    },
+    {
+      "route_id": "R-RTM-STD",
+      "description": "Asia -> Suez -> Rotterdam (native)",
+      "discharge_port": "RTM",
+      "inland_leg": "road ex-Rotterdam",
+      "transit_days": 33,
+      "cost_index": 100,
+      "chokepoints": ["SUEZ", "REDSEA", "RTM"]
+    },
+    {
+      "route_id": "R-ANR-STD",
+      "description": "Asia -> Suez -> Antwerp",
+      "discharge_port": "ANR",
+      "inland_leg": "road ex-Antwerp",
+      "transit_days": 33,
+      "cost_index": 100,
+      "chokepoints": ["SUEZ", "REDSEA", "ANR"]
+    },
+    {
+      "route_id": "R-COGH-ALT",
+      "description": "Asia -> Cape of Good Hope -> Hamburg",
+      "discharge_port": "HAM",
+      "inland_leg": "rail/road ex-Hamburg",
+      "transit_days": 42,
+      "cost_index": 130,
+      "chokepoints": ["COGH", "HAM"]
+    }
+  ]
+}

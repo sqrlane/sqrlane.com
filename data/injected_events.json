@@ -1,0 +1,28 @@
+{
+  "_comment": "The scripted, button-triggered disruption from DATASET.md. It deliberately uses the SAME event schema as live events so it flows through the real pipeline - the audience cannot tell the plumbing apart, and you tell them honestly which is which.",
+  "_timestamps": "published_offset_minutes is relative to the moment the event is loaded, so the risk feed always reads as fresh. The loader stamps published_at and detected_at at load time.",
+  "events": [
+    {
+      "event_id": "EVT-HAM-STRIKE",
+      "origin": "injected",
+      "chokepoint": "HAM",
+      "type": "strike",
+      "severity": "high",
+      "title": "Warning strike at Port of Hamburg - union calls full-day walkout",
+      "title_original": "Warnstreik im Hamburger Hafen — ver.di ruft zu ganztägigem Ausstand auf",
+      "summary": "The service union ver.di has called a full-day warning strike across container terminals at the Port of Hamburg in the current collective bargaining round. Terminal handling, gate operations and rail shunting are expected to stop for the duration of the walkout, with vessel backlogs clearing over the following days.",
+      "source": "NDR Hamburg (German-language regional RSS)",
+      "source_type": "rss",
+      "source_language": "de",
+      "url": "https://www.ndr.de/nachrichten/hamburg/",
+      "published_offset_minutes": -35,
+      "expected_duration_hours": [48, 72],
+      "expected_delay_days": [3, 5],
+      "_delay_vs_duration": "Delay exceeds the walkout itself because the vessel and gate backlog takes days to clear after terminals restart.",
+      "detected_first_from": "German-language RSS (NDR / tagesschau / ver.di press)",
+      "english_wire_lag_hours": 24,
+      "confidence": 0.95,
+      "reasoning": "Union-called full-day walkout at all Hamburg container terminals; handling and gate operations stop, so any box discharging at HAM is exposed. Picked up from a German-language regional feed roughly a day before the English wires carried it."
+    }
+  ]
+}

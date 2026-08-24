@@ -1,0 +1,54 @@
+{
+  "_comment": "Points a route can pass through. Risk events attach to a chokepoint. Source: DATASET.md. 'keywords' are multilingual match terms used by the Risk Monitor's cheap prefilter and passed to the LLM classifier as the allowed vocabulary.",
+  "chokepoints": [
+    {
+      "id": "HAM",
+      "name": "Port of Hamburg",
+      "type": "seaport",
+      "country": "DE",
+      "keywords": ["Hamburg", "Port of Hamburg", "Hamburger Hafen", "Hafen Hamburg", "HHLA", "Eurogate Hamburg", "ميناء هامبورغ"]
+    },
+    {
+      "id": "RTM",
+      "name": "Port of Rotterdam",
+      "type": "seaport",
+      "country": "NL",
+      "keywords": ["Rotterdam", "Port of Rotterdam", "Haven van Rotterdam", "Maasvlakte", "ECT Delta", "ميناء روتردام"]
+    },
+    {
+      "id": "ANR",
+      "name": "Port of Antwerp",
+      "type": "seaport",
+      "country": "BE",
+      "keywords": ["Antwerp", "Antwerpen", "Port of Antwerp", "Antwerp-Bruges", "Anvers", "ميناء أنتويرب"]
+    },
+    {
+      "id": "SUEZ",
+      "name": "Suez Canal",
+      "type": "canal",
+      "country": "EG",
+      "keywords": ["Suez", "Suez Canal", "Suezkanal", "canal de Suez", "قناة السويس", "SCA"]
+    },
+    {
+      "id": "REDSEA",
+      "name": "Red Sea / Bab-el-Mandeb",
+      "type": "strait",
+      "country": null,
+      "keywords": ["Red Sea", "Rotes Meer", "Bab-el-Mandeb", "Bab al-Mandab", "Houthi", "Huthi", "البحر الأحمر", "باب المندب", "Gulf of Aden"]
+    },
+    {
+      "id": "COGH",
+      "name": "Cape of Good Hope",
+      "type": "ocean route",
+      "country": "ZA",
+      "keywords": ["Cape of Good Hope", "Kap der Guten Hoffnung", "Cape route", "around Africa", "رأس الرجاء الصالح"]
+    },
+    {
+      "id": "RHINE",
+      "name": "Rhine barge corridor",
+      "type": "inland waterway",
+      "country": "DE",
+      "keywords": ["Rhine", "Rhein", "Rijn", "Rhine barge", "Binnenschifffahrt", "Niedrigwasser", "low water", "Kaub", "Duisburg", "Emmerich"]
+    }
+  ]
+}
