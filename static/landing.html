@@ -245,16 +245,67 @@ h1,h2,h3,h4,p{margin:0}
 .st-amber{background:var(--amber-100); color:var(--amber)}
 
 /* ---------- source strip ---------- */
+/* The sources travel right to left as one continuous band. Three identical
+   copies of the row sit side by side inside the track; the track slides left
+   by exactly one copy's width and then snaps back to the start - at that
+   instant copy 2 is standing precisely where copy 1 was, so the restart is
+   invisible and the band reads as endless.
+
+   Only one row is written in the HTML. The other two are cloned from it at
+   the bottom of the page, so the source list is edited in one place and the
+   three copies cannot drift apart.
+
+   Every mark is an inline SVG drawn in this file - no image, no icon font,
+   nothing fetched. A logo strip that half-loads in front of an audience
+   looks broken, and this one cannot. */
 .strip{padding:34px 0; border-top:1px solid var(--border); background:var(--card)}
 .strip .lead{font-size:12px; line-height:16px; color:var(--faint); text-align:center;
-             margin-bottom:18px}
-.strip .list{display:flex; flex-wrap:wrap; gap:10px 26px; justify-content:center;
-             align-items:center}
-.strip .src{display:inline-flex; align-items:center; gap:7px; font-size:14px; font-weight:500;
-            color:var(--muted); letter-spacing:-.1px}
+             margin-bottom:22px}
+
+/* The viewport. overflow clips the band; the mask softens both ends so items
+   arrive and leave rather than appearing at a hard edge. */
+.strip .strip-view{position:relative; overflow:hidden; --fade:clamp(32px,7vw,140px);
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 var(--fade),
+                                     #000 calc(100% - var(--fade)),transparent 100%);
+          mask-image:linear-gradient(90deg,transparent 0,#000 var(--fade),
+                                     #000 calc(100% - var(--fade)),transparent 100%)}
+.strip .strip-track{display:flex; width:max-content}
+/* .go is added by the script once the copies exist - without it the strip is
+   a static list rather than a band sliding against empty space. */
+.strip .strip-track.go{animation:strip-slide 44s linear infinite; will-change:transform}
+.strip .strip-view:hover .strip-track.go{animation-play-state:paused}
+@keyframes strip-slide{
+  from{transform:translate3d(0,0,0)}
+  to{transform:translate3d(calc(-100% / 3),0,0)}
+}
+
+/* No gap on the track - that would break the one-third arithmetic. The seam
+   spacing comes from each row's own trailing padding instead. */
+.strip .strip-row{display:flex; align-items:center; gap:44px; padding-right:44px; flex:none}
+.strip .src{display:inline-flex; align-items:center; gap:9px; font-size:14px; font-weight:500;
+            color:var(--muted); letter-spacing:-.1px; white-space:nowrap}
+.strip .src .mk{width:19px; height:19px; flex:none; color:var(--faint);
+                fill:none; stroke:currentColor; stroke-width:1.7;
+                stroke-linecap:round; stroke-linejoin:round}
 .strip .src .lg{font-size:9px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
                 color:var(--faint); border:1px solid var(--border-strong); border-radius:3px;
                 padding:0 4px; line-height:14px}
+.strip .sprite{position:absolute; width:0; height:0; overflow:hidden}
+
+/* Asked for no motion, the band becomes what it was before: the same list,
+   centred, wrapped, standing still. */
+@media (prefers-reduced-motion:reduce){
+  .strip .strip-view{-webkit-mask-image:none; mask-image:none; padding:0 var(--gutter)}
+  /* .go has to be matched here too, or the rule that starts the animation
+     outranks this one and the band keeps moving. */
+  .strip .strip-track,
+  .strip .strip-track.go{width:auto; animation:none; justify-content:center}
+  /* flex:none is what keeps the row from wrapping while it is moving, so it
+     has to be released before the row can fold onto a second line. */
+  .strip .strip-row{flex:1 1 auto; max-width:100%; flex-wrap:wrap;
+                    justify-content:center; gap:12px 28px; padding-right:0}
+  .strip .strip-row.dup{display:none}
+}
 
 /* ---------- contrast cards (the gap) ---------- */
 .gap-grid{margin-top:40px}
@@ -347,6 +398,125 @@ h1,h2,h3,h4,p{margin:0}
 .mail-foot .approve:hover{background:#383838}
 .mail-foot .approve.ok{background:var(--green-100); color:var(--green)}
 
+/* ---------- worked example (the case study) ---------- */
+.case .cs-note{margin-top:18px; max-width:80ch; font-size:13px; line-height:19px;
+               color:var(--faint)}
+.case .cs-note code{font-family:"Geist Mono",ui-monospace,monospace; font-size:12px;
+                    color:var(--muted)}
+
+/* The four facts the piece turns on, above the cards. */
+.cs-facts{margin-top:32px; display:grid; grid-template-columns:repeat(4,1fr); gap:20px;
+          padding:20px 22px; border:1px solid var(--border); border-radius:var(--r-md);
+          background:var(--card); box-shadow:var(--shadow-card)}
+.cs-facts .k{font-size:10px; line-height:14px; font-weight:500; letter-spacing:.07em;
+             text-transform:uppercase; color:var(--faint)}
+.cs-facts .v{margin-top:5px; font-size:26px; line-height:30px; font-weight:600;
+             letter-spacing:-1px; font-variant-numeric:tabular-nums}
+.cs-facts .v u{text-decoration:none; font-size:14px; font-weight:500; letter-spacing:-.2px;
+               color:var(--faint); margin-left:3px}
+.cs-facts .s{margin-top:3px; font-size:12px; line-height:16px; color:var(--faint)}
+
+.cs-grid{margin-top:16px}
+.cs{background:var(--card); border:1px solid var(--border); border-radius:var(--r-md);
+    box-shadow:var(--shadow-card); padding:20px; display:flex; flex-direction:column}
+.cs > h3{font-family:"Geist Mono",ui-monospace,monospace; font-size:11px; line-height:16px;
+         font-weight:400; letter-spacing:.1em; text-transform:uppercase; color:var(--faint);
+         margin-bottom:18px}
+
+/* 01 - the corridor. Two series, told apart three ways: colour, dash pattern
+   and a direct label on each. Colour alone survives neither a deuteranope nor
+   a projector at the back of a room. */
+.cs .corridor{width:100%; height:auto; display:block; border-radius:var(--r-sm);
+              background:var(--card-muted)}
+.cs .corridor text{font-family:"Geist Mono",ui-monospace,monospace; font-size:9px;
+                   letter-spacing:.05em; fill:var(--faint)}
+.cs .corridor text.on{fill:var(--fg)}
+.cs .corridor text.rd{fill:var(--red)}
+.cs .corridor text.bl{fill:var(--blue)}
+.cs .corridor .leg-ok{stroke:var(--gray-500); stroke-width:2; fill:none}
+.cs .corridor .leg-sus{stroke:var(--red); stroke-width:2; fill:none; stroke-dasharray:5 4}
+.cs .corridor .leg-alt{stroke:var(--blue); stroke-width:2; fill:none}
+.cs .corridor .node{fill:var(--fg)}
+.cs .corridor .gauge{fill:var(--card); stroke:var(--gray-600); stroke-width:1.5}
+.cs .corridor .gauge.bind{stroke:var(--red); stroke-width:2}
+
+.cs .legend{margin-top:14px; display:flex; flex-wrap:wrap; gap:8px 18px}
+.cs .legend span{display:inline-flex; align-items:center; gap:7px; font-size:12px;
+                 line-height:16px; color:var(--muted)}
+.cs .legend i{width:16px; height:0; border-top:2px solid var(--blue); flex:none}
+.cs .legend i.sus{border-top-style:dashed; border-top-color:var(--red)}
+.cs .cs-cap{margin-top:14px; font-size:13px; line-height:19px; color:var(--muted)}
+.cs .cs-sub{margin-top:20px; margin-bottom:12px; font-family:"Geist Mono",ui-monospace,monospace;
+            font-size:11px; line-height:16px; letter-spacing:.1em; text-transform:uppercase;
+            color:var(--faint)}
+.cs .trail li{font-size:13px; line-height:19px}
+.cs .trail code{font-family:"Geist Mono",ui-monospace,monospace; font-size:12px}
+.cs .nums{margin-top:auto; padding-top:18px; display:grid;
+          grid-template-columns:repeat(3,1fr); gap:12px}
+.cs .nums .k{font-size:10px; line-height:14px; font-weight:500; letter-spacing:.07em;
+             text-transform:uppercase; color:var(--faint)}
+.cs .nums .v{margin-top:4px; font-family:"Geist Mono",ui-monospace,monospace;
+             font-size:19px; line-height:24px; letter-spacing:-.5px; color:var(--fg)}
+
+/* 02 - the escalation */
+.cs-tl{margin:0; padding:0; list-style:none}
+.cs-tl li{position:relative; padding:0 0 17px 24px}
+.cs-tl li:last-child{padding-bottom:0}
+.cs-tl li::before{content:""; position:absolute; left:1px; top:5px; width:7px; height:7px;
+                  border-radius:50%; background:var(--gray-500)}
+.cs-tl li::after{content:""; position:absolute; left:4px; top:14px; bottom:0; width:1px;
+                 background:var(--border-strong)}
+.cs-tl li:last-child::after{display:none}
+.cs-tl .d{font-family:"Geist Mono",ui-monospace,monospace; font-size:12px; line-height:17px;
+          color:var(--faint)}
+.cs-tl .t{margin-top:4px; font-size:13.5px; line-height:20px; color:var(--muted)}
+.cs-tl .t b{color:var(--fg); font-weight:500}
+/* Two entries are marked: the moment the call was made, and the moment the
+   page is standing in. */
+.cs-tl li.call::before{background:var(--blue); box-shadow:0 0 0 3px var(--blue-100)}
+.cs-tl li.call .t{color:var(--fg)}
+.cs-tl li.now::before{background:var(--red); box-shadow:0 0 0 3px var(--red-100)}
+
+/* 03 - the verdict */
+.cs-odds{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
+.cs-odds .o{padding:12px 6px; border-radius:var(--r-sm); text-align:center}
+.cs-odds .o .p{font-size:22px; line-height:28px; font-weight:600; letter-spacing:-.9px;
+               font-variant-numeric:tabular-nums}
+.cs-odds .o .l{margin-top:4px; font-size:12px; line-height:16px; color:var(--faint)}
+.cs-odds .o.lead{background:var(--blue-100)}
+.cs-odds .o.lead .p{color:var(--blue)}
+.cs-odds .o.lead .l{color:var(--blue)}
+.cs .cs-call{margin-top:18px; padding:16px 18px; border-radius:var(--r-sm);
+             background:var(--card-muted); border:1px solid var(--border)}
+.cs-call .h{font-family:"Geist Mono",ui-monospace,monospace; font-size:11px; line-height:16px;
+            letter-spacing:.1em; text-transform:uppercase; color:var(--blue)}
+.cs-call .e{margin-top:10px; font-size:13.5px; line-height:20px; color:var(--fg)}
+.cs-call code{font-family:"Geist Mono",ui-monospace,monospace; font-size:12.5px;
+              color:var(--muted)}
+.cs-call .b{margin-top:9px; font-size:13px; line-height:19px; color:var(--muted)}
+.cs .cs-foot{margin-top:auto; padding-top:16px; font-size:11.5px; line-height:16px;
+             color:var(--faint)}
+
+/* ---------- signup (a placeholder, and it says so) ---------- */
+.signup{border-top:1px solid var(--border); background:var(--card); padding:88px 0;
+        text-align:center}
+.signup p.copy18{margin:18px auto 0; max-width:50ch}
+/* Deliberately not a <form>. There is no element that can submit and no
+   handler that transmits, which is the same discipline as the Comms Agent:
+   the page cannot send, rather than choosing not to. */
+.signup .row2{margin:30px auto 0; display:flex; gap:10px; justify-content:center;
+              flex-wrap:wrap; max-width:520px}
+.signup input{flex:1; min-width:230px; height:44px; padding:0 14px; border-radius:var(--r-sm);
+              border:1px solid var(--border-strong); background:var(--bg); color:var(--fg);
+              font-family:inherit; font-size:15px; line-height:20px}
+.signup input::placeholder{color:var(--faint)}
+.signup input:focus{outline:2px solid var(--blue); outline-offset:-2px; background:var(--card)}
+.signup .note{margin:16px auto 0; max-width:56ch; font-size:12.5px; line-height:18px;
+              color:var(--faint)}
+.signup .walk{margin-top:26px; font-size:14px; line-height:20px; color:var(--muted)}
+.signup .walk a{border-bottom:1px solid var(--border-strong); padding-bottom:1px}
+.signup .walk a:hover{border-color:var(--fg); color:var(--fg)}
+
 /* ---------- sources table ---------- */
 .tbl{border:1px solid var(--border); border-radius:var(--r-md); overflow:hidden;
      background:var(--card); box-shadow:var(--shadow-card); margin-top:40px}
@@ -389,7 +559,9 @@ h1,h2,h3,h4,p{margin:0}
 
 /* ---------- footer ---------- */
 .foot{border-top:1px solid var(--border); background:var(--card); padding:52px 0 34px}
-.foot .cols{display:grid; grid-template-columns:1.6fr 1fr 1fr 1fr; gap:32px}
+.foot .cols{display:grid; grid-template-columns:1.3fr 1fr 1fr 1fr 1.2fr; gap:32px}
+.foot ul.placeholder span{font-size:13.5px; color:var(--faint)}
+.foot .ph-note{margin-top:12px; font-size:11.5px; line-height:16px; color:var(--gray-600)}
 .foot .about{max-width:34ch}
 .foot .about p{margin-top:14px; font-size:13px; line-height:19px; color:var(--faint)}
 .foot h4{font-size:12px; font-weight:500; letter-spacing:.06em; text-transform:uppercase;
@@ -428,6 +600,9 @@ h1,h2,h3,h4,p{margin:0}
   .nav-links{display:none}
   .g3,.g4{grid-template-columns:1fr 1fr}
   .mini-stats{grid-template-columns:repeat(2,1fr)}
+  /* Four facts across a phone puts "9 days early" on three lines. Two by two
+     keeps each number next to the caption that explains it. */
+  .cs-facts{grid-template-columns:repeat(2,1fr); gap:22px 24px}
 }
 @media (max-width:640px){
   :root{--gutter:18px}
@@ -475,6 +650,7 @@ h1,h2,h3,h4,p{margin:0}
     <nav class="nav-links">
       <a href="#loop">How it works</a>
       <a href="#edge">The edge</a>
+      <a href="#case">Case study</a>
       <a href="#reasoning">Reasoning</a>
       <a href="#sources">Sources</a>
       <a href="#scope">Scope</a>
@@ -592,15 +768,106 @@ h1,h2,h3,h4,p{margin:0}
 <section class="strip">
   <div class="wrap">
     <p class="lead">Watching, keyless and in the open</p>
-    <div class="list">
-      <span class="src">GDELT DOC 2.0</span>
-      <span class="src">tagesschau <span class="lg">de</span></span>
-      <span class="src">NDR Hamburg <span class="lg">de</span></span>
-      <span class="src">DW <span class="lg">de</span></span>
-      <span class="src">gCaptain <span class="lg">en</span></span>
-      <span class="src">Al Jazeera <span class="lg">en</span></span>
-      <span class="src">الجزيرة <span class="lg">ar</span></span>
-      <span class="src">PEGELONLINE</span>
+  </div>
+
+  <!-- The marks, defined once and referenced by every copy of the row. They
+       are drawn here rather than fetched: each one is a plain pictogram of
+       what the source is - a broadcast tower, an anchor, a river gauge -
+       not a reproduction of anyone's trademark. -->
+  <svg class="sprite" aria-hidden="true" focusable="false"><defs>
+
+    <!-- GDELT: the global news backbone -->
+    <symbol id="mk-globe" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.6"/>
+      <path d="M12 3.4c2.9 2.4 2.9 14.8 0 17.2M12 3.4c-2.9 2.4-2.9 14.8 0 17.2
+               M3.9 8.7h16.2M3.9 15.3h16.2"/>
+    </symbol>
+
+    <!-- NDR Hamburg: a regional broadcaster -->
+    <symbol id="mk-tower" viewBox="0 0 24 24">
+      <circle cx="12" cy="6.6" r="1.3" fill="currentColor" stroke="none"/>
+      <path d="M9.2 20.8 12 8.4l2.8 12.4"/>
+      <path d="M10.5 14.4h3M9.9 17.7h4.2"/>
+      <path d="M8.8 3.8a3.2 3.2 0 0 0 0 5.6"/>
+      <path d="M15.2 3.8a3.2 3.2 0 0 1 0 5.6"/>
+    </symbol>
+
+    <!-- tagesschau: the evening bulletin, on the hour -->
+    <symbol id="mk-clock" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.6"/>
+      <path d="M12 6.9V12l3.6 2.1"/>
+    </symbol>
+
+    <!-- DW: a broadcast carried outward -->
+    <symbol id="mk-wave" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.6"/>
+      <path d="M6.4 12.6q1.85-3.7 3.7 0t3.7 0 3.7 0"/>
+    </symbol>
+
+    <!-- NOS: a signal going out -->
+    <symbol id="mk-signal" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="1.9" fill="currentColor" stroke="none"/>
+      <path d="M7.6 7.6a6.2 6.2 0 0 0 0 8.8M16.4 7.6a6.2 6.2 0 0 1 0 8.8"/>
+      <path d="M4.4 4.4a10.7 10.7 0 0 0 0 15.2M19.6 4.4a10.7 10.7 0 0 1 0 15.2"/>
+    </symbol>
+
+    <!-- Le Monde: a newspaper of record -->
+    <symbol id="mk-paper" viewBox="0 0 24 24">
+      <rect x="3.6" y="5.6" width="16.8" height="12.8" rx="1.8"/>
+      <path d="M6.9 9.4h7.4M6.9 12.6h10.2M6.9 15.4h10.2"/>
+    </symbol>
+
+    <!-- France Info: the hexagon -->
+    <symbol id="mk-hex" viewBox="0 0 24 24">
+      <path d="M12 3.4 19.4 7.7v8.6L12 20.6 4.6 16.3V7.7Z"/>
+      <circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/>
+    </symbol>
+
+    <!-- RTVE: public television -->
+    <symbol id="mk-tv" viewBox="0 0 24 24">
+      <rect x="3.4" y="8.6" width="17.2" height="11.4" rx="2"/>
+      <path d="M8.2 4.2 12 8.6l3.8-4.4"/>
+    </symbol>
+
+    <!-- Al Jazeera: al-jazeera, the island -->
+    <symbol id="mk-drop" viewBox="0 0 24 24">
+      <path d="M12 3.2c3.5 3.7 6.2 6.9 6.2 9.8a6.2 6.2 0 0 1-12.4 0c0-2.9 2.7-6.1 6.2-9.8Z"/>
+    </symbol>
+
+    <!-- gCaptain: the maritime trade press -->
+    <symbol id="mk-anchor" viewBox="0 0 24 24">
+      <circle cx="12" cy="4.9" r="2.4"/>
+      <path d="M12 7.3v13.4"/>
+      <path d="M8.6 10.6h6.8"/>
+      <path d="M5.8 12.6H3.6a8.4 8.4 0 0 0 16.8 0h-2.2"/>
+    </symbol>
+
+    <!-- PEGELONLINE: a river gauge standing in the water -->
+    <symbol id="mk-gauge" viewBox="0 0 24 24">
+      <rect x="8.2" y="2.6" width="3.8" height="14.6" rx=".9"/>
+      <path d="M8.2 5.9h1.9M8.2 8.7h1.9M8.2 11.5h1.9M8.2 14.3h1.9"/>
+      <path d="M2.6 17.7q2.2-2 4.4 0t4.4 0 4.4 0 4.4 0"/>
+      <path d="M5.4 20.5q2.2-1.8 4.4 0t4.4 0t4.4 0"/>
+    </symbol>
+
+  </defs></svg>
+
+  <div class="strip-view">
+    <div class="strip-track">
+      <div class="strip-row">
+        <span class="src"><svg class="mk"><use href="#mk-globe"/></svg>GDELT DOC 2.0</span>
+        <span class="src"><svg class="mk"><use href="#mk-tower"/></svg>NDR Hamburg <span class="lg">de</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-clock"/></svg>tagesschau <span class="lg">de</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-wave"/></svg>DW <span class="lg">de</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-signal"/></svg>NOS Nieuws <span class="lg">nl</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-paper"/></svg>Le Monde <span class="lg">fr</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-hex"/></svg>France Info <span class="lg">fr</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-tv"/></svg>RTVE <span class="lg">es</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-drop"/></svg>الجزيرة <span class="lg">ar</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-drop"/></svg>Al Jazeera <span class="lg">en</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-anchor"/></svg>gCaptain <span class="lg">en</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-gauge"/></svg>PEGELONLINE</span>
+      </div>
     </div>
   </div>
 </section>
@@ -787,6 +1054,184 @@ h1,h2,h3,h4,p{margin:0}
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================== WORKED EXAMPLE ======================== -->
+<section class="section case" id="case">
+  <div class="wrap">
+    <div class="head rv" style="max-width:none">
+      <span class="eyebrow">Worked example</span>
+      <h2 class="d2" style="margin-top:14px">Rotterdam &rarr; Basel &middot; called nine days early.</h2>
+      <p class="copy18" style="margin-top:16px;max-width:74ch">August 2026 &middot; Rhine low
+        water &middot; the inland leg was re-moded to rail nine days before operators stopped
+        quoting Basel barge bookings at all.</p>
+      <p class="cs-note">
+        <span class="chip synth">Synthetic scenario</span>
+        &nbsp;Authored, not a live reading. The corridor, the gauges and the two routes are the
+        real ones Lanewatch watches &mdash; <code>R-RTM-RHINE</code> against
+        <code>R-RTM-RAIL</code>, with Kaub, Duisburg-Ruhrort and Emmerich read from
+        PEGELONLINE, and the 78&nbsp;cm loading threshold is the one in
+        <code>config.py</code>. The readings, the vessel counts and the dates below are
+        written to show the shape of the call. Nothing here is a product metric, and no
+        outcome is being claimed.
+      </p>
+    </div>
+
+    <div class="cs-facts rv">
+      <div class="f">
+        <p class="k">Kaub gauge</p>
+        <p class="v">44<u>cm</u></p>
+        <p class="s">Loading threshold is 78 cm</p>
+      </div>
+      <div class="f">
+        <p class="k">Vessels held</p>
+        <p class="v">140</p>
+        <p class="s">Duisburg-Ruhrort up to Mainz</p>
+      </div>
+      <div class="f">
+        <p class="k">Barge payload</p>
+        <p class="v">25<u>%</u></p>
+        <p class="s">Of nominal, where barges still run</p>
+      </div>
+      <div class="f">
+        <p class="k">Called</p>
+        <p class="v">9<u>days early</u></p>
+        <p class="s">Before bookings were suspended</p>
+      </div>
+    </div>
+
+    <div class="grid g3 cs-grid">
+
+      <!-- 01 -->
+      <div class="cs rv">
+        <h3>01 &middot; Route comparison</h3>
+        <svg class="corridor" viewBox="0 0 300 392" role="img"
+             aria-label="The Rhine corridor from Rotterdam up to Basel. Rotterdam to Duisburg-Ruhrort is navigable; the reaches from Duisburg past Kaub up to Basel are payload-limited at 44 centimetres against a 78 centimetre loading threshold. A rail and road alternate runs Rotterdam to Basel for one extra day.">
+          <!-- the alternate first, so the river draws over it -->
+          <path class="leg-alt" d="M110 32C46 44 30 116 30 196S46 344 110 358"/>
+          <text class="bl" x="20" y="196" text-anchor="middle"
+                transform="rotate(-90 20 196)">RAIL + ROAD &#183; +1 d</text>
+
+          <!-- the river: navigable to Duisburg, payload-limited above it -->
+          <path class="leg-ok"  d="M110 32V198"/>
+          <path class="leg-sus" d="M110 198V358"/>
+
+          <circle class="node"  cx="110" cy="32"  r="4.5"/>
+          <circle class="gauge" cx="110" cy="116" r="3.5"/>
+          <circle class="gauge" cx="110" cy="198" r="3.5"/>
+          <circle class="gauge bind" cx="110" cy="286" r="4"/>
+          <circle class="node"  cx="110" cy="358" r="4.5"/>
+
+          <text class="on" x="128" y="36">ROTTERDAM</text>
+
+          <text x="128" y="113">EMMERICH</text>
+          <text x="128" y="126">51 cm</text>
+
+          <text x="128" y="195">DUISBURG-RUHRORT</text>
+          <text x="128" y="208">196 cm</text>
+
+          <text class="rd" x="128" y="283">KAUB</text>
+          <text class="rd" x="128" y="296">44 cm</text>
+          <text x="128" y="309">threshold 78</text>
+
+          <text class="on" x="128" y="362">BASEL</text>
+        </svg>
+
+        <div class="legend">
+          <span><i class="sus"></i>Rhine barge &middot; payload-limited</span>
+          <span><i></i>Rail + road &middot; the re-mode</span>
+        </div>
+
+        <p class="cs-cap">The sea leg is not the problem. Rotterdam discharges on schedule
+          &mdash; the constraint is the run upcountry, and it binds at Kaub, where the river
+          is shallowest.</p>
+
+        <div class="nums">
+          <div><p class="k">Baseline</p><p class="v">38 d</p></div>
+          <div><p class="k">Re-moded</p><p class="v">39 d</p></div>
+          <div><p class="k">Penalty</p><p class="v">+1 d</p></div>
+        </div>
+      </div>
+
+      <!-- 02 -->
+      <div class="cs rv">
+        <h3>02 &middot; Escalation &middot; 15 days</h3>
+        <ul class="cs-tl">
+          <li>
+            <p class="d">Aug 06</p>
+            <p class="t">A regional outlet upstream carries a third dry week in the
+              catchments. The Kaub gauge is already falling through its loading band.</p>
+          </li>
+          <li>
+            <p class="d">Aug 09</p>
+            <p class="t">Kaub 96 cm. Operators cut loaded draught and the first part-load
+              notices reach shippers.</p>
+          </li>
+          <li class="call">
+            <p class="d">Aug 12</p>
+            <p class="t"><b>Lanewatch re-modes SHP-006 from Rhine barge to rail</b> and takes
+              the slot while capacity is still quotable.</p>
+          </li>
+          <li>
+            <p class="d">Aug 14</p>
+            <p class="t">Kaub 78 cm &mdash; the loading threshold. Large-tonnage barges sail
+              at roughly a third of nominal.</p>
+          </li>
+          <li>
+            <p class="d">Aug 17</p>
+            <p class="t">Kaub 61 cm. <b>34 vessels</b> waiting on draught at
+              Duisburg-Ruhrort.</p>
+          </li>
+          <li>
+            <p class="d">Aug 19</p>
+            <p class="t">Kaub 52 cm. <b>118 vessels</b> held between Duisburg and Mainz. Spot
+              barge rates triple.</p>
+          </li>
+          <li class="now">
+            <p class="d">Aug 21</p>
+            <p class="t">Kaub 44 cm. <b>140 vessels</b> held and operators stop quoting Basel
+              bookings outright.</p>
+          </li>
+        </ul>
+        <p class="cs-foot">The Aug 06 item was carried by a regional outlet and corroborated
+          by the Kaub gauge 36 hours before the international wires ran it.</p>
+      </div>
+
+      <!-- 03 -->
+      <div class="cs rv">
+        <h3>03 &middot; Verdict</h3>
+        <div class="cs-odds">
+          <div class="o"><p class="p">20%</p><p class="l">Rain returns inside 10 days</p></div>
+          <div class="o lead"><p class="p">55%</p><p class="l">Low water sustained</p></div>
+          <div class="o"><p class="p">25%</p><p class="l">Falls past the critical band</p></div>
+        </div>
+
+        <div class="cs-call">
+          <p class="h">Re-mode &middot; R-RTM-RAIL</p>
+          <p class="e">Revised ETA <code>Sep 18</code> &middot; original <code>Sep 17</code>
+            &middot; required by <code>Sep 20</code></p>
+          <p class="b">Rail and road out of Rotterdam book ten to fourteen days ahead, so the
+            slot has to be taken before the queue forms rather than after it. Cost index rises
+            100 &rarr; 114. The sea leg and the discharge port are untouched &mdash; only the
+            inland leg moves, which is why this is a re-mode and not a reroute.</p>
+        </div>
+
+        <p class="cs-sub">What the advisor weighed</p>
+        <ul class="trail">
+          <li>Three days of slack against a one-day penalty &mdash; <b>it fits</b>.</li>
+          <li>The active risk sits on the barge leg. The sea leg and Rotterdam are clean,
+            so a discharge-port change buys nothing.</li>
+          <li><code>R-COGH-BSL</code> was on the table and <b>refused</b> &mdash; 49 days,
+            far outside the slack.</li>
+        </ul>
+
+        <p class="cs-foot">Three days of slack absorb the extra day. SHP-006 is the only
+          Rhine-barge leg on the board, so the other six shipments stay on plan &mdash; the
+          system does not cry wolf across the whole book.</p>
+      </div>
+
     </div>
   </div>
 </section>
@@ -1168,6 +1613,23 @@ firm revised ETA as soon as terminals restart.</p>
   </div>
 </section>
 
+<!-- ======================== SIGNUP (PLACEHOLDER) ======================== -->
+<section class="signup" id="subscribe">
+  <div class="wrap rv">
+    <h2 class="d2">The next one is already forming somewhere.</h2>
+    <p class="copy18">Worked examples like the Rhine piece above, when a lane does something
+      worth writing up.</p>
+    <div class="row2">
+      <input type="email" placeholder="you@company.com" aria-label="Email address"
+             autocomplete="email" spellcheck="false">
+      <button class="btn btn-primary btn-lg" type="button" data-sub>Subscribe</button>
+    </div>
+    <p class="note">Placeholder. This field is not wired to anything &mdash; there is no form
+      element here and no transport anywhere in the app.</p>
+    <p class="walk">Prefer a walkthrough? <a href="/app">Open the demo instead &rarr;</a></p>
+  </div>
+</section>
+
 <!-- ======================== FOOTER ======================== -->
 <footer class="foot">
   <div class="wrap">
@@ -1208,6 +1670,19 @@ firm revised ETA as soon as terminals restart.</p>
           <li><a href="/api/initial">Initial board</a></li>
         </ul>
       </div>
+      <div>
+        <h4>Contact</h4>
+        <!-- Placeholders. The address uses the reserved .example TLD so it
+             cannot be mistaken for a real inbox, and the two social entries
+             are plain text rather than dead links. -->
+        <ul class="placeholder">
+          <li><span>contact@lanewatch.example</span></li>
+          <li><span>LinkedIn</span></li>
+          <li><span>X</span></li>
+          <li><a href="#subscribe">Subscribe</a></li>
+        </ul>
+        <p class="ph-note">Placeholders &mdash; nothing to write to yet.</p>
+      </div>
     </div>
     <div class="bar">
       <span>Prototype. Drafts emails; sends nothing.</span>
@@ -1232,6 +1707,44 @@ firm revised ETA as soon as terminals restart.</p>
     });
   }, { rootMargin: "0px 0px -8% 0px", threshold: 0.05 });
   items.forEach(function (el) { io.observe(el); });
+})();
+
+/* The source band. One row is written in the HTML; two hidden copies are
+   cloned beside it here, so the list is only ever edited in one place. Three
+   copies is what makes the loop seamless: the track slides left by exactly
+   one copy's width, and at that point copy 2 is standing where copy 1 was.
+   Three rather than two so the band still fills a very wide screen at the
+   moment it restarts.
+
+   The animation is only switched on once the copies exist - if this script
+   never runs, the strip stays a plain static list rather than a short band
+   sliding off into empty space. */
+(function () {
+  var track = document.querySelector(".strip .strip-track");
+  var row = track && track.querySelector(".strip-row");
+  if (!row) return;
+  for (var i = 0; i < 2; i++) {
+    var copy = row.cloneNode(true);
+    copy.classList.add("dup");
+    copy.setAttribute("aria-hidden", "true");
+    track.appendChild(copy);
+  }
+  track.classList.add("go");
+})();
+
+/* The subscribe button is the same gesture again: it rewrites the note under
+   the field and does nothing else. There is no form element to submit and no
+   transport in the app for it to reach, which is the point being made. */
+(function () {
+  var btn = document.querySelector("[data-sub]");
+  var note = document.querySelector(".signup .note");
+  if (!btn || !note) return;
+  btn.addEventListener("click", function () {
+    note.textContent =
+      "Nothing was sent. There is no form element on this page and no transport " +
+      "anywhere in the app - the same reason the Comms Agent drafts but cannot send.";
+    note.style.color = "var(--muted)";
+  });
 })();
 
 /* The approve buttons are the same gesture as the real board: a state change
