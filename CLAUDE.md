@@ -301,6 +301,51 @@ threshold when it is only a grid, so that one detail is deliberately not copied.
 Direct labels are selective — only the shipment whose delay exceeds its slack — because
 a number on every bar goes unread.
 
+### The corridor map is real geography, generated not drawn
+
+The Rhine piece on the landing page and the plate in the whitepaper are the
+same map: national outlines from Natural Earth 50m, the river's course from the
+10m centrelines, projected once by `tools/build_rhine_map.py` and pasted in as
+inline SVG. **Nothing is fetched at page load** — no tile, no key, no map
+service — for the same reason the fonts are self-hosted, and both pages are
+asserted to make zero off-origin requests.
+
+It replaced a straight vertical line with the gauges hung off it. The line
+carried the numbers but not the geography, and the geography is the argument:
+Kaub binds because the river bends west through a gorge and shallows there,
+which a straight line cannot show.
+
+`tools/` is build-time only. Nothing in `src/` imports it and it never runs at
+request time; it exists because 12 KB of inlined path data with no generator
+cannot be adjusted by anyone later. Running it reproduces what is in the page
+byte-for-byte, and a change that breaks that has broken the map.
+
+Four things in it are decisions, not mechanics, and each is commented where it
+happens:
+
+- **Natural Earth names the Rhine in three pieces**, one of them `Rhin` in
+  French for the Upper Rhine. Matching only `Rhine` and `Rhein` silently drops
+  Karlsruhe to Basel — the whole southern half of the corridor.
+- **The corridor ends at Basel; the river does not.** Untruncated, the traced
+  route carries on east up the High Rhine, which nothing here sails.
+- **The alternate is offset along the local normal, never in x.** An x-only
+  shift does nothing where the corridor runs east-west, which is exactly the
+  Rotterdam–Emmerich stretch — the two routes sat on top of each other there.
+  The offset tapers to zero at the two ports both routes genuinely share.
+- **The projection carries a cos(latitude) correction** that `geo.py`'s world
+  map does without. At corridor scale, plain equirectangular stretches
+  everything east-west and the Netherlands comes out visibly too wide.
+
+**Only two inland routes are drawn, because only two exist.** SHP-006's third
+route reaches Basel over the same overland leg and differs only at sea, so the
+caption says so rather than inventing a third line for it.
+
+The whitepaper's copy is built with `--plain`, which drops the gauge readings.
+Those are the authored scenario's numbers, and on the landing page they sit
+beside a `Synthetic scenario` label. Carried into a technical paper away from
+that label, they would start being read as live measurements. **Never move an
+authored reading somewhere its label does not follow.**
+
 ### The workflow layer — inbound comms, RFQs and the TMS link
 
 The Comms Agent covers *outbound*. Three scripted Workers cover the rest of the
@@ -404,7 +449,10 @@ transport anywhere in `src/` for it to trigger, and a test asserts that.
 ├── static/
 │   ├── landing.html          # the front page (HTML+CSS+JS in one file)
 │   ├── index.html            # the dashboard (HTML+CSS+JS in one file)
+│   ├── whitepaper.html       # the technical paper (HTML+CSS+JS in one file)
 │   └── fonts/                # Geist Sans + Mono, self-hosted - never a CDN
+├── tools/                    # build-time only. Nothing here is imported by src/
+│   └── build_rhine_map.py    # regenerates the corridor map; run by hand, never at runtime
 └── risk_state.json           # written at runtime (gitignored)
 ```
 
