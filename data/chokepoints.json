@@ -112,6 +112,40 @@
         "Duisburg",
         "Emmerich"
       ]
+    },
+    {
+      "id": "FOS",
+      "name": "Port of Fos-sur-Mer / Marseille",
+      "short_name": "Fos-sur-Mer",
+      "type": "seaport",
+      "country": "FR",
+      "keywords": [
+        "Fos-sur-Mer",
+        "Fos sur Mer",
+        "Marseille",
+        "Port de Marseille",
+        "Marseille-Fos",
+        "ميناء مرسيليا"
+      ]
+    },
+    {
+      "id": "FRINL",
+      "name": "French inland corridor (Rhone-Saone)",
+      "short_name": "the Rhone corridor",
+      "type": "inland corridor",
+      "country": "FR",
+      "keywords": [
+        "Rhone",
+        "Rhône",
+        "Saone",
+        "Saône",
+        "Lyon",
+        "A7 corridor",
+        "Fret SNCF",
+        "incendie",
+        "wildfire",
+        "feu de forêt"
+      ]
     }
   ]
 }

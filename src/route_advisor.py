@@ -371,8 +371,17 @@ def decide_with_rules(assessment: dict) -> dict:
                      f"shipment carries {_days(slack)} of slack, so the deadline still holds. "
                      f"Hold course and keep watching.")
     else:
-        viable = [c for c in assessment["candidates"][1:]
-                  if c["projected_delay_days"][1] <= slack]
+        # Staying put breaks the deadline. Two things can justify a reroute: an
+        # alternate that lands inside the slack, or one that lands materially
+        # sooner than staying even though it misses too. The second case is the
+        # one that matters under a closed chokepoint, where every option is late
+        # and the job is to pick the least-late - arriving eleven days behind
+        # beats arriving fourteen.
+        MATERIAL_GAIN_DAYS = 2
+        alternates = assessment["candidates"][1:]
+        viable = [c for c in alternates
+                  if c["projected_delay_days"][1] <= slack
+                  or c["projected_delay_days"][1] <= staying_worst - MATERIAL_GAIN_DAYS]
         viable.sort(key=lambda c: (c["projected_delay_days"][1], c["added_cost_index"]))
         for candidate in assessment["candidates"][1:]:
             if candidate not in viable[:1]:
@@ -390,11 +399,24 @@ def decide_with_rules(assessment: dict) -> dict:
             best = viable[0]
             decision, route, notify = "reroute", best["route_id"], True
             headline = (f"Reroute via {best['discharge_port']} - "
-                        f"{best['added_transit_days']:+d}d, inside {slack}d slack")
-            reasoning = (f"Staying on {current['route_id']} projects up to {_days(staying_worst)} "
-                         f"of delay against {_days(slack)} of slack, which breaks the deadline. "
-                         f"{best['route_id']} adds {_days(best['added_transit_days'])} of transit "
-                         f"and carries no active risk, so it lands inside the slack.")
+                        f"{best['added_transit_days']:+d}d, inside {slack}d slack"
+                        if best["projected_delay_days"][1] <= slack else
+                        f"Reroute via {best['discharge_port']} - least-late option "
+                        f"({best['projected_delay_days'][1]}d vs {staying_worst}d)")
+            fits = best["projected_delay_days"][1] <= slack
+            if fits:
+                reasoning = (f"Staying on {current['route_id']} projects up to "
+                             f"{_days(staying_worst)} of delay against {_days(slack)} of slack, "
+                             f"which breaks the deadline. {best['route_id']} adds "
+                             f"{_days(best['added_transit_days'])} of transit and carries no "
+                             f"active risk, so it lands inside the slack.")
+            else:
+                # Everything is late. Say so plainly rather than implying a save.
+                reasoning = (f"Every option is late. Staying on {current['route_id']} projects up "
+                             f"to {_days(staying_worst)} of delay; {best['route_id']} projects "
+                             f"{_days(best['projected_delay_days'][1])} and avoids the disruption "
+                             f"outright. It still misses the {slack}-day window, but it is the "
+                             f"least-late option and the arrival is far more certain.")
             rejected.append({"route_id": current["route_id"],
                              "why_not": f"projects up to {staying_worst}d of delay "
                                         f"against {slack}d of slack"})

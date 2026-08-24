@@ -34,6 +34,7 @@ CHOKEPOINTS_FILE = DATA_DIR / "chokepoints.json"
 ROUTES_FILE = DATA_DIR / "routes.json"
 SHIPMENTS_FILE = DATA_DIR / "shipments.json"
 INJECTED_EVENTS_FILE = DATA_DIR / "injected_events.json"
+SCENARIOS_FILE = DATA_DIR / "scenarios.json"
 
 # risk_state.json is the one file written at runtime. On a serverless host the
 # app directory is read-only and only the temp directory can be written, so the

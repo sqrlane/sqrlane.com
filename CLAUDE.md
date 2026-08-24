@@ -118,7 +118,28 @@ the real pipeline.
 
 ### The product layer
 
-The same three components are surfaced as named **Workers** — Risk, Routing, Comms —
+**Seven Workers, three of them real.** Risk, Routing and Comms genuinely run and are
+tagged `LIVE`. Rate, Track & Trace, Docs and Assistant replay authored data from
+`src/roster.py` and are tagged `SCRIPTED`. **The tag is the honesty** — never present a
+scripted Worker as reasoning live. They are still *reactive*: each panel is built from
+the active scenario and the selected shipment, so switching either visibly changes it.
+What is authored is the content, not the shape.
+
+**Four scenarios over one shared shipment pool** (`data/scenarios.json`). The pool never
+changes; the active risk event does. That is the point — the same board reacting
+differently is what shows the system generalises rather than performing one trick. Each
+scenario is chosen to force a *different* decision type:
+
+| Scenario | Kind | Decision type | Outcome |
+|---|---|---|---|
+| `hamburg` | Port blocked | Discharge-port reroute vs hold | 2 reroute · 1 hold · 4 on plan |
+| `redsea` | Chokepoint closed | Forced long-haul reroute under pressure | 6 reroute · 1 hold — whole board |
+| `rhine` | Inland waterway | **Mode switch**, barge → rail/road | SHP-006 only |
+| `france` | Regional inland | Land-leg reroute | SHP-007 only — **off by default** |
+
+If two scenarios ever produce the same pattern, one is redundant.
+
+The same three components are also surfaced as named **Workers** — Risk, Routing, Comms —
 each reporting, on every run, what it actually handled: sources read, shipments triaged,
 drafts written, and how many came from the model rather than the fallback. Every number
 is counted from that run; nothing is illustrative.
@@ -161,6 +182,7 @@ transport anywhere in `src/` for it to trigger, and a test asserts that.
 │   ├── risk_monitor.py       # component 1
 │   ├── route_advisor.py      # component 2
 │   ├── comms_agent.py        # component 3
+│   ├── roster.py             # the four SCRIPTED Workers - authored, never live
 │   ├── orchestrator.py       # component 4 (the loop)
 │   └── app.py                # FastAPI: serves the page + /run
 ├── static/
@@ -345,7 +367,8 @@ network call beyond its own API — so flaky wifi cannot blank it.
 Each component still runs alone, which is how you debug one without the others:
 
 ```bash
-python -m src.risk_monitor --inject
+python -m src.risk_monitor --list-scenarios
+python -m src.risk_monitor --scenario redsea
 python -m src.route_advisor --inject --shipment SHP-002
 python -m src.comms_agent  --inject
 python -m src.orchestrator --no-live      # the whole loop, no network

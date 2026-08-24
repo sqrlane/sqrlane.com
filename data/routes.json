@@ -8,7 +8,11 @@
       "inland_leg": "rail/road ex-Hamburg",
       "transit_days": 32,
       "cost_index": 100,
-      "chokepoints": ["SUEZ", "REDSEA", "HAM"]
+      "chokepoints": [
+        "SUEZ",
+        "REDSEA",
+        "HAM"
+      ]
     },
     {
       "route_id": "R-RTM-ALT",
@@ -17,7 +21,11 @@
       "inland_leg": "road ex-Rotterdam",
       "transit_days": 34,
       "cost_index": 108,
-      "chokepoints": ["SUEZ", "REDSEA", "RTM"]
+      "chokepoints": [
+        "SUEZ",
+        "REDSEA",
+        "RTM"
+      ]
     },
     {
       "route_id": "R-RTM-STD",
@@ -26,7 +34,11 @@
       "inland_leg": "road ex-Rotterdam",
       "transit_days": 33,
       "cost_index": 100,
-      "chokepoints": ["SUEZ", "REDSEA", "RTM"]
+      "chokepoints": [
+        "SUEZ",
+        "REDSEA",
+        "RTM"
+      ]
     },
     {
       "route_id": "R-ANR-STD",
@@ -35,7 +47,11 @@
       "inland_leg": "road ex-Antwerp",
       "transit_days": 33,
       "cost_index": 100,
-      "chokepoints": ["SUEZ", "REDSEA", "ANR"]
+      "chokepoints": [
+        "SUEZ",
+        "REDSEA",
+        "ANR"
+      ]
     },
     {
       "route_id": "R-COGH-ALT",
@@ -44,7 +60,113 @@
       "inland_leg": "rail/road ex-Hamburg",
       "transit_days": 42,
       "cost_index": 130,
-      "chokepoints": ["COGH", "HAM"]
+      "chokepoints": [
+        "COGH",
+        "HAM"
+      ]
+    },
+    {
+      "route_id": "R-RTM-RHINE",
+      "description": "Asia -> Suez -> Rotterdam -> Rhine barge -> Basel",
+      "discharge_port": "RTM",
+      "inland_leg": "Rhine barge to Basel",
+      "transit_days": 38,
+      "cost_index": 100,
+      "chokepoints": [
+        "SUEZ",
+        "REDSEA",
+        "RTM",
+        "RHINE"
+      ]
+    },
+    {
+      "route_id": "R-RTM-RAIL",
+      "description": "Asia -> Suez -> Rotterdam -> rail/road -> Basel",
+      "discharge_port": "RTM",
+      "inland_leg": "rail and road to Basel",
+      "transit_days": 39,
+      "cost_index": 114,
+      "chokepoints": [
+        "SUEZ",
+        "REDSEA",
+        "RTM"
+      ]
+    },
+    {
+      "route_id": "R-FOS-STD",
+      "description": "Asia -> Suez -> Fos-sur-Mer -> Rhone corridor -> Lyon",
+      "discharge_port": "FOS",
+      "inland_leg": "road/rail up the Rhone to Lyon",
+      "transit_days": 31,
+      "cost_index": 100,
+      "chokepoints": [
+        "SUEZ",
+        "REDSEA",
+        "FOS",
+        "FRINL"
+      ]
+    },
+    {
+      "route_id": "R-ANR-LYON",
+      "description": "Asia -> Suez -> Antwerp -> road -> Lyon",
+      "discharge_port": "ANR",
+      "inland_leg": "long road haul to Lyon",
+      "transit_days": 34,
+      "cost_index": 118,
+      "chokepoints": [
+        "SUEZ",
+        "REDSEA",
+        "ANR"
+      ]
+    },
+    {
+      "route_id": "R-COGH-RTM",
+      "description": "Asia -> Cape of Good Hope -> Rotterdam",
+      "discharge_port": "RTM",
+      "inland_leg": "road ex-Rotterdam",
+      "transit_days": 43,
+      "cost_index": 128,
+      "chokepoints": [
+        "COGH",
+        "RTM"
+      ]
+    },
+    {
+      "route_id": "R-COGH-ANR",
+      "description": "Asia -> Cape of Good Hope -> Antwerp",
+      "discharge_port": "ANR",
+      "inland_leg": "road ex-Antwerp",
+      "transit_days": 43,
+      "cost_index": 128,
+      "chokepoints": [
+        "COGH",
+        "ANR"
+      ]
+    },
+    {
+      "route_id": "R-COGH-BSL",
+      "description": "Asia -> Cape of Good Hope -> Rotterdam -> rail/road -> Basel",
+      "discharge_port": "RTM",
+      "inland_leg": "rail and road to Basel",
+      "transit_days": 49,
+      "cost_index": 134,
+      "chokepoints": [
+        "COGH",
+        "RTM"
+      ]
+    },
+    {
+      "route_id": "R-COGH-FOS",
+      "description": "Asia -> Cape of Good Hope -> Gibraltar -> Fos-sur-Mer",
+      "discharge_port": "FOS",
+      "inland_leg": "road/rail up the Rhone to Lyon",
+      "transit_days": 45,
+      "cost_index": 132,
+      "chokepoints": [
+        "COGH",
+        "FOS",
+        "FRINL"
+      ]
     }
   ]
 }

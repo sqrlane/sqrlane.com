@@ -10,11 +10,32 @@ emails a person would otherwise have to write.
 Risk → decision → communication, as one closed loop, with the reasoning recorded and
 every message held for human approval.
 
-| Worker | Does |
-|---|---|
-| **Risk Worker** | Reads global news in several languages and tags what threatens a lane |
-| **Routing Worker** | Weighs schedule slack against added transit and expected delay, then decides |
-| **Comms Worker** | Drafts the carrier and customer emails. Sends nothing |
+| Worker | Does | |
+|---|---|---|
+| **Risk Worker** | Reads global news in several languages and tags what threatens a lane | `LIVE` |
+| **Routing Worker** | Weighs schedule slack against added transit and expected delay, then decides | `LIVE` |
+| **Comms Worker** | Drafts the carrier and customer emails. Sends nothing | `LIVE` |
+| **Rate Worker** | Quote and rate lookups across the carriers on a lane | `SCRIPTED` |
+| **Track & Trace** | Milestones and position for a booking | `SCRIPTED` |
+| **Docs Worker** | Field extraction from bills of lading | `SCRIPTED` |
+| **Assistant** | Answers questions about what is on the board | `SCRIPTED` |
+
+The first three genuinely run. The last four replay authored data and say so on screen —
+they react to the scenario and the selected shipment, but they are not reasoning.
+**The tag is the honesty.**
+
+## Four disruptions, one shipment pool
+
+The seven shipments never change; the active risk event does. That is the point — the
+same board reacting differently is what shows the system generalises rather than
+performing one trick.
+
+| Scenario | What breaks | The decision it forces |
+|---|---|---|
+| **Hamburg strike** | A port | Reroute the ones with slack, hold the tight cold-chain one |
+| **Red Sea closure** | A chokepoint | The whole board weighs the Cape against waiting |
+| **Rhine low water** | An inland waterway | A **mode switch** — barge to rail — not a port change |
+| **France wildfire** | A land corridor | Ready and switchable-on; off by default |
 
 ![The dashboard after a run](docs/dashboard.png)
 
