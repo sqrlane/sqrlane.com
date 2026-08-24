@@ -123,14 +123,16 @@ def run_cycle(*, live=True, inject=True, use_llm=True, verbose=False,
                             scenario=scenario)
     read = [s for s in risk["sources"] if s["status"] == "ok"]
     live_events = [e for e in risk["events"] if e.get("origin") == "live"]
-    languages = sorted({e.get("source_language", "?") for e in risk["events"]})
-    # How many events a non-English source carried first. This is the whole
-    # earliness claim, counted from the run rather than asserted in the script.
-    led_by_non_english = 0
+    # How many events a regional source carried before the international wires.
+    # That lead is the earliness claim, and it is counted from the run rather
+    # than asserted in the script. It is reported as source proximity, never as
+    # a language: the edge is reading close to the event, and that holds
+    # wherever in the world the event happens.
+    led_by_regional = 0
     for event in risk["events"]:
         first = next((t for t in event.get("language_trail", []) if t.get("first")), None)
         if first and first["language"] != "en":
-            led_by_non_english += 1
+            led_by_regional += 1
 
     total_events = len(risk["events"])
     workers["risk"].update(
@@ -139,9 +141,8 @@ def run_cycle(*, live=True, inject=True, use_llm=True, verbose=False,
                  f"{total_events} event{'' if total_events == 1 else 's'}"),
         detail=[f"{len(live_events)} from live sources, "
                 f"{total_events - len(live_events)} scripted",
-                f"{len(languages)} language{'' if len(languages) == 1 else 's'} in the events: "
-                + (", ".join(languages) if languages else "none"),
-                f"non-English first on {led_by_non_english} of {total_events} events"])
+                f"drawn from {len(risk['sources'])} sources worldwide",
+                f"a regional source was first on {led_by_regional} of {total_events} events"])
 
     failed = [s for s in risk["sources"] if s["status"] == "failed"]
     attempted = [s for s in risk["sources"] if s["status"] != "skipped"]

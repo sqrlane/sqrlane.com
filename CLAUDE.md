@@ -28,12 +28,19 @@ they don't decide or act, and they're priced out of the mid-market.
 
 ### The two differentiators (the whole story — nothing else)
 
-1. **Earlier signal from non-English sources.** English-only tools miss a German `Warnstreik`
-   until it hits the wires. Reading regional/multilingual sources *first* is a real
-   informational edge — and it is one edge in **six languages** (de, ar, fr, nl, es, en), not
-   a German special case. Which language leads depends on where the disruption is: German for
-   the North Range ports and the Rhine, Arabic for the Red Sea and Suez, French for the Rhône
-   corridor. See [The language trail](#the-language-trail).
+1. **Earlier signal, because the sources are closer to the event.** A disruption is known
+   locally long before it is news globally: the union announces it, the regional broadcaster
+   carries it, and only then does an international wire pick it up. A monitor watching the
+   wires is structurally late because it is reading *downstream*. Lanewatch reads ~20 sources
+   across every corridor on the board, so somewhere one of them is publishing whatever the
+   hour is here.
+
+   **The website never names a language.** Multilingual reading is the *mechanism*, not the
+   pitch — the edge is source proximity, and it holds wherever in the world the event
+   happens. Naming a language makes a general capability look like one rehearsed trick, so
+   the UI says "regional" and "international wires" throughout. Real outlet names
+   (Al Jazeera Arabic, DW Deutsch) are fine: those identify a source, they do not claim an
+   edge. `verify_neutral.py` holds this. See [The detection trail](#the-detection-trail).
 2. **A closed risk → reroute → comms loop with recorded reasoning.** Risk incumbents stop at the
    alert; execution players don't touch risk. Welding them — and recording *why* each decision was
    made — is the whitespace.
@@ -278,17 +285,22 @@ has to happen on screen, on command.
 
 **After every phase:** commit with a clear message describing what was built, and push.
 
-### The language trail
+### The detection trail
 
-The multilingual claim is only worth making if it is **checkable**, so every event carries a
-`language_trail` — the ordered list of which language carried the story, from which source,
-how many minutes apart. The dashboard renders it, marks which entry was first and which was
-the English wire, and shows the original headline in its own script (Arabic renders
-`dir="rtl"`, or the headline is mangled).
+The earliness claim is only worth making if it is **checkable**, so every event carries a
+`language_trail` — the ordered list of which source carried the story and how many minutes
+apart. The dashboard renders it **by outlet**, marks which entry was first and which was the
+international wire, and shows the original headline in its own script (Arabic renders
+`dir="rtl"`, or the headline is mangled — a rendering fact, not a claim).
 
-The headline number — "seen in German 23h before the English wires" — is **derived from that
+The headline number — "seen 23h before the international wires" — is **derived from that
 trail** by `wire_lag_hours()`, never stored beside it, so the claim and the timeline it rests
-on cannot drift apart. It returns `None` when the English wires actually led, which is the
+on cannot drift apart.
+
+> **Naming note.** The data keys still say `language_trail` / `english_wire` because that is
+> factually what they mark — the benchmark really is the English-language wires. The UI never
+> uses those words. If you touch either side, keep them in step: the code may name the
+> mechanism, the screen may not. It returns `None` when the English wires actually led, which is the
 case for the Suez knock-on: no lead is claimed where none exists. **A claimed lead that is not
 real is the one thing this demo cannot afford** — it would turn the honest differentiator into
 the invented metric the whole project refuses to produce.
@@ -296,7 +308,7 @@ the invented metric the whole project refuses to produce.
 Each scenario deliberately leads in a different language, so the edge reads as general rather
 than as one rehearsed German trick:
 
-| Scenario | Trail | Lead over the English wires |
+| Scenario | Trail | Lead over the international wires |
 |---|---|---|
 | `hamburg` | DE\* → DE → NL → EN | 23h |
 | `redsea` | AR\* → AR → EN → FR | 11h |
@@ -305,7 +317,11 @@ than as one rehearsed German trick:
 | `france` | FR\* → FR → ES → EN | 18h |
 
 Live events carry the same two fields with a single-entry trail, so live and scripted events
-stay the same shape. **Schema parity between live and injected events has broken three times**
+stay the same shape.
+
+The dashboard's source line — "N of 20 sources read" — **excludes the scripted scenario**,
+which reports itself as a source so the CLI can show where each event came from. Counting it
+would inflate both halves of the exact number an audience uses to check the live-news claim. **Schema parity between live and injected events has broken three times**
 — each time by adding a field to injected events only. Add it to both.
 
 ### Surviving a live audience

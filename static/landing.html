@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lanewatch — trade-lane risk, decided</title>
-<meta name="description" content="Lanewatch reads global news in six languages, works out which shipments are exposed, decides reroute or hold, and drafts the emails. The reasoning is recorded for every call.">
+<meta name="description" content="Lanewatch reads news from sources worldwide, works out which shipments are exposed, decides reroute or hold, and drafts the emails. The reasoning is recorded for every call.">
 <meta name="color-scheme" content="light">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3.5' fill='%23171717'/%3E%3Cpath d='M3 11.2h10M3 8h6.5M3 4.8h3.5' stroke='%23fff' stroke-width='1.7' stroke-linecap='round'/%3E%3C/svg%3E">
 
@@ -490,13 +490,14 @@ h1,h2,h3,h4,p{margin:0}
 <!-- ======================== HERO ======================== -->
 <section class="hero">
   <div class="wrap">
-    <span class="pill"><span class="dot"></span>13 live sources, 3 languages, no API keys</span>
+    <span class="pill"><span class="dot"></span>20 live sources worldwide, no API keys</span>
 
     <h1 class="d1">Trade-lane risk, decided.</h1>
 
     <p class="sub copy18">
-      Risk platforms stop at the alert. Lanewatch reads the disruption — often first in
-      German or Arabic — works out which of your shipments are exposed, decides
+      Risk platforms stop at the alert. Lanewatch reads the disruption — usually from a
+      local source, before it reaches the international wires — works out which of your
+      shipments are exposed, decides
       <b style="color:var(--fg);font-weight:500">reroute</b> or
       <b style="color:var(--fg);font-weight:500">hold</b> for each one, and drafts the
       carrier and customer emails a human would otherwise write. Every call keeps its
@@ -682,7 +683,7 @@ h1,h2,h3,h4,p{margin:0}
             facts — which chokepoints the lane touches, added transit days, whether the
             schedule slack absorbs them, the revised ETA. The model weighs slack against
             added transit against expected disruption delay, makes the call, and explains
-            it in plain English.</p>
+            it in plain language.</p>
           <div class="facts">
             <span class="fact">Arithmetic and dates <b>never</b> go to the model</span>
             <span class="fact">A route it wasn't offered is <b>refused and downgraded to hold</b></span>
@@ -716,26 +717,30 @@ h1,h2,h3,h4,p{margin:0}
       <div class="txt rv">
         <span class="eyebrow">Differentiator one</span>
         <h2 class="d2" style="margin-top:14px">The wires are not first.</h2>
-        <p class="copy18">A <span class="mono" style="color:var(--fg);font-size:16px">Warnstreik</span>
-          at Hamburg is announced by ver.di, carried by NDR and tagesschau, and discussed
-          in German for the better part of a day before an English-language wire picks it
-          up. An English-only monitor is structurally late — not because it is bad, but
-          because it is reading the wrong feed.</p>
+        <p class="copy18">A disruption is known locally long before it is news globally. The
+          union announces the walkout; the regional broadcaster carries it; the port's own
+          community talks about it — and only then does an international wire pick it up,
+          often the better part of a day later. A monitor that watches the wires is
+          structurally late, not because it is bad, but because it is reading downstream.</p>
+        <p class="copy16" style="margin-top:16px">So Lanewatch reads the sources
+          themselves — local outlets, regional broadcasters, trade press, government
+          gauges — across every region its lanes pass through. Somewhere in the world one
+          of them is publishing right now, whatever the hour here.</p>
         <ul class="bullets">
           <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                    stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
               <path d="M4 12.5l5 5L20 6.5"/></svg>
-            <span>German feeds are read <b style="color:var(--fg);font-weight:500">first</b>, not translated after the fact</span></li>
+            <span>Local sources are read <b style="color:var(--fg);font-weight:500">directly</b>, not picked up second-hand from a wire</span></li>
           <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                    stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
               <path d="M4 12.5l5 5L20 6.5"/></svg>
-            <span>A GDELT query pinned to <span class="mono" style="font-size:13px">sourcelang:german</span>,
-            plus Arabic for the Red Sea corridor</span></li>
+            <span>Sources spanning the North Range, the Low Countries, the Red Sea and Gulf,
+            and the Western Mediterranean — every corridor on the board</span></li>
           <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                    stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
               <path d="M4 12.5l5 5L20 6.5"/></svg>
-            <span>The source language is shown on the event, so the claim is checkable rather
-            than asserted</span></li>
+            <span>Every event shows the outlets that carried it and how far ahead of the
+            wires they were, so the claim is checkable rather than asserted</span></li>
         </ul>
       </div>
 
@@ -749,12 +754,10 @@ h1,h2,h3,h4,p{margin:0}
           <div class="art-b">
             <div class="evt first">
               <div class="row1">
-                <span class="chip blue">de</span>
+                <span class="chip blue">regional</span>
                 <span class="chip">RSS · NDR Hamburg</span>
                 <span class="chip plain">detected first</span>
               </div>
-              <p class="de">Warnstreik im Hamburger Hafen — ver.di ruft zu ganztägigem
-                Ausstand auf</p>
               <p class="en">Warning strike at Port of Hamburg — union calls full-day walkout.
                 Terminal handling, gate operations and rail shunting stop for the duration;
                 vessel backlog clears over the following days.</p>
@@ -773,10 +776,10 @@ h1,h2,h3,h4,p{margin:0}
 
             <div class="evt late">
               <div class="row1">
-                <span class="chip">en</span>
-                <span class="chip">English wire</span>
+                <span class="chip">international</span>
+                <span class="chip">newswire</span>
               </div>
-              <p class="de">German port workers stage walkout amid pay talks</p>
+              <p class="de">Port workers stage walkout amid pay talks</p>
               <p class="src">By now the box has already discharged, or already been rerouted.</p>
             </div>
           </div>
@@ -963,15 +966,18 @@ firm revised ETA as soon as terminals restart.</p>
     <div class="tbl rv">
       <div class="tr th"><span>Source</span><span>Role</span><span>Key</span></div>
       <div class="tr">
-        <span class="nm">GDELT DOC 2.0 <span class="chip plain">4 queries</span></span>
-        <span class="ds">Global news backbone, refreshing about every 15 minutes. Filterable
-          by keyword, language and country — one query is pinned to German-language sources.</span>
+        <span class="nm">GDELT DOC 2.0 <span class="chip plain">7 queries</span></span>
+        <span class="ds">Global news backbone, refreshing about every 15 minutes. Queries are
+          pinned per corridor — North Range, Low Countries, Red Sea and Gulf, Western
+          Mediterranean — so each one watches the regional press for that lane.</span>
         <span class="kx chip">None</span>
       </div>
       <div class="tr">
-        <span class="nm">RSS <span class="chip plain">6 feeds</span></span>
-        <span class="ds">tagesschau, NDR Hamburg and DW in German; gCaptain and Al Jazeera in
-          English; Al Jazeera in Arabic. This is where the earliness edge actually lives.</span>
+        <span class="nm">RSS <span class="chip plain">10 feeds</span></span>
+        <span class="ds">Regional broadcasters and trade press close to the lanes — NDR Hamburg,
+          tagesschau, DW, NOS, RTVE, France Info, Le Monde, Al Jazeera and gCaptain. This is
+          where the earliness edge actually lives; the wire feeds are kept so the lead over
+          them is measurable rather than asserted.</span>
         <span class="kx chip">None</span>
       </div>
       <div class="tr">
@@ -1112,7 +1118,7 @@ firm revised ETA as soon as terminals restart.</p>
         <h4>Product</h4>
         <ul>
           <li><a href="#loop">How it works</a></li>
-          <li><a href="#edge">The multilingual edge</a></li>
+          <li><a href="#edge">The source edge</a></li>
           <li><a href="#reasoning">Recorded reasoning</a></li>
           <li><a href="#drafts">Drafts &amp; approval</a></li>
         </ul>

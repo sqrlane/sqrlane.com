@@ -135,19 +135,19 @@ GDELT_MAX_RECORDS = 20
 GDELT_PAUSE_SECONDS = _env_int("GDELT_PAUSE_MS", 400 if SERVERLESS else 1500) / 1000
 
 GDELT_QUERIES = [
-    {"label": "port disruption (English)", "language": "en",
+    {"label": "port disruption", "language": "en",
      "query": '("port strike" OR "port closure" OR "port congestion" OR "terminal closed")'},
-    {"label": "Hafen / Streik (German)", "language": "de",
+    {"label": "North Range ports - regional", "language": "de",
      "query": "(Hafenstreik OR Warnstreik OR Hafenarbeiter OR Niedrigwasser) sourcelang:german"},
-    {"label": "الموانئ / إضراب (Arabic)", "language": "ar",
+    {"label": "Red Sea / Gulf - regional", "language": "ar",
      "query": "(ميناء OR إضراب OR البحر الأحمر) sourcelang:arabic"},
-    {"label": "port / grève (French)", "language": "fr",
+    {"label": "Western Med / Rhone - regional", "language": "fr",
      "query": "(port OR grève OR blocage) sourcelang:french"},
-    {"label": "haven / staking (Dutch)", "language": "nl",
+    {"label": "Low Countries ports - regional", "language": "nl",
      "query": "(haven OR staking OR Rotterdam) sourcelang:dutch"},
     {"label": "Red Sea / Suez routing", "language": "en",
      "query": '("Red Sea" OR "Suez Canal") (attack OR closure OR diverted OR delay)'},
-    {"label": "North Range ports", "language": "en",
+    {"label": "North Range ports - wires", "language": "en",
      "query": "(Hamburg OR Rotterdam OR Antwerp) (strike OR congestion OR backlog)"},
 ]
 

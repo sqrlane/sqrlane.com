@@ -578,7 +578,12 @@ function workersCard(){
 }
 
 function riskCard(compact){
-  const ev = risk.events||[], srcs = risk.sources||[];
+  const ev = risk.events||[];
+  /* The scripted scenario reports itself as a source so the CLI can show where
+     each event came from. It must not pad this line: "N of M sources read" is
+     the live-news claim, and counting a scripted entry in it would inflate both
+     halves of exactly the number an audience uses to check that claim. */
+  const srcs = (risk.sources||[]).filter(s=>!/^scenario:/.test(s.name||""));
   const ok = srcs.filter(s=>s.status==="ok").length;
   const bad = srcs.filter(s=>s.status==="failed");
   return `<div class="card">
@@ -588,23 +593,35 @@ function riskCard(compact){
         <span class="tag ${e.origin==="injected"?"inj":"livesrc"}">${e.origin==="injected"?"scripted":"live"}</span>
         <span class="tag ${esc(e.severity)}">${esc(e.severity)}</span>
         <span class="tag">${esc(e.chokepoint)} ${esc(e.type)}</span>
-        <span class="tag lang">${esc((e.source_language||"").toUpperCase())}</span>
+        <span class="tag lang">${esc(regionOf(e))}</span>
       </div>
       <div class="ev-title">${esc(e.title)}</div>
       ${e.title_original?`<div class="orig" dir="${RTL.has(e.source_language)?"rtl":"ltr"}"
-        lang="${esc(e.source_language)}">${esc(e.title_original)}</div>`:""}
+        lang="${esc(e.source_language)}" title="As first published">${esc(e.title_original)}</div>`:""}
       <div class="ev-src">${esc(e.detected_first_from||e.source)}</div>
       ${!compact && e.reasoning?`<div class="ev-why">${esc(e.reasoning)}</div>`:""}
-      ${languageTrail(e, compact)}
+      ${detectionTrail(e, compact)}
     </div>`).join("") : `<div class="empty">No active events.<br>Press <b>Inject Hamburg strike</b> to start.</div>`}
     ${srcs.length?`<div class="srcline">
       <div class="r">✓ ${ok} of ${srcs.length} sources read</div>
-      ${bad.length?`<div class="r">! unavailable: ${esc(bad.slice(0,4).map(s=>s.name.replace(/^(RSS|GDELT|PEGELONLINE): /,"")).join(", "))}${bad.length>4?` +${bad.length-4} more`:""}</div>`:""}
+      ${bad.length?`<div class="r">! unavailable: ${esc(bad.slice(0,4).map(s=>s.name.replace(/^(RSS|GDELT|PEGELONLINE): /,"").replace(/\s*\[\w{2}\]$/,"")).join(", "))}${bad.length>4?` +${bad.length-4} more`:""}</div>`:""}
     </div>`:""}</div>`;
 }
 
+/* Scripts that run right-to-left. This is a rendering fact, not a claim about
+   the source - an Arabic headline set left-to-right is simply mangled. */
 const RTL = new Set(["ar","he","fa","ur"]);
-const LANGNAME = {de:"German", ar:"Arabic", fr:"French", nl:"Dutch", es:"Spanish", en:"English"};
+
+/* Where a source sits, not what language it publishes in. The edge is proximity:
+   a local outlet carries a disruption while the international wires are still
+   downstream of it. Which language that happens to be in is incidental, so the
+   dashboard never names one. */
+const REGION = {de:"Regional", ar:"Regional", fr:"Regional",
+                nl:"Regional", es:"Regional", en:"International"};
+
+function regionOf(e){
+  return REGION[e.source_language] || "Regional";
+}
 
 function offsetLabel(mins){
   if (!mins) return "first";
@@ -613,27 +630,28 @@ function offsetLabel(mins){
   return h < 48 ? `+${h}h` : `+${Math.round(h/24)}d`;
 }
 
-/* The earliness claim, shown rather than asserted: which languages carried the
-   story, in what order, and how far behind the English wires were. */
-function languageTrail(e, compact){
+/* The earliness claim, shown rather than asserted: which sources carried the
+   story, in what order, and how far behind the international wires were.
+   Named by outlet, never by language - the lead comes from reading sources
+   close to the event, and that holds wherever in the world it happens. */
+function detectionTrail(e, compact){
   const trail = e.language_trail || [];
   if (trail.length < 2) return "";
   const first = trail.find(t=>t.first) || trail[0];
   const wire  = trail.find(t=>t.english_wire);
   const lead  = wire && !wire.first
-    ? `Seen in ${LANGNAME[first.language]||first.language} ${offsetLabel(wire.offset_minutes).replace("+","")} before the English wires`
+    ? `Seen ${offsetLabel(wire.offset_minutes).replace("+","")} before the international wires`
     : null;
+  const outlets = trail.length;
   if (compact) {
-    return `<div class="ltrail"><div class="ltrail-h">Carried in ${
-      (e.languages||[]).length} languages</div>
-      <div class="lt first"><span class="lg">${esc(first.language.toUpperCase())}</span>
+    return `<div class="ltrail"><div class="ltrail-h">Carried by ${outlets} sources</div>
+      <div class="lt first"><span class="lg">${esc(regionOf(first))}</span>
         <span class="src">${esc(first.source)}</span><span class="off">first</span></div>
       ${lead?`<div class="lead">${esc(lead)}</div>`:""}</div>`;
   }
-  return `<div class="ltrail"><div class="ltrail-h">Detection trail — ${
-    (e.languages||[]).length} languages</div>
+  return `<div class="ltrail"><div class="ltrail-h">Detection trail — ${outlets} sources</div>
     ${trail.map(t=>`<div class="lt ${t.first?"first":""} ${t.english_wire&&!t.first?"wire":""}">
-      <span class="lg">${esc(t.language.toUpperCase())}</span>
+      <span class="lg">${esc(regionOf(t))}</span>
       <span class="src">${esc(t.source)}</span>
       <span class="off">${esc(offsetLabel(t.offset_minutes))}</span></div>`).join("")}
     ${lead?`<div class="lead">${esc(lead)}</div>`:""}</div>`;
@@ -642,7 +660,7 @@ function languageTrail(e, compact){
 function legendCard(){
   return `<div class="card" style="padding:14px 16px;margin-bottom:20px">
     <div class="keys">
-      <span class="key"><i class="sw live"></i><span><b>Live</b> — the risk feed. Real news, pulled now, in several languages.</span></span>
+      <span class="key"><i class="sw live"></i><span><b>Live</b> — the risk feed. Real news from sources worldwide, pulled now.</span></span>
       <span class="key"><i class="sw synth"></i><span><b>Synthetic</b> — the five shipments and the injected strike.</span></span>
       <span class="key"><i class="sw draft"></i><span><b>Drafted, never sent</b> — approval changes state only.</span></span>
     </div>

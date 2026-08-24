@@ -400,7 +400,7 @@ def _rhine_event(gauge, level_cm, timestamp):
         "languages": ["de"],
         "language_trail": [{"language": "de", "source": f"PEGELONLINE {gauge['name']} gauge",
                             "offset_minutes": 0, "first": True, "english_wire": False}],
-        "detected_first_from": f"PEGELONLINE {gauge['name']} gauge (de)",
+        "detected_first_from": f"PEGELONLINE {gauge['name']} gauge (regional)",
         "english_wire_lag_hours": None,
         "confidence": 0.9,
         "reasoning": (f"Water level {level_cm:.0f} cm is at or below the "
@@ -630,7 +630,11 @@ def _event_from_verdict(item, verdict) -> dict:
         "language_trail": [{"language": item["language"], "source": item["source"],
                             "offset_minutes": 0, "first": True,
                             "english_wire": item["language"] == "en"}],
-        "detected_first_from": f"{item['source']} ({item['language']})",
+        # Where the source sits, not what language it publishes in. The edge is
+        # proximity to the event; the language it happens to be in is incidental
+        # and naming it makes the claim look narrower than it is.
+        "detected_first_from": (f"{item['source']} "
+                                f"({'international' if item['language'] == 'en' else 'regional'})"),
         # We cannot measure wire lag on a live pull, so we say so rather than guess.
         "english_wire_lag_hours": None,
         "confidence": verdict.get("confidence", 0.5),
