@@ -6,6 +6,7 @@ A handful of routes and two static pages. That is the whole backend:
     GET  /app           the dashboard (the demo itself)
     GET  /fonts/{file}  the self-hosted Geist faces the pages are set in
     GET  /api/initial   the calm 'before' board, so the page renders instantly
+    GET  /api/gauges    live Rhine water levels for the landing page
     POST /run           the trigger button - runs the orchestrator, returns JSON
 
 Start it:
@@ -15,6 +16,7 @@ Start it:
 """
 
 import os
+import time
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -125,7 +127,61 @@ def health(request: Request):
         "ai_model": llm.active_model() if llm.is_configured() else None,
         "ai_model_source": llm.resolution_note() or "not resolved yet",
         "live_pull_budget_seconds": config.LIVE_PULL_BUDGET_SECONDS,
+        "gauge_budget_seconds": config.GAUGE_BUDGET_SECONDS,
+        "gauge_cache_seconds": config.GAUGE_CACHE_SECONDS,
     }
+
+
+# The landing page's live gauge strip, cached in the process. The page is
+# public and PEGELONLINE only refreshes about every fifteen minutes, so reading
+# it again on every visit would be both rude to the source and slower than the
+# page for no new information. On Vercel each warm instance keeps its own copy,
+# which is fine - the point is not to hit the gauge once per visitor.
+_gauge_cache = {"at": 0.0, "payload": None}
+
+
+def _gauge_response(payload: dict, *, age: float, stale: bool):
+    """Attach the age to the body and the caching rules to the headers."""
+    body = dict(payload, stale=stale, age_seconds=round(age))
+    # A good reading may be cached; a failure must not be, or one bad minute
+    # would be served for the next five.
+    cache = ("no-store" if stale or not payload.get("ok") else
+             f"public, max-age=60, s-maxage={config.GAUGE_CACHE_SECONDS}")
+    return JSONResponse(body, headers={"Cache-Control": cache})
+
+
+@app.get("/api/gauges")
+def gauges():
+    """Rhine water levels, read live from PEGELONLINE.
+
+    This never fails the caller. If the source is unreachable it serves the last
+    good reading marked stale, or an empty payload marked not-ok. The landing
+    page is allowed to say the gauges are unavailable; it is not allowed to
+    break because a river gauge is down.
+    """
+    from src import risk_monitor
+
+    now = time.monotonic()
+    cached = _gauge_cache["payload"]
+    age = now - _gauge_cache["at"]
+    if cached and age < config.GAUGE_CACHE_SECONDS:
+        return _gauge_response(cached, age=age, stale=False)
+
+    try:
+        fresh = risk_monitor.read_rhine_gauges()
+    except Exception as exc:                      # noqa: BLE001
+        fresh = {"source": "PEGELONLINE", "gauges": [], "ok": False,
+                 "error": f"{type(exc).__name__}: {exc}"}
+
+    if fresh.get("ok"):
+        _gauge_cache.update(at=now, payload=fresh)
+        return _gauge_response(fresh, age=0, stale=False)
+
+    # Nothing fresh. A stale reading still tells the truth about the river as of
+    # a stated time, which beats an empty panel.
+    if cached:
+        return _gauge_response(cached, age=age, stale=True)
+    return _gauge_response(fresh, age=0, stale=False)
 
 
 @app.get("/api/initial")

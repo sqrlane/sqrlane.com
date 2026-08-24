@@ -79,6 +79,7 @@ or go straight to **http://127.0.0.1:8000/app** and press **Inject Hamburg strik
 | `/` | Landing page — what this is, and what is real about it |
 | `/app` | The dashboard. This is the demo, and the button lives here |
 | `/api/health` | What a running instance can actually see. First stop when a deploy misbehaves |
+| `/api/gauges` | Live Rhine water levels from PEGELONLINE. The landing page's one real number |
 | `POST /run` | One cycle: refresh risk, decide, draft |
 
 For the AI key, pick one free provider and put it in `.env`:

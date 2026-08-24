@@ -213,6 +213,14 @@ RHINE_GAUGES = [
     {"station": "EMMERICH", "name": "Emmerich", "warn_cm": 100, "high_cm": 70, "critical_cm": 30},
 ]
 
+# The landing page reads these gauges live, so they get their own allowance -
+# tighter than the button's live pull, because a visitor will not wait 25
+# seconds to see a water level, and longer-lived, because PEGELONLINE only
+# refreshes about every fifteen minutes and the page is public.
+GAUGE_TIMEOUT_SECONDS = _env_int("GAUGE_TIMEOUT_SECONDS", 5 if SERVERLESS else 6)
+GAUGE_BUDGET_SECONDS = _env_int("GAUGE_BUDGET_SECONDS", 8 if SERVERLESS else 10)
+GAUGE_CACHE_SECONDS = _env_int("GAUGE_CACHE_SECONDS", 300)
+
 # --- Classification tuning -------------------------------------------------
 
 # The prefilter only REDUCES COST - it decides what is worth spending an LLM

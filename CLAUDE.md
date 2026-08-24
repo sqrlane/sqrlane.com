@@ -607,6 +607,13 @@ claims were written and tested but unwitnessed. Most are now confirmed.
   the risk feed asserts it. The dashboard's source line ("N of 14 sources read")
   settles it at a glance; `python -m src.risk_monitor` on a real connection answers
   it in detail. **If N is 0 or 1, the live claim is currently decoration.**
+
+  The **landing page's gauge panel is now the cheapest way to settle half of this**:
+  it reads PEGELONLINE on load and prints three numbers or says why it could not.
+  Open `/` on a machine with outbound access — three readings means a real
+  third-party source was fetched and parsed. It was built in a sandbox whose egress
+  policy blocks `pegelonline.wsv.de` (403 at the proxy), so every path is tested
+  against a local stand-in and none against the real host.
 - **The two reroute cards have never been read.** Every review so far has been
   SHP-002, the hold. SHP-001 and SHP-005 take the other branch in both the advisor
   and the comms prompts, so the reroute emails have never been seen by anyone.
@@ -642,6 +649,12 @@ uvicorn src.app:app --reload      # then open http://127.0.0.1:8000
 `/` is the landing page, `/whitepaper` is the technical whitepaper and `/app` is the
 dashboard; all three are single self-contained files. `GET /api/initial` renders the calm five-green-cards board instantly; `POST /run`
 is the button. `GET /api/health` reports what a running instance can actually see — the
+`/` is the landing page and `/app` is the dashboard; both are single self-contained
+files. `GET /api/initial` renders the calm five-green-cards board instantly; `POST /run`
+is the button. `GET /api/gauges` reads the three Rhine gauges live from PEGELONLINE for
+the landing page's gauge panel — cached for `GAUGE_CACHE_SECONDS` because the page is
+public and the source refreshes about every fifteen minutes, and it answers 200 with
+`ok: false` rather than failing, so a gauge being down can never blank the page. `GET /api/health` reports what a running instance can actually see — the
 path it received, whether the dashboard and data files shipped, and whether a provider
 is configured. It is the first thing to check when a deploy misbehaves. The page is a single self-contained file — no CDN, no external font, no
 network call beyond its own API — so flaky wifi cannot blank it.
