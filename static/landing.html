@@ -2301,9 +2301,9 @@ firm revised ETA as soon as terminals restart.</p>
                       stroke-linejoin="round"/></svg></span>
             </div>
           </div>
-          <p class="src" style="margin-top:12px">No TMS is contacted. There is no client, no
-            credential and no endpoint — a write-back is a described change, and it stays
-            one.</p>
+          <p class="src" style="margin-top:12px">No TMS is contacted at any point: no client,
+            no credential, no endpoint. Approving does not change that — the write-back stays a
+            described change, because there is nothing in the codebase to write it with.</p>
         </div>
       </div>
     </div>
@@ -2402,8 +2402,9 @@ firm revised ETA as soon as terminals restart.</p>
              stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/>
           <path d="M5.6 5.6l12.8 12.8"/></svg>
         <div><p class="k">No TMS integration</p>
-          <p class="v">The shipments are synthetic and authored so one disruption yields three
-            different, defensible decisions.</p></div>
+          <p class="v">The shipments are synthetic, and the connector that would carry a decision
+            back to a booking describes the change rather than writing it. A real one sits behind
+            the integration, trust and liability wall.</p></div>
       </div>
       <div class="not">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
