@@ -247,9 +247,11 @@ SHIPMENT
 ROUTING OPTIONS - you may only recommend one of these
 {chr(10).join(options)}
 
-OTHER ROUTES IN THE NETWORK - not booked for this shipment, context only.
-You may not choose these, but if one is the obvious question a manager would
-ask about, say why it is not the answer.
+OTHER ROUTES IN THE NETWORK - context only; you may not recommend one.
+These exist in the network but are not on this shipment's booking. If one is the
+obvious question a manager would ask about, answer it on OPERATIONS, never on
+paperwork: "it is not booked" is not a reason, because a booking can be changed.
+What the detour would cost the cargo is the reason.
 {others}
 
 HOW TO DECIDE
@@ -276,8 +278,12 @@ Return one JSON object:
       the days of slack, the days added, the expected disruption delay. This is
       read aloud to explain the call, so make it read like a person wrote it.
   "rejected_options": array of {{"route_id": "...", "why_not": "one sentence"}}
-      for every option you considered and did not pick, including the current
-      route if you are rerouting away from it."""
+      for every option you seriously considered and did not pick. Give the
+      OPERATIONAL consequence: days added, a chokepoint the route still hits,
+      extra handling, a cold-chain transfer, a road leg because the discharge
+      port is not the destination. Never reject a route for not being booked -
+      that reads as an excuse rather than judgement. Include the current route
+      only if you are rerouting away from it."""
 
 
 def decide_with_llm(assessment: dict) -> dict:
@@ -431,6 +437,14 @@ def advise(shipment: dict, routes: dict, events: list[dict], *, use_llm=True) ->
     if route_id not in valid_routes:
         route_id = assessment["primary"]["route_id"]
 
+    # On a hold the current route is the one being kept, so listing it under
+    # "considered and rejected" contradicts the decision on screen.
+    rejected = verdict.get("rejected_options") or []
+    if decision != "reroute":
+        rejected = [r for r in rejected
+                    if isinstance(r, dict)
+                    and r.get("route_id") != assessment["primary"]["route_id"]]
+
     delay_days = _projected_delay(assessment, decision, route_id)
     revised_eta = _shift_date(shipment["eta"], delay_days)
 
@@ -454,7 +468,7 @@ def advise(shipment: dict, routes: dict, events: list[dict], *, use_llm=True) ->
         "notify_customer": bool(verdict.get("notify_customer", decision != "no-action")),
         "headline": verdict.get("headline", ""),
         "reasoning": verdict.get("reasoning", ""),
-        "rejected_options": verdict.get("rejected_options", []),
+        "rejected_options": rejected,
         "confidence": verdict.get("confidence", 0.5),
         "original_eta": shipment["eta"],
         "revised_eta": revised_eta,

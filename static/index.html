@@ -334,7 +334,8 @@ function bodyHTML(s, d){
       s.drafts.map(m => `
         <div class="mail">
           <div class="mail-h">
-            <div class="to">To the ${esc(m.audience)}: ${esc(m.to)}</div>
+            <div class="to">To the ${esc(m.audience)}: ${esc(m.to)}${
+              m.fallback ? `<span class="fb" title="The AI provider did not write this one - it came from the deterministic template">template</span>` : ""}</div>
             <div class="subj">${esc(m.subject)}</div>
           </div>
           <div class="mail-b">${esc(m.body)}</div>

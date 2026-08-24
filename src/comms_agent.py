@@ -252,6 +252,16 @@ PLACEHOLDER = re.compile(r"\[[^\]\n]{2,40}\]")
 # customer - "Rotterdam" is what a person says.
 ROUTE_CODE = re.compile(r"\bR-[A-Z]{3,5}-[A-Z]{3,4}\b")
 
+# Models write typographic punctuation: a route code comes back as R\u2011HAM\u2011STD
+# with non-breaking hyphens, not R-HAM-STD. Matching on ASCII alone let internal
+# codes through a guard that reported nothing wrong, which is worse than having
+# no guard at all. Normalise before matching.
+_DASHES = str.maketrans({c: "-" for c in "\u2010\u2011\u2012\u2013\u2014\u2015\u2212\u00ad"})
+
+
+def _normalise(text: str) -> str:
+    return (text or "").translate(_DASHES)
+
 
 def port_names() -> dict[str, str]:
     """Chokepoint id -> the word a customer would actually use."""
@@ -262,9 +272,10 @@ def port_names() -> dict[str, str]:
 
 def _find_internal_leaks(text: str, ports: dict) -> list[str]:
     """Catch internal codes in customer-facing text before a human sends it."""
-    leaks = set(ROUTE_CODE.findall(text or ""))
+    normalised = _normalise(text)
+    leaks = set(ROUTE_CODE.findall(normalised))
     for code in ports:
-        if re.search(rf"\b{code}\b", text or ""):
+        if re.search(rf"\b{code}\b", normalised):
             leaks.add(code)
     return sorted(leaks)
 
@@ -355,6 +366,9 @@ def draft_one(audience: str, decision: dict, shipment: dict, routes: dict,
         # Said in the data, not just in the UI: nothing here has been sent.
         "status": "DRAFT - not sent",
         "warnings": _draft_warnings(audience, subject, body),
+        # True when the model was meant to write this and could not, so the
+        # dashboard can say so rather than passing a template off as authored.
+        "fallback": drafted_by.startswith("template"),
         "drafted_by": drafted_by,
         "drafted_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
     }
