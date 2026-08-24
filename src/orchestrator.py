@@ -30,6 +30,23 @@ from src import comms_agent, config, llm, risk_monitor, route_advisor
 # What the dashboard colours a card by.
 STATE_FOR_DECISION = {"reroute": "rerouted", "hold": "hold", "no-action": "green"}
 
+# The three agents, named. These are not new components - they are the three
+# that have always existed, surfaced so the division of labour is visible.
+# Every number a Worker reports is counted from the run that just happened;
+# nothing here is illustrative.
+WORKERS = [
+    {"id": "risk", "name": "Risk Worker",
+     "role": "Reads global news in several languages and tags what threatens a lane"},
+    {"id": "routing", "name": "Routing Worker",
+     "role": "Weighs schedule slack against added transit and expected delay, then decides"},
+    {"id": "comms", "name": "Comms Worker",
+     "role": "Drafts the carrier and customer emails. Sends nothing"},
+]
+
+
+def _idle_workers() -> list[dict]:
+    return [dict(w, status="idle", summary="", detail=[], seconds=None) for w in WORKERS]
+
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
@@ -69,6 +86,7 @@ def initial_state() -> dict:
     return {
         "ran_at": None,
         "state": "idle",
+        "workers": _idle_workers(),
         "risk": {"events": [], "sources": [], "stats": {}},
         "shipments": [
             dict(_shipment_card(s, routes), state="green", decision=None, drafts=[])
@@ -84,11 +102,24 @@ def run_cycle(*, live=True, inject=True, use_llm=True, verbose=False) -> dict:
     started = time.monotonic()
     notes = []
     routes = route_advisor.load_routes()
+    workers = {w["id"]: dict(w, status="idle", summary="", detail=[], seconds=None)
+               for w in WORKERS}
 
     # --- 1. Refresh risk -------------------------------------------------
     # Live sources are best-effort on purpose: a slow feed must never be the
     # reason a demo stalls in front of people.
+    stage_started = time.monotonic()
     risk = risk_monitor.run(live=live, inject=inject, use_llm=use_llm, verbose=verbose)
+    read = [s for s in risk["sources"] if s["status"] == "ok"]
+    live_events = [e for e in risk["events"] if e.get("origin") == "live"]
+    languages = sorted({e.get("source_language", "?") for e in risk["events"]})
+    workers["risk"].update(
+        status="done", seconds=round(time.monotonic() - stage_started, 1),
+        summary=(f"{len(read)} of {len(risk['sources'])} sources read · "
+                 f"{len(risk['events'])} event{'' if len(risk['events']) == 1 else 's'}"),
+        detail=[f"{len(live_events)} from live sources, "
+                f"{len(risk['events']) - len(live_events)} scripted",
+                "languages: " + (", ".join(languages) if languages else "none")])
 
     failed = [s for s in risk["sources"] if s["status"] == "failed"]
     attempted = [s for s in risk["sources"] if s["status"] != "skipped"]
@@ -104,10 +135,31 @@ def run_cycle(*, live=True, inject=True, use_llm=True, verbose=False) -> dict:
                      "deterministic fallbacks, not the model.")
 
     # --- 2. Decide, every shipment ---------------------------------------
+    stage_started = time.monotonic()
     decisions = route_advisor.advise_all(use_llm=use_llm)
+    by_model = [d for d in decisions if d["decided_by"].startswith("llm")]
+    tally_now = {d: sum(1 for x in decisions if x["decision"] == d)
+                 for d in route_advisor.DECISIONS}
+    workers["routing"].update(
+        status="done", seconds=round(time.monotonic() - stage_started, 1),
+        summary=(f"{len(decisions)} shipments triaged · {tally_now['reroute']} reroute, "
+                 f"{tally_now['hold']} hold, {tally_now['no-action']} on plan"),
+        detail=[f"{len(by_model)} decided by the model, "
+                f"{len(decisions) - len(by_model)} by rules",
+                f"{sum(1 for d in decisions if d.get('deadline_breached'))} "
+                f"breaching a required-by date"])
 
     # --- 3. Draft, only where something is being done --------------------
+    stage_started = time.monotonic()
     drafts = comms_agent.draft_all(decisions, use_llm=use_llm)
+    templated = [d for d in drafts if d.get("fallback")]
+    workers["comms"].update(
+        status="done", seconds=round(time.monotonic() - stage_started, 1),
+        summary=(f"{len(drafts)} drafts for "
+                 f"{len({d['shipment_id'] for d in drafts})} shipments · none sent"),
+        detail=[f"{len(drafts) - len(templated)} written by the model, "
+                f"{len(templated)} from templates",
+                "every draft awaiting human approval"])
     drafts_by_shipment: dict[str, list] = {}
     for draft in drafts:
         drafts_by_shipment.setdefault(draft["shipment_id"], []).append(draft)
@@ -132,10 +184,25 @@ def run_cycle(*, live=True, inject=True, use_llm=True, verbose=False) -> dict:
     tally = {d: sum(1 for c in cards if c["decision"]["decision"] == d)
              for d in route_advisor.DECISIONS}
 
+    decided_by_model = sum(1 for c in cards if c["decision"]["decided_by"].startswith("llm"))
+    drafted_by_model = sum(1 for c in cards for d in c["drafts"] if not d.get("fallback"))
+
     return {
         "ran_at": _now_iso(),
         "state": "complete",
         "duration_seconds": round(time.monotonic() - started, 1),
+        "workers": [workers[w["id"]] for w in WORKERS],
+        # What actually ran this cycle, so the dashboard can show it rather than
+        # asserting it. Counted from the run, never illustrative.
+        "ai": {
+            "provider": config.LLM_PROVIDER if llm.is_configured() else None,
+            "model": llm.active_model() if llm.is_configured() else None,
+            "model_source": llm.resolution_note(),
+            "decisions_from_model": decided_by_model,
+            "decisions_total": len(cards),
+            "drafts_from_model": drafted_by_model,
+            "drafts_total": sum(len(c["drafts"]) for c in cards),
+        },
         "risk": risk,
         "shipments": cards,
         "summary": dict(tally, drafts=len(drafts)),

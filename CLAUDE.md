@@ -6,7 +6,11 @@ Guidance for Claude Code working in this repository.
 
 ## What this project is
 
-**Trade-Lane Risk & Reroute Agent** — a demo-grade AI-agent prototype for freight forwarding.
+**Lanewatch** ("Trade-lane risk, decided") — a demo-grade AI-agent prototype for freight
+forwarding. The product name and identity are our own: **never borrow 5U AI's name,
+colours, taglines or Worker names**, and never invent a metric — no traction, accuracy or
+percentage claims. Real reasoning on synthetic shipments is the honest pitch, and a
+sharp audience catches invented numbers.
 
 Small agents watch global news (in multiple languages) for events that disrupt shipping. When a
 disruption hits, the system checks which shipments are affected, decides whether to **reroute** or
@@ -110,6 +114,20 @@ the real pipeline.
 4. **Orchestrator + Dashboard** — on trigger: refresh risk → Route Advisor over all shipments →
    Comms Agent for actioned ones → one result object → rendered as cards, risk feed, expandable
    reasoning, drafts.
+
+### The product layer
+
+The same three components are surfaced as named **Workers** — Risk, Routing, Comms —
+each reporting, on every run, what it actually handled: sources read, shipments triaged,
+drafts written, and how many came from the model rather than the fallback. Every number
+is counted from that run; nothing is illustrative.
+
+A **decision-engine strip** names the model in use and the model-vs-rules split, so the
+central claim is checkable at a glance rather than asserted.
+
+Drafts sit behind a **human-approval gate**: `awaiting_approval` → *Approve* →
+`approved`. Approval is a state change in the browser and nothing else — there is no
+transport anywhere in `src/` for it to trigger, and a test asserts that.
 
 ---
 

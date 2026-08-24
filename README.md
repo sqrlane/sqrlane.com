@@ -1,11 +1,20 @@
-# Trade-Lane Risk & Reroute Agent
+# Lanewatch
 
-Small AI agents watch global news — in several languages — for events that disrupt
-shipping. When one hits, the system works out which shipments are affected, decides
-whether to **reroute** or **hold** each one, explains *why*, and drafts the carrier and
-customer emails a person would otherwise have to write.
+**Trade-lane risk, decided.**
 
-Risk → decision → communication, as one closed loop, with the reasoning recorded.
+Three AI Workers watch global news — in several languages — for events that disrupt
+shipping. When one hits, they work out which shipments are affected, decide whether to
+**reroute** or **hold** each one, explain *why*, and draft the carrier and customer
+emails a person would otherwise have to write.
+
+Risk → decision → communication, as one closed loop, with the reasoning recorded and
+every message held for human approval.
+
+| Worker | Does |
+|---|---|
+| **Risk Worker** | Reads global news in several languages and tags what threatens a lane |
+| **Routing Worker** | Weighs schedule slack against added transit and expected delay, then decides |
+| **Comms Worker** | Drafts the carrier and customer emails. Sends nothing |
 
 ![The dashboard after a run](docs/dashboard.png)
 
@@ -75,6 +84,18 @@ The whole thing runs in well under two minutes.
 
 ---
 
+## The human-approval gate
+
+Drafts land in **Awaiting approval**. A person clicks **Approve** and the draft moves to
+**Approved — ready to send**.
+
+That is the whole interaction, and it is deliberately the whole interaction. Approval is
+a state change: there is no SMTP, no email library and no transport of any kind anywhere
+in `src/`, and a test asserts it stays that way. Say this out loud in the demo — human
+oversight is the responsible design, not a missing feature.
+
+---
+
 ## The four components
 
 | | | |
@@ -83,6 +104,12 @@ The whole thing runs in well under two minutes.
 | **Route Advisor** | `src/route_advisor.py` | Weighs schedule slack against added transit against expected disruption delay. Decides reroute / hold / no-action, and records the trail. |
 | **Comms Agent** | `src/comms_agent.py` | Drafts a carrier email and a customer email, in two deliberately different voices. Sends nothing. |
 | **Orchestrator** | `src/orchestrator.py` | The loop, plus `src/app.py` (FastAPI) and `static/index.html` (the dashboard). |
+
+Each Worker reports what it handled on every run — sources read, shipments triaged,
+drafts written, and how many came from the model rather than the deterministic
+fallback. Those numbers are counted from the run that just happened. **Nothing on the
+dashboard is illustrative**, and there are no traction, accuracy or percentage claims
+anywhere: real reasoning on synthetic shipments is the honest pitch.
 
 Each runs on its own, which is how you debug one without the others:
 
@@ -152,8 +179,10 @@ The demo runs itself; these are the things only a person can check.
    `python -m src.risk_monitor` says which sources failed and why.
 2. **Open all three actioned cards**, not just one. SHP-001 and SHP-005 reroute;
    SHP-002 holds. They take different branches and read differently.
-3. **Check for `template` badges** on the emails. One means the model did not write
-   that draft — the reason prints underneath it.
+3. **Check the decision-engine strip** at the top of the board — it names the model
+   actually running and how many decisions and drafts came from it rather than the
+   rules. A `rule` or `template` badge on a card means the model did not do that one,
+   and the reason prints underneath.
 4. **Read SHP-002's customer email aloud.** It is the centrepiece: no good option,
    here is the least-bad one. If you would not send it as written, the prompts in
    `comms_agent.py` are what to change.
