@@ -753,11 +753,10 @@ $("theme").onclick = () => theme(document.documentElement.getAttribute("data-the
 /* Everything waiting on a person. A drafted email and a queued TMS change are
    the same kind of thing - work the Workers finished that leaves the building -
    so they sit behind one gate and are counted together. */
-function pending(){
-  return board.flatMap(s=>s.drafts||[]).filter(d=>!approved.has(key(d))).length
-       + queuedWrites().filter(w=>!approved.has(wkey(w))).length;
-}
+function pending(){ return draftsPending() + writesPending(); }
 function key(d){ return `${d.shipment_id}|${d.audience}`; }
+function draftsPending(){ return board.flatMap(s=>s.drafts||[]).filter(d=>!approved.has(key(d))).length; }
+function writesPending(){ return queuedWrites().filter(w=>!approved.has(wkey(w))).length; }
 function queuedWrites(){ return tmsLink.writebacks || []; }
 function wkey(w){ return `tms|${w.booking_ref}|${w.record}|${w.action}`; }
 function attention(){ return board.filter(s=>s.state!=="green" && s.decision).length; }
@@ -1439,7 +1438,9 @@ function statRow(){
                 sub:late?"customer date missed":"all within required-by"})}
     ${statCard({label:"Awaiting your approval", value:pending(),
                 pill:pending()?"held":"clear", tone:pending()?"amber":"green",
-                sub:pending()?"drafts need a human":"all drafts approved"})}
+                sub:pending()?`${draftsPending()} draft${draftsPending()===1?"":"s"} · ${
+                  writesPending()} TMS change${writesPending()===1?"":"s"}`
+                  :"everything approved"})}
   </div>`;
 }
 
@@ -1660,9 +1661,13 @@ function scriptedPanelBody(w, ship){
 }
 
 function workersCard(){
+  /* The three that actually run. The full roster has its own strip above, and
+     listing all thirteen here under a "3" badge was saying two different things
+     at once. These are the ones with a summary to report. */
+  const live = workers.filter(w => w.mode === "live");
   return `<div class="card" style="margin-bottom:20px">
-    <div class="card-h"><h2>Workers</h2><span class="n">3</span></div>
-    ${workers.map(w=>`<div class="worker ${w.status}"><span class="wdot"></span>
+    <div class="card-h"><h2>Workers</h2><span class="n">${live.length}</span></div>
+    ${live.map(w=>`<div class="worker ${w.status}"><span class="wdot"></span>
       <div style="flex:1;min-width:0">
         <div class="wname">${esc(w.name)}${w.seconds!=null?`<span class="wsecs">${esc(w.seconds)}s</span>`:""}</div>
         <div class="wrole">${esc(w.role)}</div>
@@ -1760,7 +1765,7 @@ function legendCard(){
   return `<div class="card" style="padding:14px 16px;margin-bottom:20px">
     <div class="keys">
       <span class="key"><i class="sw live"></i><span><b>Live</b> — the risk feed. Real news from sources worldwide, pulled now.</span></span>
-      <span class="key"><i class="sw synth"></i><span><b>Synthetic</b> — the five shipments and the injected strike.</span></span>
+      <span class="key"><i class="sw synth"></i><span><b>Synthetic</b> — the bookings on the board and the injected strike.</span></span>
       <span class="key"><i class="sw draft"></i><span><b>Drafted, never sent</b> — approval changes state only.</span></span>
       <span class="key"><i class="sw tms"></i><span><b>Through the TMS</b> — bookings read from the system of record; every action queued back to it.</span></span>
     </div>

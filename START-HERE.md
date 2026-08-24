@@ -6,6 +6,15 @@
 
 ---
 
+> **This is a build-time document, kept as the record of how the prototype was
+> planned.** The build has moved on since: the pool grew to **seven bookings** and
+> four scenarios, and the loop now opens and closes on the forwarder's TMS — the
+> bookings are read out of the system of record through `src/tms.py` and every
+> agent action is queued back onto them. `CLAUDE.md` and `README.md` describe what
+> the system does today; read those first if the two disagree.
+
+---
+
 ## The one-paragraph pitch
 
 Small agents watch global news (in multiple languages) for events that disrupt shipping. When a disruption hits, the system checks which of your shipments are affected, decides whether to reroute or hold each one — and *explains why* — then drafts the carrier and customer emails a human would need to send. Risk → decision → communication, as one closed loop, with the reasoning recorded. A light "5U AI-style AI Worker" wrapper sits on top purely as demo framing.

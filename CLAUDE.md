@@ -59,7 +59,12 @@ the decision into the TMS is a real part of what eats the day.
    happens. Naming a language makes a general capability look like one rehearsed trick, so
    the UI says "regional" and "international wires" throughout. Real outlet names
    (Al Jazeera Arabic, DW Deutsch) are fine: those identify a source, they do not claim an
-   edge. `verify_neutral.py` holds this. See [The detection trail](#the-detection-trail).
+   edge. `tests/test_the_pages_keep_their_promises.py` holds this on the landing page and the
+   dashboard, reading past comments — a word that appears only in a `/* ... */`
+   explaining why it is avoided has not been said to anyone. **The whitepaper is the
+   stated exception**: it has to say where a model came from ("a German research
+   consortium", "Mistral is French"), and that is provenance, not a claim about the
+   detection edge. See [The detection trail](#the-detection-trail).
 2. **A closed risk → reroute → comms loop that runs on the TMS, with recorded reasoning.**
    Risk incumbents stop at the alert; execution players start after the decision and don't
    touch risk. Welding them — reading the book out of the system of record, deciding,
@@ -83,7 +88,7 @@ the button. `README.md` is the front door for anyone new.
 
 It is also **deployed on Vercel** and running against the live Groq key there.
 
-One claim still needs a human to judge it — see
+Three claims still need a human to judge them — see
 [What still needs a human](#what-still-needs-a-human) below. Everything else is verified.
 
 > **Path note:** `DESIGN.md` shows the tree rooted at `trade-risk-agent/`. This repo is checked out
@@ -97,14 +102,14 @@ One claim still needs a human to judge it — see
 Everything serves this. **If a feature doesn't help this story land, it doesn't get built.**
 Target: runs start to finish in **under ~2 minutes**, on command, without breaking.
 
-1. **"Here are 5 bookings out of your TMS, in transit."** Dashboard shows 5 shipment cards,
+1. **"Here are 7 bookings out of your TMS, in transit."** Dashboard shows 7 shipment cards,
    all green. Every one is a record read through the connector — the board is a view of the
    book, not a second copy of it.
 2. **"Watch — a strike hits the Port of Hamburg."** Click a trigger button.
 3. **"The system caught it from a German-language source before the English news wires."** The risk
    feed shows the event, flagged as detected from a German source first.
-4. **"It triaged all 5 shipments in seconds."** Cards change state — two reroute, one hold, two stay
-   green (the system doesn't cry wolf).
+4. **"It triaged the whole board in seconds."** Cards change state — two reroute, one hold,
+   four stay green (the system doesn't cry wolf).
 5. **"Here's the reasoning for each decision."** Click a rerouted card → plain-English justification
    (slack vs. added transit vs. strike delay).
 6. **"And here are the emails it drafted."** Two drafts appear — carrier and customer. *Nothing is sent.*
@@ -232,8 +237,8 @@ step, so what carries over is **anatomy, never code**:
 - **One page header everywhere** — title, what the page is, actions, last-run stamp.
   Before it, some views opened with a card and some with a bare table.
 - **Segmented control** on Approvals (awaiting / approved / all).
-- **Empty states** that name the next action. `verify_shell.py` asserts zero ad-hoc
-  `.hint` blocks survive.
+- **Empty states** that name the next action. `tests/test_the_pages_keep_their_promises.py` asserts
+  zero ad-hoc `.hint` blocks survive.
 - **Skeletons** shaped like the thing that is loading, so the layout does not jump.
 - **Notch gauge**, after bklit's, on the shipment drawer: **slack consumed** — the delay
   against the slack the booking had. A real proportion, and the number every decision
@@ -284,8 +289,10 @@ route it just left. Without that, SHP-001 went HAM → RTM → HAM → COGH acro
 Each single day was arithmetically defensible — under the Red Sea closure,
 Hamburg-under-strike genuinely beats Rotterdam-under-Red-Sea on "least late" — but a box
 ping-ponging between two ports across a week is nonsense. The advisor was right; it just
-should never have been asked. `verify_simulation.py` asserts no booking ever revisits a
-route.
+should never have been asked. `tests/test_the_simulation_holds_together.py` asserts no
+booking ever revisits a route — and, because state carrying between days is the whole
+difference between a simulation and eight runs in a row, that yesterday's reroute is
+still in place this morning and that a held booking pays a day for every day it waits.
 
 It runs **deterministically by default**. Seven shipments over eight days is 56
 decisions, which is far more model calls than a free tier will take; `--llm` opts in.
@@ -320,8 +327,9 @@ What was taken from the reference's layout:
 - The reference's stat cards carry a **sparkline and a "+12% vs. previous 30 days" delta**.
   Lanewatch has no history to compare a run against, so both would be invented — and an
   invented metric is the one thing this project refuses to produce. The card keeps the
-  same anatomy and puts a fact from the run in the pill instead. `verify_shell.py` fails if
-  "vs. previous" ever appears on the page.
+  same anatomy and puts a fact from the run in the pill instead.
+  `tests/test_the_pages_keep_their_promises.py` fails if "vs. previous" — or any other
+  period-over-period delta — ever appears on a page.
 - The bottom-of-sidebar **user card** is replaced by the decision-engine strip, which names
   the model actually in use. On a demo whose whole claim is "the model decided this", that
   slot is worth more than a fake profile.
@@ -360,8 +368,9 @@ a number on every bar goes unread.
 
 ### The workflow layer — inbound comms, RFQs and the TMS link
 
-The Comms Agent covers *outbound*. Three scripted Workers cover the rest of the
-desk a disruption actually lands on:
+The Comms Agent covers *outbound*. Two scripted Workers and the TMS link cover the
+rest of the desk a disruption actually lands on — the other three scripted Workers
+(Booking, Invoice, Customs) are below:
 
 - **Inbox Worker** — inbound carrier and customer mail, triaged: intent classified,
   linked to the booking, and a reply drafted. Which mail arrives is derived from the
@@ -405,9 +414,10 @@ Note what it deliberately does *not* assert — that a TMS was contacted. It was
 desk actually runs — quoting, booking, shipment tracking, TMS data entry, invoice
 reconciliation, and customs — is all present. The names are ours: **never** use the
 names the reference product ships (`Rate Manager`, `DocuMind`, `Track & Trace`,
-`Copilot`), and `verify_product.py` fails on any of them appearing in the dashboard,
-the README, the roster source, the served Worker names, or the run payload. It caught
-one of those names in a source *comment*, which is the level of paranoia this deserves.
+`Copilot`), and `tests/test_the_pages_keep_their_promises.py` fails on any of them appearing
+in the dashboard, the landing page, the whitepaper, the README, the roster source, the
+served Worker names, or the run payload. It caught one of those names in a source
+*comment*, which is the level of paranoia this deserves.
 
 Three of them earn their place by reacting to the decision rather than decorating:
 
@@ -451,33 +461,48 @@ transport anywhere in `src/` for it to trigger, and a test asserts that.
 - **Fallback:** if the web UI gets fiddly, the whole thing can be a **Streamlit** app. Default to
   FastAPI + HTML for the visual drama of cards flipping state.
 
-### Target file structure (build at repo root)
+### File structure (all at repo root)
+
+The tree as it actually stands, not as it was first planned — if you add a file, add it
+here too, because this is what the next session reads to find its way around.
 
 ```
 ├── *.md                      # the seven planning docs + this file
 ├── .env                      # runtime AI key — NEVER committed
 ├── .gitignore                # must list .env, __pycache__/, .venv/, risk_state.json
 ├── requirements.txt
+├── vercel.json               # rewrites every path to the function; lists includeFiles
+├── api/index.py              # re-exports the same FastAPI app for Vercel
 ├── data/
-│   ├── shipments.json        # from DATASET.md
-│   ├── routes.json           # candidate routes + chokepoints
+│   ├── shipments.json        # the book: seven bookings, aged forward at load time
+│   ├── routes.json           # candidate routes + the chokepoints each passes
 │   ├── chokepoints.json
-│   └── injected_events.json  # the scripted Hamburg strike
+│   ├── scenarios.json        # the four switchable disruptions
+│   ├── injected_events.json  # the scripted Hamburg strike
+│   ├── simulation.json       # the authored week - a timeline only, never events
+│   └── geo.json              # coastlines and points for the map
 ├── src/
 │   ├── llm.py                # provider wrapper — the ONLY place AI is called
-│   ├── config.py             # keys, model names, source list
+│   ├── config.py             # keys, model names, source list, budgets
+│   ├── tms.py                # component 0: the system of record — the ONLY door to
+│   │                         #   the book, and every agent action as a queued change
 │   ├── risk_monitor.py       # component 1
 │   ├── route_advisor.py      # component 2
 │   ├── comms_agent.py        # component 3
-│   ├── roster.py             # the seven SCRIPTED Workers - authored, never live
-│   ├── tms.py                # the system of record - the ONLY door to the book,
-│   │                         #   and every agent action as a queued booking change
 │   ├── orchestrator.py       # component 4 (the loop)
-│   └── app.py                # FastAPI: serves the page + /run
+│   ├── roster.py             # the SCRIPTED Workers - authored, never live
+│   ├── simulation.py         # the authored week, replayed over the same board
+│   ├── geo.py                # the board on a map - derived from the run
+│   └── app.py                # FastAPI: serves the three pages + the API
 ├── static/
 │   ├── landing.html          # the front page (HTML+CSS+JS in one file)
 │   ├── index.html            # the dashboard (HTML+CSS+JS in one file)
+│   ├── whitepaper.html       # the technical paper
 │   └── fonts/                # Geist Sans + Mono, self-hosted - never a CDN
+├── tests/                    # five suites, one per claim the demo makes out loud
+├── tools/build_rhine_map.py  # regenerates the landing page's corridor map
+├── scratch/genheat.py        # one-off generator for the landing heatmap
+├── docs/dashboard.png        # the README's screenshot
 └── risk_state.json           # written at runtime (gitignored)
 ```
 
@@ -493,7 +518,10 @@ different, defensible decisions. Full tables in `DATASET.md`; turn them into the
   chokepoints it passes. Key pair: `R-HAM-STD` (32d/100) vs. `R-RTM-ALT` (34d/108) — the +2-day
   Rotterdam alternate.
 
-**The 5 shipments and their expected outcomes on the injected strike — this is the payoff:**
+**The five the strike was authored around, and their expected outcomes — this is the
+payoff.** SHP-006 and SHP-007 joined the pool later for the Rhine and France scenarios;
+they touch none of Hamburg's chokepoints, so they stay green here and the board reads
+2 reroute · 1 hold · 4 on plan:
 
 | id | cargo | route | slack | expected decision |
 |---|---|---|---|---|
@@ -551,9 +579,9 @@ Full copy-paste prompts live in `BUILD-GUIDE.md`.
 
 | Phase | What | Checkpoint | Status |
 |---|---|---|---|
-| **0** | Orient: read the docs, confirm understanding, write no code | Summary matches the narrative + four components | ✅ (this file) |
+| **0** | Orient: read the docs, confirm understanding, write no code | Summary matches the narrative + the components | ✅ (this file) |
 | **1** | `data/` JSON + `llm.py`, `config.py`, `risk_monitor.py` | Run the Risk Monitor alone from the terminal; see real current news classified; confirm ≥1 non-English source is actually read; injected event loadable | ✅ (live pull unverified — see below) |
-| **2** | `route_advisor.py` | Run against the 5 shipments with the strike active; the three expected outcomes appear with reasoning that reads *well* | ✅ (LLM wording unverified — see below) |
+| **2** | `route_advisor.py` | Run against the board with the strike active; the three expected outcomes appear with reasoning that reads *well* | ✅ (LLM wording unverified — see below) |
 | **3** | `comms_agent.py` | Drafts for SHP-001 (reroute) and SHP-002 (hold) read like something a person would actually send | ✅ (LLM wording unverified — see below) |
 | **4** | `orchestrator.py`, `app.py`, `static/index.html` | Open the URL, click the button, the whole narrative plays on screen. **This is the demo.** | ✅ (driven in a real browser) |
 | **5** | Polish: AI-Worker framing · graceful degradation if a source is down · live-vs-synthetic legend · README | Runs cold, survives flaky wifi, the honest framing is visible | ✅ |
@@ -629,8 +657,12 @@ and easy to undo by accident:
 - `response.close()` alone does not unblock a read already in flight;
   `raw._connection.sock.shutdown()` does.
 
-Both cases are held by `verify_slowsources.py`: the hang ends at 25s, the trickle at 8s, and
-the scenario survives both.
+Both cases are held by `tests/test_a_slow_source_cannot_stall_the_demo.py`, against real
+sockets on localhost: a trickling source is cut off by the watchdog rather than the
+between-bytes timeout, a hanging one by the timeout, and a whole run whose every source
+trickles still ends inside its budget with the scenario intact. It runs with the budget
+patched down so the suite stays fast, and asserts the documented 25s / 8s separately —
+the mechanism working and the numbers being what the pages quote are two claims.
 
 RSS feeds are read **concurrently** (`RSS_CONCURRENCY`). Sequentially, ten feeds at the
 per-source timeout cannot fit a serverless budget — only the first would be read and the
@@ -652,9 +684,10 @@ claims were written and tested but unwitnessed. Most are now confirmed.
 - **The model really is deciding.** A run produced no `rule` badges on any card, which
   means all three actioned shipments went through `decide_with_llm` and the provider
   answered. The deterministic fallback was not used.
-- **The pipeline fits the function timeout.** A full cycle makes up to a dozen
-  sequential model calls, and a cold serverless function is capped at 60s. It
-  completed. This was a real risk, not a theoretical one.
+- **The pipeline fits the function timeout.** A full cycle makes about fourteen
+  sequential model calls — roughly five to screen headlines, three decisions and
+  six drafts — and a cold serverless function is capped at 60s. It completed.
+  This was a real risk, not a theoretical one.
 - **Runtime model discovery works against the real Groq API.** The hard-coded
   `llama-3.3-70b-versatile` 404'd on the live key and silently sent every decision
   to the rule fallback — a retired model's 404 is indistinguishable from a broken
@@ -753,7 +786,8 @@ python -m src.orchestrator --no-live      # the whole loop, no network
 `/whitepaper` is the technical paper, served from `static/whitepaper.html` and linked
 from the landing nav. It carries the same tokens, the same self-hosted Geist and the
 same nav as the other two pages — no CDN, no Google Fonts, nothing external, which
-`verify_paper.py` asserts by failing on any off-origin request.
+`tests/test_the_pages_keep_their_promises.py` asserts by failing on any off-origin
+asset or fetch, on all three pages.
 
 It is the one document that states the project's assumptions and failures in public, so
 four claims in it are load-bearing and tested for by string:
@@ -780,7 +814,7 @@ Two things the deck settled that the earlier draft had wrong:
   models are Chinese and American in origin, openly licensed and hosted in `eu-north1`
   with zero retention. Teuken-7B, EuroLLM and Mistral are the answer if provenance must
   be European too, at a cost in capability. The page keeps those two axes apart in a
-  table rather than blurring them, and `verify_paper.py` asserts both are named.
+  table rather than blurring them.
 
 ### Deployed on Vercel
 
@@ -821,8 +855,12 @@ No SMTP, no email library, no transport of any kind is imported anywhere in `src
 and `tests/test_comms_agent_sends_nothing.py` asserts it stays that way — it parses every
 file in `src/` and fails naming the file and line if a transport library ever appears
 (including via `__import__` or `importlib`). It also runs a full offline cycle and checks
-every draft it produces. Run it with `python -m unittest discover -s tests` — standard
-library, nothing to install. Note it is deliberately *not* a "no networking" rule: the
+every draft it produces. Run the whole suite with
+`python -m unittest discover -s tests` — standard library, nothing to install, and it
+covers the other four claim-guards too: the TMS being the only door to the book, the
+pages naming no language and loading nothing external, the simulated week never
+sending a booking back to a route it left, and a trickling source being cut off
+rather than hanging the run. Note it is deliberately *not* a "no networking" rule: the
 live news pull and the LLM calls are real HTTP and must stay that way. Every draft carries `status: "DRAFT - not sent"`
 in the data, not just in the UI. Say this out loud in the demo — it is the responsible
 design, not a missing feature.
@@ -890,7 +928,7 @@ prototype is finished and nothing else is in scope:
 
 1. The demo narrative runs start to finish in under ~2 minutes, on command, without breaking.
 2. The Risk Monitor genuinely pulls live news — the credibility anchor.
-3. The injected strike produces three distinct, defensible decisions across the 5 shipments, each
+3. The injected strike produces three distinct, defensible decisions across the board, each
    with plain-English reasoning.
 4. Drafted emails read like something a human would actually send.
 5. It looks good enough to present — cards, states, and drafts legible on a screen in a room.
@@ -904,11 +942,11 @@ prototype is finished and nothing else is in scope:
 
 | File | What it's for |
 |---|---|
-| `START-HERE.md` | Orientation, the pitch, the demo narrative, build order |
+| `START-HERE.md` | Orientation, the pitch, the demo narrative, build order. Build-time; `CLAUDE.md` is current |
 | `SETUP.md` | One-time human setup: Node/Claude Code/Python, GitHub CLI, free AI key, `.env` |
 | `PRD.md` | *What* and *why* — problem, success criteria, non-goals, differentiation |
 | `DESIGN.md` | *How* — architecture, stack, file structure, design principles |
-| `DATASET.md` | The screenplay — chokepoints, routes, 5 shipments, the injected strike |
+| `DATASET.md` | The screenplay — chokepoints, routes, the five shipments it was first authored around, the injected strike. Build-time; the pool is seven now |
 | `DATA-SOURCES.md` | Curated free APIs: which to wire (CORE) and which to skip |
 | `BUILD-GUIDE.md` | The copy-paste phase prompts — the spine of the build |
 | `README.md` | The front door — what it is, how to run it, the honest framing |
