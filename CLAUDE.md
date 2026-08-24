@@ -40,10 +40,12 @@ it**, in plain language, at the end of every phase. Prefer obvious code over cle
 
 ## Current state
 
-**Docs only — no code has been written yet.** The repo contains the seven planning documents and
-`trade-risk-agent-docs.zip` (a duplicate copy of the same seven files; not a source of truth).
+**All five phases are built.** The demo runs end to end: `uvicorn src.app:app --reload`, then open
+http://127.0.0.1:8000 and press the button. `README.md` is the front door for anyone new.
 
-Phase 0 (orientation) is effectively what this file captures. **Phase 1 is next.**
+Two claims still need a human to witness them against the real thing — see
+[Two things still need a human to confirm](#two-things-still-need-a-human-to-confirm) below.
+Everything else is verified.
 
 > **Path note:** `DESIGN.md` shows the tree rooted at `trade-risk-agent/`. This repo is checked out
 > as `Logistics-Freight-Forwarding`. Build at the **repo root** — `src/`, `data/`, `static/` go
@@ -211,13 +213,26 @@ Full copy-paste prompts live in `BUILD-GUIDE.md`.
 | **1** | `data/` JSON + `llm.py`, `config.py`, `risk_monitor.py` | Run the Risk Monitor alone from the terminal; see real current news classified; confirm ≥1 non-English source is actually read; injected event loadable | ✅ (live pull unverified — see below) |
 | **2** | `route_advisor.py` | Run against the 5 shipments with the strike active; the three expected outcomes appear with reasoning that reads *well* | ✅ (LLM wording unverified — see below) |
 | **3** | `comms_agent.py` | Drafts for SHP-001 (reroute) and SHP-002 (hold) read like something a person would actually send | ✅ (LLM wording unverified — see below) |
-| **4** | `orchestrator.py`, `app.py`, `static/index.html` | Open the URL, click the button, the whole narrative plays on screen. **This is the demo.** | ⬜ **next** |
-| **5** | Polish: AI-Worker framing · graceful degradation if a source is down · live-vs-synthetic legend · README | Runs cold, survives flaky wifi, the honest framing is visible | ⬜ |
+| **4** | `orchestrator.py`, `app.py`, `static/index.html` | Open the URL, click the button, the whole narrative plays on screen. **This is the demo.** | ✅ (driven in a real browser) |
+| **5** | Polish: AI-Worker framing · graceful degradation if a source is down · live-vs-synthetic legend · README | Runs cold, survives flaky wifi, the honest framing is visible | ✅ |
 
 **No scheduler, nothing always-running.** For a demo, a button beats a background job — the magic
 has to happen on screen, on command.
 
 **After every phase:** commit with a clear message describing what was built, and push.
+
+### Surviving a live audience
+
+The failure mode that actually threatens a demo is not a *dead* source — that fails fast —
+but a *slow* one, because sources are read in sequence. So the whole live pull has a hard
+**25-second budget** (`LIVE_PULL_BUDGET_SECONDS`) and each request an 8-second timeout.
+Whatever is not read by then is marked `skipped` and the cycle moves on. Tested against a
+server that accepts connections and never replies: the run ends at 25s with the scenario
+intact. Without the budget the same test would take over four minutes.
+
+Alongside that: a failed run returns a readable sentence rather than a stack trace; a
+missing provider falls back to deterministic logic and every affected card is badged
+`rule`; and the page loads no external asset, so flaky wifi cannot blank it.
 
 ### Two things still need a human to confirm
 
@@ -235,6 +250,25 @@ two claims are **written and tested but not yet witnessed against the real thing
    `python -m src.comms_agent --inject` with a key, read SHP-002's reasoning and its
    two drafts aloud. If they don't sound like a person, tune `ADVISOR_SYSTEM` in
    `route_advisor.py` and `CARRIER_SYSTEM` / `CUSTOMER_SYSTEM` in `comms_agent.py`.
+
+### Running the demo
+
+```bash
+uvicorn src.app:app --reload      # then open http://127.0.0.1:8000
+```
+
+`GET /api/initial` renders the calm five-green-cards board instantly; `POST /run` is
+the button. The page is a single self-contained file — no CDN, no external font, no
+network call beyond its own API — so flaky wifi cannot blank it.
+
+Each component still runs alone, which is how you debug one without the others:
+
+```bash
+python -m src.risk_monitor --inject
+python -m src.route_advisor --inject --shipment SHP-002
+python -m src.comms_agent  --inject
+python -m src.orchestrator --no-live      # the whole loop, no network
+```
 
 ### How the decision layer splits the work
 
@@ -320,6 +354,7 @@ Five criteria, from `PRD.md`. If these hold, the prototype is finished and nothi
 | `DATASET.md` | The screenplay — chokepoints, routes, 5 shipments, the injected strike |
 | `DATA-SOURCES.md` | Curated free APIs: which to wire (CORE) and which to skip |
 | `BUILD-GUIDE.md` | The copy-paste phase prompts — the spine of the build |
+| `README.md` | The front door — what it is, how to run it, the honest framing |
 | `trade-risk-agent-docs.zip` | Duplicate archive of the seven docs above; not a source of truth |
 
 ---

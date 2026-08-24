@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trade-Lane Risk &amp; Reroute Agent</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23141a21'/%3E%3Cpath d='M3 11h10M5 8h6M7 5h2' stroke='%23fff' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+  /* Restrained palette. One accent per state, and red reserved strictly for
+     "this misses the customer's date" so it never gets diluted. */
+  :root{
+    --bg:#f6f7f9; --surface:#fff; --line:#e3e6ea; --line-strong:#cfd4da;
+    --ink:#141a21; --ink-2:#4a5560; --ink-3:#79848f;
+    --green:#1f8a4c; --green-bg:#eaf6ee;
+    --blue:#1f5fbf;  --blue-bg:#eaf0fb;
+    --amber:#a86412; --amber-bg:#fdf2e2;
+    --red:#b4232a;   --red-bg:#fceceb;
+    --radius:10px;
+    --shadow:0 1px 2px rgba(16,24,32,.05), 0 4px 12px rgba(16,24,32,.05);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1280px; margin:0 auto; padding:0 24px 56px}
+
+  /* ---------- header ---------- */
+  header{background:var(--surface); border-bottom:1px solid var(--line); margin-bottom:24px}
+  .head-in{max-width:1280px; margin:0 auto; padding:20px 24px; display:flex;
+           align-items:center; gap:24px; flex-wrap:wrap}
+  h1{margin:0; font-size:19px; letter-spacing:-.01em}
+  .sub{margin:2px 0 0; color:var(--ink-3); font-size:13px}
+  .spacer{flex:1}
+  /* AI Worker framing - cosmetic product dressing, nothing behind it. */
+  .brand{display:flex; align-items:center; gap:12px}
+  .mark{width:36px; height:36px; border-radius:9px; background:var(--ink); flex:none;
+        display:flex; align-items:center; justify-content:center}
+  .kicker{font-size:10.5px; font-weight:700; letter-spacing:.13em; text-transform:uppercase;
+          color:var(--ink-3)}
+  .status{display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--ink-2);
+          background:var(--bg); border:1px solid var(--line); border-radius:20px;
+          padding:5px 13px 5px 10px; white-space:nowrap}
+  .status i{width:7px; height:7px; border-radius:50%; background:var(--ink-3); flex:none}
+  .status.working i{background:var(--blue); animation:pulse 1.1s ease-in-out infinite}
+  .status.done i{background:var(--green)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+
+  /* The live-vs-synthetic legend: the honest answer to "is this real?" */
+  .legend{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+          padding:14px 16px; margin-bottom:22px; box-shadow:var(--shadow)}
+  .keys{display:flex; gap:22px; flex-wrap:wrap; margin-bottom:10px}
+  .key{display:flex; align-items:flex-start; gap:8px; font-size:12.5px; color:var(--ink-2)}
+  .sw{width:11px; height:11px; border-radius:3px; flex:none; margin-top:3px}
+  .sw.live{background:var(--green-bg); border:1.5px solid var(--green)}
+  .sw.synth{background:var(--amber-bg); border:1.5px solid var(--amber)}
+  .sw.draft{background:var(--bg); border:1.5px dashed var(--line-strong)}
+  .key b{color:var(--ink); font-weight:600}
+  .said{border-top:1px solid var(--line); padding-top:10px; font-size:13.5px;
+        color:var(--ink); font-style:italic}
+  .panel-h .chip{font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+                 padding:2.5px 7px; border-radius:4px}
+  .chip.live{background:var(--green-bg); color:var(--green)}
+  .chip.synth{background:var(--amber-bg); color:var(--amber)}
+  button.run{
+    background:var(--ink); color:#fff; border:0; border-radius:8px;
+    padding:11px 20px; font-size:14px; font-weight:600; cursor:pointer;
+    display:flex; align-items:center; gap:9px; transition:background .15s;
+  }
+  button.run:hover:not(:disabled){background:#2b3540}
+  button.run:disabled{opacity:.6; cursor:default}
+  .dot{width:7px;height:7px;border-radius:50%;background:#ff5d52;flex:none}
+  .spin{width:13px;height:13px;border:2px solid rgba(255,255,255,.3);
+        border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;flex:none}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  /* the honest line - visible, not buried */
+  .honest{
+    background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--ink-3);
+    border-radius:var(--radius); padding:13px 16px; margin-bottom:22px;
+    font-size:13.5px; color:var(--ink-2);
+  }
+  .honest b{color:var(--ink); font-weight:600}
+
+  .cols{display:grid; grid-template-columns:340px 1fr; gap:24px; align-items:start}
+  @media (max-width:980px){.cols{grid-template-columns:1fr}}
+
+  .panel{background:var(--surface); border:1px solid var(--line);
+         border-radius:var(--radius); box-shadow:var(--shadow)}
+  .panel-h{padding:13px 16px; border-bottom:1px solid var(--line);
+           display:flex; align-items:center; gap:8px}
+  .panel-h h2{margin:0; font-size:12px; font-weight:700; letter-spacing:.07em;
+              text-transform:uppercase; color:var(--ink-3)}
+  .count{margin-left:auto; font-size:12px; color:var(--ink-3);
+         background:var(--bg); border-radius:20px; padding:2px 9px}
+
+  /* ---------- risk feed ---------- */
+  .feed{padding:6px}
+  .empty{padding:26px 16px; text-align:center; color:var(--ink-3); font-size:13px}
+  .event{padding:12px; border-radius:8px; margin:4px 0}
+  .event+.event{border-top:1px solid var(--line)}
+  .event.injected{background:var(--amber-bg)}
+  .tags{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:7px; align-items:center}
+  .tag{font-size:10.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+       padding:2.5px 7px; border-radius:4px; background:var(--bg); color:var(--ink-2)}
+  .tag.live{background:var(--green-bg); color:var(--green)}
+  .tag.inj{background:#f4dfc0; color:var(--amber)}
+  .tag.high{background:var(--red-bg); color:var(--red)}
+  .tag.medium{background:var(--amber-bg); color:var(--amber)}
+  .tag.low{background:var(--bg); color:var(--ink-2)}
+  .tag.lang{background:#e7e3f7; color:#4c3d9e}
+  .event .title{font-size:13.5px; font-weight:600; line-height:1.4}
+  /* The original-language headline is the differentiator, so it is shown, not summarised. */
+  .orig{margin-top:6px; padding:7px 9px; background:rgba(255,255,255,.75);
+        border-left:2px solid #4c3d9e; border-radius:0 4px 4px 0;
+        font-size:12.5px; color:var(--ink-2); font-style:italic}
+  .src{margin-top:7px; font-size:11.5px; color:var(--ink-3)}
+  .why{margin-top:6px; font-size:12.5px; color:var(--ink-2)}
+
+  .sources{padding:11px 16px; border-top:1px solid var(--line); font-size:11.5px; color:var(--ink-3)}
+  .sources .row{display:flex; gap:7px; padding:1.5px 0}
+  .ok-m{color:var(--green)} .fail-m{color:var(--red)}
+
+  /* ---------- shipment cards ---------- */
+  .grid{display:grid; gap:11px}
+  .card{background:var(--surface); border:1px solid var(--line);
+        border-left:3px solid var(--line-strong); border-radius:var(--radius);
+        box-shadow:var(--shadow); transition:border-color .35s, box-shadow .2s}
+  .card.green{border-left-color:var(--green)}
+  .card.rerouted{border-left-color:var(--blue)}
+  .card.hold{border-left-color:var(--amber)}
+  .card.flip{animation:flip .5s ease-out}
+  @keyframes flip{
+    0%{transform:translateY(0)} 30%{transform:translateY(-4px)} 100%{transform:translateY(0)}
+  }
+  .card-h{padding:14px 16px; display:flex; align-items:center; gap:14px; cursor:pointer}
+  .card-h:hover{background:#fafbfc}
+  .card.idle .card-h{cursor:default}
+  .card.idle .card-h:hover{background:transparent}
+  .badge{font-size:10.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+         padding:4px 9px; border-radius:5px; white-space:nowrap; flex:none; min-width:82px;
+         text-align:center}
+  .badge.green{background:var(--green-bg); color:var(--green)}
+  .badge.rerouted{background:var(--blue-bg); color:var(--blue)}
+  .badge.hold{background:var(--amber-bg); color:var(--amber)}
+  .who{flex:1; min-width:0}
+  .who .id{font-size:11.5px; color:var(--ink-3); font-variant-numeric:tabular-nums}
+  .who .cargo{font-weight:600; font-size:14.5px; margin:1px 0}
+  .who .lane{font-size:12.5px; color:var(--ink-2)}
+  .head-line{font-size:12.5px; color:var(--ink-2); max-width:270px; text-align:right}
+  .eta{text-align:right; flex:none; min-width:112px}
+  .eta .lab{font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-3)}
+  .eta .val{font-size:13.5px; font-variant-numeric:tabular-nums; font-weight:600}
+  .eta .was{text-decoration:line-through; color:var(--ink-3); font-weight:400; margin-right:5px}
+  .eta .breach{color:var(--red); font-size:11px; font-weight:600}
+  .chev{color:var(--ink-3); flex:none; transition:transform .2s; font-size:11px}
+  .card.open .chev{transform:rotate(90deg)}
+
+  .body{display:none; padding:0 16px 16px; border-top:1px solid var(--line)}
+  .card.open .body{display:block}
+  .sec{margin-top:15px}
+  .sec h3{margin:0 0 7px; font-size:11px; font-weight:700; letter-spacing:.07em;
+          text-transform:uppercase; color:var(--ink-3)}
+  .reason{font-size:14px; line-height:1.6; color:var(--ink)}
+  .rejected{margin:8px 0 0; padding:0; list-style:none}
+  .rejected li{font-size:12.5px; color:var(--ink-2); padding:4px 0 4px 15px; position:relative}
+  .rejected li:before{content:"×"; position:absolute; left:0; color:var(--ink-3); font-weight:700}
+  .rejected b{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px;
+              color:var(--ink)}
+
+  /* the recorded reasoning trail - the defensible part, so it is shown in full */
+  .trail{margin:0; padding:0; list-style:none; border-left:1.5px solid var(--line); padding-left:14px}
+  .trail li{position:relative; padding:5px 0; font-size:12.5px; color:var(--ink-2)}
+  .trail li:before{content:""; position:absolute; left:-19px; top:11px; width:6px; height:6px;
+                   border-radius:50%; background:var(--line-strong)}
+  .trail .k{color:var(--ink); font-weight:600}
+
+  /* drafts */
+  .mail{border:1px solid var(--line); border-radius:8px; margin-top:9px; overflow:hidden}
+  .mail-h{background:#fafbfc; padding:9px 12px; border-bottom:1px solid var(--line);
+          font-size:12px; color:var(--ink-2)}
+  .mail-h .to{font-weight:600; color:var(--ink)}
+  .mail-h .subj{margin-top:2px}
+  .mail-b{padding:12px; font-size:13px; line-height:1.6; white-space:pre-wrap;
+          font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px}
+  .notsent{float:right; font-size:10px; font-weight:700; letter-spacing:.05em;
+           text-transform:uppercase; color:var(--ink-3); border:1px solid var(--line-strong);
+           border-radius:4px; padding:2px 6px}
+  .warn{margin:8px 0 0; font-size:12px; color:var(--amber);
+        background:var(--amber-bg); border-radius:5px; padding:7px 10px}
+  .meta{margin-top:12px; padding-top:10px; border-top:1px solid var(--line);
+        font-size:11.5px; color:var(--ink-3)}
+
+  .notes{margin-top:16px}
+  .note{background:var(--amber-bg); border:1px solid #f0dcc0; color:var(--amber);
+        border-radius:8px; padding:10px 13px; font-size:13px; margin-bottom:8px}
+  .tally{display:flex; gap:18px; padding:12px 16px; border-top:1px solid var(--line);
+         font-size:12.5px; color:var(--ink-2)}
+  .tally b{color:var(--ink)}
+  .fb{font-size:10.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+      background:var(--amber-bg); color:var(--amber); border:1px solid #f0dcc0;
+      border-radius:4px; padding:2px 6px; margin-left:8px; white-space:nowrap}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-in">
+    <div class="brand">
+      <div class="mark">
+        <svg width="19" height="19" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <path d="M3 14h14M5.5 10h9M8 6h4" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="kicker">AI Worker</div>
+        <h1>Trade-Lane Risk &amp; Reroute</h1>
+      </div>
+    </div>
+    <span class="status" id="status"><i></i><span id="status-t">Idle</span></span>
+    <div class="spacer"></div>
+    <button class="run" id="run"><span class="dot"></span><span id="run-t">Inject Hamburg strike</span></button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="legend">
+    <div class="keys">
+      <span class="key"><i class="sw live"></i><span><b>Live</b> &mdash; the risk feed.
+        Real news, pulled now, in several languages.</span></span>
+      <span class="key"><i class="sw synth"></i><span><b>Synthetic</b> &mdash; the five
+        shipments and the injected strike, so a disruption can be shown on demand.</span></span>
+      <span class="key"><i class="sw draft"></i><span><b>Drafted, never sent</b> &mdash;
+        no email leaves this machine.</span></span>
+    </div>
+    <div class="said">&ldquo;The risk detection is real &mdash; it runs against live news
+      right now. The shipments are synthetic, so I can show you a disruption on demand
+      instead of waiting for one.&rdquo;</div>
+  </div>
+
+  <div class="cols">
+    <div>
+      <div class="panel">
+        <div class="panel-h"><h2>Risk feed</h2><span class="chip live">live</span>
+             <span class="count" id="ev-n">0</span></div>
+        <div class="feed" id="feed">
+          <div class="empty">No active events.<br>Press the button to run a cycle.</div>
+        </div>
+        <div class="sources" id="sources"></div>
+      </div>
+      <div class="notes" id="notes"></div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <div class="panel-h"><h2>Shipments in transit</h2><span class="chip synth">synthetic</span>
+             <span class="count" id="sh-n">5</span></div>
+        <div class="tally" id="tally">
+          <span><b>5</b> on plan</span>
+        </div>
+      </div>
+      <div class="grid" id="grid" style="margin-top:11px"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c =>
+  ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const LABEL = {green:"On plan", rerouted:"Rerouted", hold:"Hold"};
+
+let board = [];
+const openCards = new Set();
+
+/* ---------- shipment cards ---------- */
+function cardHTML(s){
+  const d = s.decision;
+  const idle = !d;
+  const eta = d && d.delay_days
+    ? `<span class="was">${esc(d.original_eta)}</span>${esc(d.revised_eta)}`
+    : esc(s.eta);
+  const breach = d && d.deadline_breached
+    ? `<div class="breach">misses ${esc(d.required_by)}</div>` : "";
+
+  return `
+  <div class="card ${s.state} ${idle?"idle":""} ${openCards.has(s.id)?"open":""}" data-id="${esc(s.id)}">
+    <div class="card-h">
+      <span class="badge ${s.state}">${LABEL[s.state]}</span>
+      <div class="who">
+        <div class="id">${esc(s.id)}${s.cold_chain?" &middot; cold chain":""}</div>
+        <div class="cargo">${esc(s.cargo)}</div>
+        <div class="lane">${esc(s.origin)} &rarr; ${esc(s.final_destination)}</div>
+      </div>
+      ${d ? `<div class="head-line">${esc(d.headline)}${
+        d.fallback ? `<span class="fb" title="The AI provider was unavailable, so this came from the deterministic fallback">rule</span>` : ""}</div>` : ""}
+      <div class="eta">
+        <div class="lab">${d && d.delay_days ? "Revised ETA" : "ETA"}</div>
+        <div class="val">${eta}</div>${breach}
+      </div>
+      ${idle ? "" : `<span class="chev">&#9654;</span>`}
+    </div>
+    ${idle ? "" : `<div class="body">${bodyHTML(s, d)}</div>`}
+  </div>`;
+}
+
+function bodyHTML(s, d){
+  let html = `<div class="sec"><h3>Why</h3><div class="reason">${esc(d.reasoning)}</div>`;
+
+  if (d.rejected_options && d.rejected_options.length){
+    html += `<ul class="rejected">` + d.rejected_options.map(o =>
+      `<li><b>${esc(o.route_id)}</b> &mdash; ${esc(o.why_not)}</li>`).join("") + `</ul>`;
+  }
+  html += `</div>`;
+
+  if (d.decision === "reroute"){
+    html += `<div class="sec"><h3>Routing change</h3><div class="reason">
+      ${esc(d.route_before)} &rarr; <b>${esc(d.recommended_route)}</b><br>
+      <span style="color:var(--ink-2);font-size:13px">
+        ${esc(d.recommended_route_description || "")} &middot;
+        discharge ${esc(d.recommended_discharge_port || "")} &middot;
+        then ${esc(d.recommended_inland_leg || "")}</span>
+    </div></div>`;
+  }
+
+  html += `<div class="sec"><h3>Reasoning trail</h3><ul class="trail">` +
+    (d.reasoning_trail || []).map(t =>
+      `<li><span class="k">${esc(t.check)}</span> &mdash; ${esc(t.finding)}</li>`).join("") +
+    `</ul></div>`;
+
+  if (s.drafts && s.drafts.length){
+    html += `<div class="sec"><h3>Drafted emails <span class="notsent">not sent</span></h3>` +
+      s.drafts.map(m => `
+        <div class="mail">
+          <div class="mail-h">
+            <div class="to">To the ${esc(m.audience)}: ${esc(m.to)}</div>
+            <div class="subj">${esc(m.subject)}</div>
+          </div>
+          <div class="mail-b">${esc(m.body)}</div>
+        </div>` +
+        (m.warnings && m.warnings.length
+          ? `<div class="warn">Fix before sending: ${m.warnings.map(esc).join("; ")}</div>` : "")
+      ).join("") + `</div>`;
+  }
+
+  html += `<div class="meta">decided by ${esc(d.decided_by)} &middot;
+           confidence ${esc(d.confidence)} &middot; ${esc(d.slack_days)} days of slack</div>`;
+  return html;
+}
+
+function renderBoard(){
+  $("grid").innerHTML = board.map(cardHTML).join("");
+  $("sh-n").textContent = board.length;
+  document.querySelectorAll(".card:not(.idle) .card-h").forEach(h => {
+    h.onclick = () => {
+      const card = h.parentElement, id = card.dataset.id;
+      card.classList.toggle("open");
+      card.classList.contains("open") ? openCards.add(id) : openCards.delete(id);
+    };
+  });
+}
+
+function setStatus(cls, text){
+  $("status").className = "status " + cls;
+  $("status-t").textContent = text;
+}
+
+function renderTally(sum){
+  $("tally").innerHTML = sum
+    ? `<span><b>${sum.reroute}</b> rerouted</span><span><b>${sum.hold}</b> held</span>
+       <span><b>${sum["no-action"]}</b> on plan</span>
+       <span><b>${sum.drafts}</b> drafts, none sent</span>`
+    : `<span><b>${board.length}</b> on plan</span>`;
+}
+
+/* ---------- risk feed ---------- */
+function renderRisk(risk){
+  const events = risk.events || [];
+  $("ev-n").textContent = events.length;
+  $("feed").innerHTML = events.length ? events.map(e => `
+    <div class="event ${e.origin}">
+      <div class="tags">
+        <span class="tag ${e.origin === "injected" ? "inj" : "live"}">
+          ${e.origin === "injected" ? "scripted" : "live"}</span>
+        <span class="tag ${esc(e.severity)}">${esc(e.severity)}</span>
+        <span class="tag">${esc(e.chokepoint)} ${esc(e.type)}</span>
+        <span class="tag lang">${esc((e.source_language || "").toUpperCase())}</span>
+      </div>
+      <div class="title">${esc(e.title)}</div>
+      ${e.title_original ? `<div class="orig">${esc(e.title_original)}</div>` : ""}
+      <div class="src">${esc(e.detected_first_from || e.source)}${
+        e.english_wire_lag_hours ? ` &middot; English wires ~${e.english_wire_lag_hours}h later` : ""}</div>
+      ${e.reasoning ? `<div class="why">${esc(e.reasoning)}</div>` : ""}
+    </div>`).join("")
+    : `<div class="empty">No active events.<br>Press the button to run a cycle.</div>`;
+
+  const srcs = risk.sources || [];
+  if (!srcs.length){ $("sources").innerHTML = ""; return; }
+  const ok = srcs.filter(s => s.status === "ok").length;
+  const bad = srcs.filter(s => s.status === "failed");
+  $("sources").innerHTML =
+    `<div class="row"><span class="ok-m">&#10003;</span> ${ok} of ${srcs.length} sources read</div>` +
+    (bad.length ? `<div class="row"><span class="fail-m">&#33;</span> unavailable: ` +
+      esc(bad.slice(0,4).map(s => s.name.replace(/^(RSS|GDELT|PEGELONLINE): /, "")).join(", ")) +
+      (bad.length > 4 ? ` +${bad.length-4} more` : "") + `</div>` : "");
+}
+
+/* ---------- the run ---------- */
+async function load(){
+  const r = await fetch("/api/initial").then(r => r.json());
+  board = r.shipments; renderBoard(); renderTally(null);
+}
+
+async function run(){
+  const btn = $("run");
+  setStatus("working", "Working");
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spin"></span><span>Reading sources&hellip;</span>`;
+  const steps = ["Reading sources…","Classifying events…",
+                 "Triaging 5 shipments…","Drafting emails…"];
+  let i = 0;
+  const tick = setInterval(() => {
+    i = Math.min(i + 1, steps.length - 1);
+    btn.innerHTML = `<span class="spin"></span><span>${steps[i]}</span>`;
+  }, 1400);
+
+  try{
+    const res = await fetch("/run", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({live:true, inject:true, use_llm:true})
+    }).then(r => r.json());
+    clearInterval(tick);
+
+    if (res.state === "error"){
+      setStatus("", "Run failed");
+      $("notes").innerHTML = `<div class="note">${esc(res.error)}</div>`;
+    } else {
+      renderRisk(res.risk);
+      board = res.shipments;
+      renderBoard();
+      renderTally(res.summary);
+      $("notes").innerHTML = (res.notes || []).map(n => `<div class="note">${esc(n)}</div>`).join("");
+      setStatus("done", `Cycle complete · ${res.duration_seconds}s`);
+      // Stagger the state change so the triage reads as a sweep, not a repaint.
+      document.querySelectorAll(".card").forEach((c, n) =>
+        setTimeout(() => c.classList.add("flip"), n * 110));
+    }
+  } catch(err){
+    clearInterval(tick);
+    setStatus("", "Run failed");
+    $("notes").innerHTML = `<div class="note">Could not reach the server: ${esc(err.message)}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span class="dot"></span><span>Run again</span>`;
+  }
+}
+
+$("run").onclick = run;
+load();
+</script>
+</body>
+</html>

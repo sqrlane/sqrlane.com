@@ -5,12 +5,27 @@ model, or retune a threshold, this is the only file you touch.
 """
 
 import os
+import tempfile
 from pathlib import Path
 
 from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parent.parent
-load_dotenv(ROOT / ".env")
+load_dotenv(ROOT / ".env")     # absent on a deployed host; env vars are used instead
+
+
+def _env_int(name: str, default: int) -> int:
+    """Read an int from the environment, falling back if unset or nonsense."""
+    try:
+        return int(os.getenv(name) or default)
+    except ValueError:
+        return default
+
+
+# Serverless hosts (Vercel, Lambda) give you a read-only application directory
+# and a short execution ceiling. Both change where state goes and how long the
+# live pull may take, so detect it once here rather than scattering checks.
+SERVERLESS = bool(os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
 
 # --- Paths -----------------------------------------------------------------
 
@@ -19,7 +34,15 @@ CHOKEPOINTS_FILE = DATA_DIR / "chokepoints.json"
 ROUTES_FILE = DATA_DIR / "routes.json"
 SHIPMENTS_FILE = DATA_DIR / "shipments.json"
 INJECTED_EVENTS_FILE = DATA_DIR / "injected_events.json"
-RISK_STATE_FILE = ROOT / "risk_state.json"
+
+# risk_state.json is the one file written at runtime. On a serverless host the
+# app directory is read-only and only the temp directory can be written, so the
+# state file goes there. Same process reads it back within the request, which is
+# all this needs - there is no database and no state kept between requests.
+_state_dir = os.getenv("RISK_STATE_DIR")
+if not _state_dir:
+    _state_dir = tempfile.gettempdir() if (SERVERLESS or not os.access(ROOT, os.W_OK)) else str(ROOT)
+RISK_STATE_FILE = Path(_state_dir) / "risk_state.json"
 
 # --- AI provider -----------------------------------------------------------
 # Read by llm.py and nowhere else. Swap providers by editing LLM_PROVIDER in .env.
@@ -44,7 +67,20 @@ LLM_TEMPERATURE = 0.0        # classification should be repeatable
 
 # --- HTTP ------------------------------------------------------------------
 
-HTTP_TIMEOUT_SECONDS = 20
+# Deliberately short. A dead source fails fast; the danger in a live demo is a
+# source that is merely SLOW, because it stalls the whole run.
+HTTP_TIMEOUT_SECONDS = _env_int("HTTP_TIMEOUT_SECONDS", 6 if SERVERLESS else 8)
+
+# Hard ceiling on the entire live pull. Once this is spent, whatever has not
+# been read is marked skipped and the cycle moves on. Thirteen sources at eight
+# seconds each would otherwise be nearly two minutes on its own - the whole
+# demo's budget - so this is what actually keeps the run on time.
+#
+# Deployed, the ceiling is the function's own timeout, and the LLM calls that
+# follow the pull need most of it. Both are tunable by environment variable so
+# a slow deploy can be trimmed without a code change.
+LIVE_PULL_BUDGET_SECONDS = _env_int("LIVE_PULL_BUDGET_SECONDS", 10 if SERVERLESS else 25)
+
 USER_AGENT = "trade-risk-agent/0.1 (demo prototype; contact: local)"
 
 # ===========================================================================
@@ -139,7 +175,7 @@ EVENT_TYPES = ["strike", "weather", "congestion", "geopolitical", "customs", "ot
 SEVERITIES = ["low", "medium", "high"]
 
 CLASSIFY_BATCH_SIZE = 8      # items per LLM call - keeps free-tier usage sane
-MAX_ITEMS_TO_CLASSIFY = 40   # hard ceiling on a single run
+MAX_ITEMS_TO_CLASSIFY = _env_int("MAX_ITEMS_TO_CLASSIFY", 16 if SERVERLESS else 40)
 
 
 # ===========================================================================

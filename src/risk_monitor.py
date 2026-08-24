@@ -72,6 +72,29 @@ def load_chokepoints() -> list[dict]:
     return _load_json(config.CHOKEPOINTS_FILE)["chokepoints"]
 
 
+class Budget:
+    """A wall-clock allowance for the whole live pull.
+
+    Sources are read one at a time, so without a shared ceiling one slow feed
+    delays every feed behind it. Each source checks the clock before it starts
+    and borrows only what is left.
+    """
+
+    def __init__(self, seconds: float):
+        self.total = seconds
+        self._deadline = time.monotonic() + seconds
+
+    def remaining(self) -> float:
+        return max(0.0, self._deadline - time.monotonic())
+
+    def spent(self) -> bool:
+        return self.remaining() <= 0.5      # under half a second is not worth starting
+
+    def timeout(self) -> float:
+        """Never wait longer than the budget has left."""
+        return max(1.0, min(config.HTTP_TIMEOUT_SECONDS, self.remaining()))
+
+
 class SourceReport:
     """Records how each source did, so the dashboard can say 'GDELT was down'
     instead of the whole demo falling over."""
@@ -98,18 +121,21 @@ class SourceReport:
 # ---------------------------------------------------------------------------
 
 
-def fetch_gdelt(report: SourceReport) -> list[dict]:
+def fetch_gdelt(report: SourceReport, budget: "Budget") -> list[dict]:
     """One narrow query at a time; a failing query never kills the others."""
     items = []
     for spec in config.GDELT_QUERIES:
         label = f"GDELT: {spec['label']}"
+        if budget.spent():
+            report.skipped(label, "live-pull time budget spent")
+            continue
         try:
             response = requests.get(
                 config.GDELT_ENDPOINT,
                 params={"query": spec["query"], "mode": "artlist", "format": "json",
                         "maxrecords": config.GDELT_MAX_RECORDS, "timespan": config.GDELT_TIMESPAN},
                 headers={"User-Agent": config.USER_AGENT},
-                timeout=config.HTTP_TIMEOUT_SECONDS,
+                timeout=budget.timeout(),
             )
             response.raise_for_status()
             articles = response.json().get("articles", [])
@@ -136,7 +162,7 @@ def fetch_gdelt(report: SourceReport) -> list[dict]:
         ]
         items.extend(found)
         report.ok(label, len(found))
-        time.sleep(config.GDELT_PAUSE_SECONDS)
+        time.sleep(min(config.GDELT_PAUSE_SECONDS, budget.remaining()))
     return items
 
 
@@ -154,16 +180,19 @@ def _parse_gdelt_date(seendate: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def fetch_rss(report: SourceReport) -> list[dict]:
+def fetch_rss(report: SourceReport, budget: "Budget") -> list[dict]:
     """One feed at a time; a dead feed is recorded and skipped, never fatal."""
     items = []
     for feed_spec in config.RSS_FEEDS:
         label = f"RSS: {feed_spec['name']} [{feed_spec['language']}]"
+        if budget.spent():
+            report.skipped(label, "live-pull time budget spent")
+            continue
         try:
             response = requests.get(
                 feed_spec["url"],
                 headers={"User-Agent": config.USER_AGENT},
-                timeout=config.HTTP_TIMEOUT_SECONDS,
+                timeout=budget.timeout(),
             )
             response.raise_for_status()
             parsed = feedparser.parse(response.content)
@@ -211,15 +240,18 @@ def _strip_html(text: str) -> str:
 # be understood, so these are classified by threshold and become events directly.
 
 
-def fetch_rhine_levels(report: SourceReport) -> list[dict]:
+def fetch_rhine_levels(report: SourceReport, budget: "Budget") -> list[dict]:
     events = []
     for gauge in config.RHINE_GAUGES:
         label = f"PEGELONLINE: {gauge['name']}"
+        if budget.spent():
+            report.skipped(label, "live-pull time budget spent")
+            continue
         try:
             response = requests.get(
                 f"{config.PEGELONLINE_ENDPOINT}/{gauge['station']}/W/currentmeasurement.json",
                 headers={"User-Agent": config.USER_AGENT},
-                timeout=config.HTTP_TIMEOUT_SECONDS,
+                timeout=budget.timeout(),
             )
             response.raise_for_status()
             measurement = response.json()
@@ -487,11 +519,15 @@ def run(*, live=True, inject=False, use_llm=True, verbose=True) -> dict:
     stats = {"raw_items": 0, "after_prefilter": 0, "llm_used": False}
 
     if live:
+        budget = Budget(config.LIVE_PULL_BUDGET_SECONDS)
         if verbose:
-            print("Pulling live sources ...")
-        raw_items += fetch_gdelt(report)
-        raw_items += fetch_rss(report)
-        events += fetch_rhine_levels(report)
+            print(f"Pulling live sources (up to {budget.total:.0f}s) ...")
+        raw_items += fetch_gdelt(report, budget)
+        raw_items += fetch_rss(report, budget)
+        events += fetch_rhine_levels(report, budget)
+        out_of_time = [e for e in report.entries if e["status"] == "skipped"]
+        if out_of_time and verbose:
+            print(f"  {len(out_of_time)} source(s) not reached inside the time budget")
 
         raw_items = deduplicate(raw_items)
         stats["raw_items"] = len(raw_items)

@@ -319,11 +319,16 @@ def decide_with_rules(assessment: dict) -> dict:
         viable.sort(key=lambda c: (c["projected_delay_days"][1], c["added_cost_index"]))
         for candidate in assessment["candidates"][1:]:
             if candidate not in viable[:1]:
-                rejected.append({
-                    "route_id": candidate["route_id"],
-                    "why_not": (f"projects {candidate['projected_delay_days'][1]}d of delay "
-                                f"against {slack}d of slack"),
-                })
+                if candidate["exposed_to"]:
+                    hit = ", ".join(sorted({x["chokepoint"] for x in candidate["exposed_to"]}))
+                    why = (f"adds {_days(candidate['added_transit_days'])} and still runs "
+                           f"through {hit}, so it projects "
+                           f"{candidate['projected_delay_days'][1]}d against "
+                           f"{_days(slack)} of slack")
+                else:
+                    why = (f"projects {candidate['projected_delay_days'][1]}d of delay "
+                           f"against {_days(slack)} of slack")
+                rejected.append({"route_id": candidate["route_id"], "why_not": why})
         if viable:
             best = viable[0]
             decision, route, notify = "reroute", best["route_id"], True
@@ -339,13 +344,28 @@ def decide_with_rules(assessment: dict) -> dict:
         else:
             decision, route, notify = "hold", current["route_id"], True
             headline = "No better option - hold and notify"
+            if not assessment["candidates"][1:]:
+                # Nothing booked as an alternate, but a manager will still ask
+                # about the obvious other ports. Answer it before they ask.
+                destination = assessment["shipment"]["final_destination"]
+                elsewhere = sorted({r["discharge_port"] for r in assessment["other_network_routes"]
+                                    if r["discharge_port"] != current["discharge_port"]})
+                if elsewhere:
+                    rejected.append({
+                        "route_id": "no alternate booked",
+                        "why_not": (f"discharging at {' or '.join(elsewhere)} instead would add "
+                                    f"road transit to {destination} and extra handling"
+                                    + (", and a cold-chain transfer"
+                                       if assessment["shipment"].get("cold_chain") else "")
+                                    + " on top of the detour"),
+                    })
             reasoning = (f"Staying put projects up to {_days(staying_worst)} of delay against "
                          f"{_days(slack)} of slack, but no alternate on file lands any better. "
                          f"Hold and tell the customer now.")
 
     return {"decision": decision, "recommended_route": route, "notify_customer": notify,
             "confidence": 0.4, "headline": headline,
-            "reasoning": reasoning + "  [RULE-BASED FALLBACK - no LLM was used.]",
+            "reasoning": reasoning,
             "rejected_options": rejected}
 
 
@@ -446,6 +466,9 @@ def advise(shipment: dict, routes: dict, events: list[dict], *, use_llm=True) ->
         "triggering_events": [e["event_id"] for e in assessment["current"]["exposed_to"]],
         "reasoning_trail": trail,
         "decided_by": decided_by,
+        # True only when the model was supposed to decide and could not. The
+        # no-risk short-circuit is a rule by design, so it is not a fallback.
+        "fallback": decided_by.startswith("rule (") and "no risk on this route" not in decided_by,
         "decided_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
     }
 
