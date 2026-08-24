@@ -245,16 +245,67 @@ h1,h2,h3,h4,p{margin:0}
 .st-amber{background:var(--amber-100); color:var(--amber)}
 
 /* ---------- source strip ---------- */
+/* The sources travel right to left as one continuous band. Three identical
+   copies of the row sit side by side inside the track; the track slides left
+   by exactly one copy's width and then snaps back to the start - at that
+   instant copy 2 is standing precisely where copy 1 was, so the restart is
+   invisible and the band reads as endless.
+
+   Only one row is written in the HTML. The other two are cloned from it at
+   the bottom of the page, so the source list is edited in one place and the
+   three copies cannot drift apart.
+
+   Every mark is an inline SVG drawn in this file - no image, no icon font,
+   nothing fetched. A logo strip that half-loads in front of an audience
+   looks broken, and this one cannot. */
 .strip{padding:34px 0; border-top:1px solid var(--border); background:var(--card)}
 .strip .lead{font-size:12px; line-height:16px; color:var(--faint); text-align:center;
-             margin-bottom:18px}
-.strip .list{display:flex; flex-wrap:wrap; gap:10px 26px; justify-content:center;
-             align-items:center}
-.strip .src{display:inline-flex; align-items:center; gap:7px; font-size:14px; font-weight:500;
-            color:var(--muted); letter-spacing:-.1px}
+             margin-bottom:22px}
+
+/* The viewport. overflow clips the band; the mask softens both ends so items
+   arrive and leave rather than appearing at a hard edge. */
+.strip .strip-view{position:relative; overflow:hidden; --fade:clamp(32px,7vw,140px);
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 var(--fade),
+                                     #000 calc(100% - var(--fade)),transparent 100%);
+          mask-image:linear-gradient(90deg,transparent 0,#000 var(--fade),
+                                     #000 calc(100% - var(--fade)),transparent 100%)}
+.strip .strip-track{display:flex; width:max-content}
+/* .go is added by the script once the copies exist - without it the strip is
+   a static list rather than a band sliding against empty space. */
+.strip .strip-track.go{animation:strip-slide 44s linear infinite; will-change:transform}
+.strip .strip-view:hover .strip-track.go{animation-play-state:paused}
+@keyframes strip-slide{
+  from{transform:translate3d(0,0,0)}
+  to{transform:translate3d(calc(-100% / 3),0,0)}
+}
+
+/* No gap on the track - that would break the one-third arithmetic. The seam
+   spacing comes from each row's own trailing padding instead. */
+.strip .strip-row{display:flex; align-items:center; gap:44px; padding-right:44px; flex:none}
+.strip .src{display:inline-flex; align-items:center; gap:9px; font-size:14px; font-weight:500;
+            color:var(--muted); letter-spacing:-.1px; white-space:nowrap}
+.strip .src .mk{width:19px; height:19px; flex:none; color:var(--faint);
+                fill:none; stroke:currentColor; stroke-width:1.7;
+                stroke-linecap:round; stroke-linejoin:round}
 .strip .src .lg{font-size:9px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
                 color:var(--faint); border:1px solid var(--border-strong); border-radius:3px;
                 padding:0 4px; line-height:14px}
+.strip .sprite{position:absolute; width:0; height:0; overflow:hidden}
+
+/* Asked for no motion, the band becomes what it was before: the same list,
+   centred, wrapped, standing still. */
+@media (prefers-reduced-motion:reduce){
+  .strip .strip-view{-webkit-mask-image:none; mask-image:none; padding:0 var(--gutter)}
+  /* .go has to be matched here too, or the rule that starts the animation
+     outranks this one and the band keeps moving. */
+  .strip .strip-track,
+  .strip .strip-track.go{width:auto; animation:none; justify-content:center}
+  /* flex:none is what keeps the row from wrapping while it is moving, so it
+     has to be released before the row can fold onto a second line. */
+  .strip .strip-row{flex:1 1 auto; max-width:100%; flex-wrap:wrap;
+                    justify-content:center; gap:12px 28px; padding-right:0}
+  .strip .strip-row.dup{display:none}
+}
 
 /* ---------- contrast cards (the gap) ---------- */
 .gap-grid{margin-top:40px}
@@ -592,15 +643,106 @@ h1,h2,h3,h4,p{margin:0}
 <section class="strip">
   <div class="wrap">
     <p class="lead">Watching, keyless and in the open</p>
-    <div class="list">
-      <span class="src">GDELT DOC 2.0</span>
-      <span class="src">tagesschau <span class="lg">de</span></span>
-      <span class="src">NDR Hamburg <span class="lg">de</span></span>
-      <span class="src">DW <span class="lg">de</span></span>
-      <span class="src">gCaptain <span class="lg">en</span></span>
-      <span class="src">Al Jazeera <span class="lg">en</span></span>
-      <span class="src">الجزيرة <span class="lg">ar</span></span>
-      <span class="src">PEGELONLINE</span>
+  </div>
+
+  <!-- The marks, defined once and referenced by every copy of the row. They
+       are drawn here rather than fetched: each one is a plain pictogram of
+       what the source is - a broadcast tower, an anchor, a river gauge -
+       not a reproduction of anyone's trademark. -->
+  <svg class="sprite" aria-hidden="true" focusable="false"><defs>
+
+    <!-- GDELT: the global news backbone -->
+    <symbol id="mk-globe" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.6"/>
+      <path d="M12 3.4c2.9 2.4 2.9 14.8 0 17.2M12 3.4c-2.9 2.4-2.9 14.8 0 17.2
+               M3.9 8.7h16.2M3.9 15.3h16.2"/>
+    </symbol>
+
+    <!-- NDR Hamburg: a regional broadcaster -->
+    <symbol id="mk-tower" viewBox="0 0 24 24">
+      <circle cx="12" cy="6.6" r="1.3" fill="currentColor" stroke="none"/>
+      <path d="M9.2 20.8 12 8.4l2.8 12.4"/>
+      <path d="M10.5 14.4h3M9.9 17.7h4.2"/>
+      <path d="M8.8 3.8a3.2 3.2 0 0 0 0 5.6"/>
+      <path d="M15.2 3.8a3.2 3.2 0 0 1 0 5.6"/>
+    </symbol>
+
+    <!-- tagesschau: the evening bulletin, on the hour -->
+    <symbol id="mk-clock" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.6"/>
+      <path d="M12 6.9V12l3.6 2.1"/>
+    </symbol>
+
+    <!-- DW: a broadcast carried outward -->
+    <symbol id="mk-wave" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.6"/>
+      <path d="M6.4 12.6q1.85-3.7 3.7 0t3.7 0 3.7 0"/>
+    </symbol>
+
+    <!-- NOS: a signal going out -->
+    <symbol id="mk-signal" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="1.9" fill="currentColor" stroke="none"/>
+      <path d="M7.6 7.6a6.2 6.2 0 0 0 0 8.8M16.4 7.6a6.2 6.2 0 0 1 0 8.8"/>
+      <path d="M4.4 4.4a10.7 10.7 0 0 0 0 15.2M19.6 4.4a10.7 10.7 0 0 1 0 15.2"/>
+    </symbol>
+
+    <!-- Le Monde: a newspaper of record -->
+    <symbol id="mk-paper" viewBox="0 0 24 24">
+      <rect x="3.6" y="5.6" width="16.8" height="12.8" rx="1.8"/>
+      <path d="M6.9 9.4h7.4M6.9 12.6h10.2M6.9 15.4h10.2"/>
+    </symbol>
+
+    <!-- France Info: the hexagon -->
+    <symbol id="mk-hex" viewBox="0 0 24 24">
+      <path d="M12 3.4 19.4 7.7v8.6L12 20.6 4.6 16.3V7.7Z"/>
+      <circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/>
+    </symbol>
+
+    <!-- RTVE: public television -->
+    <symbol id="mk-tv" viewBox="0 0 24 24">
+      <rect x="3.4" y="8.6" width="17.2" height="11.4" rx="2"/>
+      <path d="M8.2 4.2 12 8.6l3.8-4.4"/>
+    </symbol>
+
+    <!-- Al Jazeera: al-jazeera, the island -->
+    <symbol id="mk-drop" viewBox="0 0 24 24">
+      <path d="M12 3.2c3.5 3.7 6.2 6.9 6.2 9.8a6.2 6.2 0 0 1-12.4 0c0-2.9 2.7-6.1 6.2-9.8Z"/>
+    </symbol>
+
+    <!-- gCaptain: the maritime trade press -->
+    <symbol id="mk-anchor" viewBox="0 0 24 24">
+      <circle cx="12" cy="4.9" r="2.4"/>
+      <path d="M12 7.3v13.4"/>
+      <path d="M8.6 10.6h6.8"/>
+      <path d="M5.8 12.6H3.6a8.4 8.4 0 0 0 16.8 0h-2.2"/>
+    </symbol>
+
+    <!-- PEGELONLINE: a river gauge standing in the water -->
+    <symbol id="mk-gauge" viewBox="0 0 24 24">
+      <rect x="8.2" y="2.6" width="3.8" height="14.6" rx=".9"/>
+      <path d="M8.2 5.9h1.9M8.2 8.7h1.9M8.2 11.5h1.9M8.2 14.3h1.9"/>
+      <path d="M2.6 17.7q2.2-2 4.4 0t4.4 0 4.4 0 4.4 0"/>
+      <path d="M5.4 20.5q2.2-1.8 4.4 0t4.4 0t4.4 0"/>
+    </symbol>
+
+  </defs></svg>
+
+  <div class="strip-view">
+    <div class="strip-track">
+      <div class="strip-row">
+        <span class="src"><svg class="mk"><use href="#mk-globe"/></svg>GDELT DOC 2.0</span>
+        <span class="src"><svg class="mk"><use href="#mk-tower"/></svg>NDR Hamburg <span class="lg">de</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-clock"/></svg>tagesschau <span class="lg">de</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-wave"/></svg>DW <span class="lg">de</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-signal"/></svg>NOS Nieuws <span class="lg">nl</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-paper"/></svg>Le Monde <span class="lg">fr</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-hex"/></svg>France Info <span class="lg">fr</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-tv"/></svg>RTVE <span class="lg">es</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-drop"/></svg>الجزيرة <span class="lg">ar</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-drop"/></svg>Al Jazeera <span class="lg">en</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-anchor"/></svg>gCaptain <span class="lg">en</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-gauge"/></svg>PEGELONLINE</span>
+      </div>
     </div>
   </div>
 </section>
@@ -1232,6 +1374,29 @@ firm revised ETA as soon as terminals restart.</p>
     });
   }, { rootMargin: "0px 0px -8% 0px", threshold: 0.05 });
   items.forEach(function (el) { io.observe(el); });
+})();
+
+/* The source band. One row is written in the HTML; two hidden copies are
+   cloned beside it here, so the list is only ever edited in one place. Three
+   copies is what makes the loop seamless: the track slides left by exactly
+   one copy's width, and at that point copy 2 is standing where copy 1 was.
+   Three rather than two so the band still fills a very wide screen at the
+   moment it restarts.
+
+   The animation is only switched on once the copies exist - if this script
+   never runs, the strip stays a plain static list rather than a short band
+   sliding off into empty space. */
+(function () {
+  var track = document.querySelector(".strip .strip-track");
+  var row = track && track.querySelector(".strip-row");
+  if (!row) return;
+  for (var i = 0; i < 2; i++) {
+    var copy = row.cloneNode(true);
+    copy.classList.add("dup");
+    copy.setAttribute("aria-hidden", "true");
+    track.appendChild(copy);
+  }
+  track.classList.add("go");
 })();
 
 /* The approve buttons are the same gesture as the real board: a state change
