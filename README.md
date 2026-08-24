@@ -40,7 +40,16 @@ cp .env.example .env        # then paste a free API key into .env
 uvicorn src.app:app --reload
 ```
 
-Open **http://127.0.0.1:8000** and press **Inject Hamburg strike**.
+Open **http://127.0.0.1:8000** for the landing page, then **Open the demo** —
+or go straight to **http://127.0.0.1:8000/app** and press **Inject Hamburg strike**.
+
+
+| Route | What |
+|---|---|
+| `/` | Landing page — what this is, and what is real about it |
+| `/app` | The dashboard. This is the demo, and the button lives here |
+| `/api/health` | What a running instance can actually see. First stop when a deploy misbehaves |
+| `POST /run` | One cycle: refresh risk, decide, draft |
 
 For the AI key, pick one free provider and put it in `.env`:
 
@@ -103,7 +112,7 @@ oversight is the responsible design, not a missing feature.
 | **Risk Monitor** | `src/risk_monitor.py` | Pulls GDELT, multilingual RSS and Rhine gauges. An LLM classifies each item for logistics relevance → chokepoint, type, severity. |
 | **Route Advisor** | `src/route_advisor.py` | Weighs schedule slack against added transit against expected disruption delay. Decides reroute / hold / no-action, and records the trail. |
 | **Comms Agent** | `src/comms_agent.py` | Drafts a carrier email and a customer email, in two deliberately different voices. Sends nothing. |
-| **Orchestrator** | `src/orchestrator.py` | The loop, plus `src/app.py` (FastAPI) and `static/index.html` (the dashboard). |
+| **Orchestrator** | `src/orchestrator.py` | The loop, plus `src/app.py` (FastAPI), `static/index.html` (the dashboard) and `static/landing.html` (the front page). |
 
 Each Worker reports what it handled on every run — sources read, shipments triaged,
 drafts written, and how many came from the model rather than the deterministic
@@ -207,7 +216,8 @@ business is the integration, trust and liability wall, which is real work for la
 ```
 data/     the screenplay - chokepoints, routes, 5 shipments, the injected strike
 src/      the four components + llm.py (the only door to the AI provider) + config.py
-static/   index.html - the dashboard, one self-contained file
+static/   landing.html - the front page  ·  index.html - the dashboard
+          fonts/ - Geist Sans + Mono, self-hosted (no CDN, ever)
 *.md      the planning docs; CLAUDE.md is the working summary
 ```
 

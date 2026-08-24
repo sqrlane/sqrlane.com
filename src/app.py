@@ -1,8 +1,10 @@
 """app.py - the web layer. Serves the dashboard and exposes the trigger.
 
-Two endpoints and a static file. That is the whole backend:
+A handful of routes and two static pages. That is the whole backend:
 
-    GET  /              the dashboard
+    GET  /              the landing page - what this is, before you press anything
+    GET  /app           the dashboard (the demo itself)
+    GET  /fonts/{file}  the self-hosted Geist faces the pages are set in
     GET  /api/initial   the calm 'before' board, so the page renders instantly
     POST /run           the trigger button - runs the orchestrator, returns JSON
 
@@ -22,7 +24,9 @@ from pydantic import BaseModel
 from src import config, llm, orchestrator
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
-INDEX = STATIC_DIR / "index.html"
+INDEX = STATIC_DIR / "index.html"        # the dashboard, served at /app
+LANDING = STATIC_DIR / "landing.html"    # the marketing page, served at /
+FONTS_DIR = STATIC_DIR / "fonts"         # Geist, self-hosted: no CDN, ever
 
 app = FastAPI(title="Trade-Lane Risk & Reroute Agent",
               description="Demo prototype. Drafts emails; sends nothing.")
@@ -35,17 +39,45 @@ class RunRequest(BaseModel):
     use_llm: bool = True   # fall back to deterministic logic if this is false
 
 
-@app.get("/")
-def dashboard():
-    if not INDEX.exists():
-        # Only reachable if a deploy failed to bundle static/. Say which file is
-        # missing rather than throwing a 500 at whoever opened the page.
+def _page(path: Path, what: str):
+    """Serve a static page, or say which file is missing and why.
+
+    Only the missing branch is interesting: it is reachable when a deploy fails
+    to bundle static/, and a named file beats a 500 at whoever opened the page.
+    """
+    if not path.exists():
         return HTMLResponse(status_code=500, content=(
-            "<h1>Dashboard file missing</h1><p>Expected <code>"
-            f"{INDEX}</code>. If this is a deployed build, check that "
-            "<code>vercel.json</code> still lists <code>static/**</code> under "
-            "<code>includeFiles</code>.</p>"))
-    return FileResponse(INDEX)
+            f"<h1>{what} file missing</h1><p>Expected <code>{path}</code>. If this "
+            "is a deployed build, check that <code>vercel.json</code> still lists "
+            "<code>static/**</code> under <code>includeFiles</code>.</p>"))
+    return FileResponse(path)
+
+
+@app.get("/")
+def landing():
+    """The front door: what Lanewatch is, and what is real about it."""
+    return _page(LANDING, "Landing page")
+
+
+@app.get("/app")
+def dashboard():
+    """The demo itself. This is the page with the button."""
+    return _page(INDEX, "Dashboard")
+
+
+@app.get("/fonts/{filename}")
+def font(filename: str):
+    """Geist Sans and Geist Mono, served from static/fonts/.
+
+    Self-hosted on purpose: the pages must load no external asset, so flaky wifi
+    in front of an audience cannot strip the typography or blank the page.
+    """
+    # Resolve and confine to FONTS_DIR so a crafted name cannot walk upward.
+    target = (FONTS_DIR / filename).resolve()
+    if not target.is_file() or FONTS_DIR.resolve() not in target.parents:
+        return JSONResponse(status_code=404, content={"error": "No such font."})
+    return FileResponse(target, media_type="font/woff2", headers={
+        "Cache-Control": "public, max-age=31536000, immutable"})
 
 
 @app.get("/api/health")
@@ -60,6 +92,8 @@ def health(request: Request):
         "path_seen_by_app": request.url.path,
         "serverless": config.SERVERLESS,
         "dashboard_present": INDEX.exists(),
+        "landing_present": LANDING.exists(),
+        "fonts_present": sorted(f.name for f in FONTS_DIR.glob("*.woff2")),
         "data_files_present": {
             f.name: f.exists() for f in (
                 config.CHOKEPOINTS_FILE, config.ROUTES_FILE,

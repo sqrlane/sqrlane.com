@@ -45,7 +45,8 @@ it**, in plain language, at the end of every phase. Prefer obvious code over cle
 ## Current state
 
 **All five phases are built.** The demo runs end to end: `uvicorn src.app:app --reload`, then open
-http://127.0.0.1:8000 and press the button. `README.md` is the front door for anyone new.
+http://127.0.0.1:8000 for the landing page and http://127.0.0.1:8000/app for the board with
+the button. `README.md` is the front door for anyone new.
 
 It is also **deployed on Vercel** and running against the live Groq key there.
 
@@ -163,7 +164,9 @@ transport anywhere in `src/` for it to trigger, and a test asserts that.
 │   ├── orchestrator.py       # component 4 (the loop)
 │   └── app.py                # FastAPI: serves the page + /run
 ├── static/
-│   └── index.html            # the dashboard (HTML+CSS+JS in one file)
+│   ├── landing.html          # the front page (HTML+CSS+JS in one file)
+│   ├── index.html            # the dashboard (HTML+CSS+JS in one file)
+│   └── fonts/                # Geist Sans + Mono, self-hosted - never a CDN
 └── risk_state.json           # written at runtime (gitignored)
 ```
 
@@ -332,8 +335,9 @@ days and ordering exactly as the screenplay authored them.
 uvicorn src.app:app --reload      # then open http://127.0.0.1:8000
 ```
 
-`GET /api/initial` renders the calm five-green-cards board instantly; `POST /run` is
-the button. `GET /api/health` reports what a running instance can actually see — the
+`/` is the landing page and `/app` is the dashboard; both are single self-contained
+files. `GET /api/initial` renders the calm five-green-cards board instantly; `POST /run`
+is the button. `GET /api/health` reports what a running instance can actually see — the
 path it received, whether the dashboard and data files shipped, and whether a provider
 is configured. It is the first thing to check when a deploy misbehaves. The page is a single self-contained file — no CDN, no external font, no
 network call beyond its own API — so flaky wifi cannot blank it.
@@ -417,6 +421,10 @@ Scope creep is the failure mode here. None of these are in this build:
 - **Fail soft in front of an audience.** If a live source is slow or down, run the injected scenario
   anyway and show a small note. Never crash the demo.
 - **Never commit `.env`.** If it's about to be staged, stop.
+- **Both pages are set in Geist**, served from `static/fonts/` — the same typographic
+  scale the dashboard's colour tokens came from, so the two pages read as one product.
+  Self-hosted, never a CDN: an external font request is one more thing that can fail in
+  front of an audience, and a page that loses its type looks broken.
 
 ---
 

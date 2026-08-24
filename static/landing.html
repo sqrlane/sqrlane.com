@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lanewatch — trade-lane risk, decided</title>
+<meta name="description" content="Lanewatch reads global news in six languages, works out which shipments are exposed, decides reroute or hold, and drafts the emails. The reasoning is recorded for every call.">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3.5' fill='%23171717'/%3E%3Cpath d='M3 11.2h10M3 8h6.5M3 4.8h3.5' stroke='%23fff' stroke-width='1.7' stroke-linecap='round'/%3E%3C/svg%3E">
+
+<style>
+/* ==================================================================
+   Lanewatch landing page.
+
+   Typography and colour are the Geist design language, taken from the
+   token set in Franvy/limns-admin: the same gray scale, the same
+   6/12/16px radii, the same near-invisible shadows, and the same
+   headings-tighten-as-they-grow tracking rule (-0.04em at 24px and up).
+   Geist Sans and Geist Mono are served from static/fonts/ - nothing on
+   this page is fetched from another host, so bad wifi cannot blank it.
+
+   Light theme only, deliberately. Colour is spent on state, never on
+   decoration.
+   ================================================================== */
+
+@font-face{
+  font-family:"Geist";
+  src:url("/fonts/Geist-Variable.woff2") format("woff2-variations"),
+      url("/fonts/Geist-Variable.woff2") format("woff2");
+  font-weight:100 900; font-style:normal; font-display:swap;
+}
+@font-face{
+  font-family:"Geist Mono";
+  src:url("/fonts/GeistMono-Variable.woff2") format("woff2-variations"),
+      url("/fonts/GeistMono-Variable.woff2") format("woff2");
+  font-weight:100 900; font-style:normal; font-display:swap;
+}
+
+:root{
+  /* surfaces */
+  --bg:#fafafa;            /* background-200 */
+  --card:#ffffff;          /* background-100 */
+  --card-muted:#fafafa;
+
+  /* text */
+  --fg:#171717;            /* gray-1000 */
+  --muted:#4d4d4d;         /* gray-900 */
+  --faint:#8f8f8f;         /* gray-700 */
+
+  /* borders */
+  --border:#00000014;      /* gray-alpha-400 */
+  --border-strong:#00000024;
+
+  /* geist gray */
+  --gray-100:#f2f2f2; --gray-200:#ebebeb; --gray-300:#e6e6e6;
+  --gray-400:#dbdbdb; --gray-500:#c9c9c9; --gray-600:#a8a8a8;
+
+  /* accents - constant Geist scales */
+  --blue:#006bff;   --blue-100:#f0f7ff; --blue-400:#cae7ff;
+  --green:#107d32;  --green-100:#ecfdec; --green-400:#b9f5bc;
+  --amber:#aa4d00;  --amber-100:#fff6de; --amber-400:#ffdc73;
+  --red:#ea001d;    --red-100:#ffeeef;  --red-400:#ffd7d6;
+
+  --r-sm:6px; --r-md:12px; --r-lg:16px;
+
+  --shadow-card:0 2px 2px rgba(0,0,0,.04);
+  --shadow-pop:0 1px 1px rgba(0,0,0,.02),0 4px 8px -4px rgba(0,0,0,.04),
+               0 16px 24px -8px rgba(0,0,0,.06);
+  --shadow-lift:0 1px 1px rgba(0,0,0,.02),0 8px 16px -4px rgba(0,0,0,.04),
+                0 24px 32px -8px rgba(0,0,0,.06);
+
+  --ease:cubic-bezier(.175,.885,.32,1.1);
+  --gutter:24px;
+  --maxw:1120px;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%; scroll-behavior:smooth; scroll-padding-top:88px}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font-family:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:16px; line-height:24px;
+  font-feature-settings:"rlig" 1,"calt" 1;
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+}
+::selection{background:color-mix(in srgb,var(--blue) 20%,transparent)}
+a{color:inherit; text-decoration:none}
+h1,h2,h3,h4,p{margin:0}
+.mono{font-family:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+      font-feature-settings:normal}
+.tabular{font-variant-numeric:tabular-nums}
+
+/* ---------- Geist type scale, extended upward for display sizes ---------- */
+.d1{font-size:64px; line-height:68px; letter-spacing:-3.2px; font-weight:600}
+.d2{font-size:44px; line-height:50px; letter-spacing:-2px;   font-weight:600}
+.h32{font-size:32px; line-height:40px; letter-spacing:-1.28px; font-weight:600}
+.h24{font-size:24px; line-height:32px; letter-spacing:-.96px;  font-weight:600}
+.h20{font-size:20px; line-height:28px; letter-spacing:-.4px;   font-weight:600}
+.h16{font-size:16px; line-height:24px; letter-spacing:-.32px;  font-weight:600}
+.h14{font-size:14px; line-height:20px; letter-spacing:-.28px;  font-weight:600}
+.copy18{font-size:18px; line-height:28px; letter-spacing:-.2px; color:var(--muted)}
+.copy16{font-size:16px; line-height:24px; color:var(--muted)}
+.copy14{font-size:14px; line-height:20px; color:var(--muted)}
+.copy13{font-size:13px; line-height:18px; color:var(--muted)}
+.lab12{font-size:12px; line-height:16px; font-weight:500}
+.eyebrow{font-size:11px; line-height:16px; font-weight:500; letter-spacing:.08em;
+         text-transform:uppercase; color:var(--faint)}
+
+/* ---------- layout ---------- */
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 var(--gutter)}
+.section{padding:88px 0; border-top:1px solid var(--border)}
+.section.flush{border-top:0}
+.head{max-width:660px}
+.head .eyebrow{margin-bottom:14px}
+.head p{margin-top:16px}
+
+/* ---------- primitives ---------- */
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:8px;
+     height:40px; padding:0 16px; border-radius:var(--r-sm); border:1px solid transparent;
+     font-size:14px; line-height:20px; font-weight:500; cursor:pointer;
+     transition:background .15s var(--ease), border-color .15s var(--ease),
+                transform .15s var(--ease), box-shadow .15s var(--ease);
+     white-space:nowrap; font-family:inherit}
+.btn-primary{background:var(--fg); color:#fff}
+.btn-primary:hover{background:#383838; transform:translateY(-1px);
+                   box-shadow:0 4px 10px -4px rgba(0,0,0,.25)}
+.btn-secondary{background:var(--card); color:var(--fg); border-color:var(--border-strong)}
+.btn-secondary:hover{background:var(--gray-100); transform:translateY(-1px)}
+.btn-lg{height:44px; padding:0 20px; font-size:15px}
+.btn svg{flex:none}
+
+.pill{display:inline-flex; align-items:center; gap:8px; height:28px; padding:0 12px;
+      border-radius:999px; background:var(--card); border:1px solid var(--border-strong);
+      font-size:12px; line-height:16px; font-weight:500; color:var(--muted);
+      box-shadow:var(--shadow-card)}
+.pill .dot{width:6px; height:6px; border-radius:50%; background:var(--green);
+           box-shadow:0 0 0 3px var(--green-100); flex:none}
+
+.chip{display:inline-flex; align-items:center; gap:5px; padding:2px 7px; border-radius:4px;
+      font-size:10px; line-height:16px; font-weight:600; letter-spacing:.05em;
+      text-transform:uppercase; background:var(--gray-100); color:var(--muted)}
+.chip.live{background:var(--green-100); color:var(--green)}
+.chip.synth{background:var(--amber-100); color:var(--amber)}
+.chip.blue{background:var(--blue-100); color:var(--blue)}
+.chip.red{background:var(--red-100); color:var(--red)}
+.chip.plain{background:transparent; border:1px solid var(--border-strong); color:var(--faint)}
+
+.card{background:var(--card); border:1px solid var(--border); border-radius:var(--r-md);
+      box-shadow:var(--shadow-card)}
+.grid{display:grid; gap:16px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+
+/* ---------- top banner ---------- */
+.banner{background:var(--fg); color:#fff; font-size:13px; line-height:18px;
+        padding:9px 0; text-align:center}
+.banner .wrap{display:flex; align-items:center; justify-content:center; gap:10px;
+              flex-wrap:wrap}
+.banner b{font-weight:600}
+.banner span{color:#a8a8a8}
+
+/* ---------- nav ---------- */
+.nav{position:sticky; top:0; z-index:50; background:rgba(250,250,250,.82);
+     backdrop-filter:saturate(180%) blur(12px);
+     -webkit-backdrop-filter:saturate(180%) blur(12px);
+     border-bottom:1px solid var(--border)}
+.nav .wrap{height:64px; display:flex; align-items:center; gap:32px}
+.brand{display:flex; align-items:center; gap:10px}
+.mark{width:28px; height:28px; border-radius:var(--r-sm); background:var(--fg);
+      display:flex; align-items:center; justify-content:center; flex:none}
+.brand .name{font-size:16px; font-weight:600; letter-spacing:-.32px}
+.nav-links{display:flex; align-items:center; gap:4px; margin-left:8px}
+.nav-links a{padding:6px 10px; border-radius:var(--r-sm); font-size:14px; line-height:20px;
+             color:var(--muted); transition:background .15s var(--ease), color .15s var(--ease)}
+.nav-links a:hover{background:var(--gray-100); color:var(--fg)}
+.nav .right{margin-left:auto; display:flex; align-items:center; gap:10px}
+.nav .ghost{font-size:14px; color:var(--muted); padding:6px 10px; border-radius:var(--r-sm)}
+.nav .ghost:hover{background:var(--gray-100); color:var(--fg)}
+
+/* ---------- hero ---------- */
+.hero{padding:88px 0 0; text-align:center; position:relative; overflow:hidden}
+.hero::before{content:""; position:absolute; inset:0 0 auto; height:520px; z-index:0;
+  background:
+    radial-gradient(680px 300px at 50% -40px, rgba(0,107,255,.07), transparent 70%),
+    linear-gradient(to bottom, rgba(255,255,255,.9), transparent);
+  pointer-events:none}
+.hero .wrap{position:relative; z-index:1}
+.hero h1{margin:22px auto 0; max-width:15ch}
+.hero .sub{margin:22px auto 0; max-width:60ch}
+.hero .cta{margin-top:30px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap}
+.hero .under{margin-top:16px; font-size:13px; line-height:18px; color:var(--faint)}
+
+/* ---------- product mock (a real-looking Lanewatch board, in HTML) ------- */
+.shot{margin:56px auto 0; max-width:1000px; position:relative}
+.shot::after{content:""; position:absolute; left:6%; right:6%; bottom:-1px; height:150px;
+  background:linear-gradient(to bottom, transparent, var(--bg) 85%); pointer-events:none}
+.frame{background:var(--card); border:1px solid var(--border-strong); border-radius:var(--r-lg);
+       box-shadow:var(--shadow-lift); overflow:hidden; text-align:left}
+.frame-bar{height:38px; display:flex; align-items:center; gap:7px; padding:0 14px;
+           border-bottom:1px solid var(--border); background:var(--card-muted)}
+.frame-bar i{width:9px; height:9px; border-radius:50%; background:var(--gray-400); flex:none}
+.frame-bar .url{margin-left:12px; font-size:11px; color:var(--faint);
+                background:var(--card); border:1px solid var(--border); border-radius:999px;
+                padding:2px 12px}
+.board{display:flex; min-height:392px}
+.board-side{width:186px; flex:none; border-right:1px solid var(--border); padding:12px 10px;
+            display:none}
+.board-side .t{font-size:10px; font-weight:500; letter-spacing:.07em; text-transform:uppercase;
+               color:var(--faint); padding:6px 8px}
+.board-side .i{display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:var(--r-sm);
+               font-size:13px; color:var(--muted)}
+.board-side .i.on{background:var(--gray-100); color:var(--fg); font-weight:500}
+.board-side .i .n{margin-left:auto; font-size:10px; font-weight:600; padding:0 6px;
+                  border-radius:999px; background:var(--gray-200); color:var(--muted)}
+.board-side .i.on .n{background:var(--fg); color:#fff}
+.board-main{flex:1; min-width:0; padding:16px}
+.board-top{display:flex; align-items:center; gap:10px; margin-bottom:14px}
+.board-top .h{font-size:14px; font-weight:600; letter-spacing:-.28px}
+.board-top .r{margin-left:auto; display:flex; gap:8px; align-items:center}
+.fake-btn{height:28px; padding:0 11px; border-radius:var(--r-sm); background:var(--fg);
+          color:#fff; font-size:12px; font-weight:500; display:flex; align-items:center; gap:6px}
+.mini-stats{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px}
+.ms{border:1px solid var(--border); border-radius:var(--r-sm); padding:10px 11px;
+    background:var(--card)}
+.ms .l{font-size:11px; color:var(--faint); line-height:15px}
+.ms .v{font-size:22px; font-weight:600; letter-spacing:-.9px; margin-top:3px; line-height:1.1}
+.ms .v.amber{color:var(--amber)} .ms .v.blue{color:var(--blue)}
+.rows{border:1px solid var(--border); border-radius:var(--r-sm); overflow:hidden}
+.row{display:flex; align-items:center; gap:12px; padding:10px 12px;
+     border-bottom:1px solid var(--border); background:var(--card)}
+.row:last-child{border-bottom:0}
+.row .id{font-family:"Geist Mono",ui-monospace,monospace; font-size:11.5px; color:var(--faint);
+         width:64px; flex:none}
+.row .lane{font-size:13px; font-weight:500; letter-spacing:-.1px; flex:1; min-width:0;
+           overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.row .meta{font-size:11.5px; color:var(--faint); flex:none;
+           font-variant-numeric:tabular-nums; display:none}
+.row .st{flex:none}
+.st-badge{display:inline-flex; align-items:center; gap:5px; padding:2px 8px; border-radius:999px;
+          font-size:11px; font-weight:500; line-height:18px}
+.st-badge i{width:5px; height:5px; border-radius:50%; background:currentColor; flex:none}
+.st-green{background:var(--green-100); color:var(--green)}
+.st-blue{background:var(--blue-100); color:var(--blue)}
+.st-amber{background:var(--amber-100); color:var(--amber)}
+
+/* ---------- source strip ---------- */
+.strip{padding:34px 0; border-top:1px solid var(--border); background:var(--card)}
+.strip .lead{font-size:12px; line-height:16px; color:var(--faint); text-align:center;
+             margin-bottom:18px}
+.strip .list{display:flex; flex-wrap:wrap; gap:10px 26px; justify-content:center;
+             align-items:center}
+.strip .src{display:inline-flex; align-items:center; gap:7px; font-size:14px; font-weight:500;
+            color:var(--muted); letter-spacing:-.1px}
+.strip .src .lg{font-size:9px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+                color:var(--faint); border:1px solid var(--border-strong); border-radius:3px;
+                padding:0 4px; line-height:14px}
+
+/* ---------- contrast cards (the gap) ---------- */
+.gap-grid{margin-top:40px}
+.gap-card{padding:22px; border-radius:var(--r-md); border:1px solid var(--border);
+          background:var(--card); box-shadow:var(--shadow-card); display:flex;
+          flex-direction:column; gap:12px}
+.gap-card.dim{background:var(--card-muted); box-shadow:none}
+.gap-card .n{font-family:"Geist Mono",ui-monospace,monospace; font-size:11px; color:var(--faint)}
+.gap-card .stops{margin-top:auto; padding-top:14px; border-top:1px solid var(--border);
+                 font-size:12px; line-height:16px; color:var(--faint)}
+.gap-card.us{border-color:var(--fg); box-shadow:var(--shadow-pop)}
+.gap-card.us .stops{color:var(--fg); font-weight:500}
+
+/* ---------- steps ---------- */
+.steps{margin-top:40px; counter-reset:step}
+.step{display:grid; grid-template-columns:52px 1fr; gap:20px; padding:26px 0;
+      border-top:1px solid var(--border)}
+.step:first-child{border-top:0; padding-top:0}
+.step .num{font-family:"Geist Mono",ui-monospace,monospace; font-size:13px; color:var(--faint);
+           padding-top:2px}
+.step .body h3{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+.step .body p{margin-top:8px; max-width:64ch}
+.step .facts{margin-top:14px; display:flex; flex-wrap:wrap; gap:8px}
+.fact{display:inline-flex; align-items:center; gap:7px; padding:5px 10px; border-radius:999px;
+      border:1px solid var(--border); background:var(--card-muted); font-size:12px;
+      line-height:16px; color:var(--muted)}
+.fact b{font-weight:500; color:var(--fg)}
+
+/* ---------- feature rows ---------- */
+.feature{display:grid; grid-template-columns:1fr 1fr; gap:56px; align-items:center}
+.feature.flip .fig{order:-1}
+.feature .txt p{margin-top:16px}
+.feature .bullets{margin:22px 0 0; padding:0; list-style:none; display:flex;
+                  flex-direction:column; gap:12px}
+.feature .bullets li{display:flex; gap:11px; font-size:15px; line-height:22px; color:var(--muted)}
+.feature .bullets svg{flex:none; margin-top:4px; color:var(--fg)}
+
+/* ---------- artifacts inside features ---------- */
+.art{background:var(--card); border:1px solid var(--border); border-radius:var(--r-md);
+     box-shadow:var(--shadow-pop); overflow:hidden;
+     display:flex; flex-direction:column}
+.art-b{flex:1}          /* pushes .mail-foot to the bottom of a stretched card */
+.art-h{padding:11px 14px; border-bottom:1px solid var(--border); display:flex;
+       align-items:center; gap:9px; background:var(--card-muted)}
+.art-h .ttl{font-size:12.5px; font-weight:600; letter-spacing:-.2px}
+.art-h .r{margin-left:auto}
+.art-b{padding:15px}
+.evt{padding:13px 14px; border:1px solid var(--border); border-radius:var(--r-sm);
+     background:var(--card)}
+.evt + .evt{margin-top:10px}
+.evt.first{border-color:var(--blue-400); background:var(--blue-100)}
+.evt .row1{display:flex; align-items:center; gap:8px; margin-bottom:7px; flex-wrap:wrap}
+.evt .de{font-size:14px; line-height:20px; font-weight:500; letter-spacing:-.2px}
+.evt .en{font-size:12.5px; line-height:18px; color:var(--muted); margin-top:5px}
+.evt .src{font-size:11.5px; line-height:16px; color:var(--faint); margin-top:9px;
+          display:flex; align-items:center; gap:6px; flex-wrap:wrap}
+.evt.late{opacity:.62}
+.lagline{display:flex; align-items:center; gap:10px; margin:12px 2px; color:var(--faint);
+         font-size:11.5px}
+.lagline .bar{flex:1; height:1px; background:var(--border-strong)}
+
+.trail{margin:0; padding:0; list-style:none}
+.trail li{position:relative; padding:0 0 14px 22px; font-size:13px; line-height:19px;
+          color:var(--muted)}
+.trail li:last-child{padding-bottom:0}
+.trail li::before{content:""; position:absolute; left:4px; top:6px; width:7px; height:7px;
+                  border-radius:50%; background:var(--card); border:1.5px solid var(--gray-500)}
+.trail li::after{content:""; position:absolute; left:7px; top:15px; bottom:0; width:1px;
+                 background:var(--border-strong)}
+.trail li:last-child::after{display:none}
+.trail li.done::before{background:var(--fg); border-color:var(--fg)}
+.trail li b{color:var(--fg); font-weight:500}
+
+.mail{font-size:13px; line-height:19px}
+.mail .fields{border-bottom:1px solid var(--border); padding-bottom:11px; margin-bottom:12px}
+.mail .f{display:flex; gap:10px; padding:2px 0}
+.mail .f .k{width:52px; flex:none; color:var(--faint); font-size:12px}
+.mail .f .v{color:var(--fg); font-size:12.5px; min-width:0; overflow:hidden;
+            text-overflow:ellipsis; white-space:nowrap}
+.mail .b{color:var(--muted); white-space:pre-line}
+.mail-foot{display:flex; align-items:center; gap:10px; padding:11px 14px;
+           border-top:1px solid var(--border); background:var(--card-muted)}
+.mail-foot .note{font-size:11.5px; color:var(--faint)}
+.mail-foot .approve{margin-left:auto; height:28px; padding:0 12px; border-radius:var(--r-sm);
+                    background:var(--fg); color:#fff; font-size:12px; font-weight:500;
+                    display:flex; align-items:center; gap:6px; border:0; cursor:pointer;
+                    font-family:inherit}
+.mail-foot .approve:hover{background:#383838}
+.mail-foot .approve.ok{background:var(--green-100); color:var(--green)}
+
+/* ---------- sources table ---------- */
+.tbl{border:1px solid var(--border); border-radius:var(--r-md); overflow:hidden;
+     background:var(--card); box-shadow:var(--shadow-card); margin-top:40px}
+.tbl .tr{display:grid; grid-template-columns:1.5fr 2.2fr .8fr; gap:16px; padding:14px 18px;
+         border-bottom:1px solid var(--border); align-items:center}
+.tbl .tr:last-child{border-bottom:0}
+.tbl .th{background:var(--card-muted); font-size:11px; font-weight:500; letter-spacing:.07em;
+         text-transform:uppercase; color:var(--faint)}
+.tbl .nm{font-size:14px; font-weight:500; letter-spacing:-.2px; display:flex;
+         align-items:center; gap:8px; flex-wrap:wrap}
+.tbl .ds{font-size:13px; line-height:19px; color:var(--muted)}
+.tbl .kx{justify-self:start}
+
+/* ---------- non-goals ---------- */
+.nots{margin-top:36px}
+.not{display:flex; gap:12px; padding:16px 18px; border:1px solid var(--border);
+     border-radius:var(--r-md); background:var(--card-muted)}
+.not svg{flex:none; margin-top:2px; color:var(--gray-600)}
+.not .k{font-size:14px; font-weight:500; letter-spacing:-.2px}
+.not .v{font-size:13px; line-height:19px; color:var(--muted); margin-top:3px}
+
+/* ---------- honest band ---------- */
+.honest .panel{padding:44px; border-radius:var(--r-lg); border:1px solid var(--border-strong);
+               background:var(--card); box-shadow:var(--shadow-pop); position:relative;
+               overflow:hidden}
+.honest .panel::before{content:""; position:absolute; inset:0 auto 0 0; width:3px;
+                       background:var(--fg)}
+.honest blockquote{margin:0; max-width:52ch}
+.honest .who{margin-top:22px; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+
+/* ---------- final cta ---------- */
+.final{text-align:center; padding:96px 0}
+.final p{margin:18px auto 0; max-width:52ch}
+.final .cta{margin-top:30px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap}
+.final .runline{margin-top:22px; display:inline-flex; align-items:center; gap:10px;
+                padding:7px 14px; border-radius:999px; background:var(--card);
+                border:1px solid var(--border-strong); box-shadow:var(--shadow-card)}
+.final .runline code{font-family:"Geist Mono",ui-monospace,monospace; font-size:12.5px;
+                     color:var(--fg)}
+
+/* ---------- footer ---------- */
+.foot{border-top:1px solid var(--border); background:var(--card); padding:52px 0 34px}
+.foot .cols{display:grid; grid-template-columns:1.6fr 1fr 1fr 1fr; gap:32px}
+.foot .about{max-width:34ch}
+.foot .about p{margin-top:14px; font-size:13px; line-height:19px; color:var(--faint)}
+.foot h4{font-size:12px; font-weight:500; letter-spacing:.06em; text-transform:uppercase;
+         color:var(--faint); margin-bottom:14px}
+.foot ul{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:9px}
+.foot ul a{font-size:13.5px; color:var(--muted)}
+.foot ul a:hover{color:var(--fg)}
+.foot .bar{margin-top:44px; padding-top:20px; border-top:1px solid var(--border);
+           display:flex; gap:14px; align-items:center; flex-wrap:wrap;
+           font-size:12.5px; color:var(--faint)}
+.foot .bar .sp{margin-left:auto}
+
+/* ---------- reveal ---------- */
+.rv{opacity:0; transform:translateY(14px);
+    transition:opacity .6s var(--ease), transform .6s var(--ease)}
+.rv.in{opacity:1; transform:none}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .rv{opacity:1; transform:none; transition:none}
+  .btn:hover{transform:none}
+}
+
+/* ---------- responsive ---------- */
+@media (min-width:720px){
+  .row .meta{display:block}
+  .board-side{display:block}
+}
+@media (max-width:1000px){
+  .d1{font-size:52px; line-height:56px; letter-spacing:-2.4px}
+  .feature{grid-template-columns:1fr; gap:32px}
+  .feature.flip .fig{order:0}
+  .foot .cols{grid-template-columns:1fr 1fr}
+  .foot .about{grid-column:1/-1}
+}
+@media (max-width:860px){
+  .nav-links{display:none}
+  .g3,.g4{grid-template-columns:1fr 1fr}
+  .mini-stats{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:640px){
+  :root{--gutter:18px}
+  /* The honest note is the first thing on the page and must stay readable,
+     but four lines of black bar is too much weight above the fold. */
+  .banner{font-size:12px; line-height:17px; padding:8px 0; text-align:left}
+  .banner .wrap{gap:4px; justify-content:flex-start}
+  .section{padding:64px 0}
+  .hero{padding-top:60px}
+  .d1{font-size:38px; line-height:42px; letter-spacing:-1.6px}
+  .d2{font-size:30px; line-height:36px; letter-spacing:-1.2px}
+  .h32{font-size:26px; line-height:32px; letter-spacing:-1px}
+  .copy18{font-size:16px; line-height:25px}
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .step{grid-template-columns:1fr; gap:10px}
+  .tbl .tr{grid-template-columns:1fr; gap:6px}
+  .tbl .th{display:none}
+  .honest .panel{padding:26px}
+  .nav .ghost{display:none}
+  .shot{margin-top:38px}
+  .btn{width:100%}
+  .hero .cta,.final .cta{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<!-- The honest framing goes at the very top, not in the small print. -->
+<div class="banner">
+  <div class="wrap">
+    <b>The risk detection is real</b>
+    <span>— it runs against live news right now. The shipments are synthetic, so a
+    disruption can be shown on demand instead of waited for.</span>
+  </div>
+</div>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="/">
+      <span class="mark"><svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+        <path d="M3.2 14h13.6M3.2 10h8.6M3.2 6h4.6" stroke="#fff" stroke-width="2.1"
+              stroke-linecap="round"/></svg></span>
+      <span class="name">Lanewatch</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#loop">How it works</a>
+      <a href="#edge">The edge</a>
+      <a href="#reasoning">Reasoning</a>
+      <a href="#sources">Sources</a>
+      <a href="#scope">Scope</a>
+    </nav>
+    <div class="right">
+      <a class="ghost" href="#honest">What's real</a>
+      <a class="btn btn-primary" href="/app">Open the demo
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h13M12 5l7 7-7 7"/></svg></a>
+    </div>
+  </div>
+</header>
+
+<!-- ======================== HERO ======================== -->
+<section class="hero">
+  <div class="wrap">
+    <span class="pill"><span class="dot"></span>13 live sources, 3 languages, no API keys</span>
+
+    <h1 class="d1">Trade-lane risk, decided.</h1>
+
+    <p class="sub copy18">
+      Risk platforms stop at the alert. Lanewatch reads the disruption — often first in
+      German or Arabic — works out which of your shipments are exposed, decides
+      <b style="color:var(--fg);font-weight:500">reroute</b> or
+      <b style="color:var(--fg);font-weight:500">hold</b> for each one, and drafts the
+      carrier and customer emails a human would otherwise write. Every call keeps its
+      reasoning.
+    </p>
+
+    <div class="cta">
+      <a class="btn btn-primary btn-lg" href="/app">Run the Hamburg scenario
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h13M12 5l7 7-7 7"/></svg></a>
+      <a class="btn btn-secondary btn-lg" href="#loop">See how the loop closes</a>
+    </div>
+    <p class="under">One button. Five shipments. Three different, defensible decisions
+      in under two minutes.</p>
+
+    <!-- A rendering of the actual board, drawn in HTML so it stays sharp. -->
+    <div class="shot">
+      <div class="frame">
+        <div class="frame-bar">
+          <i></i><i></i><i></i>
+          <span class="url mono">lanewatch / overview</span>
+        </div>
+        <div class="board">
+          <aside class="board-side">
+            <div class="t">Operations</div>
+            <div class="i on">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="9"/>
+                <rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/>
+                <rect x="3" y="16" width="7" height="5"/></svg>Overview</div>
+            <div class="i">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round"><path d="M3 7h13v10H3zM16 10h3l2 3v4h-5"/>
+                <circle cx="7" cy="18" r="1.6"/><circle cx="18" cy="18" r="1.6"/></svg>
+              Shipments<span class="n">5</span></div>
+            <div class="i">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round"><path d="M12 3l9 16H3z"/>
+                <path d="M12 9v4M12 16.5v.5"/></svg>Risk feed<span class="n">7</span></div>
+            <div class="i">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round"><path d="M4 5h16v11H4z"/>
+                <path d="M4 6l8 6 8-6"/></svg>Approvals<span class="n">6</span></div>
+          </aside>
+          <div class="board-main">
+            <div class="board-top">
+              <span class="h">Overview</span>
+              <span class="chip live">Live</span>
+              <div class="r">
+                <span class="fake-btn">Inject Hamburg strike</span>
+              </div>
+            </div>
+            <div class="mini-stats">
+              <div class="ms"><div class="l">Shipments tracked</div><div class="v tabular">5</div></div>
+              <div class="ms"><div class="l">Needing action</div><div class="v amber tabular">3</div></div>
+              <div class="ms"><div class="l">Drafts written</div><div class="v tabular">6</div></div>
+              <div class="ms"><div class="l">Model decisions</div><div class="v blue tabular">3/3</div></div>
+            </div>
+            <div class="rows">
+              <div class="row"><span class="id">SHP-001</span>
+                <span class="lane">Automotive parts · Shanghai → Munich</span>
+                <span class="meta">4d slack</span>
+                <span class="st"><span class="st-badge st-blue"><i></i>Rerouted · RTM</span></span></div>
+              <div class="row"><span class="id">SHP-002</span>
+                <span class="lane">Reefer pharma · Ningbo → Hamburg</span>
+                <span class="meta">1d slack</span>
+                <span class="st"><span class="st-badge st-amber"><i></i>Hold + notify</span></span></div>
+              <div class="row"><span class="id">SHP-003</span>
+                <span class="lane">Furniture · Shanghai → Rotterdam</span>
+                <span class="meta">3d slack</span>
+                <span class="st"><span class="st-badge st-green"><i></i>On plan</span></span></div>
+              <div class="row"><span class="id">SHP-004</span>
+                <span class="lane">Electronics · Shenzhen → Antwerp</span>
+                <span class="meta">2d slack</span>
+                <span class="st"><span class="st-badge st-green"><i></i>On plan</span></span></div>
+              <div class="row"><span class="id">SHP-005</span>
+                <span class="lane">Machinery · Busan → Hamburg</span>
+                <span class="meta">3d slack</span>
+                <span class="st"><span class="st-badge st-blue"><i></i>Rerouted · RTM</span></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================== SOURCE STRIP ======================== -->
+<section class="strip">
+  <div class="wrap">
+    <p class="lead">Watching, keyless and in the open</p>
+    <div class="list">
+      <span class="src">GDELT DOC 2.0</span>
+      <span class="src">tagesschau <span class="lg">de</span></span>
+      <span class="src">NDR Hamburg <span class="lg">de</span></span>
+      <span class="src">DW <span class="lg">de</span></span>
+      <span class="src">gCaptain <span class="lg">en</span></span>
+      <span class="src">Al Jazeera <span class="lg">en</span></span>
+      <span class="src">الجزيرة <span class="lg">ar</span></span>
+      <span class="src">PEGELONLINE</span>
+    </div>
+  </div>
+</section>
+
+<!-- ======================== THE GAP ======================== -->
+<section class="section" id="gap">
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">The gap</span>
+      <h2 class="d2">Everyone stops one step short.</h2>
+      <p class="copy18">A forwarder's operations desk watches for disruptions <i>and</i> reacts to
+        them by hand. The tools sold into that desk each own one half of the job and
+        hand the other half back to a person at 7am.</p>
+    </div>
+
+    <div class="grid g3 gap-grid rv">
+      <div class="gap-card dim">
+        <span class="n">01</span>
+        <h3 class="h20">Risk platforms</h3>
+        <p class="copy14">Everstream, Interos, Resilinc. Broad, credible monitoring that
+          surfaces the event and scores it. Then it is your problem.</p>
+        <p class="stops">Stops at: <b>the alert</b></p>
+      </div>
+      <div class="gap-card dim">
+        <span class="n">02</span>
+        <h3 class="h20">Execution tools</h3>
+        <p class="copy14">TMS and visibility stacks move the booking once someone has
+          already decided it should move. They do not watch the world.</p>
+        <p class="stops">Starts at: <b>the decision already made</b></p>
+      </div>
+      <div class="gap-card us">
+        <span class="n">03</span>
+        <h3 class="h20">Lanewatch</h3>
+        <p class="copy14">Reads the event, triages the book, makes the call per shipment,
+          explains it, and writes the two emails that call requires.</p>
+        <p class="stops">Closes: <b>risk → reroute → comms</b></p>
+      </div>
+    </div>
+
+    <p class="copy14 rv" style="margin-top:24px;max-width:70ch">
+      The two halves are also priced for enterprise. The desk this is modelled on — a
+      Head of Operations at a mid-size DACH or Benelux forwarder — sits below that line
+      and does the joining by hand.
+    </p>
+  </div>
+</section>
+
+<!-- ======================== THE LOOP ======================== -->
+<section class="section" id="loop">
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">How it works</span>
+      <h2 class="d2">Three agents, one closed loop.</h2>
+      <p class="copy18">No framework, no scheduler, no queue. Plain functions calling
+        functions over shared JSON state — which is exactly why you can read what
+        happened afterwards.</p>
+    </div>
+
+    <div class="steps rv">
+      <div class="step">
+        <div class="num">01</div>
+        <div class="body">
+          <h3 class="h24">Risk Monitor <span class="chip live">Live</span></h3>
+          <p class="copy16">Pulls GDELT, six RSS feeds and three Rhine gauges, then has the
+            model classify each item for logistics relevance — chokepoint, disruption type,
+            severity. Numbers from the gauges are read by threshold, not by the model.
+            Whatever has not answered inside the budget is marked skipped and the cycle
+            moves on.</p>
+          <div class="facts">
+            <span class="fact"><b>25s</b> hard budget for the whole pull</span>
+            <span class="fact"><b>8s</b> per-request timeout</span>
+            <span class="fact">Seven chokepoints: <b>HAM · RTM · ANR · SUEZ · REDSEA · COGH · RHINE</b></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="num">02</div>
+        <div class="body">
+          <h3 class="h24">Route Advisor <span class="chip blue">Decides</span></h3>
+          <p class="copy16">Maps each shipment's route against active risk. Code computes the
+            facts — which chokepoints the lane touches, added transit days, whether the
+            schedule slack absorbs them, the revised ETA. The model weighs slack against
+            added transit against expected disruption delay, makes the call, and explains
+            it in plain English.</p>
+          <div class="facts">
+            <span class="fact">Arithmetic and dates <b>never</b> go to the model</span>
+            <span class="fact">A route it wasn't offered is <b>refused and downgraded to hold</b></span>
+            <span class="fact">Clean lanes short-circuit with <b>no model call</b></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="num">03</div>
+        <div class="body">
+          <h3 class="h24">Comms Agent <span class="chip synth">Drafts only</span></h3>
+          <p class="copy16">Two separate calls, two different voices. A carrier email is a
+            transaction between operators, so route codes and chokepoint ids are fine in it.
+            A customer email is a relationship, so internal vocabulary appearing there is
+            flagged as a warning. Both come back as text and stop there.</p>
+          <div class="facts">
+            <span class="fact">Every draft carries <b>status: DRAFT — not sent</b></span>
+            <span class="fact">Nothing leaves the process</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================== THE MULTILINGUAL EDGE ======================== -->
+<section class="section" id="edge">
+  <div class="wrap">
+    <div class="feature">
+      <div class="txt rv">
+        <span class="eyebrow">Differentiator one</span>
+        <h2 class="d2" style="margin-top:14px">The wires are not first.</h2>
+        <p class="copy18">A <span class="mono" style="color:var(--fg);font-size:16px">Warnstreik</span>
+          at Hamburg is announced by ver.di, carried by NDR and tagesschau, and discussed
+          in German for the better part of a day before an English-language wire picks it
+          up. An English-only monitor is structurally late — not because it is bad, but
+          because it is reading the wrong feed.</p>
+        <ul class="bullets">
+          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 12.5l5 5L20 6.5"/></svg>
+            <span>German feeds are read <b style="color:var(--fg);font-weight:500">first</b>, not translated after the fact</span></li>
+          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 12.5l5 5L20 6.5"/></svg>
+            <span>A GDELT query pinned to <span class="mono" style="font-size:13px">sourcelang:german</span>,
+            plus Arabic for the Red Sea corridor</span></li>
+          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 12.5l5 5L20 6.5"/></svg>
+            <span>The source language is shown on the event, so the claim is checkable rather
+            than asserted</span></li>
+        </ul>
+      </div>
+
+      <div class="fig rv">
+        <div class="art">
+          <div class="art-h">
+            <span class="ttl">Risk feed</span>
+            <span class="chip red">High</span>
+            <span class="r chip plain">HAM</span>
+          </div>
+          <div class="art-b">
+            <div class="evt first">
+              <div class="row1">
+                <span class="chip blue">de</span>
+                <span class="chip">RSS · NDR Hamburg</span>
+                <span class="chip plain">detected first</span>
+              </div>
+              <p class="de">Warnstreik im Hamburger Hafen — ver.di ruft zu ganztägigem
+                Ausstand auf</p>
+              <p class="en">Warning strike at Port of Hamburg — union calls full-day walkout.
+                Terminal handling, gate operations and rail shunting stop for the duration;
+                vessel backlog clears over the following days.</p>
+              <p class="src">
+                <span class="mono">strike</span> · severity <span class="mono">high</span> ·
+                walkout <span class="mono tabular">48–72h</span> ·
+                expected delay <span class="mono tabular">3–5d</span>
+              </p>
+            </div>
+
+            <div class="lagline">
+              <span class="bar"></span>
+              <span class="mono tabular">≈ 24h later</span>
+              <span class="bar"></span>
+            </div>
+
+            <div class="evt late">
+              <div class="row1">
+                <span class="chip">en</span>
+                <span class="chip">English wire</span>
+              </div>
+              <p class="de">German port workers stage walkout amid pay talks</p>
+              <p class="src">By now the box has already discharged, or already been rerouted.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================== REASONING ======================== -->
+<section class="section" id="reasoning">
+  <div class="wrap">
+    <div class="feature flip">
+      <div class="txt rv">
+        <span class="eyebrow">Differentiator two</span>
+        <h2 class="d2" style="margin-top:14px">The hard one is the interesting one.</h2>
+        <p class="copy18">Two of the five shipments reroute cleanly and two are never
+          touched — the system does not cry wolf. The one worth reading is SHP-002, where
+          there is no good option and the job is to pick the least-bad one and say why.</p>
+        <p class="copy16" style="margin-top:16px">Two 40ft reefers of temperature-controlled
+          pharma, one day of slack, and a final customer who is <i>in Hamburg</i>.
+          Rerouting via Rotterdam adds road transit and a cold-chain transfer — and every
+          transfer is a GDP-compliance event. So the call is to hold, notify, and be
+          explicit that the deadline is at risk.</p>
+        <ul class="bullets">
+          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 12.5l5 5L20 6.5"/></svg>
+            <span>Every decision keeps a <b style="color:var(--fg);font-weight:500">reasoning trail</b> —
+            including the guard rails that fired</span></li>
+          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 12.5l5 5L20 6.5"/></svg>
+            <span>If the provider is unreachable, the fallback is transparent rules and the card
+            is badged <span class="mono" style="font-size:13px">rule</span> — never a silent
+            downgrade</span></li>
+          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 12.5l5 5L20 6.5"/></svg>
+            <span>A strip on the board names the model in use and the model-versus-rules split,
+            so the central claim is checkable at a glance</span></li>
+        </ul>
+      </div>
+
+      <div class="fig rv">
+        <div class="art">
+          <div class="art-h">
+            <span class="ttl">SHP-002 · Reefer pharma · Ningbo → Hamburg</span>
+            <span class="r"><span class="st-badge st-amber"><i></i>Hold + notify</span></span>
+          </div>
+          <div class="art-b">
+            <ul class="trail">
+              <li class="done"><b>Route touches an active chokepoint.</b>
+                R-HAM-STD discharges at HAM. EVT-HAM-STRIKE is active there at severity
+                high, 3–5 days expected delay.</li>
+              <li class="done"><b>No alternate route on file.</b>
+                The only Hamburg-discharging alternate is the Cape routing at 42 days —
+                ten days longer against one day of slack.</li>
+              <li class="done"><b>Rotterdam was considered and rejected.</b>
+                Discharge at RTM adds road transit to Hamburg plus one reefer transfer.
+                The consignee is in Hamburg, so the reroute moves the box away from where
+                it needs to be.</li>
+              <li class="done"><b>Cold chain is the binding constraint.</b>
+                +2 to +8 °C, continuous power. Each transfer is a break risk and a
+                GDP-compliance event; the strike costs days, a temperature excursion costs
+                the consignment.</li>
+              <li class="done"><b>Decision: hold at origin, notify now.</b>
+                Deadline is likely breached either way. Holding keeps the cold chain
+                unbroken and buys the customer the time to react.</li>
+            </ul>
+            <div style="margin-top:14px;padding-top:13px;border-top:1px solid var(--border);
+                        display:flex;gap:8px;flex-wrap:wrap">
+              <span class="fact">slack <b>1d</b></span>
+              <span class="fact">expected delay <b>3–5d</b></span>
+              <span class="fact">alternates <b>0</b></span>
+              <span class="fact">decided by <b>model</b></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================== DRAFTS ======================== -->
+<section class="section" id="drafts">
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">The last mile</span>
+      <h2 class="d2">It writes the emails. It does not send them.</h2>
+      <p class="copy18">A decision that lands in a dashboard is still work for a person.
+        Every actioned shipment comes back with the two emails that decision requires —
+        one to the carrier, one to the customer — waiting behind an approval gate.</p>
+    </div>
+
+    <div class="grid g2 rv" style="margin-top:40px">
+      <div class="art">
+        <div class="art-h">
+          <span class="ttl">To carrier</span>
+          <span class="chip">SHP-001</span>
+          <span class="r chip synth">Awaiting approval</span>
+        </div>
+        <div class="art-b mail">
+          <div class="fields">
+            <div class="f"><span class="k">To</span><span class="v">Hapag-Lloyd — booking desk</span></div>
+            <div class="f"><span class="k">Ref</span><span class="v mono">HLCU-2261188 · R-HAM-STD → R-RTM-ALT</span></div>
+            <div class="f"><span class="k">Subj</span><span class="v">Discharge port change request — HLCU-2261188 (12 x 40HC)</span></div>
+          </div>
+          <p class="b">Hamburg terminals are subject to a full-day ver.di warning strike with
+a 3–5 day expected backlog. Please advise on rerouting booking HLCU-2261188
+to discharge Rotterdam per R-RTM-ALT, accepting the two-day transit penalty.
+
+Confirm feasibility and any surcharge before we commit. Onward road leg to
+Munich will be rebooked on our side once you confirm.</p>
+        </div>
+        <div class="mail-foot">
+          <span class="chip plain">Draft — not sent</span>
+          <span class="note">Route codes are fine here</span>
+          <button class="approve" data-approve>Approve</button>
+        </div>
+      </div>
+
+      <div class="art">
+        <div class="art-h">
+          <span class="ttl">To customer</span>
+          <span class="chip">SHP-002</span>
+          <span class="r chip synth">Awaiting approval</span>
+        </div>
+        <div class="art-b mail">
+          <div class="fields">
+            <div class="f"><span class="k">To</span><span class="v">Dr. Anke Petersen — Nordmed Pharma Logistik AG</span></div>
+            <div class="f"><span class="k">Ref</span><span class="v mono">MAEU-9930472 · 2 x 40RH</span></div>
+            <div class="f"><span class="k">Subj</span><span class="v">Hamburg port strike — your reefer consignment</span></div>
+          </div>
+          <p class="b">A full-day strike has been called at the Port of Hamburg, with terminal
+handling expected to be disrupted for three to five days once the backlog
+is counted.
+
+We have chosen to hold rather than reroute. Discharging elsewhere would
+mean road transit into Hamburg and an additional transfer of your reefer
+units — and with a continuous +2 to +8 °C requirement, we are not willing
+to introduce that risk to avoid a delay.
+
+We now expect delivery to run past your required date. We will confirm a
+firm revised ETA as soon as terminals restart.</p>
+        </div>
+        <div class="mail-foot">
+          <span class="chip plain">Draft — not sent</span>
+          <span class="note">No internal codes</span>
+          <button class="approve" data-approve>Approve</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card rv" style="margin-top:24px;padding:20px 22px;display:flex;gap:14px;
+                                align-items:flex-start">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+           style="flex:none;margin-top:2px;color:var(--fg)">
+        <rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      <div>
+        <p class="h16">Human-in-the-loop is the design, not a missing feature.</p>
+        <p class="copy14" style="margin-top:5px">There is no SMTP, no email library and no
+          transport of any kind imported anywhere in the codebase — nothing in
+          <span class="mono" style="font-size:13px">src/</span> can reach an outbox.
+          Approval flips a state in the browser; there is nothing for it to trigger.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================== SOURCES ======================== -->
+<section class="section" id="sources">
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">What it reads</span>
+      <h2 class="d2">Free, keyless, and few on purpose.</h2>
+      <p class="copy18">Every extra source is one more thing that can break live in front of
+        an audience. Three source families carry the whole story, each behind its own small
+        function so one can be pulled without touching the others.</p>
+    </div>
+
+    <div class="tbl rv">
+      <div class="tr th"><span>Source</span><span>Role</span><span>Key</span></div>
+      <div class="tr">
+        <span class="nm">GDELT DOC 2.0 <span class="chip plain">4 queries</span></span>
+        <span class="ds">Global news backbone, refreshing about every 15 minutes. Filterable
+          by keyword, language and country — one query is pinned to German-language sources.</span>
+        <span class="kx chip">None</span>
+      </div>
+      <div class="tr">
+        <span class="nm">RSS <span class="chip plain">6 feeds</span></span>
+        <span class="ds">tagesschau, NDR Hamburg and DW in German; gCaptain and Al Jazeera in
+          English; Al Jazeera in Arabic. This is where the earliness edge actually lives.</span>
+        <span class="kx chip">None</span>
+      </div>
+      <div class="tr">
+        <span class="nm">PEGELONLINE <span class="chip plain">3 gauges</span></span>
+        <span class="ds">Rhine water levels at Kaub, Duisburg-Ruhrort and Emmerich, mapped to
+          the RHINE chokepoint. Read by threshold, not by the model — they are numbers, not prose.</span>
+        <span class="kx chip">None</span>
+      </div>
+      <div class="tr">
+        <span class="nm">Runtime model <span class="chip blue">Groq</span></span>
+        <span class="ds">Resolved at runtime against the provider's own model list rather than
+          hard-coded, because a retired model name returns a 404 that looks exactly like a
+          broken key. Swappable in one file.</span>
+        <span class="kx chip">Yours</span>
+      </div>
+    </div>
+
+    <p class="copy14 rv" style="margin-top:20px;max-width:74ch">
+      Deliberately not wired: anything paid, and anything optional. Reuters is named in the
+      research but retired its public RSS feeds, so it is left out — a dead feed is a live
+      failure.
+    </p>
+  </div>
+</section>
+
+<!-- ======================== SCOPE ======================== -->
+<section class="section" id="scope">
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">Scope</span>
+      <h2 class="d2">What it deliberately does not do.</h2>
+      <p class="copy18">Scope creep is the failure mode for a prototype like this. These are
+        not roadmap items being coy — they are out, by decision.</p>
+    </div>
+
+    <div class="grid g2 nots rv">
+      <div class="not">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/>
+          <path d="M5.6 5.6l12.8 12.8"/></svg>
+        <div><p class="k">No route optimisation</p>
+          <p class="v">Routes are pre-authored candidates. The agent chooses among them and
+            justifies the choice; it never computes a route.</p></div>
+      </div>
+      <div class="not">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/>
+          <path d="M5.6 5.6l12.8 12.8"/></svg>
+        <div><p class="k">No sending</p>
+          <p class="v">Emails are drafted and displayed. No transport of any kind is
+            imported anywhere in the codebase.</p></div>
+      </div>
+      <div class="not">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/>
+          <path d="M5.6 5.6l12.8 12.8"/></svg>
+        <div><p class="k">No TMS integration</p>
+          <p class="v">The shipments are synthetic and authored so one disruption yields three
+            different, defensible decisions.</p></div>
+      </div>
+      <div class="not">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/>
+          <path d="M5.6 5.6l12.8 12.8"/></svg>
+        <div><p class="k">No scheduler, no database</p>
+          <p class="v">Button-triggered, JSON files, in memory. For a demo, magic on command
+            beats a background job.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================== HONEST BAND ======================== -->
+<section class="section honest" id="honest">
+  <div class="wrap">
+    <div class="panel rv">
+      <span class="eyebrow">What is real and what is not</span>
+      <blockquote class="h32" style="margin-top:18px">
+        “The risk detection is real — it runs against live news right now. The shipments are
+        synthetic, so I can show you a disruption on demand instead of waiting for one.”
+      </blockquote>
+      <div class="who">
+        <span class="chip live">Live</span>
+        <span class="copy14">news pull, classification, decisions, drafts</span>
+        <span class="chip synth">Synthetic</span>
+        <span class="copy14">the five shipments and the injected Hamburg strike</span>
+      </div>
+      <p class="copy14" style="margin-top:20px;max-width:70ch">
+        The injected strike uses the same event format as a live one, so it flows through the
+        real pipeline rather than around it. That is what makes the demo honest and repeatable
+        at the same time — and it is why the Risk Monitor stays genuinely live even though
+        everything downstream runs on authored data.
+      </p>
+      <p class="copy14" style="margin-top:14px;max-width:70ch">
+        This is a strong learning artifact and a compelling demo. It is not a live product —
+        the gap between the two is the integration, trust and liability wall, which is real
+        work for later.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ======================== FINAL CTA ======================== -->
+<section class="final">
+  <div class="wrap rv">
+    <h2 class="d2">One news event. One button.</h2>
+    <p class="copy18">Five shipments in transit, a strike at Hamburg, and three different
+      decisions with the reasoning attached — start to finish in under two minutes.</p>
+    <div class="cta">
+      <a class="btn btn-primary btn-lg" href="/app">Open the demo
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h13M12 5l7 7-7 7"/></svg></a>
+      <a class="btn btn-secondary btn-lg" href="/api/health">Check what it can see</a>
+    </div>
+    <div class="runline">
+      <span class="copy13" style="color:var(--faint)">Or run it yourself</span>
+      <code>uvicorn src.app:app --reload</code>
+    </div>
+  </div>
+</section>
+
+<!-- ======================== FOOTER ======================== -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="cols">
+      <div class="about">
+        <a class="brand" href="/">
+          <span class="mark"><svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+            <path d="M3.2 14h13.6M3.2 10h8.6M3.2 6h4.6" stroke="#fff" stroke-width="2.1"
+                  stroke-linecap="round"/></svg></span>
+          <span class="name">Lanewatch</span>
+        </a>
+        <p>Trade-lane risk, decided. A demo-grade AI-agent prototype for freight forwarding —
+          real reasoning on synthetic shipments.</p>
+      </div>
+      <div>
+        <h4>Product</h4>
+        <ul>
+          <li><a href="#loop">How it works</a></li>
+          <li><a href="#edge">The multilingual edge</a></li>
+          <li><a href="#reasoning">Recorded reasoning</a></li>
+          <li><a href="#drafts">Drafts &amp; approval</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Detail</h4>
+        <ul>
+          <li><a href="#sources">Data sources</a></li>
+          <li><a href="#scope">Scope &amp; non-goals</a></li>
+          <li><a href="#honest">What's real</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Run it</h4>
+        <ul>
+          <li><a href="/app">Open the demo</a></li>
+          <li><a href="/api/health">Health check</a></li>
+          <li><a href="/api/initial">Initial board</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="bar">
+      <span>Prototype. Drafts emails; sends nothing.</span>
+      <span class="sp">Set in Geist</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* Reveal on scroll. Everything is visible without JS - the class only ever
+   gets added, never removed, and .rv already renders if the observer never
+   runs (see the reduced-motion rule). */
+(function () {
+  var items = document.querySelectorAll(".rv");
+  if (!("IntersectionObserver" in window)) {
+    items.forEach(function (el) { el.classList.add("in"); });
+    return;
+  }
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+    });
+  }, { rootMargin: "0px 0px -8% 0px", threshold: 0.05 });
+  items.forEach(function (el) { io.observe(el); });
+})();
+
+/* The approve buttons are the same gesture as the real board: a state change
+   in the browser and nothing else. Nothing is transmitted. */
+document.querySelectorAll("[data-approve]").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    if (btn.classList.contains("ok")) return;
+    btn.classList.add("ok");
+    btn.textContent = "Approved";
+    var card = btn.closest(".art");
+    var badge = card && card.querySelector(".art-h .chip.synth");
+    if (badge) { badge.className = "r chip live"; badge.textContent = "Approved"; }
+  });
+});
+</script>
+</body>
+</html>
