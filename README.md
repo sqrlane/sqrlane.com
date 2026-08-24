@@ -37,9 +37,21 @@ For the AI key, pick one free provider and put it in `.env`:
 
 | Provider | Where | `.env` |
 |---|---|---|
-| **Groq** (recommended) | https://console.groq.com | `LLM_PROVIDER=groq`, `GROQ_API_KEY=…` |
+| **Groq** (recommended) | https://console.groq.com | `GROQ_API_KEY=…` (provider defaults to groq) |
 | Google Gemini | https://aistudio.google.com/apikey | `LLM_PROVIDER=gemini`, `GEMINI_API_KEY=…` |
 | Ollama (local, no key) | https://ollama.com | `LLM_PROVIDER=ollama` |
+
+You do **not** set a model name. On Groq the app asks your key which models it can
+actually run and picks the best available one, because Groq retires and renames
+models and a hard-coded name that has been retired fails with a 404 that looks
+exactly like a broken key. To see what your key offers:
+
+```bash
+python -m src.llm --models
+```
+
+Pin one with `LLM_MODEL` in `.env` only if you want a specific model — and even then,
+if it turns out to be unavailable the app falls back to discovery rather than failing.
 
 Without a key it still runs — decisions and emails come from deterministic fallbacks,
 and every card that used one is badged `rule` so you can see it.

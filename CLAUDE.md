@@ -195,6 +195,15 @@ front of an audience.** Three keyless sources carry the whole story:
 **Runtime LLM (pick one, key in `.env`):** Groq (recommended default) / Google Gemini / Ollama local.
 Note: Claude Code Max pays for *building*, not for the agents' *runtime* calls.
 
+**Never hard-code a Groq model name.** Groq retires and renames models, and a retired
+name fails with a 404 that looks exactly like a broken key — the whole demo drops
+silently to the deterministic fallback. `llm.py` resolves the model at runtime against
+`/openai/v1/models`: it asks the key what it can run and picks the best available,
+preferring `GROQ_MODEL_PREFERENCES` in `config.py` but falling back to a sensible choice
+from a lineup it has never seen. A model that 404s mid-run triggers one re-resolve and
+retry. `python -m src.llm --models` shows what a key offers; `/api/health` names the
+model actually in use.
+
 **Skip:** everything marked OPTIONAL (Open-Meteo, NewsAPI, World News API, AISstream, Nominatim)
 until the core demo works end to end. **Never** wire MarineTraffic / VesselFinder / Datalastic /
 Kpler — all paid.

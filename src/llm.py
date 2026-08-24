@@ -17,6 +17,7 @@ Public API
 """
 
 import json
+import re
 import time
 
 import requests
@@ -30,6 +31,14 @@ class LLMError(RuntimeError):
 
 class LLMNotConfigured(LLMError):
     """No key / no reachable provider. Callers can catch this and degrade."""
+
+
+class ModelNotAvailable(LLMError):
+    """The named model does not exist on this key.
+
+    Distinct from a bad key on purpose: a retired model is recoverable by asking
+    the provider what it does offer, whereas a bad key is not.
+    """
 
 
 # --- Is the provider usable? ----------------------------------------------
@@ -47,8 +56,105 @@ def is_configured() -> bool:
     return False
 
 
+# Resolved once per process. Serverless gives each cold start its own process,
+# so this is at most one extra request per container, not per run.
+_resolved_groq_model: str | None = None
+_resolution_note: str = ""
+
+
+def list_groq_models() -> list[str]:
+    """Ask Groq what this key can actually run. Read-only."""
+    response = requests.get(
+        "https://api.groq.com/openai/v1/models",
+        headers={"Authorization": f"Bearer {config.GROQ_API_KEY}"},
+        timeout=config.LLM_TIMEOUT_SECONDS,
+    )
+    if response.status_code != 200:
+        raise LLMError(f"could not list models: HTTP {response.status_code} "
+                       f"{response.text[:200]}")
+    return [m["id"] for m in response.json().get("data", []) if m.get("id")]
+
+
+def _usable(model_id: str) -> bool:
+    """Chat models only - not audio, safety classifiers or embeddings."""
+    lowered = model_id.lower()
+    return not any(bad in lowered for bad in config.GROQ_MODEL_EXCLUDE)
+
+
+def _rank(model_id: str) -> tuple:
+    """Sort key: preferred models first, then bigger/instruct-looking ones.
+
+    The fallback half matters - it is what picks a sensible model from a lineup
+    this code has never heard of.
+    """
+    lowered = model_id.lower()
+    for position, preferred in enumerate(config.GROQ_MODEL_PREFERENCES):
+        if lowered == preferred.lower():
+            return (0, position, 0)
+    # Unknown model: prefer something that looks like a general instruct model,
+    # and prefer larger parameter counts where the name states one.
+    size = 0
+    for token in re.findall(r"(\d+)\s*b\b", lowered):
+        size = max(size, int(token))
+    looks_general = any(word in lowered for word in
+                        ("instruct", "versatile", "chat", "-it", "instant"))
+    return (1, -size, 0 if looks_general else 1)
+
+
+def resolve_groq_model(*, force: bool = False, exclude: frozenset = frozenset()) -> str:
+    """Decide which Groq model to call, asking Groq if we do not already know.
+
+    An explicit LLM_MODEL in .env wins, but is not a hard pin: if it turns out
+    to be retired, discovery still rescues the run rather than failing it.
+    """
+    global _resolved_groq_model, _resolution_note
+
+    if not force and _resolved_groq_model and _resolved_groq_model not in exclude:
+        return _resolved_groq_model
+
+    if config.LLM_MODEL and config.LLM_MODEL not in exclude:
+        _resolved_groq_model = config.LLM_MODEL
+        _resolution_note = "pinned by LLM_MODEL in .env"
+        return _resolved_groq_model
+
+    try:
+        available = [m for m in list_groq_models() if _usable(m) and m not in exclude]
+    except (LLMError, requests.RequestException) as exc:
+        # Could not ask. Fall back to the first preference and let the call fail
+        # loudly if that is wrong, rather than guessing silently.
+        _resolved_groq_model = next(
+            (m for m in config.GROQ_MODEL_PREFERENCES if m not in exclude),
+            config.GROQ_MODEL_PREFERENCES[0])
+        _resolution_note = f"could not reach the model list ({exc}); using a default"
+        return _resolved_groq_model
+
+    if not available:
+        raise ModelNotAvailable(
+            "This Groq key exposes no usable chat model. Check the key at "
+            "https://console.groq.com, or pin one with LLM_MODEL in .env.")
+
+    available.sort(key=_rank)
+    _resolved_groq_model = available[0]
+    known = _resolved_groq_model.lower() in {p.lower() for p in config.GROQ_MODEL_PREFERENCES}
+    _resolution_note = ("chosen from the models this key offers" if known else
+                        f"chosen from the models this key offers "
+                        f"(not in the preference list; {len(available)} available)")
+    return _resolved_groq_model
+
+
+def active_model() -> str:
+    """The model that will be used, without forcing a lookup."""
+    if config.LLM_PROVIDER == "groq":
+        return _resolved_groq_model or config.LLM_MODEL or "(resolved on first call)"
+    return config.LLM_MODEL or config.DEFAULT_MODELS.get(config.LLM_PROVIDER, "")
+
+
+def resolution_note() -> str:
+    return _resolution_note
+
+
 def describe() -> str:
-    return f"{config.LLM_PROVIDER} / {config.LLM_MODEL or '(no model set)'}"
+    return f"{config.LLM_PROVIDER} / {active_model()}"
 
 
 def configuration_hint() -> str:
@@ -139,6 +245,15 @@ def _parse_json(text: str):
 # --- Provider implementations (private) ------------------------------------
 
 
+def _looks_like_missing_model(body: str) -> bool:
+    lowered = (body or "").lower()
+    return ("model_not_found" in lowered
+            or ("model" in lowered and ("does not exist" in lowered
+                                        or "not found" in lowered
+                                        or "decommission" in lowered
+                                        or "no longer supported" in lowered)))
+
+
 def _post_with_retries(url: str, *, headers=None, json_body=None, params=None) -> dict:
     """POST with backoff on rate limits and transient server errors.
 
@@ -158,27 +273,45 @@ def _post_with_retries(url: str, *, headers=None, json_body=None, params=None) -
             if response.status_code in (408, 409, 429, 500, 502, 503, 504):
                 last_error = f"HTTP {response.status_code}: {response.text[:200]}"
             else:
-                # 401/403/404 will not fix themselves - fail immediately.
-                raise LLMError(f"HTTP {response.status_code}: {response.text[:300]}")
+                body = response.text[:300]
+                # A retired or unavailable model IS recoverable - we can ask the
+                # provider what it does offer. A bad key is not. Tell them apart.
+                if response.status_code in (400, 404) and _looks_like_missing_model(body):
+                    raise ModelNotAvailable(f"HTTP {response.status_code}: {body}")
+                raise LLMError(f"HTTP {response.status_code}: {body}")
         if attempt < config.LLM_MAX_RETRIES - 1:
             time.sleep(2 ** attempt)
     raise LLMError(f"provider unreachable after {config.LLM_MAX_RETRIES} attempts - {last_error}")
 
 
-def _call_groq(prompt, system, temperature, max_tokens) -> str:
+def _groq_chat(model, prompt, system, temperature, max_tokens) -> str:
     messages = ([{"role": "system", "content": system}] if system else []) + \
                [{"role": "user", "content": prompt}]
     data = _post_with_retries(
         "https://api.groq.com/openai/v1/chat/completions",
         headers={"Authorization": f"Bearer {config.GROQ_API_KEY}",
                  "Content-Type": "application/json"},
-        json_body={"model": config.LLM_MODEL, "messages": messages,
+        json_body={"model": model, "messages": messages,
                    "temperature": temperature, "max_tokens": max_tokens},
     )
     try:
         return data["choices"][0]["message"]["content"]
     except (KeyError, IndexError) as exc:
         raise LLMError(f"unexpected Groq response shape: {str(data)[:300]}") from exc
+
+
+def _call_groq(prompt, system, temperature, max_tokens) -> str:
+    model = resolve_groq_model()
+    try:
+        return _groq_chat(model, prompt, system, temperature, max_tokens)
+    except ModelNotAvailable:
+        # The model was retired, renamed, or is not on this key. Ask Groq what it
+        # does offer and try once more, rather than dropping the whole run to the
+        # deterministic fallback over a stale name.
+        replacement = resolve_groq_model(force=True, exclude=frozenset({model}))
+        if replacement == model:
+            raise
+        return _groq_chat(replacement, prompt, system, temperature, max_tokens)
 
 
 def _call_gemini(prompt, system, temperature, max_tokens) -> str:
@@ -189,7 +322,7 @@ def _call_gemini(prompt, system, temperature, max_tokens) -> str:
     if system:
         body["systemInstruction"] = {"parts": [{"text": system}]}
     data = _post_with_retries(
-        f"https://generativelanguage.googleapis.com/v1beta/models/{config.LLM_MODEL}:generateContent",
+        f"https://generativelanguage.googleapis.com/v1beta/models/{active_model()}:generateContent",
         headers={"Content-Type": "application/json"},
         params={"key": config.GEMINI_API_KEY},
         json_body=body,
@@ -206,7 +339,7 @@ def _call_ollama(prompt, system, temperature, max_tokens) -> str:
     data = _post_with_retries(
         f"{config.OLLAMA_HOST.rstrip('/')}/api/chat",
         headers={"Content-Type": "application/json"},
-        json_body={"model": config.LLM_MODEL, "messages": messages, "stream": False,
+        json_body={"model": active_model(), "messages": messages, "stream": False,
                    "options": {"temperature": temperature, "num_predict": max_tokens}},
     )
     try:
@@ -216,9 +349,30 @@ def _call_ollama(prompt, system, temperature, max_tokens) -> str:
 
 
 if __name__ == "__main__":
-    # Quick smoke test:  python -m src.llm
-    print(f"Provider: {describe()}")
+    # python -m src.llm            smoke-test the provider
+    # python -m src.llm --models   list what this key can actually run
+    import sys
+
     if not is_configured():
         print(configuration_hint())
         raise SystemExit(1)
+
+    if "--models" in sys.argv:
+        if config.LLM_PROVIDER != "groq":
+            print(f"--models only applies to Groq. Provider is {config.LLM_PROVIDER}.")
+            raise SystemExit(1)
+        try:
+            models = list_groq_models()
+        except (LLMError, requests.RequestException) as exc:
+            print(f"Could not list models: {exc}")
+            raise SystemExit(1)
+        usable = sorted((m for m in models if _usable(m)), key=_rank)
+        print(f"{len(models)} models on this key, {len(usable)} usable for this project:\n")
+        for index, model in enumerate(usable):
+            print(f"  {'-> ' if index == 0 else '   '}{model}")
+        print(f"\nWould use: {usable[0] if usable else '(none)'}")
+        raise SystemExit(0)
+
+    print(f"Provider: {describe()}")
     print("Reply:", complete("Reply with exactly: OK", max_tokens=10).strip())
+    print(f"Resolved model: {active_model()}  ({resolution_note()})")

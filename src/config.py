@@ -49,13 +49,37 @@ RISK_STATE_FILE = Path(_state_dir) / "risk_state.json"
 
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "groq").strip().lower()
 
+# Set LLM_MODEL in .env to pin a specific model. Left empty (the default), the
+# model is discovered at runtime - see GROQ_MODEL_PREFERENCES below.
+LLM_MODEL = os.getenv("LLM_MODEL", "").strip()
+
 DEFAULT_MODELS = {
-    "groq": "llama-3.3-70b-versatile",
     "gemini": "gemini-2.0-flash",
     "ollama": "llama3.1",
 }
-# .env can override the model for whichever provider is selected.
-LLM_MODEL = os.getenv("LLM_MODEL", "").strip() or DEFAULT_MODELS.get(LLM_PROVIDER, "")
+
+# Groq retires and renames models regularly, and a hard-coded name that has been
+# retired fails with a 404 that looks exactly like a broken key - the whole demo
+# silently drops to the deterministic fallback. So the Groq model is RESOLVED AT
+# RUNTIME against /openai/v1/models: whatever this key can actually run.
+#
+# This list is only a preference order among what is available. If none of these
+# are offered, llm.py picks the most capable chat model the key does have, so a
+# lineup this list has never heard of still works.
+GROQ_MODEL_PREFERENCES = [
+    "llama-3.3-70b-versatile",
+    "meta-llama/llama-4-maverick-17b-128e-instruct",
+    "meta-llama/llama-4-scout-17b-16e-instruct",
+    "openai/gpt-oss-120b",
+    "moonshotai/kimi-k2-instruct",
+    "qwen/qwen3-32b",
+    "openai/gpt-oss-20b",
+    "llama-3.1-8b-instant",
+    "gemma2-9b-it",
+]
+
+# Never usable for this job: audio, safety classifiers, embeddings.
+GROQ_MODEL_EXCLUDE = ("whisper", "tts", "guard", "embed", "moderation", "rerank")
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
