@@ -562,6 +562,58 @@ h1,h2,h3,h4,p{margin:0}
 .cs .cs-foot{margin-top:auto; padding-top:16px; font-size:11.5px; line-height:16px;
              color:var(--faint)}
 
+/* ---------- decision card (booked plan vs recommended) ---------- */
+/* The anatomy is a side-by-side: what is booked now against what the advisor
+   proposes, each with its transit figure large enough to compare across the
+   gutter and one line of rationale underneath. The recommended side carries
+   the same blue the board uses for a rerouted shipment, so a card read here
+   and a row read on the board agree on what the colour means.
+
+   Every figure in it is read from routes.json and shipments.json and matches
+   what `python -m src.route_advisor --inject --shipment SHP-001` prints. It
+   is a rendering of a real run of the advisor, not a mock-up with numbers
+   chosen to look good - which is why the recommended route is the SLOWER of
+   the two. Thirty-four days beats thirty-two plus a strike, and the honest
+   version of this card has to show that rather than hide it. */
+.dec{margin-top:34px; background:var(--card); border:1px solid var(--border);
+     border-radius:var(--r-md); box-shadow:var(--shadow-card); overflow:hidden}
+
+.dec-h{display:flex; align-items:center; gap:9px; flex-wrap:wrap; padding:12px 20px;
+       background:var(--card-muted); border-bottom:1px solid var(--border)}
+.dec-h .ref{font-family:"Geist Mono",ui-monospace,monospace; font-size:12.5px;
+            font-weight:500; color:var(--blue)}
+.dec-h .lane{font-family:"Geist Mono",ui-monospace,monospace; font-size:12.5px;
+             color:var(--muted)}
+.dec-h .sep{color:var(--gray-500)}
+.dec-h .r{margin-left:auto}
+
+.dec-t{padding:20px 20px 19px}
+.dec-t h4{margin:0; font-size:22px; line-height:27px; font-weight:600; letter-spacing:-.7px}
+.dec-t .meta{margin:6px 0 0; font-family:"Geist Mono",ui-monospace,monospace;
+             font-size:12.5px; line-height:18px; color:var(--faint)}
+
+.dec-cols{display:grid; grid-template-columns:1fr 1fr; border-top:1px solid var(--border)}
+.dec-col{padding:19px 20px 21px; min-width:0}
+.dec-col + .dec-col{border-left:1px solid var(--border); background:var(--blue-100)}
+.dec-col .k{margin:0; font-size:10px; line-height:14px; font-weight:500; letter-spacing:.07em;
+            text-transform:uppercase; color:var(--faint)}
+.dec-col.rec .k{color:var(--blue)}
+.dec-col .n{margin:9px 0 0; font-size:18px; line-height:24px; font-weight:600;
+            letter-spacing:-.5px}
+.dec-col .d{margin:3px 0 0; font-family:"Geist Mono",ui-monospace,monospace;
+            font-size:12.5px; line-height:18px; color:var(--faint)}
+.dec-col .big{margin:13px 0 0; font-size:38px; line-height:42px; font-weight:600;
+              letter-spacing:-1.8px; font-variant-numeric:tabular-nums}
+.dec-col .big u{text-decoration:none; margin-left:7px; font-size:15px; font-weight:500;
+                letter-spacing:-.2px; color:var(--faint)}
+.dec-col .st-badge{margin-top:11px}
+.dec-col .why{margin:13px 0 0; font-size:13.5px; line-height:20px; color:var(--muted)}
+
+.dec-f{display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:14px 20px;
+       background:var(--card-muted); border-top:1px solid var(--border)}
+.dec-note{margin:14px 0 0; max-width:80ch; font-size:13px; line-height:19px; color:var(--faint)}
+.dec-note code{font-family:"Geist Mono",ui-monospace,monospace; font-size:12px; color:var(--muted)}
+
 /* ---------- signup (a placeholder, and it says so) ---------- */
 .signup{border-top:1px solid var(--border); background:var(--card); padding:88px 0;
         text-align:center}
@@ -798,6 +850,15 @@ h1,h2,h3,h4,p{margin:0}
   .h32{font-size:26px; line-height:32px; letter-spacing:-1px}
   .copy18{font-size:16px; line-height:25px}
   .g2,.g3,.g4{grid-template-columns:1fr}
+  /* Two 38px figures side by side do not fit a phone. Stacked, the border
+     between them has to move from the left edge to the top or the tinted
+     panel loses its boundary. */
+  .dec-cols{grid-template-columns:1fr}
+  .dec-col + .dec-col{border-left:0; border-top:1px solid var(--border)}
+  .dec-col .big{font-size:32px; line-height:36px; letter-spacing:-1.4px}
+  /* The header wraps to two lines here, and a chip pushed to the right edge of
+     a line of its own reads as detached from the lane it qualifies. */
+  .dec-h .r{margin-left:0}
   /* Three gauges across a phone is three different baselines the moment one
      name wraps to a second line. Full width each, and they line up again. */
   .gauges .g-row{grid-template-columns:1fr; gap:22px}
@@ -1521,6 +1582,135 @@ h1,h2,h3,h4,p{margin:0}
         </div>
       </div>
     </div>
+
+    <!-- The other branch. The trail above is the hold, where there is no good
+         option; these are the same run's two clean reroutes, each laid out as
+         the booked plan against the proposed one. Both halves of the board's
+         behaviour, rather than only the hard half.
+
+         Two cards rather than one because the pair is the argument: same
+         event, same route change, and the reasons are not interchangeable.
+         SHP-001 has a day more slack. SHP-005 has cargo that constrains which
+         ports can take it at all, and a consignee in Hamburg who is still
+         served better by the reroute than by waiting - which is the opposite
+         of the call made for SHP-002, whose consignee is also in Hamburg. A
+         reader who only ever sees one reroute card cannot tell a decision
+         from a rule. -->
+    <div class="head rv" style="max-width:none;margin-top:64px">
+      <span class="eyebrow">The other branch</span>
+      <h3 class="h32" style="margin-top:12px">And these are the clean ones.</h3>
+      <p class="copy16" style="margin-top:12px;max-width:74ch">Two of the five reroute on the
+        same event, and neither is a copy of the other. Each is worth showing whole: the plan
+        that is booked, the plan the advisor proposes, and the arithmetic that separates
+        them.</p>
+    </div>
+
+    <div class="dec rv">
+      <div class="dec-h">
+        <span class="ref">HLCU-2261188</span>
+        <span class="sep">·</span>
+        <span class="lane">Shanghai → Munich</span>
+        <span class="r"><span class="chip red">Hamburg strike · high</span></span>
+      </div>
+
+      <div class="dec-t">
+        <h4>Reroute the discharge port</h4>
+        <p class="meta">SHP-001 · Automotive parts · Hapag-Lloyd · 12 x 40HC · 4d slack</p>
+      </div>
+
+      <div class="dec-cols">
+        <div class="dec-col">
+          <p class="k">Booked</p>
+          <p class="n">Hamburg discharge</p>
+          <p class="d">R-HAM-STD · via Suez · rail ex-Hamburg</p>
+          <p class="big">32<u>days transit</u></p>
+          <span class="st-badge st-red"><i></i>Exposed · HAM</span>
+          <p class="why">Terminal handling, gate operations and rail shunting stop for the
+            walkout. Staying put projects three to five days of delay against four days of
+            slack — in the worst case the deadline breaks.</p>
+        </div>
+
+        <div class="dec-col rec">
+          <p class="k">Recommended</p>
+          <p class="n">Rotterdam discharge</p>
+          <p class="d">R-RTM-ALT · via Suez · road ex-Rotterdam</p>
+          <p class="big">34<u>days transit</u></p>
+          <span class="st-badge st-blue"><i></i>Reroute · RTM</span>
+          <p class="why">Two days longer on paper, and nothing active on any chokepoint it
+            passes. Two days of added transit against four of slack, so the deadline holds
+            without spending the whole margin.</p>
+        </div>
+      </div>
+
+      <div class="dec-f">
+        <span class="fact">ETA <b>Sep 13 → Sep 15</b></span>
+        <span class="fact">required by <b>Sep 17</b></span>
+        <span class="fact">cost index <b>100 → 108</b></span>
+        <span class="fact">alternates weighed <b>2</b></span>
+        <span class="fact">decided by <b>model</b></span>
+      </div>
+    </div>
+
+    <!-- The second reroute. Same event, same pair of routes, and deliberately
+         not the same card: the slack is a day tighter, the cargo is
+         out-of-gauge so the alternate has to be a heavy-lift port, and the
+         consignee is in Hamburg - the fact that made SHP-002 hold. -->
+    <div class="dec rv">
+      <div class="dec-h">
+        <span class="ref">HLCU-2264903</span>
+        <span class="sep">·</span>
+        <span class="lane">Busan → Hamburg</span>
+        <span class="r"><span class="chip red">Hamburg strike · high</span></span>
+      </div>
+
+      <div class="dec-t">
+        <h4>Reroute, with the final leg by road</h4>
+        <p class="meta">SHP-005 · Machinery, out-of-gauge · Hapag-Lloyd · 3 x 40FR flatrack ·
+          3d slack</p>
+      </div>
+
+      <div class="dec-cols">
+        <div class="dec-col">
+          <p class="k">Booked</p>
+          <p class="n">Hamburg discharge</p>
+          <p class="d">R-HAM-STD · via Suez · consignee at the port</p>
+          <p class="big">32<u>days transit</u></p>
+          <span class="st-badge st-red"><i></i>Exposed · HAM</span>
+          <p class="why">The same walkout, one day tighter: three to five days of delay against
+            three days of slack. Heavy-lift handling stops with everything else, so out-of-gauge
+            cargo waits out the backlog rather than moving through it.</p>
+        </div>
+
+        <div class="dec-col rec">
+          <p class="k">Recommended</p>
+          <p class="n">Rotterdam discharge</p>
+          <p class="d">R-RTM-ALT · via Suez · road Rotterdam → Hamburg</p>
+          <p class="big">34<u>days transit</u></p>
+          <span class="st-badge st-blue"><i></i>Reroute · RTM</span>
+          <p class="why">Rotterdam takes heavy lift, which is what makes this reroute available
+            to flatrack cargo at all. Two days of added transit against three of slack — it
+            fits, with a day left over.</p>
+        </div>
+      </div>
+
+      <div class="dec-f">
+        <span class="fact">ETA <b>Sep 14 → Sep 16</b></span>
+        <span class="fact">required by <b>Sep 17</b></span>
+        <span class="fact">cost index <b>100 → 108</b></span>
+        <span class="fact">alternates weighed <b>2</b></span>
+        <span class="fact">decided by <b>model</b></span>
+      </div>
+    </div>
+
+    <p class="dec-note rv">Both shipments were offered the Cape routing <code>R-COGH-ALT</code>
+      as well, and both refused it: ten days longer, and it still discharges at Hamburg, so it
+      carries the disruption it was meant to avoid. SHP-005 is the one to read against the hold
+      above — its consignee is in Hamburg too, and it reroutes anyway, because a road leg from
+      Rotterdam is just road for a machine tool and a broken cold chain for a reefer. The
+      comparisons and the refusals all sit in the reasoning trails —
+      <code>python -m src.route_advisor --inject</code> prints the same figures these cards
+      show.</p>
+
   </div>
 </section>
 
