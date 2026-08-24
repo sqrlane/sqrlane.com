@@ -986,6 +986,28 @@ h1,h2,h3,h4,p{margin:0}
   .row .meta{display:block}
   .board-side{display:block}
 }
+/* The nav, in two steps rather than one cliff.
+
+   At full size the bar needs about 1100px: a 119px brand, seven links at
+   612px, and 257px of actions. The old rule kept every one of them until
+   860px and then dropped the links all at once, so the page scrolled
+   sideways across the whole band between - and every link added since made
+   that band wider. Two links have been added since the breakpoint was set.
+
+   So: tighten first - close the gaps and drop the ghost link, which the
+   footer carries anyway - and only hide the links once tightening is not
+   enough. Anything added to this nav shifts both numbers; the fix is to
+   re-measure, not to nudge them. */
+@media (max-width:1180px){
+  .nav .wrap{gap:18px}
+  .nav-links{gap:0; margin-left:0}
+  .nav-links a{padding:6px 8px}
+  .nav .ghost{display:none}
+}
+@media (max-width:900px){
+  .nav-links{display:none}
+}
+
 @media (max-width:1000px){
   .d1{font-size:52px; line-height:56px; letter-spacing:-2.4px}
   .feature{grid-template-columns:1fr; gap:32px}
@@ -994,7 +1016,6 @@ h1,h2,h3,h4,p{margin:0}
   .foot .about{grid-column:1/-1}
 }
 @media (max-width:860px){
-  .nav-links{display:none}
   .g3,.g4{grid-template-columns:1fr 1fr}
   .mini-stats{grid-template-columns:repeat(2,1fr)}
 }
@@ -1038,7 +1059,6 @@ h1,h2,h3,h4,p{margin:0}
      "SYNTHETIC" column. The chips size to their own text; the column still
      lines the words up. */
   .honest .who .chip{justify-self:start}
-  .nav .ghost{display:none}
   .shot{margin-top:38px}
   .btn{width:100%}
   .hero .cta,.final .cta{flex-direction:column}
