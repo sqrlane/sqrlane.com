@@ -1857,6 +1857,8 @@ firm revised ETA as soon as terminals restart.</p>
                   <p class="wv-body">We were expecting this in a few days and have seen the
                     port news.</p>
                 </div>
+                <p class="wv-note">Triaged and linked automatically. Replies are drafted and
+                  held — there is no way to send one.</p>
               </div>
               <div class="wv-s" data-do="held at the gate" data-hold="1500">
                 <div class="wv-gate">
@@ -1886,28 +1888,28 @@ firm revised ETA as soon as terminals restart.</p>
             <div class="wv-bar"><i></i><i></i><i></i>
               <span class="url mono">rfq</span><span class="stamp mono">ready</span></div>
             <div class="wv-rail">
-              <span class="wv-chip" data-pick>SHP-001</span>
-              <span class="wv-chip">SHP-002</span>
+              <span class="wv-chip">SHP-001</span>
+              <span class="wv-chip" data-pick>SHP-002</span>
               <span class="wv-chip">SHP-003</span>
             </div>
             <div class="wv-b">
               <div class="wv-s" data-at="[data-pick]" data-do="booking picked">
-                <p class="wv-t">1 rate request on Shanghai → Munich</p>
+                <p class="wv-t">1 rate request on Ningbo → Hamburg</p>
               </div>
               <div class="wv-s" data-do="read">
                 <div class="wv-m">
-                  <div class="wv-mh"><span class="who">Bavaria Drivetrain GmbH</span>
+                  <div class="wv-mh"><span class="who">Nordmed Pharma Logistik AG</span>
                     <span class="chip">rate request</span>
                     <span class="ago">24m ago</span></div>
-                  <p class="wv-body">Need pricing Shanghai to Munich, 2 x 40ft, ready in
+                  <p class="wv-body">Need pricing Ningbo to Hamburg, 2 x 40ft, ready in
                     about three weeks. What can you do?</p>
                 </div>
               </div>
               <div class="wv-s" data-do="read into fields">
                 <div class="wv-f">
-                  <span class="k">lane</span><span class="v">Shanghai → Munich</span>
-                  <span class="k">equipment</span><span class="v">2 x 40ft</span>
-                  <span class="k">commodity</span><span class="v">Automotive parts</span>
+                  <span class="k">lane</span><span class="v">Ningbo → Hamburg</span>
+                  <span class="k">equipment</span><span class="v">2 x 40ft reefer</span>
+                  <span class="k">commodity</span><span class="v">Refrigerated pharma</span>
                   <span class="k">ready</span><span class="v">≈ 3 weeks</span>
                 </div>
               </div>
@@ -1917,9 +1919,14 @@ firm revised ETA as soon as terminals restart.</p>
                   <tbody>
                     <tr class="pick"><td>Hapag-Lloyd</td><td>HAM</td><td>32d</td>
                       <td>106 <span class="chip">+ surcharge</span></td></tr>
-                    <tr><td>Maersk</td><td>RTM</td><td>34d</td><td>108</td></tr>
                     <tr><td>Hapag-Lloyd</td><td>HAM</td><td>42d</td><td>130</td></tr>
                   </tbody></table>
+              </div>
+              <div class="wv-s" data-do="quote drafted">
+                <div class="wv-r"><div class="wv-rl">Drafted quote</div>
+                  On Ningbo → Hamburg we would route via HAM with Hapag-Lloyd, around 32 days
+                  port to port. A port disruption surcharge of 6 index points currently
+                  applies…</div>
               </div>
               <div class="wv-s" data-do="held at the gate" data-hold="1500">
                 <div class="wv-gate">
@@ -1962,16 +1969,20 @@ firm revised ETA as soon as terminals restart.</p>
                 <div class="wv-f map">
                   <span class="k">booking_ref</span><span class="v"><span class="ar">→</span> id
                     <span class="chip">in</span></span>
+                  <span class="k">commodity</span><span class="v"><span class="ar">→</span> cargo
+                    <span class="chip">in</span></span>
+                  <span class="k">port_of_loading</span><span class="v"><span class="ar">→</span> origin
+                    <span class="chip">in</span></span>
                   <span class="k">port_of_discharge</span><span class="v"><span class="ar">→</span> discharge_port
                     <span class="chip">both</span></span>
                   <span class="k">routing_code</span><span class="v"><span class="ar">→</span> primary_route
                     <span class="chip">both</span></span>
                   <span class="k">eta</span><span class="v"><span class="ar">→</span> eta
                     <span class="chip">both</span></span>
-                  <span class="k">commodity</span><span class="v"><span class="ar">→</span> cargo
+                  <span class="k">required_by</span><span class="v"><span class="ar">→</span> required_by
                     <span class="chip">in</span></span>
-                  <span class="k">required_by</span><span class="v"><span class="ar">→</span>
-                    required_by <span class="chip">in</span></span>
+                  <span class="k">temperature_regime</span><span class="v"><span class="ar">→</span> cold_chain
+                    <span class="chip">in</span></span>
                 </div>
                 <p class="wv-note">Bookings read in; routing, discharge port and ETA
                   written back once a person approves.</p>
