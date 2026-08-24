@@ -140,3 +140,23 @@ SEVERITIES = ["low", "medium", "high"]
 
 CLASSIFY_BATCH_SIZE = 8      # items per LLM call - keeps free-tier usage sane
 MAX_ITEMS_TO_CLASSIFY = 40   # hard ceiling on a single run
+
+
+# ===========================================================================
+# Who the emails come FROM (Comms Agent, Phase 3)
+#
+# Not in DATASET.md - authored so drafts are signed by a consistent person
+# instead of the model inventing one on every run. The modelled end user is a
+# mid-size DACH/Benelux forwarder's Head of Operations.
+#
+# The domain uses .example, a TLD reserved by RFC 2606 so it can never belong
+# to anyone. Nothing here is a real company, person or address.
+# ===========================================================================
+
+FORWARDER = {
+    "company": "Hanseatic Freight Partners GmbH",
+    "ops_contact": "Lena Brandt",
+    "ops_title": "Head of Operations",
+    "ops_email": "operations@hanseatic-freight.example",
+    "ops_phone": "+49 40 5550 118",
+}

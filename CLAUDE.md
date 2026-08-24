@@ -210,8 +210,8 @@ Full copy-paste prompts live in `BUILD-GUIDE.md`.
 | **0** | Orient: read the docs, confirm understanding, write no code | Summary matches the narrative + four components | ✅ (this file) |
 | **1** | `data/` JSON + `llm.py`, `config.py`, `risk_monitor.py` | Run the Risk Monitor alone from the terminal; see real current news classified; confirm ≥1 non-English source is actually read; injected event loadable | ✅ (live pull unverified — see below) |
 | **2** | `route_advisor.py` | Run against the 5 shipments with the strike active; the three expected outcomes appear with reasoning that reads *well* | ✅ (LLM wording unverified — see below) |
-| **3** | `comms_agent.py` | Drafts for SHP-001 (reroute) and SHP-002 (hold) read like something a person would actually send | ⬜ **next** |
-| **4** | `orchestrator.py`, `app.py`, `static/index.html` | Open the URL, click the button, the whole narrative plays on screen. **This is the demo.** | ⬜ |
+| **3** | `comms_agent.py` | Drafts for SHP-001 (reroute) and SHP-002 (hold) read like something a person would actually send | ✅ (LLM wording unverified — see below) |
+| **4** | `orchestrator.py`, `app.py`, `static/index.html` | Open the URL, click the button, the whole narrative plays on screen. **This is the demo.** | ⬜ **next** |
 | **5** | Polish: AI-Worker framing · graceful degradation if a source is down · live-vs-synthetic legend · README | Runs cold, survives flaky wifi, the honest framing is visible | ⬜ |
 
 **No scheduler, nothing always-running.** For a demo, a button beats a background job — the magic
@@ -228,12 +228,13 @@ two claims are **written and tested but not yet witnessed against the real thing
    crashing (that path is well tested), but no real GDELT/RSS/PEGELONLINE response
    has been parsed. Run `python -m src.risk_monitor` on a real connection and
    confirm at least one non-English source returns items.
-2. **How the LLM's reasoning actually reads.** Decision *routing* is verified against
-   stubs, and the deterministic fallback already produces the correct 2/1/2 split.
-   But the plain-English wording — the demo's centrepiece — depends on the live
-   model. Run `python -m src.route_advisor --inject` with a key and read SHP-002's
-   reasoning aloud. If it doesn't sound like a person, tune `ADVISOR_SYSTEM` and the
-   prompt in `route_advisor.py`.
+2. **How the LLM's prose actually reads**, in both the Route Advisor and the Comms
+   Agent. Routing and fallbacks are verified against stubs, and the deterministic
+   templates already produce the correct 2/1/2 split and readable emails. But the
+   wording — the demo's centrepiece — depends on the live model. Run
+   `python -m src.comms_agent --inject` with a key, read SHP-002's reasoning and its
+   two drafts aloud. If they don't sound like a person, tune `ADVISOR_SYSTEM` in
+   `route_advisor.py` and `CARRIER_SYSTEM` / `CUSTOMER_SYSTEM` in `comms_agent.py`.
 
 ### How the decision layer splits the work
 
@@ -248,6 +249,18 @@ is recorded in the shipment's `reasoning_trail`.
 
 Shipments whose route carries **no active risk short-circuit without an LLM call** —
 that is a real answer, not a shortcut, and it keeps 2 of the 5 outcomes deterministic.
+
+### The Comms Agent sends nothing, structurally
+
+No SMTP, no email library, no transport of any kind is imported anywhere in `src/`,
+and a test asserts it stays that way. Every draft carries `status: "DRAFT - not sent"`
+in the data, not just in the UI. Say this out loud in the demo — it is the responsible
+design, not a missing feature.
+
+Carrier and customer get **different voices and separate calls**: a carrier email is a
+transaction between operators, a customer email is a relationship. Internal vocabulary
+(route codes like `R-RTM-ALT`, chokepoint ids like `HAM`) is fine in a carrier email and
+is flagged as a warning if it ever appears in a customer one.
 
 ---
 
