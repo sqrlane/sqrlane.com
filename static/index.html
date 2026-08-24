@@ -192,6 +192,24 @@ html[data-theme="dark"]{
 .chart .blab{text-anchor:middle;font-size:11px;font-weight:600;fill:var(--s-delay)}
 .chart .grp:hover .b{opacity:.82}
 .chart-f{font-size:12.5px;color:var(--faint);margin:12px 0 0}
+/* The week, as a strip of days. Each bar is the day's decision mix, so the
+   shape of the week is readable before any day is opened. */
+.simstrip{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-top:20px}
+@media(max-width:900px){.simstrip{grid-template-columns:repeat(4,1fr)}}
+.simday{display:flex;flex-direction:column;gap:6px;align-items:flex-start;text-align:left;
+        background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);
+        padding:11px 12px;cursor:pointer;box-shadow:var(--shadow)}
+.simday:hover{border-color:var(--border-strong)}
+.simday.on{border-color:var(--fg)}
+.sd-l{font-size:13px;font-weight:600}
+.sd-n{font-size:11.5px;color:var(--faint)}
+.sd-bar{display:flex;gap:2px;width:100%;height:5px;margin-top:2px}
+.sd-bar i{display:block;border-radius:2px;min-width:3px}
+.sd-bar i.blue{background:var(--s-reroute)}
+.sd-bar i.amber{background:var(--s-hold)}
+.sd-bar i.green{background:var(--s-plan)}
+.simev{display:flex;gap:7px;flex-wrap:wrap;margin-top:14px}
+
 /* The connection point. */
 .conn{padding:20px}
 .conn-h{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
@@ -518,6 +536,7 @@ table.q tr.pick td{background:var(--surface)}
         <div class="view" id="v-risk"></div>
         <div class="view" id="v-approvals"></div>
         <div class="view" id="v-connections"></div>
+        <div class="view" id="v-simulation"></div>
       </div>
     </div>
   </div>
@@ -541,6 +560,7 @@ const ICON = {
   panelClose:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M10 4v16M17 9l-3 3 3 3"/></svg>',
   panelOpen:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M10 4v16M14 9l3 3-3 3"/></svg>',
   bell:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>',
+  simulation:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>',
   connections:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0z"/><path d="M12 18v4"/></svg>',
   close:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
 };
@@ -548,6 +568,7 @@ const ICON = {
 let board=[], workers=[], risk={events:[],sources:[]}, ai=null, summary=null, notes=[], hasRun=false;
 let scenarios=[], scenario=null, chosenScenario=null, openWorker=null, selected=null;
 let tmsLink = {};        // the demo TMS connection, board-wide (src/tms.py)
+let sim = {}, simDay = null, simBusy = false;   // the authored week (src/simulation.py)
 const approved = new Set();     // approval is browser state only; nothing is transmitted
 let view = "overview", openId = null;
 
@@ -576,6 +597,8 @@ const NAV_GROUPS = [
     {id:"approvals", label:"Approvals", count:() => pending()},
   ]},
   {title:"System", items:[
+    {id:"simulation", label:"Simulation",
+     count:() => (sim.days||[]).length, quiet:true},
     {id:"connections", label:"Connections",
      count:() => (tmsLink.queued || 0), quiet:true},
   ]},
@@ -616,6 +639,86 @@ function initCollapse(){
    status says "connected (demo)" in every place it is surfaced, and a write-back
    is a described change that stays queued behind the same approval gate as an
    email. */
+/* The authored week. The button runs one cycle; this runs eight, and carries
+   state between them - a box rerouted on Tuesday is on the new route on
+   Wednesday, and a held one pays a day for every day it waits. Every event is
+   authored, so the whole view is tagged SCRIPTED. The decisions inside it are
+   still made by the real advisor. */
+const SIMTONE = {reroute:"blue", hold:"amber", "no-action":"green"};
+
+function simulationView(){
+  if (!(sim.days||[]).length) {
+    return `<div class="card conn">
+      <div class="conn-h"><div>
+        <h2>One week on the board</h2>
+        <p>Eight days, five disruptions, the same seven shipments. State carries from
+           one day to the next.</p></div>
+        <span class="tag inj">scripted</span></div>
+      <div class="hint" style="margin-top:16px">
+        <b>Nothing has run yet.</b> Press <b>Play the week</b> to step the board through
+        a walkout, a river running low, a corridor closing, and the climb back.</div>
+      <button class="run" id="sim-run" style="margin-top:16px">${
+        simBusy ? "Running…" : "Play the week"}</button>
+    </div>`;
+  }
+
+  const t = sim.totals || {};
+  const open = simDay || sim.days[0].day;
+  const day = sim.days.find(d => d.day === open) || sim.days[0];
+
+  return `<div class="card conn">
+    <div class="conn-h">
+      <div><h2>${esc(sim.name)}</h2><p>${esc(sim.summary)}</p></div>
+      <span class="tag inj">scripted</span>
+    </div>
+    <div class="stats" style="margin:18px 0 0">
+      ${statCard({label:"Days replayed", value:t.days||0, pill:"authored", tone:"",
+                  sub:"each one decided for real"})}
+      ${statCard({label:"Decisions made", value:t.decisions||0,
+                  pill:`${t.reroute_decisions||0} reroute`, tone:"blue",
+                  sub:`${t.hold_decisions||0} hold across the week`})}
+      ${statCard({label:"Shipments moved", value:t.shipments_moved||0,
+                  pill:`${t.shipments_held||0} held`, tone:(t.shipments_held?"amber":"green"),
+                  sub:"of the seven on the board"})}
+      ${statCard({label:"Longest hold", value:`${t.longest_hold_days||0}d`,
+                  pill:`busiest ${esc(t.busiest_day||"-")}`, tone:"",
+                  sub:"a day of delay for each day waited"})}
+    </div>
+    <div class="warn" style="margin-top:18px">${esc(sim.honesty||"")}</div>
+  </div>
+
+  <div class="simstrip">${sim.days.map(d => `
+    <button class="simday ${d.day===open?"on":""}" data-simday="${d.day}">
+      <span class="sd-l">${esc(d.label)}</span>
+      <span class="sd-n">${d.actioned ? `${d.actioned} actioned` : "all on plan"}</span>
+      <span class="sd-bar">${["reroute","hold","no-action"].map(k =>
+        (d.summary[k] ? `<i class="${SIMTONE[k]}" style="flex:${d.summary[k]}"></i>` : "")
+      ).join("")}</span>
+    </button>`).join("")}
+  </div>
+
+  <div class="card conn" style="margin-top:14px">
+    <div class="conn-h"><div>
+      <h2>Day ${day.day} · ${esc(day.label)} — ${esc(day.headline)}</h2>
+      <p>${esc(day.note)}</p></div></div>
+
+    <div class="simev">${day.active_events.length
+      ? day.active_events.map(e => `<span class="tag ${esc(e.severity)}">${
+          esc(e.chokepoint)} ${esc(e.type)}</span>`).join("")
+      : `<span class="pnote" style="margin:0">Nothing active.</span>`}</div>
+
+    <table class="q" style="margin-top:14px">
+      <thead><tr><th>Booking</th><th>Decision</th><th>Route</th><th>ETA</th><th>What changed</th></tr></thead>
+      <tbody>${day.shipments.map(c => `<tr class="${c.changed.moved||c.changed.held?"pick":""}">
+        <td class="mono">${esc(c.id)}</td>
+        <td><span class="spill ${SIMTONE[c.decision]||""}">${esc(c.decision)}</span></td>
+        <td class="mono">${esc(c.route)}</td>
+        <td class="mono">${esc(c.eta)}</td>
+        <td>${esc(c.changed.detail || "—")}</td></tr>`).join("")}
+      </tbody></table>
+  </div>`;
+}
+
 function connectionsView(){
   const t = tmsLink || {};
   if (!t.connector) return `<div class="hint">The connection reports itself on a run.
@@ -716,7 +819,8 @@ function go(id){
   document.querySelectorAll(".view").forEach(v => v.classList.remove("on"));
   $("v-"+id).classList.add("on");
   $("crumb").textContent = {overview:"Overview",shipments:"Shipments",risk:"Risk feed",
-                           approvals:"Approvals",connections:"Connections"}[id];
+                           approvals:"Approvals",connections:"Connections",
+                           simulation:"Simulation"}[id];
   $("scroll").scrollTop = 0;
   render();
 }
@@ -1199,7 +1303,7 @@ function render(){
   $("band").innerHTML = scenarioSwitcher() + rosterStrip() + workerPanel();
   // Only the visible view is built. Rendering all four left duplicate rows and
   // duplicate handlers in the DOM, with the hidden copies first.
-  ["overview","shipments","risk","approvals","connections"].forEach(v => {
+  ["overview","shipments","risk","approvals","connections","simulation"].forEach(v => {
     if (v !== view) $("v-"+v).innerHTML = "";
   });
 
@@ -1217,12 +1321,18 @@ function render(){
   if (view === "risk")      $("v-risk").innerHTML = riskCard(false);
   if (view === "approvals") $("v-approvals").innerHTML = approvalsView();
   if (view === "connections") $("v-connections").innerHTML = connectionsView();
+  if (view === "simulation")  $("v-simulation").innerHTML = simulationView();
 
   document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => {
     selected = b.dataset.open;
     // With a Worker panel open, picking a shipment drives that panel instead of
     // opening the detail drawer - that reactivity is the point of the roster.
     if (openWorker) render(); else openPanel(b.dataset.open);
+  });
+  const simBtn = $("sim-run");
+  if (simBtn) simBtn.onclick = runSimulation;
+  document.querySelectorAll("[data-simday]").forEach(b => b.onclick = () => {
+    simDay = Number(b.dataset.simday); render();
   });
   document.querySelectorAll("[data-scen]").forEach(b => b.onclick = () => {
     chosenScenario = b.dataset.scen; render(); run();
@@ -1327,6 +1437,19 @@ function renderEngine(){
     $("eng-split").innerHTML = `${ai.decisions_from_model}/${ai.decisions_total} decisions ·
       ${ai.drafts_from_model}/${ai.drafts_total} drafts by model`;
   } else $("eng-split").textContent = ai.model_source || "";
+}
+
+async function runSimulation(){
+  simBusy = true; render();
+  try {
+    const r = await fetch("/api/simulation").then(r => r.json());
+    sim = r.error ? {} : r;
+    simDay = (sim.days||[]).length ? sim.days[0].day : null;
+    if (r.error) notes = [`The simulation failed: ${r.error}`];
+  } catch (err) {
+    notes = [`Could not reach the server: ${err.message}`];
+  }
+  simBusy = false; render(); renderNav();
 }
 
 /* ---------- run ---------- */

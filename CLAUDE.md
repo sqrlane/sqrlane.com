@@ -159,6 +159,47 @@ is counted from that run; nothing is illustrative.
 A **decision-engine strip** names the model in use and the model-vs-rules split, so the
 central claim is checkable at a glance rather than asserted.
 
+### The simulation loop — a week, not a snapshot
+
+The button runs **one** cycle: one set of active events, one set of decisions. That
+shows the system working, not the system *operating*. `src/simulation.py` replays an
+authored week over the same pool — `python -m src.simulation`, or the **Simulation**
+view in the dashboard.
+
+`data/simulation.json` holds only a timeline: which authored events activate or resolve
+on which day. **The events themselves are never copied there** — they are pulled from
+`scenarios.json` by id, because a second copy of an event is exactly how schema parity
+has broken before.
+
+The arc is eight days: a quiet Monday, the Hamburg walkout, the Rhine falling *while the
+strike is still on*, the Red Sea closing on top of both, the strike settling, a wildfire
+on a land leg, two disruptions clearing, and a board settled on its revised plan. Two
+disruptions at once is the case a single-event demo never shows.
+
+**State carries between days — that is what makes it a simulation rather than eight
+independent runs:**
+
+- A booking rerouted on Tuesday is *on* the new route on Wednesday, and is therefore no
+  longer exposed to the thing that moved it.
+- A held booking accrues **a day of delay for every day it waits**, and keeps that delay
+  when it resumes. Holding is not free, and the week is what makes that legible.
+- Every decision is still made by the real Route Advisor. Only the timeline is authored.
+
+**One rule lives in the simulation, not the advisor:** a booking is never offered the
+route it just left. Without that, SHP-001 went HAM → RTM → HAM → COGH across four days.
+Each single day was arithmetically defensible — under the Red Sea closure,
+Hamburg-under-strike genuinely beats Rotterdam-under-Red-Sea on "least late" — but a box
+ping-ponging between two ports across a week is nonsense. The advisor was right; it just
+should never have been asked. `verify_simulation.py` asserts no booking ever revisits a
+route.
+
+It runs **deterministically by default**. Seven shipments over eight days is 56
+decisions, which is far more model calls than a free tier will take; `--llm` opts in.
+
+One booking ends the week still held, because under a persistent corridor closure no
+better routing exists for it. Saying so is a real answer, not a gap, and the day's copy
+says it rather than claiming the board is clear.
+
 ### The dashboard follows limns-admin
 
 The shell is modelled on [`Franvy/limns-admin`](https://github.com/Franvy/limns-admin),
