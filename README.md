@@ -83,6 +83,40 @@ python -m src.orchestrator  --no-live         # the whole loop, no network
 
 ---
 
+## Deploying to Vercel
+
+The repo is configured for it: `api/index.py` re-exports the same FastAPI app,
+and `vercel.json` rewrites every path to it, so `/` and `POST /run` both land on
+one function.
+
+1. In Vercel, **Add New → Project** and import this GitHub repo.
+2. Framework preset **Other**. Leave build and output settings empty — `vercel.json`
+   handles it.
+3. Add your AI key under **Settings → Environment Variables**
+   (`LLM_PROVIDER` and `GROQ_API_KEY`), then redeploy so it takes effect.
+
+**Check `/api/health` first.** It reports what the running app can actually see —
+the path it received, whether the dashboard and data files shipped, and whether a
+provider is configured. If something is wrong, it will say so there before you go
+hunting.
+
+Serverless changes two things, both handled automatically:
+
+- **The filesystem is read-only.** `risk_state.json` is written to the temp
+  directory instead. Nothing is kept between requests, which is fine — this app
+  has no database and never did.
+- **Functions have a hard timeout.** `maxDuration` is 60s, and on a deployed host
+  the live pull is trimmed to 10s and the classifier to 16 items to leave room for
+  the LLM calls. Tune with `LIVE_PULL_BUDGET_SECONDS` and `MAX_ITEMS_TO_CLASSIFY`
+  if a run gets cut off.
+
+> **A demo you are presenting should run locally.** A full cycle makes up to a
+> dozen sequential model calls, and on a cold serverless function that can bump the
+> 60-second ceiling. Locally there is no ceiling and no cold start. Deploy for
+> sharing a link; run `uvicorn` for the room.
+
+---
+
 ## Built to survive a live audience
 
 - **A dead source is skipped, not fatal.** Each one is read in its own function and its
