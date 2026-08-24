@@ -304,7 +304,8 @@ Return one JSON object:
 
 def decide_with_llm(assessment: dict) -> dict:
     verdict = llm.complete_json(_decision_prompt(assessment),
-                                system=ADVISOR_SYSTEM, max_tokens=1200)
+                                system=ADVISOR_SYSTEM,
+                                max_tokens=config.DECISION_MAX_TOKENS)
     if isinstance(verdict, list) and verdict:
         verdict = verdict[0]
     return verdict

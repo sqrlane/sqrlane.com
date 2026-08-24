@@ -326,9 +326,19 @@ def _groq_chat(model, prompt, system, temperature, max_tokens) -> str:
                    "temperature": temperature, "max_tokens": max_tokens},
     )
     try:
-        return data["choices"][0]["message"]["content"]
+        choice = data["choices"][0]
+        content = choice["message"]["content"]
     except (KeyError, IndexError) as exc:
         raise LLMError(f"unexpected Groq response shape: {str(data)[:300]}") from exc
+
+    # A reply cut off at the token limit is not malformed JSON, it is an
+    # incomplete one - and reasoning models spend part of this budget thinking
+    # before they answer. Saying which it is turns a silent fallback into a
+    # fixable number.
+    if choice.get("finish_reason") == "length":
+        raise LLMError(f"reply truncated at the {max_tokens}-token limit - "
+                       f"raise max_tokens for this call")
+    return content
 
 
 def _call_groq(prompt, system, temperature, max_tokens) -> str:
