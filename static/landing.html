@@ -424,44 +424,144 @@ h1,h2,h3,h4,p{margin:0}
 .mail-foot .approve.ok{background:var(--green-100); color:var(--green)}
 
 /* ---------- live gauges ---------- */
-/* The only numbers on this page that are not authored. A reading against a
-   limit is a ratio against a limit, which is a meter - so that is what it is:
-   the fill is the level, the notch is where loading restrictions start, and
-   the track is a lighter step of the fill's own ramp so the state reads across
-   the whole bar. The state is spelled out in words beside it, because a colour
-   on its own is not a label. */
-.gauges{margin-top:32px; padding:20px 22px; border:1px solid var(--border);
-        border-radius:var(--r-md); background:var(--card); box-shadow:var(--shadow-card)}
-.gauges .g-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:20px}
+/* The only numbers on this page that are not authored, so they get the room:
+   one card per gauge, and a map of the corridor beside them showing where the
+   readings actually are.
+
+   A reading against a limit is a ratio against a limit, which is a meter - the
+   fill is the level, the notch is where loading restrictions start, and the
+   track is a lighter step of the fill's own ramp so state reads across the
+   whole bar. State is spelled out in words too, because a colour on its own is
+   not a label.
+
+   Anatomy borrowed from bklit-ui (never its code - this page has no build
+   step): the stat card's label-and-pill top row over a large value, the
+   funnel's concentric halo rings and its 0.12s entrance stagger, and the
+   choropleth's graticule. */
+.gauges{margin-top:32px}
+.gauges .g-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px}
 .gauges .g-head h3{font-size:14px; line-height:20px; font-weight:600; letter-spacing:-.28px}
 .gauges .g-when{margin-left:auto; font-size:11.5px; line-height:16px; color:var(--faint)}
-.gauges .g-row{display:grid; grid-template-columns:repeat(3,1fr); gap:24px}
+
+/* The cards are the boxes here, so the panel around them is not one too -
+   nesting a card inside a card is the thing the single card rule exists to
+   stop. */
+.gauges .g-body{display:grid; grid-template-columns:minmax(0,1fr) 228px; gap:16px;
+                align-items:stretch}
+.gauges .g-cards{display:flex; flex-direction:column; gap:12px}
+
+.gauges .g{padding:14px 16px; border:1px solid var(--border); border-radius:var(--r-md);
+           background:var(--card); box-shadow:var(--shadow-card);
+           transition:transform .5s var(--ease), opacity .5s var(--ease),
+                      border-color .2s var(--ease)}
+.gauges .g:hover{border-color:var(--border-strong)}
+/* Entrance, staggered by --i. Held off until the reading lands so the numbers
+   do not animate in and then change. */
+.gauges .g.enter{opacity:0; transform:translateY(10px)}
+.gauges .g.enter.in{opacity:1; transform:none;
+                    transition-delay:calc(var(--i, 0) * .12s)}
+
+.gauges .g-top{display:flex; align-items:center; gap:10px}
 .gauges .g-name{font-size:10px; line-height:14px; font-weight:500; letter-spacing:.07em;
                 text-transform:uppercase; color:var(--faint)}
-/* A standalone display number takes the font's proportional figures. Tabular
-   is for columns that have to line up, and it reads loose at this size. */
-.gauges .g-val{margin-top:5px; font-size:28px; line-height:32px; font-weight:600;
-               letter-spacing:-1.1px; color:var(--fg)}
+.gauges .g-top .st-badge{margin-left:auto}
+/* A standalone display number takes the font's proportional figures. Tabular is
+   for columns that have to line up, and it reads loose at this size. */
+/* Value and meter share a row: given the page's full width a stacked card is
+   mostly empty, and three empty cards stand much taller than the map beside
+   them. Side by side they read as one dashboard line and the heights match. */
+.gauges .g-read{margin-top:10px; display:flex; align-items:baseline; gap:20px}
+.gauges .g-val{font-size:30px; line-height:34px; font-weight:600;
+               letter-spacing:-1.2px; color:var(--fg); flex:none;
+               min-width:104px}
 .gauges .g-val u{text-decoration:none; font-size:14px; font-weight:500;
                  letter-spacing:-.2px; color:var(--faint); margin-left:4px}
-.gauges .g-meter{position:relative; height:6px; border-radius:999px; margin-top:12px;
+
+.gauges .g-line{flex:1; min-width:0; display:flex; align-items:center; gap:10px}
+.gauges .g-meter{position:relative; flex:1; height:6px; border-radius:999px;
                  background:var(--gray-200)}
-.gauges .g-fill{position:absolute; top:0; bottom:0; left:0; border-radius:999px;
-                background:var(--gray-600)}
-/* The notch is the threshold, so it has to stay legible on top of the fill as
-   well as on the empty track - hence a gap in the bar rather than a coloured
-   line on it. */
+.gauges .g-fill{position:absolute; top:0; bottom:0; left:0; width:0; border-radius:999px;
+                background:var(--gray-600);
+                /* Not --ease: that curve overshoots, and a bar that runs past
+                   its own reading before settling is showing a number that was
+                   never read. */
+                transition:width .9s cubic-bezier(.22,.61,.36,1);
+                transition-delay:calc(var(--i, 0) * .12s)}
+/* The notch is the threshold, so it has to stay legible on the fill as well as
+   on the empty track - hence a gap in the bar rather than a line on it. */
 .gauges .g-mark{position:absolute; top:-3px; bottom:-3px; width:2px; margin-left:-1px;
                 background:var(--card); box-shadow:0 0 0 1px var(--border-strong);
                 border-radius:1px}
+.gauges .g-lim{font-size:11px; line-height:16px; color:var(--faint); flex:none;
+               font-variant-numeric:tabular-nums}
 .gauges .g-green{background:var(--green-100)} .gauges .g-green .g-fill{background:var(--green)}
 .gauges .g-amber{background:var(--amber-100)} .gauges .g-amber .g-fill{background:var(--amber)}
 .gauges .g-red{background:var(--red-100)}     .gauges .g-red   .g-fill{background:var(--red)}
-.gauges .g-state{margin-top:12px}
-.gauges .g-sub{margin-top:8px; font-size:11.5px; line-height:16px; color:var(--faint)}
 .gauges .g.gone .g-val{color:var(--gray-600)}
-.gauges .g-note{margin-top:20px; padding-top:16px; border-top:1px solid var(--border);
-                font-size:12.5px; line-height:18px; color:var(--faint); max-width:92ch}
+.gauges .g-err{margin-top:10px; font-size:11.5px; line-height:16px; color:var(--faint)}
+
+/* ---- the corridor map ---- */
+/* Real geography: every point is the actual place, projected equirectangular
+   with a cos(lat) correction so the corridor keeps its true proportions. The
+   river is drawn in a neutral gray on purpose - on this page colour means
+   state, never decoration, so the only colour on the map is the gauges'. */
+.gauges .g-map{margin:0; padding:14px 14px 12px; border:1px solid var(--border);
+               border-radius:var(--r-md); background:var(--card);
+               box-shadow:var(--shadow-card)}
+.gauges .g-map svg{display:block; width:auto; height:300px; margin:0 auto;
+                   max-width:100%}
+.gauges .g-map figcaption{margin-top:8px; font-size:11px; line-height:15px;
+                          color:var(--faint); text-align:center}
+.gauges .g-map .grat{stroke:var(--border); stroke-width:1; fill:none}
+.gauges .g-map .river{stroke:var(--gray-400); stroke-width:2.4; fill:none;
+                      stroke-linecap:round; stroke-linejoin:round;
+                      stroke-dasharray:1; stroke-dashoffset:1;
+                      transition:stroke-dashoffset 1.7s ease}
+.gauges .g-map.in .river{stroke-dashoffset:0}
+.gauges .g-map .end{fill:var(--fg)}
+.gauges .g-map text{font-family:"Geist Mono",ui-monospace,monospace; font-size:8.5px;
+                    letter-spacing:.05em; fill:var(--faint)}
+.gauges .g-map text.on{fill:var(--fg)}
+
+/* The pins fade up after the river has drawn most of itself. */
+.gauges .g-map .pin{opacity:0; transition:opacity .45s var(--ease);
+                    transition-delay:calc(1.05s + var(--i, 0) * .12s)}
+.gauges .g-map.in .pin{opacity:1}
+/* bklit's halo: concentric rings, each larger and fainter than the last. */
+.gauges .g-map .halo-2{opacity:.18} .gauges .g-map .halo-1{opacity:.5}
+.gauges .g-map .pin.s-green .core,.gauges .g-map .pin.s-green .halo-1,
+.gauges .g-map .pin.s-green .halo-2,.gauges .g-map .pin.s-green .pulse{fill:var(--green)}
+.gauges .g-map .pin.s-amber .core,.gauges .g-map .pin.s-amber .halo-1,
+.gauges .g-map .pin.s-amber .halo-2,.gauges .g-map .pin.s-amber .pulse{fill:var(--amber)}
+.gauges .g-map .pin.s-red .core,.gauges .g-map .pin.s-red .halo-1,
+.gauges .g-map .pin.s-red .halo-2,.gauges .g-map .pin.s-red .pulse{fill:var(--red)}
+.gauges .g-map .pin .core,.gauges .g-map .pin .halo-1,
+.gauges .g-map .pin .halo-2,.gauges .g-map .pin .pulse{fill:var(--gray-500)}
+/* Only a gauge that is actually past its limit flashes. A pin that pulses
+   whatever the river is doing is decoration, and it would cry wolf. */
+.gauges .g-map .pulse{opacity:0; transform-box:fill-box; transform-origin:center}
+.gauges .g-map .pin.flash .pulse{animation:g-pulse 2.6s ease-out infinite;
+                                 animation-delay:calc(var(--i, 0) * .5s)}
+@keyframes g-pulse{
+  0%{transform:scale(.35); opacity:.55}
+  70%,100%{transform:scale(2.4); opacity:0}
+}
+
+.gauges .g-note{margin-top:14px; font-size:12px; line-height:17px; color:var(--faint)}
+
+@media (max-width:900px){
+  .gauges .g-body{grid-template-columns:1fr}
+  /* The map is a tall column; given the full width it would tower. */
+  .gauges .g-map{max-width:260px; margin:0 auto}
+}
+@media (prefers-reduced-motion:reduce){
+  .gauges .g,.gauges .g-fill,.gauges .g-map .river,.gauges .g-map .pin{
+    transition:none; transition-delay:0s}
+  .gauges .g.enter{opacity:1; transform:none}
+  .gauges .g-map .river{stroke-dashoffset:0}
+  .gauges .g-map .pin{opacity:1}
+  .gauges .g-map .pin.flash .pulse{animation:none}
+}
 
 /* ---------- worked example (the case study) ---------- */
 .case .cs-note{margin-top:18px; max-width:80ch; font-size:13px; line-height:19px;
@@ -1335,18 +1435,72 @@ h1,h2,h3,h4,p{margin:0}
       <div class="g-head">
         <span class="chip" data-g-chip>Reading&hellip;</span>
         <h3>The Rhine, right now</h3>
-        <span class="g-when" data-g-when>PEGELONLINE &middot; three gauges</span>
+        <span class="g-when" data-g-when>PEGELONLINE</span>
       </div>
-      <div class="g-row" data-g-row>
-        <div class="g gone"><p class="g-name">Kaub</p><p class="g-val">&mdash;</p>
-          <div class="g-meter"></div><p class="g-sub">reading the gauge&hellip;</p></div>
-        <div class="g gone"><p class="g-name">Duisburg-Ruhrort</p><p class="g-val">&mdash;</p>
-          <div class="g-meter"></div><p class="g-sub">reading the gauge&hellip;</p></div>
-        <div class="g gone"><p class="g-name">Emmerich</p><p class="g-val">&mdash;</p>
-          <div class="g-meter"></div><p class="g-sub">reading the gauge&hellip;</p></div>
+
+      <div class="g-body">
+        <div class="g-cards" data-g-row>
+          <div class="g gone" style="--i:0"><div class="g-top"><p class="g-name">Kaub</p></div>
+            <div class="g-read"><p class="g-val">&mdash;</p>
+              <div class="g-line"><div class="g-meter"></div></div></div></div>
+          <div class="g gone" style="--i:1"><div class="g-top"><p class="g-name">Duisburg-Ruhrort</p></div>
+            <div class="g-read"><p class="g-val">&mdash;</p>
+              <div class="g-line"><div class="g-meter"></div></div></div></div>
+          <div class="g gone" style="--i:2"><div class="g-top"><p class="g-name">Emmerich</p></div>
+            <div class="g-read"><p class="g-val">&mdash;</p>
+              <div class="g-line"><div class="g-meter"></div></div></div></div>
+        </div>
+
+        <!-- The corridor, drawn from real coordinates: every point is the
+             actual place, projected equirectangular with a cos(lat) correction
+             so the Rhine keeps its true shape rather than a drawn-by-eye one.
+             The cards carry the readings, so the map itself is decorative to a
+             screen reader and the caption says what it is. -->
+        <figure class="g-map" data-g-map>
+          <svg viewBox="0 0 250 400" role="img" aria-hidden="true" focusable="false">
+            <g class="grat">
+              <path d="M8 101.6h234M8 179.4h234M8 257.2h234M8 335h234"/>
+            </g>
+            <path class="river" pathLength="1"
+                  d="M22.0 30.0C29.4 30.6 81.4 34.7 90.9 35.4C100.4 36.2 106.9 35.4 111.1 37.0C115.2 38.6 127.1 47.1 129.7 50.2C132.3 53.4 134.4 63.0 135.2 66.6C136.1 70.1 136.5 79.5 137.7 83.7C139.0 87.9 145.1 102.1 146.8 106.2C148.5 110.4 150.4 117.8 153.8 122.6C157.3 127.4 175.4 146.1 179.0 151.4C182.6 156.7 186.0 169.1 187.6 172.4C189.2 175.6 191.4 181.0 194.1 181.7C196.8 182.5 209.7 175.4 212.7 179.4C215.8 183.4 222.1 210.8 222.8 219.1C223.5 227.3 223.1 248.9 219.3 256.4C215.4 264.0 190.9 277.7 186.6 289.9C182.2 302.0 179.4 361.5 178.5 370.0"/>
+
+            <circle class="end" cx="22" cy="30" r="2.6"/>
+            <text class="on" x="30" y="27">ROTTERDAM</text>
+            <circle class="end" cx="178.5" cy="370" r="2.6"/>
+            <text class="on" x="171" y="384" text-anchor="end">BASEL</text>
+
+            <!-- Emmerich -->
+            <g class="pin" data-pin="EMMERICH" style="--i:2">
+              <circle class="pulse" cx="111.1" cy="37" r="5"/>
+              <circle class="halo-2" cx="111.1" cy="37" r="9"/>
+              <circle class="halo-1" cx="111.1" cy="37" r="5.8"/>
+              <circle class="core"   cx="111.1" cy="37" r="3.1"/>
+              <text x="111.1" y="59" text-anchor="middle" data-pin-label="EMMERICH">EMMERICH</text>
+            </g>
+
+            <!-- Duisburg-Ruhrort -->
+            <g class="pin" data-pin="DUISBURG-RUHRORT" style="--i:1">
+              <circle class="pulse" cx="135.2" cy="66.6" r="5"/>
+              <circle class="halo-2" cx="135.2" cy="66.6" r="9"/>
+              <circle class="halo-1" cx="135.2" cy="66.6" r="5.8"/>
+              <circle class="core"   cx="135.2" cy="66.6" r="3.1"/>
+              <text x="147" y="70" data-pin-label="DUISBURG-RUHRORT">DUISBURG</text>
+            </g>
+
+            <!-- Kaub -->
+            <g class="pin" data-pin="KAUB" style="--i:0">
+              <circle class="pulse" cx="187.6" cy="172.4" r="5"/>
+              <circle class="halo-2" cx="187.6" cy="172.4" r="9"/>
+              <circle class="halo-1" cx="187.6" cy="172.4" r="5.8"/>
+              <circle class="core"   cx="187.6" cy="172.4" r="3.1"/>
+              <text x="176" y="176" text-anchor="end" data-pin-label="KAUB">KAUB</text>
+            </g>
+          </svg>
+          <figcaption>Rhine corridor &middot; Rotterdam to Basel</figcaption>
+        </figure>
       </div>
-      <p class="g-note" data-g-note>Read live from PEGELONLINE when this page loaded.
-        The notch on each bar is the level below which barges stop loading normally.</p>
+
+      <p class="g-note" data-g-note>Reading the gauges&hellip;</p>
     </div>
 
     <p class="cs-note rv">
@@ -2275,7 +2429,11 @@ firm revised ETA as soon as terminals restart.</p>
    that still looks like it is loading reads as broken - so there is a timeout
    on this side too, not only on the server's. And it never invents a number:
    when the gauge is down it says the gauge is down, which is the whole reason
-   the live claim is worth making. */
+   the live claim is worth making.
+
+   The motion is deliberately all after the fact. Nothing animates until the
+   real reading is in hand, so no bar ever sweeps to a number and then corrects
+   itself - which would be the page appearing to show a reading it never had. */
 (function () {
   var panel = document.querySelector("[data-gauges]");
   if (!panel) return;
@@ -2284,6 +2442,10 @@ firm revised ETA as soon as terminals restart.</p>
   var chip = panel.querySelector("[data-g-chip]");
   var when = panel.querySelector("[data-g-when]");
   var note = panel.querySelector("[data-g-note]");
+  var map  = panel.querySelector("[data-g-map]");
+
+  var still = window.matchMedia &&
+              window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /* Four bands, three colours. The label is what tells them apart - colour is
      the second channel, never the only one. */
@@ -2303,35 +2465,90 @@ firm revised ETA as soon as terminals restart.</p>
   function clock(iso) {
     var d = new Date(iso);
     if (isNaN(d)) return "";
-    return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
 
-  function cell(g) {
-    if (!g.ok) {
-      return '<div class="g gone"><p class="g-name">' + esc(g.name) + "</p>" +
-             '<p class="g-val">&mdash;</p><div class="g-meter"></div>' +
-             '<p class="g-sub">' + esc(g.error || "no reading") + "</p></div>";
-    }
-    var s = STATES[g.state] || STATES.normal;
-    /* Full scale is three times the level at which restrictions start, which
-       is a property of the gauge and not of today's reading - so the bar means
-       the same thing on every visit and a falling river visibly retreats past
-       the notch. Deriving the top from the reading instead looks reasonable
-       and is not: it made 214 cm and 240 cm draw the identical bar. A reading
-       over full scale is clamped, and the number above it is always exact. */
-    var top  = g.warn_cm * 3;
-    var fill = Math.min(100, (g.level_cm / top) * 100);
-    var mark = Math.min(100, (g.high_cm  / top) * 100);
+  /* Full scale is three times the level at which restrictions start, which is
+     a property of the gauge and not of today's reading - so the bar means the
+     same thing on every visit and a falling river visibly retreats past the
+     notch. Deriving the top from the reading instead looks reasonable and is
+     not: it made 214 cm and 240 cm draw the identical bar. */
+  function geometry(g) {
+    var top = g.warn_cm * 3;
+    return { fill: Math.min(100, (g.level_cm / top) * 100),
+             mark: Math.min(100, (g.high_cm  / top) * 100) };
+  }
 
-    return '<div class="g">' +
-      '<p class="g-name">' + esc(g.name) + "</p>" +
-      '<p class="g-val">' + esc(g.level_cm) + "<u>cm</u></p>" +
-      '<div class="g-meter g-' + s.cls + '">' +
-        '<span class="g-fill" style="width:' + fill.toFixed(1) + '%"></span>' +
-        '<i class="g-mark" style="left:' + mark.toFixed(1) + '%"></i></div>' +
-      '<p class="g-state"><span class="st-badge st-' + s.cls + '"><i></i>' +
-        s.label + "</span></p>" +
-      '<p class="g-sub">Loading restricted below ' + esc(g.high_cm) + " cm</p></div>";
+  function cell(g, i) {
+    if (!g.ok) {
+      return '<div class="g gone" style="--i:' + i + '">' +
+        '<div class="g-top"><p class="g-name">' + esc(g.name) + "</p></div>" +
+        '<p class="g-val">&mdash;</p>' +
+        '<p class="g-err">' + esc(g.error || "no reading") + "</p></div>";
+    }
+    var s = STATES[g.state] || STATES.normal, m = geometry(g);
+    return '<div class="g enter" style="--i:' + i + '" data-card="' + esc(g.station) + '">' +
+      '<div class="g-top"><p class="g-name">' + esc(g.name) + "</p>" +
+        '<span class="st-badge st-' + s.cls + '"><i></i>' + s.label + "</span></div>" +
+      '<div class="g-read">' +
+        '<p class="g-val"><span data-count="' + esc(g.level_cm) + '">' +
+          (still ? esc(g.level_cm) : "0") + "</span><u>cm</u></p>" +
+        '<div class="g-line"><div class="g-meter g-' + s.cls + '">' +
+          '<span class="g-fill" data-w="' + m.fill.toFixed(1) + '"></span>' +
+          '<i class="g-mark" style="left:' + m.mark.toFixed(1) + '%"></i></div>' +
+          '<span class="g-lim">limit ' + esc(g.high_cm) + "</span></div></div></div>";
+  }
+
+  /* Count the value up rather than snapping it in - bklit's NumberFlow, done
+     with the two lines of arithmetic this page can afford. */
+  function countUp(el, target, delay) {
+    var span = 620, from = 0;
+    setTimeout(function () {
+      var t0 = null;
+      function step(now) {
+        if (t0 === null) t0 = now;
+        var k = Math.min(1, (now - t0) / span);
+        k = 1 - Math.pow(1 - k, 3);                    // ease out
+        el.textContent = Math.round(from + (target - from) * k);
+        if (k < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }, delay);
+  }
+
+  function play() {
+    /* One frame after the cards are in the DOM, so the browser has a starting
+       width and a starting opacity to transition FROM. Without this the fills
+       are simply born at their final width and nothing moves. */
+    requestAnimationFrame(function () {
+      panel.querySelectorAll(".g.enter").forEach(function (c) { c.classList.add("in"); });
+      panel.querySelectorAll(".g-fill").forEach(function (f) {
+        f.style.width = f.getAttribute("data-w") + "%";
+      });
+      if (map) map.classList.add("in");
+      if (still) return;
+      panel.querySelectorAll("[data-count]").forEach(function (el, i) {
+        countUp(el, parseFloat(el.getAttribute("data-count")), i * 120);
+      });
+    });
+  }
+
+  /* The map shows state, not readings - the cards carry the numbers. Only a
+     gauge actually past its loading limit flashes; a pin that pulses whatever
+     the river is doing is decoration, and it cries wolf. */
+  function paintMap(gauges) {
+    if (!map) return;
+    gauges.forEach(function (g) {
+      var pin = map.querySelector('[data-pin="' + g.station + '"]');
+      var label = map.querySelector('[data-pin-label="' + g.station + '"]');
+      if (!pin) return;
+      pin.classList.remove("s-green", "s-amber", "s-red", "flash");
+      if (!g.ok) return;
+      var s = STATES[g.state] || STATES.normal;
+      pin.classList.add("s-" + s.cls);
+      if (g.state === "restricted" || g.state === "critical") pin.classList.add("flash");
+      if (label && s.cls === "red") label.classList.add("on");
+    });
   }
 
   function unavailable(why) {
@@ -2339,11 +2556,10 @@ firm revised ETA as soon as terminals restart.</p>
     chip.textContent = "Unavailable";
     when.textContent = "PEGELONLINE";
     row.innerHTML = ["Kaub", "Duisburg-Ruhrort", "Emmerich"]
-      .map(function (n) { return cell({ name: n, ok: false, error: why }); }).join("");
-    note.textContent =
-      "The gauges are not answering right now. They are the one live reading on this " +
-      "page, so when the source is down it says so rather than showing a number that " +
-      "is not there.";
+      .map(function (n, i) { return cell({ name: n, ok: false, error: why }, i); }).join("");
+    note.textContent = "The gauges are not answering. They are the only live reading " +
+      "on this page, so when the source is down it says so.";
+    if (map) map.classList.add("in");
   }
 
   function render(data) {
@@ -2354,35 +2570,30 @@ firm revised ETA as soon as terminals restart.</p>
     if (!gauges.length) return unavailable("could not reach the gauge service");
 
     row.innerHTML = gauges.map(cell).join("");
+    paintMap(gauges);
+    play();
+
     var first = gauges.filter(function (g) { return g.ok; })[0];
     var at = first ? clock(first.measured_at) : "";
+    when.textContent = "PEGELONLINE" + (at ? " · " + at : "");
 
     if (!data.ok) {
       chip.className = "chip";
       chip.textContent = "Unavailable";
-      when.textContent = "PEGELONLINE";
-      note.textContent = "The gauges are not answering right now, and each one above " +
-        "says what came back. They are the only live reading on this page, so when the " +
-        "source is down it says so rather than showing a number that is not there.";
+      note.textContent = "The gauges are not answering, and each card says what came back.";
       return;
     }
-
     if (data.stale) {
       chip.className = "chip synth";
       chip.textContent = "Last good reading";
-      note.textContent = "PEGELONLINE did not answer just now, so this is the last " +
-        "reading that came back" + (at ? ", taken at " + at : "") +
-        ". Nothing here is estimated to fill the gap.";
-    } else {
-      chip.className = "chip live";
-      chip.textContent = "Live";
-      note.textContent = "Read from PEGELONLINE when this page loaded" +
-        (at ? ", gauged at " + at : "") + ". The gauges refresh about every fifteen " +
-        "minutes. Each bar is scaled to its own gauge's restriction levels, and the " +
-        "notch is where barges stop loading normally \u2014 left of it the river is " +
-        "working against the shipper. Everything under the line below is authored.";
+      note.textContent = "PEGELONLINE did not answer just now, so this is the last reading " +
+        "that came back. Nothing is estimated to fill the gap.";
+      return;
     }
-    when.textContent = "PEGELONLINE \u00b7 " + gauges.length + " gauges";
+    chip.className = "chip live";
+    chip.textContent = "Live";
+    note.textContent = "The notch on each bar is where barges stop loading normally. " +
+      "Everything below the line is authored.";
   }
 
   /* AbortController is what stops a hung request leaving the panel mid-read.
