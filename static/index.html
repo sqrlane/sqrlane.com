@@ -192,6 +192,48 @@ html[data-theme="dark"]{
 .chart .blab{text-anchor:middle;font-size:11px;font-weight:600;fill:var(--s-delay)}
 .chart .grp:hover .b{opacity:.82}
 .chart-f{font-size:12.5px;color:var(--faint);margin:12px 0 0}
+/* ---------- element kit: search, palette, page headers ---------- */
+.sidesearch{display:flex;align-items:center;gap:9px;width:calc(100% - 24px);margin:2px 12px 8px;
+            padding:8px 10px;border:1px solid var(--border);background:var(--card-muted);
+            border-radius:var(--r);color:var(--faint);font-size:13.5px;cursor:pointer}
+.sidesearch:hover{border-color:var(--border-strong);color:var(--muted)}
+.sidesearch span{flex:1;text-align:left}
+.sidesearch kbd,.pal-h kbd{font-family:inherit;font-size:10.5px;color:var(--faint);
+     border:1px solid var(--border);border-radius:4px;padding:1px 5px;background:var(--card)}
+
+.pal-scrim{position:fixed;inset:0;background:rgba(0,0,0,.34);opacity:0;pointer-events:none;
+           transition:opacity .15s;z-index:60}
+.pal{position:fixed;top:14vh;left:50%;transform:translateX(-50%) scale(.98);width:min(560px,92vw);
+     background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);
+     box-shadow:var(--shadow-pop);opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;
+     z-index:61;overflow:hidden}
+body.pal-on .pal-scrim{opacity:1;pointer-events:auto}
+body.pal-on .pal{opacity:1;pointer-events:auto;transform:translateX(-50%) scale(1)}
+.pal-h{display:flex;align-items:center;gap:10px;padding:13px 14px;border-bottom:1px solid var(--border);
+       color:var(--faint)}
+.pal-h input{flex:1;border:0;background:none;outline:none;font:inherit;font-size:14.5px;color:var(--fg)}
+.pal-h input::placeholder{color:var(--faint)}
+.pal-l{max-height:340px;overflow-y:auto;padding:6px}
+.pal-r{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:none;
+       padding:9px 10px;border-radius:var(--r);cursor:pointer;color:var(--muted);font-size:13.5px}
+.pal-r.on,.pal-r:hover{background:var(--surface);color:var(--fg)}
+.pal-k{font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+       border-radius:4px;padding:2px 6px;flex:none;background:var(--surface-2);color:var(--muted)}
+.pal-r.on .pal-k.view{background:rgba(0,107,255,.12);color:var(--blue)}
+.pal-t{font-weight:500;color:var(--fg);flex:none;
+       font-family:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px}
+.pal-hint{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px}
+.pal-empty{padding:22px 14px;text-align:center;color:var(--faint);font-size:13px}
+
+/* Every page opens the same way: a title, a line saying what it is, and its
+   actions on the right. */
+.page-h{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px}
+.page-h h1{font-size:20px;font-weight:600;letter-spacing:-.03em;margin:0;line-height:26px}
+.page-h p{font-size:14px;color:var(--muted);margin:4px 0 0}
+.page-a{display:flex;align-items:center;gap:8px;flex:none}
+.stamp{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--faint)}
+.stamp i{width:7px;height:7px;border-radius:999px;background:var(--green);display:inline-block}
+
 /* The map. Sea and land are one step apart; the lanes carry all the contrast. */
 .atlas{width:100%;height:auto;display:block;margin-top:16px;border-radius:var(--r-md);
        border:1px solid var(--border);background:var(--card-muted)}
@@ -552,6 +594,11 @@ table.q tr.pick td{background:var(--surface)}
         <path d="M3.2 14h13.6M3.2 10h8.6M3.2 6h4.6" stroke="var(--card)" stroke-width="2.1" stroke-linecap="round"/></svg></div>
       <div><div class="wordmark">Lanewatch</div><div class="tagline">Trade-lane risk, decided</div></div>
     </a>
+    <button class="sidesearch" id="sidesearch" title="Search  Ctrl-K">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <span>Search</span><kbd>Ctrl K</kbd>
+    </button>
     <nav class="nav" id="nav"></nav>
     <div class="side-f">
       <span class="lab">Decision engine</span>
@@ -587,6 +634,17 @@ table.q tr.pick td{background:var(--surface)}
   </div>
 </div>
 
+<div class="pal-scrim" id="pal-scrim"></div>
+<div class="pal" id="pal" role="dialog" aria-modal="true" aria-label="Search">
+  <div class="pal-h">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input id="pal-q" placeholder="Jump to a view or a booking…" autocomplete="off" spellcheck="false">
+    <kbd>Esc</kbd>
+  </div>
+  <div class="pal-l" id="pal-l"></div>
+</div>
+
 <div class="scrim" id="scrim"></div>
 <aside class="panel" id="panel"><div class="panel-h" id="panel-h"></div><div class="panel-b" id="panel-b"></div></aside>
 
@@ -616,6 +674,7 @@ let scenarios=[], scenario=null, chosenScenario=null, openWorker=null, selected=
 let tmsLink = {};        // the demo TMS connection, board-wide (src/tms.py)
 let sim = {}, simDay = null, simBusy = false;   // the authored week (src/simulation.py)
 let atlas = {}, mapPick = null;                 // the board on a map (src/geo.py)
+let ranAt = null;                               // when the last run finished
 const approved = new Set();     // approval is browser state only; nothing is transmitted
 let view = "overview", openId = null;
 
@@ -892,6 +951,107 @@ function connectionsView(){
     </div>`).join("") : `<div class="pnote" style="margin-top:12px">
       Nothing to write back — every booking is on plan.</div>`}
   </div>`;
+}
+
+/* Command palette. The reference libraries ship this as a React dialog over a
+   search index; the same shape in vanilla is an overlay, an input, and a list
+   that is rebuilt per keystroke. It searches what the board actually holds -
+   the views, and every booking by id, cargo, origin and destination - so it is
+   a way to reach something rather than a decorative search box. */
+let palOpen = false, palSel = 0, palRows = [];
+
+/* One header shape for every page. Before this, some views opened with a card
+   and some with a bare table, so moving between them felt like moving between
+   two products. */
+const PAGES = {
+  overview:   ["Overview", "The board, the run, and what the Workers did with it"],
+  shipments:  ["Shipments", "Every booking on the board, grouped by what it needs"],
+  risk:       ["Risk feed", "What the sources carried, and how far ahead of the wires"],
+  approvals:  ["Approvals", "Drafted work waiting on a person. Nothing is sent"],
+  map:        ["Map", "Lanes drawn through what they transit, and what is blocked"],
+  simulation: ["Simulation", "An authored week, decided for real, day by day"],
+  connections:["Connections", "The demo TMS link and the changes it would write"],
+};
+
+function pageHeader(id, actions){
+  const [title, sub] = PAGES[id] || [id, ""];
+  const when = hasRun && ranAt ? `<span class="stamp"><i></i>Last run ${esc(ranAt)}</span>` : "";
+  return `<div class="page-h">
+    <div><h1>${esc(title)}</h1><p>${esc(sub)}</p></div>
+    <div class="page-a">${when}${actions || ""}</div>
+  </div>`;
+}
+
+function palSource(){
+  const views = [
+    {id:"overview", label:"Overview", hint:"The board and the run"},
+    {id:"shipments", label:"Shipments", hint:"Every booking, grouped by state"},
+    {id:"risk", label:"Risk feed", hint:"What the sources carried"},
+    {id:"approvals", label:"Approvals", hint:"Drafts waiting on a person"},
+    {id:"map", label:"Map", hint:"Lanes, chokepoints and blockades"},
+    {id:"simulation", label:"Simulation", hint:"The authored week, replayed"},
+    {id:"connections", label:"Connections", hint:"The demo TMS link"},
+  ].map(v => ({...v, kind:"view", go:() => go(v.id)}));
+
+  const ships = board.map(sh => ({
+    kind:"booking", id:sh.id, label:sh.id,
+    hint:`${sh.cargo} · ${sh.origin} → ${sh.final_destination}`,
+    state:sh.state,
+    go:() => { selected = sh.id; go("shipments"); openPanel(sh.id); },
+  }));
+  return views.concat(ships);
+}
+
+function palFilter(q){
+  q = (q||"").trim().toLowerCase();
+  const all = palSource();
+  if (!q) return all.slice(0, 9);
+  return all.filter(r => (r.label + " " + r.hint).toLowerCase().includes(q)).slice(0, 9);
+}
+
+function palPaint(){
+  const q = $("pal-q").value;
+  palRows = palFilter(q);
+  if (palSel >= palRows.length) palSel = Math.max(0, palRows.length - 1);
+  $("pal-l").innerHTML = palRows.length ? palRows.map((r, i) => `
+    <button class="pal-r ${i===palSel?"on":""}" data-pal="${i}">
+      <span class="pal-k ${esc(r.kind)}">${r.kind === "view" ? "View" : "Booking"}</span>
+      <span class="pal-t">${esc(r.label)}</span>
+      <span class="pal-hint">${esc(r.hint)}</span>
+      ${r.state ? `<span class="sdot ${esc(r.state)}"></span>` : ""}
+    </button>`).join("")
+    : `<div class="pal-empty">Nothing matches “${esc(q)}”.</div>`;
+  document.querySelectorAll("[data-pal]").forEach(b =>
+    b.onclick = () => palRun(Number(b.dataset.pal)));
+}
+
+function palRun(i){
+  const row = palRows[i];
+  if (!row) return;
+  palToggle(false);
+  row.go();
+}
+
+function palToggle(open){
+  palOpen = open;
+  document.body.classList.toggle("pal-on", open);
+  if (open) { $("pal-q").value = ""; palSel = 0; palPaint(); $("pal-q").focus(); }
+}
+
+function initPalette(){
+  $("sidesearch").onclick = () => palToggle(true);
+  $("pal-scrim").onclick = () => palToggle(false);
+  $("pal-q").oninput = () => { palSel = 0; palPaint(); };
+  addEventListener("keydown", e => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+      e.preventDefault(); palToggle(!palOpen); return;
+    }
+    if (!palOpen) return;
+    if (e.key === "Escape") { e.preventDefault(); palToggle(false); }
+    else if (e.key === "ArrowDown") { e.preventDefault(); palSel = Math.min(palSel + 1, palRows.length - 1); palPaint(); }
+    else if (e.key === "ArrowUp")   { e.preventDefault(); palSel = Math.max(palSel - 1, 0); palPaint(); }
+    else if (e.key === "Enter")     { e.preventDefault(); palRun(palSel); }
+  });
 }
 
 function paintBell(){
@@ -1434,7 +1594,7 @@ function render(){
     if (v !== view) $("v-"+v).innerHTML = "";
   });
 
-  if (view === "overview") $("v-overview").innerHTML = statRow() +
+  if (view === "overview") $("v-overview").innerHTML = pageHeader("overview") + statRow() +
     (hasRun ? `<div class="grid-chart">${schedulePressure()}${outcomeRing()}</div>` : "") +
     legendCard() +
     (hasRun?"":`<div class="hint" style="margin-bottom:20px">
@@ -1444,12 +1604,12 @@ function render(){
     notes.map(n=>`<div class="note">${esc(n)}</div>`).join("") +
     `<div class="grid2"><div>${shipmentGroups()}</div><div>${workersCard()}${riskCard(true)}</div></div>`;
 
-  if (view === "shipments") $("v-shipments").innerHTML = statRow() + shipmentGroups();
-  if (view === "risk")      $("v-risk").innerHTML = riskCard(false);
-  if (view === "approvals") $("v-approvals").innerHTML = approvalsView();
-  if (view === "connections") $("v-connections").innerHTML = connectionsView();
-  if (view === "simulation")  $("v-simulation").innerHTML = simulationView();
-  if (view === "map")         $("v-map").innerHTML = mapView();
+  if (view === "shipments") $("v-shipments").innerHTML = pageHeader("shipments") + statRow() + shipmentGroups();
+  if (view === "risk")      $("v-risk").innerHTML = pageHeader("risk") + riskCard(false);
+  if (view === "approvals") $("v-approvals").innerHTML = pageHeader("approvals") + approvalsView();
+  if (view === "connections") $("v-connections").innerHTML = pageHeader("connections") + connectionsView();
+  if (view === "simulation")  $("v-simulation").innerHTML = pageHeader("simulation") + simulationView();
+  if (view === "map")         $("v-map").innerHTML = pageHeader("map") + mapView();
 
   document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => {
     selected = b.dataset.open;
@@ -1479,6 +1639,7 @@ function render(){
   });
   bindApprove();
   initCollapse();
+  initPalette();
   $("bell").onclick = () => go("approvals");
   renderNav();
 }
@@ -1619,6 +1780,7 @@ async function run(){
     } else {
       board=res.shipments; workers=res.workers||workers; risk=res.risk; tmsLink=res.tms||{};
       atlas=res.map||{};
+      ranAt=new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
       ai=res.ai; summary=res.summary; notes=res.notes||[]; hasRun=true;
       scenario=res.scenario||null; scenarios=res.scenarios||scenarios;
       if (scenario) chosenScenario = scenario.id;
