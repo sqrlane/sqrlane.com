@@ -22,6 +22,7 @@ import http.server
 import json
 import socketserver
 import threading
+import time
 import unittest
 from pathlib import Path
 import sys
@@ -259,7 +260,13 @@ class TheEndpoint(GaugeTestCase):
     def test_a_dead_source_serves_the_last_good_reading_marked_stale(self):
         RESPONSES.update({"KAUB": 214.0, "DUISBURG-RUHRORT": 385.0, "EMMERICH": 240.0})
         self._call()
-        self.app_module._gauge_cache["at"] = 0.0          # force a refresh
+        # Age the reading past the cache window. Not `at = 0.0`: monotonic()
+        # counts from an arbitrary epoch - system boot on Linux - so on a
+        # machine up for less than GAUGE_CACHE_SECONDS, zero is INSIDE the
+        # window and the endpoint rightly serves the cached reading as fresh.
+        # That made this test pass or fail on the host's uptime.
+        self.app_module._gauge_cache["at"] = (
+            time.monotonic() - config.GAUGE_CACHE_SECONDS - 1)
         RESPONSES.update({"KAUB": "broken", "DUISBURG-RUHRORT": "broken",
                           "EMMERICH": "broken"})
 
