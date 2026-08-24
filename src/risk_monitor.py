@@ -522,9 +522,14 @@ def run(*, live=True, inject=False, use_llm=True, verbose=True) -> dict:
         budget = Budget(config.LIVE_PULL_BUDGET_SECONDS)
         if verbose:
             print(f"Pulling live sources (up to {budget.total:.0f}s) ...")
-        raw_items += fetch_gdelt(report, budget)
+        # Order matters, because whatever the budget does not reach is skipped.
+        # RSS first: it is one request per feed with no pauses, and it carries
+        # the German-language feeds the whole earliness claim rests on. Gauges
+        # next, being three small requests. GDELT last: four queries with a
+        # pause between each, so it is the slowest and the most expendable.
         raw_items += fetch_rss(report, budget)
         events += fetch_rhine_levels(report, budget)
+        raw_items += fetch_gdelt(report, budget)
         out_of_time = [e for e in report.entries if e["status"] == "skipped"]
         if out_of_time and verbose:
             print(f"  {len(out_of_time)} source(s) not reached inside the time budget")

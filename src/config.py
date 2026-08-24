@@ -128,7 +128,10 @@ USER_AGENT = "trade-risk-agent/0.1 (demo prototype; contact: local)"
 GDELT_ENDPOINT = "https://api.gdeltproject.org/api/v2/doc/doc"
 GDELT_TIMESPAN = "3d"
 GDELT_MAX_RECORDS = 20
-GDELT_PAUSE_SECONDS = 1.5    # be polite; GDELT throttles rapid calls
+# Be polite - GDELT throttles rapid calls. But four queries at 1.5s is six
+# seconds of pure waiting, which is most of a serverless budget, so it is
+# shorter there.
+GDELT_PAUSE_SECONDS = _env_int("GDELT_PAUSE_MS", 400 if SERVERLESS else 1500) / 1000
 
 GDELT_QUERIES = [
     {
