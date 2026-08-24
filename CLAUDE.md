@@ -129,8 +129,9 @@ the real pipeline.
 
 ### The product layer
 
-**Ten Workers, three of them real.** Risk, Routing and Comms genuinely run and are
-tagged `LIVE`. Rate, Milestones, Docs, Inbox, RFQ, TMS Link and Assistant replay
+**Thirteen Workers, three of them real.** Risk, Routing and Comms genuinely run and are
+tagged `LIVE`. Rate, Milestones, Docs, Inbox, RFQ, Booking, Invoice, Customs, TMS Link
+and Assistant replay
 authored data from `src/roster.py` and are tagged `SCRIPTED`. **The tag is the honesty** — never present a
 scripted Worker as reasoning live. They are still *reactive*: each panel is built from
 the active scenario and the selected shipment, so switching either visibly changes it.
@@ -157,6 +158,84 @@ is counted from that run; nothing is illustrative.
 
 A **decision-engine strip** names the model in use and the model-vs-rules split, so the
 central claim is checkable at a glance rather than asserted.
+
+### The element kit — ported, not imported
+
+Two more references sit behind the UI: [`bklit/bklit-ui`](https://github.com/bklit/bklit-ui)
+and [`kokonut-labs/kokonutui`](https://github.com/kokonut-labs/kokonutui). bklit-ui is
+the **upstream of limns-admin** — the same chart component names — so the Geist direction
+is one lineage, not three.
+
+Both are React + Tailwind. This page is one self-contained vanilla file with no build
+step, so what carries over is **anatomy, never code**:
+
+- **Command palette** on Ctrl/Cmd-K, plus the sidebar search box. It searches the seven
+  views and every booking by id, cargo, origin and destination; Enter selects the booking
+  and opens its panel. It reaches something rather than decorating the sidebar.
+- **One page header everywhere** — title, what the page is, actions, last-run stamp.
+  Before it, some views opened with a card and some with a bare table.
+- **Segmented control** on Approvals (awaiting / approved / all).
+- **Empty states** that name the next action. `verify_shell.py` asserts zero ad-hoc
+  `.hint` blocks survive.
+- **Skeletons** shaped like the thing that is loading, so the layout does not jump.
+- **Notch gauge**, after bklit's, on the shipment drawer: **slack consumed** — the delay
+  against the slack the booking had. A real proportion, and the number every decision
+  turns on. SHP-002 reads `100%+` in red.
+
+Two things worth keeping:
+
+- **The gauge figure is capped to its track.** SHP-002 is 5 days of delay against 1 of
+  slack — literally 500%. A full arc labelled "500%" reads as a bug, so the headline caps
+  at `100%+` and the exact days sit in the line beside it. Nothing is lost.
+- **A `running` flag must be cleared before the render that consumes it.** It was being
+  cleared in `finally`, which runs *after* the success path's `render()`, so every
+  skeletoned view stayed on its skeleton with the real data already in hand. Two browser
+  suites caught it; no unit test would have.
+
+Not ported, deliberately: kokonutui's decorative pieces (glitch-text, liquid-glass,
+background-paths) and anything needing teams or avatar stacks. The first fight a demo
+that has to read clearly in a room; the second would be invented data.
+
+### The simulation loop — a week, not a snapshot
+
+The button runs **one** cycle: one set of active events, one set of decisions. That
+shows the system working, not the system *operating*. `src/simulation.py` replays an
+authored week over the same pool — `python -m src.simulation`, or the **Simulation**
+view in the dashboard.
+
+`data/simulation.json` holds only a timeline: which authored events activate or resolve
+on which day. **The events themselves are never copied there** — they are pulled from
+`scenarios.json` by id, because a second copy of an event is exactly how schema parity
+has broken before.
+
+The arc is eight days: a quiet Monday, the Hamburg walkout, the Rhine falling *while the
+strike is still on*, the Red Sea closing on top of both, the strike settling, a wildfire
+on a land leg, two disruptions clearing, and a board settled on its revised plan. Two
+disruptions at once is the case a single-event demo never shows.
+
+**State carries between days — that is what makes it a simulation rather than eight
+independent runs:**
+
+- A booking rerouted on Tuesday is *on* the new route on Wednesday, and is therefore no
+  longer exposed to the thing that moved it.
+- A held booking accrues **a day of delay for every day it waits**, and keeps that delay
+  when it resumes. Holding is not free, and the week is what makes that legible.
+- Every decision is still made by the real Route Advisor. Only the timeline is authored.
+
+**One rule lives in the simulation, not the advisor:** a booking is never offered the
+route it just left. Without that, SHP-001 went HAM → RTM → HAM → COGH across four days.
+Each single day was arithmetically defensible — under the Red Sea closure,
+Hamburg-under-strike genuinely beats Rotterdam-under-Red-Sea on "least late" — but a box
+ping-ponging between two ports across a week is nonsense. The advisor was right; it just
+should never have been asked. `verify_simulation.py` asserts no booking ever revisits a
+route.
+
+It runs **deterministically by default**. Seven shipments over eight days is 56
+decisions, which is far more model calls than a free tier will take; `--llm` opts in.
+
+One booking ends the week still held, because under a persistent corridor closure no
+better routing exists for it. Saying so is a real answer, not a gap, and the day's copy
+says it rather than claiming the board is clear.
 
 ### The dashboard follows limns-admin
 
@@ -250,6 +329,38 @@ the original checks only ever looked at `card["drafts"]`, which none of these ap
 endpoint — a write-back is a dict describing a change, and it stays a dict. Never
 present the connector as a live TMS link; it says `connected (demo)` everywhere it is
 surfaced, and a test asserts that.
+
+**The roster covers the desk, under our own names.** The function set a forwarding
+desk actually runs — quoting, booking, shipment tracking, TMS data entry, invoice
+reconciliation, and customs — is all present. The names are ours: **never** use the
+names the reference product ships (`Rate Manager`, `DocuMind`, `Track & Trace`,
+`Copilot`), and `verify_product.py` fails on any of them appearing in the dashboard,
+the README, the roster source, the served Worker names, or the run payload. It caught
+one of those names in a source *comment*, which is the level of paranoia this deserves.
+
+Three of them earn their place by reacting to the decision rather than decorating:
+
+- **Booking Worker** — the carrier booking, and the amendment the decision forces: a
+  reroute is a change of discharge port, a hold is a hold at the load port, an on-plan
+  booking needs no amendment at all. An amendment is an outbound action, so it is
+  `DRAFT - not sent` / `awaiting_approval` like an email.
+- **Invoice Worker** — reconciles the carrier invoice against the rate agreed. It only
+  bites under a disruption: the carrier bills a surcharge that was never quoted, and the
+  discrepancy is the finding. With no disruption every line matches and it says so.
+- **Customs Worker** — the one that only exists because of the reroute. Moving the
+  discharge port moves the **country of entry** (HAM → RTM is Germany → Netherlands), so a
+  different EORI and clearance agent apply and the bill of lading has to be reissued. It
+  **escalates rather than files**, which is the honest behaviour and matches how these
+  systems are supposed to treat a novel exception.
+
+**The connection point** is its own view in the sidebar under `System`, not just a Worker
+chip: connector name, `connected (demo)`, bookings synced, changes queued, the field
+mapping table, and every queued write-back with the change it describes. All of it from
+`src/tms.py`, which still imports nothing but `datetime`.
+
+**The topbar bell** carries the real pending-approval count and shows a dot only when
+something is actually waiting — a permanent badge would be decoration. Clicking it opens
+Approvals, and a test asserts the bell and the Approvals count agree.
 
 Drafts sit behind a **human-approval gate**: `awaiting_approval` → *Approve* →
 `approved`. Approval is a state change in the browser and nothing else — there is no

@@ -21,7 +21,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
-from src import config, llm, orchestrator
+from src import config, llm, orchestrator, simulation
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 INDEX = STATIC_DIR / "index.html"        # the dashboard, served at /app
@@ -142,6 +142,24 @@ def initial():
         "model_source": llm.resolution_note(),
     }
     return state
+
+
+@app.get("/api/simulation")
+def api_simulation(days: int | None = None, use_llm: bool = False):
+    """Replay the authored week over the board.
+
+    Deterministic by default: a full week is seven shipments times eight days of
+    decisions, which is far more model calls than a free tier will take. The
+    timeline is authored either way and the payload says so.
+    """
+    try:
+        return simulation.run(use_llm=use_llm, until_day=days, verbose=False)
+    except Exception as exc:  # noqa: BLE001 - same reason as /run
+        return JSONResponse(status_code=200, content={
+            "state": "error",
+            "error": f"{type(exc).__name__}: {exc}",
+            "days": [], "totals": {},
+        })
 
 
 @app.post("/run")

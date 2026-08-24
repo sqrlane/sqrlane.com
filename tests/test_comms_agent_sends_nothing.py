@@ -203,6 +203,40 @@ class TheWorkflowLayerSendsNothingEither(unittest.TestCase):
                 self.assertEqual(rfq["status"], "DRAFT - not sent")
                 self.assertEqual(rfq["approval_status"], "awaiting_approval")
 
+    def test_every_booking_amendment_is_held(self):
+        """An amendment to a carrier booking is an outbound action like an email.
+
+        The original checks only ever looked at card["drafts"], which a booking
+        amendment does not appear in - the same blind spot that let the inbox and
+        RFQ replies through unchecked.
+        """
+        amended = 0
+        for roster in self.rosters:
+            booking = roster.get("booking") or {}
+            if not booking.get("amendment"):
+                continue
+            amended += 1
+            with self.subTest(headline=booking.get("headline")):
+                self.assertEqual(booking["status"], "DRAFT - not sent")
+                self.assertEqual(booking["approval_status"], "awaiting_approval")
+        self.assertGreater(amended, 0,
+                           "The injected strike reroutes and holds shipments, so some "
+                           "booking should need amending. None means this tests nothing.")
+
+    def test_customs_escalates_and_never_files(self):
+        """The Customs Worker prepares an entry; a person submits it."""
+        escalated = 0
+        for roster in self.rosters:
+            customs = roster.get("customs") or {}
+            if not customs:
+                continue
+            self.assertIn(customs["status"], ("Escalated to a person", "Ready to file"))
+            self.assertIn("Nothing is filed", customs["note"])
+            escalated += bool(customs.get("escalate"))
+        self.assertGreater(escalated, 0,
+                           "A reroute moves the country of entry, so at least one entry "
+                           "should escalate. None means this tests nothing.")
+
     def test_no_tms_writeback_is_ever_written(self):
         board = self.result["tms"]
         self.assertGreater(board["queued"], 0,

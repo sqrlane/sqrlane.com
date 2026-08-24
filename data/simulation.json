@@ -1,0 +1,87 @@
+{
+  "_comment": "The simulation timeline - one authored week on the board. Each day activates or resolves events that already live in scenarios.json; nothing is duplicated here, because a second copy of an event is how schema parity breaks. Days carry state forward: a shipment rerouted on Tuesday is ON the new route on Wednesday, and a held one accrues a day of delay for every day it waits.",
+  "_honesty": "Every event and every day here is authored. The Route Advisor still makes each decision for real - the timeline only decides which disruptions are active when. This is a replay, and the dashboard tags it SCRIPTED.",
+  "_authored_on": "2026-08-24",
+  "name": "One week on the North Range",
+  "summary": "A quiet Monday, a walkout, a river running low, a corridor closing, and then the slow climb back. Eight days, five disruptions, one pool of shipments.",
+  "days": [
+    {
+      "day": 1,
+      "label": "Mon",
+      "headline": "Quiet start",
+      "note": "Nothing active. Every booking is running to plan - this is the baseline the rest of the week moves away from.",
+      "activate": [],
+      "resolve": []
+    },
+    {
+      "day": 2,
+      "label": "Tue",
+      "headline": "Hamburg walkout called",
+      "note": "The union calls a full-day stoppage across the container terminals. Boxes with slack move to Rotterdam; the tight cold-chain one is better off waiting.",
+      "activate": [
+        "EVT-HAM-STRIKE"
+      ],
+      "resolve": []
+    },
+    {
+      "day": 3,
+      "label": "Wed",
+      "headline": "The Rhine falls with the strike still on",
+      "note": "Low water at Kaub cuts barge drafts while Hamburg is still stopped. Two unrelated disruptions at once is the case a single-event demo never shows.",
+      "activate": [
+        "EVT-RHINE-LOWWATER"
+      ],
+      "resolve": []
+    },
+    {
+      "day": 4,
+      "label": "Thu",
+      "headline": "Red Sea closes - the week's worst day",
+      "note": "A corridor closure lands on top of both. Every lane on the board is now touched by something.",
+      "activate": [
+        "EVT-REDSEA-CLOSURE",
+        "EVT-SUEZ-KNOCKON"
+      ],
+      "resolve": []
+    },
+    {
+      "day": 5,
+      "label": "Fri",
+      "headline": "Hamburg settles; the hold releases",
+      "note": "The stoppage ends. The shipment held since Tuesday resumes - carrying the delay it accrued while it waited, which is the cost of that call made visible.",
+      "activate": [],
+      "resolve": [
+        "EVT-HAM-STRIKE"
+      ]
+    },
+    {
+      "day": 6,
+      "label": "Sat",
+      "headline": "Wildfire closes a land leg",
+      "note": "A regional fire shuts the inland route south. Small, contained, and it only touches one booking - the system should not treat it as a board-wide event.",
+      "activate": [
+        "EVT-FR-WILDFIRE"
+      ],
+      "resolve": []
+    },
+    {
+      "day": 7,
+      "label": "Sun",
+      "headline": "The river comes back, the fire is contained",
+      "note": "Two of the four clear. What is left is the corridor closure, which does not resolve in a week.",
+      "activate": [],
+      "resolve": [
+        "EVT-RHINE-LOWWATER",
+        "EVT-FR-WILDFIRE"
+      ]
+    },
+    {
+      "day": 8,
+      "label": "Mon",
+      "headline": "Settled on the revised plan",
+      "note": "The Red Sea stays shut. Everything still moving is doing so on a route the system chose earlier in the week. One booking is still waiting, because no better routing exists for it - saying so is a real answer, not a gap.",
+      "activate": [],
+      "resolve": []
+    }
+  ]
+}

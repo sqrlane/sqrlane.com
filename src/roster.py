@@ -30,6 +30,12 @@ ROSTER = [
      "role": "Triages inbound carrier and customer mail, and drafts the reply"},
     {"id": "rfq", "name": "RFQ Worker", "mode": "scripted",
      "role": "Reads an inbound rate request and drafts the quote back"},
+    {"id": "booking", "name": "Booking Worker", "mode": "scripted",
+     "role": "Holds the carrier booking, and the amendment a decision requires"},
+    {"id": "invoice", "name": "Invoice Worker", "mode": "scripted",
+     "role": "Reconciles the carrier invoice against the rate that was agreed"},
+    {"id": "customs", "name": "Customs Worker", "mode": "scripted",
+     "role": "Checks the entry for the discharge country, and escalates what needs a person"},
     {"id": "tms", "name": "TMS Link", "mode": "scripted",
      "role": "Booking sync, and the write-back a decision implies"},
     {"id": "assistant", "name": "Assistant", "mode": "scripted",
@@ -385,6 +391,154 @@ def rfq_panel(shipment, decision, scenario_id):
 # --- TMS link ---------------------------------------------------------------
 
 
+# --- Booking ---------------------------------------------------------------
+# A forwarder's booking is the thing a reroute actually changes. This models the
+# amendment that follows from the decision - and holds it, because sending an
+# amendment to a carrier is an outbound action like any other.
+
+_VESSELS = {
+    "SHP-001": ("MSC AMBER", "V.418W"), "SHP-002": ("MAERSK KOWLOON", "V.233E"),
+    "SHP-003": ("CMA CGM LOIRE", "V.107W"), "SHP-004": ("EVER LEGACY", "V.912E"),
+    "SHP-005": ("HMM GARNET", "V.055W"), "SHP-006": ("RHINE TRADER", "B.221"),
+    "SHP-007": ("CMA CGM RHONE", "V.340W"),
+}
+
+
+def booking_panel(shipment, decision, scenario_id):
+    routes = route_advisor.load_routes()
+    vessel, voyage = _VESSELS.get(shipment["id"], ("TBN", "TBN"))
+    booked = routes.get(shipment["primary_route"], {})
+    action = (decision or {}).get("decision")
+
+    amendment = None
+    if action == "reroute":
+        to = routes.get((decision or {}).get("recommended_route"), {})
+        amendment = {
+            "type": "Change of discharge port",
+            "from": booked.get("discharge_port", "-"),
+            "to": to.get("discharge_port", "-"),
+            "also": f"routing {shipment['primary_route']} to {decision.get('recommended_route')}",
+            "revised_eta": decision.get("revised_eta"),
+        }
+    elif action == "hold":
+        amendment = {
+            "type": "Hold at load port",
+            "from": "Booked to sail",
+            "to": "Hold pending berth confirmation",
+            "also": "no equipment release until the hold lifts",
+            "revised_eta": (decision or {}).get("revised_eta"),
+        }
+
+    return {
+        "headline": f"Booking {shipment['id']} with {vessel} {voyage}",
+        "booking": {
+            "carrier_ref": f"BK-{shipment['id'].replace('SHP-', '')}-{voyage.replace('.', '')}",
+            "vessel": vessel, "voyage": voyage,
+            "load_port": shipment["origin"],
+            "discharge_port": booked.get("discharge_port", "-"),
+            "cutoff": _shift(shipment.get("etd") or shipment["eta"], -3),
+        },
+        "amendment": amendment,
+        # An amendment is an outbound action, so it waits like a draft email does.
+        "status": "DRAFT - not sent" if amendment else "No amendment needed",
+        "approval_status": "awaiting_approval" if amendment else "not_applicable",
+        "note": ("Nothing is sent to the carrier. The amendment is described and held "
+                 "at the approval gate."),
+    }
+
+
+# --- Invoice ---------------------------------------------------------------
+# The reconciliation only bites when a disruption is active: the carrier bills a
+# surcharge that was never in the quote, and the discrepancy is the whole point.
+
+
+def invoice_panel(shipment, decision, scenario_id):
+    routes = route_advisor.load_routes()
+    label, pct, why = _SURCHARGE.get(scenario_id, (None, 0, ""))
+    booked = routes.get(shipment["primary_route"], {})
+    agreed = booked.get("cost_index", 100)
+    exposed = bool(decision) and pct
+
+    lines = [
+        {"description": "Ocean freight, base rate", "agreed": agreed, "invoiced": agreed},
+        {"description": "Terminal handling, destination", "agreed": 8, "invoiced": 8},
+        {"description": "Documentation", "agreed": 2, "invoiced": 2},
+    ]
+    if exposed:
+        lines.append({"description": f"{label} (not in the agreed rate)",
+                      "agreed": 0, "invoiced": pct})
+
+    disputed = [ln for ln in lines if ln["invoiced"] != ln["agreed"]]
+    gap = sum(ln["invoiced"] - ln["agreed"] for ln in lines)
+    return {
+        "headline": f"Carrier invoice for {shipment['id']}",
+        "invoice_ref": f"INV-{shipment['id'].replace('SHP-', '')}-0{1 if not exposed else 2}",
+        "lines": lines,
+        "gap": gap,
+        "finding": (f"{len(disputed)} line does not match the agreed rate — {label.lower()}, "
+                    f"{why}. Query it before the invoice is passed for payment."
+                    if disputed else
+                    "Every line matches the agreed rate. Nothing to query."),
+        "matched": not disputed,
+        "note": "Index points, in the same 100 = baseline units the rates use. Not currency.",
+    }
+
+
+# --- Customs ---------------------------------------------------------------
+# The one that only exists because of the reroute: moving the discharge port can
+# move the country of entry, and that changes who files and under which number.
+
+_ENTRY = {
+    "HAM": {"country": "Germany", "office": "Zollamt Hamburg-Waltershof", "eori": "DE"},
+    "RTM": {"country": "Netherlands", "office": "Douane Rotterdam Maasvlakte", "eori": "NL"},
+    "ANR": {"country": "Belgium", "office": "Douane Antwerpen", "eori": "BE"},
+    "FOS": {"country": "France", "office": "Douane Marseille-Fos", "eori": "FR"},
+}
+
+
+def customs_panel(shipment, decision, scenario_id):
+    routes = route_advisor.load_routes()
+    booked = routes.get(shipment["primary_route"], {})
+    now_port = ((decision or {}).get("recommended_discharge_port")
+                or booked.get("discharge_port"))
+    was_port = booked.get("discharge_port")
+    entry = _ENTRY.get(now_port) or _ENTRY.get(was_port) or {}
+    moved = bool(now_port) and bool(was_port) and now_port != was_port
+
+    checks = [
+        {"item": "Commercial invoice", "state": "on file"},
+        {"item": "Packing list", "state": "on file"},
+        {"item": "Bill of lading", "state": "on file" if not moved else "reissue required"},
+        {"item": "Commodity code", "state": "classified"},
+    ]
+    if shipment.get("cold_chain"):
+        checks.append({"item": "Health certificate (temperature-controlled goods)",
+                       "state": "on file"})
+
+    escalate = None
+    if moved:
+        escalate = (f"Entry moves from {_ENTRY.get(was_port, {}).get('country', was_port)} to "
+                    f"{entry.get('country', now_port)}. A different EORI and clearance agent "
+                    f"apply, and the bill of lading has to name the new discharge port. "
+                    f"A person files this — the Worker will not.")
+    elif shipment.get("cold_chain") and (decision or {}).get("action") == "hold":
+        escalate = ("Temperature-controlled goods sitting longer than booked. Confirm the "
+                    "health certificate still covers the revised date before the entry is filed.")
+
+    return {
+        "headline": f"Entry for {shipment['id']} at {now_port or '-'}",
+        "entry": {"country": entry.get("country", "-"), "office": entry.get("office", "-"),
+                  "eori_prefix": entry.get("eori", "-"), "regime": "Import, release for free circulation"},
+        "checks": checks,
+        "escalate": escalate,
+        # The workers this roster models escalate a novel exception rather than
+        # deciding it. So does this one, and it says so on screen rather than
+        # implying it filed anything.
+        "status": "Escalated to a person" if escalate else "Ready to file",
+        "note": "Nothing is filed. The Worker prepares and escalates; a person submits.",
+    }
+
+
 def tms_panel(shipment, decision, scenario_id):
     """One booking's view of the connection. The board-wide view lives in tms.py."""
     writeback = tms._writeback_for({"id": shipment["id"], "decision": decision})
@@ -399,7 +553,8 @@ def tms_panel(shipment, decision, scenario_id):
 
 
 PANELS = {"rate": rate_panel, "milestones": milestones_panel, "docs": docs_panel,
-          "inbox": inbox_panel, "rfq": rfq_panel, "tms": tms_panel}
+          "inbox": inbox_panel, "rfq": rfq_panel, "booking": booking_panel,
+          "invoice": invoice_panel, "customs": customs_panel, "tms": tms_panel}
 
 
 def build(shipment, decision, scenario_id, board, scenario) -> dict:

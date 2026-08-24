@@ -25,7 +25,7 @@ import sys
 import time
 from datetime import datetime, timezone
 
-from src import comms_agent, config, llm, risk_monitor, roster, route_advisor, tms
+from src import comms_agent, config, geo, llm, risk_monitor, roster, route_advisor, tms
 
 # What the dashboard colours a card by.
 STATE_FOR_DECISION = {"reroute": "rerouted", "hold": "hold", "no-action": "green"}
@@ -88,6 +88,8 @@ def initial_state() -> dict:
     """
     routes = route_advisor.load_routes()
     shipments = route_advisor.load_shipments()
+    cards = [dict(_shipment_card(s, routes), state="green", decision=None, drafts=[])
+             for s in shipments]
     return {
         "ran_at": None,
         "state": "idle",
@@ -97,10 +99,10 @@ def initial_state() -> dict:
                                           "decision_type", "expected")}
                       for sc in risk_monitor.load_scenarios()],
         "risk": {"events": [], "sources": [], "stats": {}},
-        "shipments": [
-            dict(_shipment_card(s, routes), state="green", decision=None, drafts=[])
-            for s in shipments
-        ],
+        "shipments": cards,
+        # The calm board on a map, with no risk on it yet - so the map is there
+        # before the button is pressed rather than appearing with the disruption.
+        "map": geo.build(cards, [], routes),
         "summary": {"reroute": 0, "hold": 0, "no-action": len(shipments), "drafts": 0},
         "notes": [],
     }
@@ -255,6 +257,9 @@ def run_cycle(*, live=True, inject=True, use_llm=True, verbose=False,
         # The demo TMS connection, board-wide: what synced, and the booking
         # changes each decision implies. Every one stays queued - see tms.py.
         "tms": tms.connection(cards),
+        # The board on a map: lanes drawn through what they actually transit,
+        # and which chokepoints are carrying risk right now. Derived, not authored.
+        "map": geo.build(cards, risk["events"], routes),
         "summary": dict(tally, drafts=len(drafts)),
         "notes": notes,
     }
