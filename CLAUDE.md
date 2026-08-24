@@ -607,6 +607,13 @@ claims were written and tested but unwitnessed. Most are now confirmed.
   the risk feed asserts it. The dashboard's source line ("N of 14 sources read")
   settles it at a glance; `python -m src.risk_monitor` on a real connection answers
   it in detail. **If N is 0 or 1, the live claim is currently decoration.**
+
+  The **landing page's gauge panel is now the cheapest way to settle half of this**:
+  it reads PEGELONLINE on load and prints three numbers or says why it could not.
+  Open `/` on a machine with outbound access — three readings means a real
+  third-party source was fetched and parsed. It was built in a sandbox whose egress
+  policy blocks `pegelonline.wsv.de` (403 at the proxy), so every path is tested
+  against a local stand-in and none against the real host.
 - **The two reroute cards have never been read.** Every review so far has been
   SHP-002, the hold. SHP-001 and SHP-005 take the other branch in both the advisor
   and the comms prompts, so the reroute emails have never been seen by anyone.
@@ -639,9 +646,15 @@ days and ordering exactly as the screenplay authored them.
 uvicorn src.app:app --reload      # then open http://127.0.0.1:8000
 ```
 
+`/` is the landing page, `/whitepaper` is the technical whitepaper and `/app` is the
+dashboard; all three are single self-contained files. `GET /api/initial` renders the calm five-green-cards board instantly; `POST /run`
+is the button. `GET /api/health` reports what a running instance can actually see — the
 `/` is the landing page and `/app` is the dashboard; both are single self-contained
 files. `GET /api/initial` renders the calm five-green-cards board instantly; `POST /run`
-is the button. `GET /api/health` reports what a running instance can actually see — the
+is the button. `GET /api/gauges` reads the three Rhine gauges live from PEGELONLINE for
+the landing page's gauge panel — cached for `GAUGE_CACHE_SECONDS` because the page is
+public and the source refreshes about every fifteen minutes, and it answers 200 with
+`ok: false` rather than failing, so a gauge being down can never blank the page. `GET /api/health` reports what a running instance can actually see — the
 path it received, whether the dashboard and data files shipped, and whether a provider
 is configured. It is the first thing to check when a deploy misbehaves. The page is a single self-contained file — no CDN, no external font, no
 network call beyond its own API — so flaky wifi cannot blank it.
@@ -655,6 +668,40 @@ python -m src.route_advisor --inject --shipment SHP-002
 python -m src.comms_agent  --inject
 python -m src.orchestrator --no-live      # the whole loop, no network
 ```
+
+### The whitepaper page
+
+`/whitepaper` is the technical paper, served from `static/whitepaper.html` and linked
+from the landing nav. It carries the same tokens, the same self-hosted Geist and the
+same nav as the other two pages — no CDN, no Google Fonts, nothing external, which
+`verify_paper.py` asserts by failing on any off-origin request.
+
+It is the one document that states the project's assumptions and failures in public, so
+four claims in it are load-bearing and tested for by string:
+
+- the prototype **calls a US inference provider** today, so "built in Europe" describes
+  an architecture and not the current deployment;
+- the per-cycle cost figure **is an assumption, not a measurement**;
+- **any hard-coded model name is a scheduled outage**;
+- there are **no accuracy figures** anywhere, because none have been measured.
+
+Model guidance names **specific models from Lyceum's own catalogue with their per-token
+prices**, taken from their inference deck rather than from secondary sources, and dated
+July–August 2026 with their own subject-to-change caveat.
+
+Two things the deck settled that the earlier draft had wrong:
+
+- **It is per-token serverless, not GPU rental.** That fits this workload far better —
+  the system is idle until a disruption lands, then makes about fourteen calls. Costing
+  it needed no assumption about GPU seconds: the per-cycle token volume is measured from
+  the real prompts (~12.8k in, ~3.7k out) and priced against the catalogue. The
+  recommended per-task mix is **about ten times cheaper** than a frontier model
+  everywhere, which is the number worth quoting.
+- **EU residency is not the same as European model provenance.** The catalogue's strong
+  models are Chinese and American in origin, openly licensed and hosted in `eu-north1`
+  with zero retention. Teuken-7B, EuroLLM and Mistral are the answer if provenance must
+  be European too, at a cost in capability. The page keeps those two axes apart in a
+  table rather than blurring them, and `verify_paper.py` asserts both are named.
 
 ### Deployed on Vercel
 

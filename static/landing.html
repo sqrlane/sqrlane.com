@@ -60,12 +60,16 @@
   --green:#107d32;  --green-100:#ecfdec; --green-400:#b9f5bc;
   --amber:#aa4d00;  --amber-100:#fff6de; --amber-400:#ffdc73;
   --red:#ea001d;    --red-100:#ffeeef;  --red-400:#ffd7d6;
+  /* One step darker than --red, same hue, and it exists for one reason:
+     --red on --red-100 measures 4.15:1, under the 4.5:1 a badge label
+     needs. This clears it at 4.84:1. Marks keep --red; only text moves. */
+  --red-ink:#d60019;
 
   --r-sm:6px; --r-md:12px; --r-lg:16px;
 
   --shadow-card:0 2px 2px rgba(0,0,0,.04);
-  --shadow-pop:0 1px 1px rgba(0,0,0,.02),0 4px 8px -4px rgba(0,0,0,.04),
-               0 16px 24px -8px rgba(0,0,0,.06);
+  /* One card shadow, and one lift for the single window mock in the hero.
+     A third step existed only so some cards could shout at the others. */
   --shadow-lift:0 1px 1px rgba(0,0,0,.02),0 8px 16px -4px rgba(0,0,0,.04),
                 0 24px 32px -8px rgba(0,0,0,.06);
 
@@ -142,7 +146,7 @@ h1,h2,h3,h4,p{margin:0}
 .chip.live{background:var(--green-100); color:var(--green)}
 .chip.synth{background:var(--amber-100); color:var(--amber)}
 .chip.blue{background:var(--blue-100); color:var(--blue)}
-.chip.red{background:var(--red-100); color:var(--red)}
+.chip.red{background:var(--red-100); color:var(--red-ink)}
 .chip.plain{background:transparent; border:1px solid var(--border-strong); color:var(--faint)}
 
 .card{background:var(--card); border:1px solid var(--border); border-radius:var(--r-md);
@@ -195,7 +199,11 @@ h1,h2,h3,h4,p{margin:0}
 .shot{margin:56px auto 0; max-width:1000px; position:relative}
 .shot::after{content:""; position:absolute; left:6%; right:6%; bottom:-1px; height:150px;
   background:linear-gradient(to bottom, transparent, var(--bg) 85%); pointer-events:none}
-.frame{background:var(--card); border:1px solid var(--border-strong); border-radius:var(--r-lg);
+/* The one object on the page that is not a card: a browser window standing in
+   for a screenshot. It keeps the lift and the 16px radius because flattening it
+   turns the hero shot into an inline table - but the frame is a hairline now,
+   like everything else. Being the only lifted thing is what makes it read. */
+.frame{background:var(--card); border:1px solid var(--border); border-radius:var(--r-lg);
        box-shadow:var(--shadow-lift); overflow:hidden; text-align:left}
 .frame-bar{height:38px; display:flex; align-items:center; gap:7px; padding:0 14px;
            border-bottom:1px solid var(--border); background:var(--card-muted)}
@@ -243,18 +251,70 @@ h1,h2,h3,h4,p{margin:0}
 .st-green{background:var(--green-100); color:var(--green)}
 .st-blue{background:var(--blue-100); color:var(--blue)}
 .st-amber{background:var(--amber-100); color:var(--amber)}
+.st-red{background:var(--red-100); color:var(--red-ink)}
 
 /* ---------- source strip ---------- */
+/* The sources travel right to left as one continuous band. Three identical
+   copies of the row sit side by side inside the track; the track slides left
+   by exactly one copy's width and then snaps back to the start - at that
+   instant copy 2 is standing precisely where copy 1 was, so the restart is
+   invisible and the band reads as endless.
+
+   Only one row is written in the HTML. The other two are cloned from it at
+   the bottom of the page, so the source list is edited in one place and the
+   three copies cannot drift apart.
+
+   Every mark is an inline SVG drawn in this file - no image, no icon font,
+   nothing fetched. A logo strip that half-loads in front of an audience
+   looks broken, and this one cannot. */
 .strip{padding:34px 0; border-top:1px solid var(--border); background:var(--card)}
 .strip .lead{font-size:12px; line-height:16px; color:var(--faint); text-align:center;
-             margin-bottom:18px}
-.strip .list{display:flex; flex-wrap:wrap; gap:10px 26px; justify-content:center;
-             align-items:center}
-.strip .src{display:inline-flex; align-items:center; gap:7px; font-size:14px; font-weight:500;
-            color:var(--muted); letter-spacing:-.1px}
+             margin-bottom:22px}
+
+/* The viewport. overflow clips the band; the mask softens both ends so items
+   arrive and leave rather than appearing at a hard edge. */
+.strip .strip-view{position:relative; overflow:hidden; --fade:clamp(32px,7vw,140px);
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 var(--fade),
+                                     #000 calc(100% - var(--fade)),transparent 100%);
+          mask-image:linear-gradient(90deg,transparent 0,#000 var(--fade),
+                                     #000 calc(100% - var(--fade)),transparent 100%)}
+.strip .strip-track{display:flex; width:max-content}
+/* .go is added by the script once the copies exist - without it the strip is
+   a static list rather than a band sliding against empty space. */
+.strip .strip-track.go{animation:strip-slide 44s linear infinite; will-change:transform}
+.strip .strip-view:hover .strip-track.go{animation-play-state:paused}
+@keyframes strip-slide{
+  from{transform:translate3d(0,0,0)}
+  to{transform:translate3d(calc(-100% / 3),0,0)}
+}
+
+/* No gap on the track - that would break the one-third arithmetic. The seam
+   spacing comes from each row's own trailing padding instead. */
+.strip .strip-row{display:flex; align-items:center; gap:44px; padding-right:44px; flex:none}
+.strip .src{display:inline-flex; align-items:center; gap:9px; font-size:14px; font-weight:500;
+            color:var(--muted); letter-spacing:-.1px; white-space:nowrap}
+.strip .src .mk{width:19px; height:19px; flex:none; color:var(--faint);
+                fill:none; stroke:currentColor; stroke-width:1.7;
+                stroke-linecap:round; stroke-linejoin:round}
 .strip .src .lg{font-size:9px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
                 color:var(--faint); border:1px solid var(--border-strong); border-radius:3px;
                 padding:0 4px; line-height:14px}
+.strip .sprite{position:absolute; width:0; height:0; overflow:hidden}
+
+/* Asked for no motion, the band becomes what it was before: the same list,
+   centred, wrapped, standing still. */
+@media (prefers-reduced-motion:reduce){
+  .strip .strip-view{-webkit-mask-image:none; mask-image:none; padding:0 var(--gutter)}
+  /* .go has to be matched here too, or the rule that starts the animation
+     outranks this one and the band keeps moving. */
+  .strip .strip-track,
+  .strip .strip-track.go{width:auto; animation:none; justify-content:center}
+  /* flex:none is what keeps the row from wrapping while it is moving, so it
+     has to be released before the row can fold onto a second line. */
+  .strip .strip-row{flex:1 1 auto; max-width:100%; flex-wrap:wrap;
+                    justify-content:center; gap:12px 28px; padding-right:0}
+  .strip .strip-row.dup{display:none}
+}
 
 /* ---------- contrast cards (the gap) ---------- */
 .gap-grid{margin-top:40px}
@@ -265,7 +325,9 @@ h1,h2,h3,h4,p{margin:0}
 .gap-card .n{font-family:"Geist Mono",ui-monospace,monospace; font-size:11px; color:var(--faint)}
 .gap-card .stops{margin-top:auto; padding-top:14px; border-top:1px solid var(--border);
                  font-size:12px; line-height:16px; color:var(--faint)}
-.gap-card.us{border-color:var(--fg); box-shadow:var(--shadow-pop)}
+/* The black border already says which column is ours. The lifted shadow under
+   it was saying the same thing a second time, louder. */
+.gap-card.us{border-color:var(--fg)}
 .gap-card.us .stops{color:var(--fg); font-weight:500}
 
 /* ---------- steps ---------- */
@@ -308,10 +370,10 @@ h1,h2,h3,h4,p{margin:0}
 
 /* ---------- artifacts inside features ---------- */
 .art{background:var(--card); border:1px solid var(--border); border-radius:var(--r-md);
-     box-shadow:var(--shadow-pop); overflow:hidden;
+     box-shadow:var(--shadow-card); overflow:hidden;
      display:flex; flex-direction:column}
 .art-b{flex:1}          /* pushes .mail-foot to the bottom of a stretched card */
-.callout{background:var(--card); border:1px solid var(--border);
+.callout{background:var(--card); border:1px solid var(--border); box-shadow:var(--shadow-card);
          border-radius:var(--r-md); padding:20px 22px}
 .art-h{padding:11px 14px; border-bottom:1px solid var(--border); display:flex;
        align-items:center; gap:9px; background:var(--card-muted)}
@@ -360,6 +422,165 @@ h1,h2,h3,h4,p{margin:0}
                     font-family:inherit}
 .mail-foot .approve:hover{background:#383838}
 .mail-foot .approve.ok{background:var(--green-100); color:var(--green)}
+
+/* ---------- live gauges ---------- */
+/* The only numbers on this page that are not authored. A reading against a
+   limit is a ratio against a limit, which is a meter - so that is what it is:
+   the fill is the level, the notch is where loading restrictions start, and
+   the track is a lighter step of the fill's own ramp so the state reads across
+   the whole bar. The state is spelled out in words beside it, because a colour
+   on its own is not a label. */
+.gauges{margin-top:32px; padding:20px 22px; border:1px solid var(--border);
+        border-radius:var(--r-md); background:var(--card); box-shadow:var(--shadow-card)}
+.gauges .g-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:20px}
+.gauges .g-head h3{font-size:14px; line-height:20px; font-weight:600; letter-spacing:-.28px}
+.gauges .g-when{margin-left:auto; font-size:11.5px; line-height:16px; color:var(--faint)}
+.gauges .g-row{display:grid; grid-template-columns:repeat(3,1fr); gap:24px}
+.gauges .g-name{font-size:10px; line-height:14px; font-weight:500; letter-spacing:.07em;
+                text-transform:uppercase; color:var(--faint)}
+/* A standalone display number takes the font's proportional figures. Tabular
+   is for columns that have to line up, and it reads loose at this size. */
+.gauges .g-val{margin-top:5px; font-size:28px; line-height:32px; font-weight:600;
+               letter-spacing:-1.1px; color:var(--fg)}
+.gauges .g-val u{text-decoration:none; font-size:14px; font-weight:500;
+                 letter-spacing:-.2px; color:var(--faint); margin-left:4px}
+.gauges .g-meter{position:relative; height:6px; border-radius:999px; margin-top:12px;
+                 background:var(--gray-200)}
+.gauges .g-fill{position:absolute; top:0; bottom:0; left:0; border-radius:999px;
+                background:var(--gray-600)}
+/* The notch is the threshold, so it has to stay legible on top of the fill as
+   well as on the empty track - hence a gap in the bar rather than a coloured
+   line on it. */
+.gauges .g-mark{position:absolute; top:-3px; bottom:-3px; width:2px; margin-left:-1px;
+                background:var(--card); box-shadow:0 0 0 1px var(--border-strong);
+                border-radius:1px}
+.gauges .g-green{background:var(--green-100)} .gauges .g-green .g-fill{background:var(--green)}
+.gauges .g-amber{background:var(--amber-100)} .gauges .g-amber .g-fill{background:var(--amber)}
+.gauges .g-red{background:var(--red-100)}     .gauges .g-red   .g-fill{background:var(--red)}
+.gauges .g-state{margin-top:12px}
+.gauges .g-sub{margin-top:8px; font-size:11.5px; line-height:16px; color:var(--faint)}
+.gauges .g.gone .g-val{color:var(--gray-600)}
+.gauges .g-note{margin-top:20px; padding-top:16px; border-top:1px solid var(--border);
+                font-size:12.5px; line-height:18px; color:var(--faint); max-width:92ch}
+
+/* ---------- worked example (the case study) ---------- */
+.case .cs-note{margin-top:18px; max-width:80ch; font-size:13px; line-height:19px;
+               color:var(--faint)}
+.case .cs-note code{font-family:"Geist Mono",ui-monospace,monospace; font-size:12px;
+                    color:var(--muted)}
+
+/* The four facts the piece turns on, above the cards. */
+.cs-facts{margin-top:32px; display:grid; grid-template-columns:repeat(4,1fr); gap:20px;
+          padding:20px 22px; border:1px solid var(--border); border-radius:var(--r-md);
+          background:var(--card); box-shadow:var(--shadow-card)}
+.cs-facts .k{font-size:10px; line-height:14px; font-weight:500; letter-spacing:.07em;
+             text-transform:uppercase; color:var(--faint)}
+.cs-facts .v{margin-top:5px; font-size:26px; line-height:30px; font-weight:600;
+             letter-spacing:-1px; font-variant-numeric:tabular-nums}
+.cs-facts .v u{text-decoration:none; font-size:14px; font-weight:500; letter-spacing:-.2px;
+               color:var(--faint); margin-left:3px}
+.cs-facts .s{margin-top:3px; font-size:12px; line-height:16px; color:var(--faint)}
+
+.cs-grid{margin-top:16px}
+.cs{background:var(--card); border:1px solid var(--border); border-radius:var(--r-md);
+    box-shadow:var(--shadow-card); padding:20px; display:flex; flex-direction:column}
+.cs > h3{font-family:"Geist Mono",ui-monospace,monospace; font-size:11px; line-height:16px;
+         font-weight:400; letter-spacing:.1em; text-transform:uppercase; color:var(--faint);
+         margin-bottom:18px}
+
+/* 01 - the corridor. Two series, told apart three ways: colour, dash pattern
+   and a direct label on each. Colour alone survives neither a deuteranope nor
+   a projector at the back of a room. */
+.cs .corridor{width:100%; height:auto; display:block; border-radius:var(--r-sm);
+              background:var(--card-muted)}
+.cs .corridor text{font-family:"Geist Mono",ui-monospace,monospace; font-size:9px;
+                   letter-spacing:.05em; fill:var(--faint)}
+.cs .corridor text.on{fill:var(--fg)}
+.cs .corridor text.rd{fill:var(--red)}
+.cs .corridor text.bl{fill:var(--blue)}
+.cs .corridor .leg-ok{stroke:var(--gray-500); stroke-width:2; fill:none}
+.cs .corridor .leg-sus{stroke:var(--red); stroke-width:2; fill:none; stroke-dasharray:5 4}
+.cs .corridor .leg-alt{stroke:var(--blue); stroke-width:2; fill:none}
+.cs .corridor .node{fill:var(--fg)}
+.cs .corridor .gauge{fill:var(--card); stroke:var(--gray-600); stroke-width:1.5}
+.cs .corridor .gauge.bind{stroke:var(--red); stroke-width:2}
+
+.cs .legend{margin-top:14px; display:flex; flex-wrap:wrap; gap:8px 18px}
+.cs .legend span{display:inline-flex; align-items:center; gap:7px; font-size:12px;
+                 line-height:16px; color:var(--muted)}
+.cs .legend i{width:16px; height:0; border-top:2px solid var(--blue); flex:none}
+.cs .legend i.sus{border-top-style:dashed; border-top-color:var(--red)}
+.cs .cs-cap{margin-top:14px; font-size:13px; line-height:19px; color:var(--muted)}
+.cs .cs-sub{margin-top:20px; margin-bottom:12px; font-family:"Geist Mono",ui-monospace,monospace;
+            font-size:11px; line-height:16px; letter-spacing:.1em; text-transform:uppercase;
+            color:var(--faint)}
+.cs .trail li{font-size:13px; line-height:19px}
+.cs .trail code{font-family:"Geist Mono",ui-monospace,monospace; font-size:12px}
+.cs .nums{margin-top:auto; padding-top:18px; display:grid;
+          grid-template-columns:repeat(3,1fr); gap:12px}
+.cs .nums .k{font-size:10px; line-height:14px; font-weight:500; letter-spacing:.07em;
+             text-transform:uppercase; color:var(--faint)}
+.cs .nums .v{margin-top:4px; font-family:"Geist Mono",ui-monospace,monospace;
+             font-size:19px; line-height:24px; letter-spacing:-.5px; color:var(--fg)}
+
+/* 02 - the escalation */
+.cs-tl{margin:0; padding:0; list-style:none}
+.cs-tl li{position:relative; padding:0 0 17px 24px}
+.cs-tl li:last-child{padding-bottom:0}
+.cs-tl li::before{content:""; position:absolute; left:1px; top:5px; width:7px; height:7px;
+                  border-radius:50%; background:var(--gray-500)}
+.cs-tl li::after{content:""; position:absolute; left:4px; top:14px; bottom:0; width:1px;
+                 background:var(--border-strong)}
+.cs-tl li:last-child::after{display:none}
+.cs-tl .d{font-family:"Geist Mono",ui-monospace,monospace; font-size:12px; line-height:17px;
+          color:var(--faint)}
+.cs-tl .t{margin-top:4px; font-size:13.5px; line-height:20px; color:var(--muted)}
+.cs-tl .t b{color:var(--fg); font-weight:500}
+/* Two entries are marked: the moment the call was made, and the moment the
+   page is standing in. */
+.cs-tl li.call::before{background:var(--blue); box-shadow:0 0 0 3px var(--blue-100)}
+.cs-tl li.call .t{color:var(--fg)}
+.cs-tl li.now::before{background:var(--red); box-shadow:0 0 0 3px var(--red-100)}
+
+/* 03 - the verdict */
+.cs-odds{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
+.cs-odds .o{padding:12px 6px; border-radius:var(--r-sm); text-align:center}
+.cs-odds .o .p{font-size:22px; line-height:28px; font-weight:600; letter-spacing:-.9px;
+               font-variant-numeric:tabular-nums}
+.cs-odds .o .l{margin-top:4px; font-size:12px; line-height:16px; color:var(--faint)}
+.cs-odds .o.lead{background:var(--blue-100)}
+.cs-odds .o.lead .p{color:var(--blue)}
+.cs-odds .o.lead .l{color:var(--blue)}
+.cs .cs-call{margin-top:18px; padding:16px 18px; border-radius:var(--r-sm);
+             background:var(--card-muted); border:1px solid var(--border)}
+.cs-call .h{font-family:"Geist Mono",ui-monospace,monospace; font-size:11px; line-height:16px;
+            letter-spacing:.1em; text-transform:uppercase; color:var(--blue)}
+.cs-call .e{margin-top:10px; font-size:13.5px; line-height:20px; color:var(--fg)}
+.cs-call code{font-family:"Geist Mono",ui-monospace,monospace; font-size:12.5px;
+              color:var(--muted)}
+.cs-call .b{margin-top:9px; font-size:13px; line-height:19px; color:var(--muted)}
+.cs .cs-foot{margin-top:auto; padding-top:16px; font-size:11.5px; line-height:16px;
+             color:var(--faint)}
+
+/* ---------- signup (a placeholder, and it says so) ---------- */
+.signup{border-top:1px solid var(--border); background:var(--card); padding:88px 0;
+        text-align:center}
+.signup p.copy18{margin:18px auto 0; max-width:50ch}
+/* Deliberately not a <form>. There is no element that can submit and no
+   handler that transmits, which is the same discipline as the Comms Agent:
+   the page cannot send, rather than choosing not to. */
+.signup .row2{margin:30px auto 0; display:flex; gap:10px; justify-content:center;
+              flex-wrap:wrap; max-width:520px}
+.signup input{flex:1; min-width:230px; height:44px; padding:0 14px; border-radius:var(--r-sm);
+              border:1px solid var(--border-strong); background:var(--bg); color:var(--fg);
+              font-family:inherit; font-size:15px; line-height:20px}
+.signup input::placeholder{color:var(--faint)}
+.signup input:focus{outline:2px solid var(--blue); outline-offset:-2px; background:var(--card)}
+.signup .note{margin:16px auto 0; max-width:56ch; font-size:12.5px; line-height:18px;
+              color:var(--faint)}
+.signup .walk{margin-top:26px; font-size:14px; line-height:20px; color:var(--muted)}
+.signup .walk a{border-bottom:1px solid var(--border-strong); padding-bottom:1px}
+.signup .walk a:hover{border-color:var(--fg); color:var(--fg)}
 
 /* ---------- sources table ---------- */
 .tbl{border:1px solid var(--border); border-radius:var(--r-md); overflow:hidden;
@@ -492,14 +713,20 @@ h1,h2,h3,h4,p{margin:0}
 .not .k{font-size:14px; font-weight:500; letter-spacing:-.2px}
 .not .v{font-size:13px; line-height:19px; color:var(--muted); margin-top:3px}
 
-/* ---------- honest band ---------- */
-.honest .panel{padding:44px; border-radius:var(--r-lg); border:1px solid var(--border-strong);
-               background:var(--card); box-shadow:var(--shadow-pop); position:relative;
-               overflow:hidden}
-.honest .panel::before{content:""; position:absolute; inset:0 auto 0 0; width:3px;
-                       background:var(--fg)}
-.honest blockquote{margin:0; max-width:52ch}
-.honest .who{margin-top:22px; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+/* ---------- honest band ----------
+   The same card rule as everything else on the page - hairline border, 12px
+   radius, --shadow-card - which is bklit-ui's anatomy, it being a shadcn
+   registry. This panel used to carry a 3px black rule down its left edge, a
+   lifted shadow, the heavier border and the 16px radius: four kinds of
+   emphasis at once, on the quietest claim on the page. */
+.honest .panel{padding:32px; border-radius:var(--r-md); border:1px solid var(--border);
+               background:var(--card); box-shadow:var(--shadow-card)}
+.honest blockquote{margin:16px 0 0; max-width:52ch}
+/* Each chip stays welded to the words it labels - as a flat run they wrapped
+   apart, leaving "Synthetic" on one line and what it applies to on the next. */
+.honest .who{margin-top:20px; display:flex; gap:8px 24px; flex-wrap:wrap}
+.honest .who > span{display:inline-flex; align-items:center; gap:8px}
+.honest .panel > p{margin-top:18px; max-width:66ch}
 
 /* ---------- final cta ---------- */
 .final{text-align:center; padding:96px 0}
@@ -513,7 +740,9 @@ h1,h2,h3,h4,p{margin:0}
 
 /* ---------- footer ---------- */
 .foot{border-top:1px solid var(--border); background:var(--card); padding:52px 0 34px}
-.foot .cols{display:grid; grid-template-columns:1.6fr 1fr 1fr 1fr; gap:32px}
+.foot .cols{display:grid; grid-template-columns:1.3fr 1fr 1fr 1fr 1.2fr; gap:32px}
+.foot ul.placeholder span{font-size:13.5px; color:var(--faint)}
+.foot .ph-note{margin-top:12px; font-size:11.5px; line-height:16px; color:var(--gray-600)}
 .foot .about{max-width:34ch}
 .foot .about p{margin-top:14px; font-size:13px; line-height:19px; color:var(--faint)}
 .foot h4{font-size:12px; font-weight:500; letter-spacing:.06em; text-transform:uppercase;
@@ -552,6 +781,9 @@ h1,h2,h3,h4,p{margin:0}
   .nav-links{display:none}
   .g3,.g4{grid-template-columns:1fr 1fr}
   .mini-stats{grid-template-columns:repeat(2,1fr)}
+  /* Four facts across a phone puts "9 days early" on three lines. Two by two
+     keeps each number next to the caption that explains it. */
+  .cs-facts{grid-template-columns:repeat(2,1fr); gap:22px 24px}
 }
 @media (max-width:640px){
   :root{--gutter:18px}
@@ -566,12 +798,24 @@ h1,h2,h3,h4,p{margin:0}
   .h32{font-size:26px; line-height:32px; letter-spacing:-1px}
   .copy18{font-size:16px; line-height:25px}
   .g2,.g3,.g4{grid-template-columns:1fr}
+  /* Three gauges across a phone is three different baselines the moment one
+     name wraps to a second line. Full width each, and they line up again. */
+  .gauges .g-row{grid-template-columns:1fr; gap:22px}
   .step{grid-template-columns:1fr; gap:10px}
   .feature .claims li{grid-template-columns:1fr; gap:3px}
   .feature .claims .k{line-height:18px}
   .tbl .tr{grid-template-columns:1fr; gap:6px}
   .tbl .th{display:none}
-  .honest .panel{padding:26px}
+  .honest .panel{padding:24px}
+  /* Stacked, a flat run leaves the two descriptions starting at different x
+     because "SYNTHETIC" is the wider chip. A two-column grid lines them up;
+     display:contents hands each pair's chip and words straight to the grid. */
+  .honest .who{display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:center}
+  .honest .who > span{display:contents}
+  /* ...but a grid item stretches, which blew "LIVE" out to the width of the
+     "SYNTHETIC" column. The chips size to their own text; the column still
+     lines the words up. */
+  .honest .who .chip{justify-self:start}
   .nav .ghost{display:none}
   .shot{margin-top:38px}
   .btn{width:100%}
@@ -601,9 +845,11 @@ h1,h2,h3,h4,p{margin:0}
     <nav class="nav-links">
       <a href="#loop">How it works</a>
       <a href="#edge">The edge</a>
+      <a href="#case">Case study</a>
       <a href="#reasoning">Reasoning</a>
       <a href="#sources">Sources</a>
       <a href="#scope">Scope</a>
+      <a href="/whitepaper">Whitepaper</a>
     </nav>
     <div class="right">
       <a class="ghost" href="#honest">What's real</a>
@@ -718,15 +964,106 @@ h1,h2,h3,h4,p{margin:0}
 <section class="strip">
   <div class="wrap">
     <p class="lead">Watching, keyless and in the open</p>
-    <div class="list">
-      <span class="src">GDELT DOC 2.0</span>
-      <span class="src">tagesschau <span class="lg">de</span></span>
-      <span class="src">NDR Hamburg <span class="lg">de</span></span>
-      <span class="src">DW <span class="lg">de</span></span>
-      <span class="src">gCaptain <span class="lg">en</span></span>
-      <span class="src">Al Jazeera <span class="lg">en</span></span>
-      <span class="src">الجزيرة <span class="lg">ar</span></span>
-      <span class="src">PEGELONLINE</span>
+  </div>
+
+  <!-- The marks, defined once and referenced by every copy of the row. They
+       are drawn here rather than fetched: each one is a plain pictogram of
+       what the source is - a broadcast tower, an anchor, a river gauge -
+       not a reproduction of anyone's trademark. -->
+  <svg class="sprite" aria-hidden="true" focusable="false"><defs>
+
+    <!-- GDELT: the global news backbone -->
+    <symbol id="mk-globe" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.6"/>
+      <path d="M12 3.4c2.9 2.4 2.9 14.8 0 17.2M12 3.4c-2.9 2.4-2.9 14.8 0 17.2
+               M3.9 8.7h16.2M3.9 15.3h16.2"/>
+    </symbol>
+
+    <!-- NDR Hamburg: a regional broadcaster -->
+    <symbol id="mk-tower" viewBox="0 0 24 24">
+      <circle cx="12" cy="6.6" r="1.3" fill="currentColor" stroke="none"/>
+      <path d="M9.2 20.8 12 8.4l2.8 12.4"/>
+      <path d="M10.5 14.4h3M9.9 17.7h4.2"/>
+      <path d="M8.8 3.8a3.2 3.2 0 0 0 0 5.6"/>
+      <path d="M15.2 3.8a3.2 3.2 0 0 1 0 5.6"/>
+    </symbol>
+
+    <!-- tagesschau: the evening bulletin, on the hour -->
+    <symbol id="mk-clock" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.6"/>
+      <path d="M12 6.9V12l3.6 2.1"/>
+    </symbol>
+
+    <!-- DW: a broadcast carried outward -->
+    <symbol id="mk-wave" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.6"/>
+      <path d="M6.4 12.6q1.85-3.7 3.7 0t3.7 0 3.7 0"/>
+    </symbol>
+
+    <!-- NOS: a signal going out -->
+    <symbol id="mk-signal" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="1.9" fill="currentColor" stroke="none"/>
+      <path d="M7.6 7.6a6.2 6.2 0 0 0 0 8.8M16.4 7.6a6.2 6.2 0 0 1 0 8.8"/>
+      <path d="M4.4 4.4a10.7 10.7 0 0 0 0 15.2M19.6 4.4a10.7 10.7 0 0 1 0 15.2"/>
+    </symbol>
+
+    <!-- Le Monde: a newspaper of record -->
+    <symbol id="mk-paper" viewBox="0 0 24 24">
+      <rect x="3.6" y="5.6" width="16.8" height="12.8" rx="1.8"/>
+      <path d="M6.9 9.4h7.4M6.9 12.6h10.2M6.9 15.4h10.2"/>
+    </symbol>
+
+    <!-- France Info: the hexagon -->
+    <symbol id="mk-hex" viewBox="0 0 24 24">
+      <path d="M12 3.4 19.4 7.7v8.6L12 20.6 4.6 16.3V7.7Z"/>
+      <circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/>
+    </symbol>
+
+    <!-- RTVE: public television -->
+    <symbol id="mk-tv" viewBox="0 0 24 24">
+      <rect x="3.4" y="8.6" width="17.2" height="11.4" rx="2"/>
+      <path d="M8.2 4.2 12 8.6l3.8-4.4"/>
+    </symbol>
+
+    <!-- Al Jazeera: al-jazeera, the island -->
+    <symbol id="mk-drop" viewBox="0 0 24 24">
+      <path d="M12 3.2c3.5 3.7 6.2 6.9 6.2 9.8a6.2 6.2 0 0 1-12.4 0c0-2.9 2.7-6.1 6.2-9.8Z"/>
+    </symbol>
+
+    <!-- gCaptain: the maritime trade press -->
+    <symbol id="mk-anchor" viewBox="0 0 24 24">
+      <circle cx="12" cy="4.9" r="2.4"/>
+      <path d="M12 7.3v13.4"/>
+      <path d="M8.6 10.6h6.8"/>
+      <path d="M5.8 12.6H3.6a8.4 8.4 0 0 0 16.8 0h-2.2"/>
+    </symbol>
+
+    <!-- PEGELONLINE: a river gauge standing in the water -->
+    <symbol id="mk-gauge" viewBox="0 0 24 24">
+      <rect x="8.2" y="2.6" width="3.8" height="14.6" rx=".9"/>
+      <path d="M8.2 5.9h1.9M8.2 8.7h1.9M8.2 11.5h1.9M8.2 14.3h1.9"/>
+      <path d="M2.6 17.7q2.2-2 4.4 0t4.4 0 4.4 0 4.4 0"/>
+      <path d="M5.4 20.5q2.2-1.8 4.4 0t4.4 0t4.4 0"/>
+    </symbol>
+
+  </defs></svg>
+
+  <div class="strip-view">
+    <div class="strip-track">
+      <div class="strip-row">
+        <span class="src"><svg class="mk"><use href="#mk-globe"/></svg>GDELT DOC 2.0</span>
+        <span class="src"><svg class="mk"><use href="#mk-tower"/></svg>NDR Hamburg <span class="lg">de</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-clock"/></svg>tagesschau <span class="lg">de</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-wave"/></svg>DW <span class="lg">de</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-signal"/></svg>NOS Nieuws <span class="lg">nl</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-paper"/></svg>Le Monde <span class="lg">fr</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-hex"/></svg>France Info <span class="lg">fr</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-tv"/></svg>RTVE <span class="lg">es</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-drop"/></svg>الجزيرة <span class="lg">ar</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-drop"/></svg>Al Jazeera <span class="lg">en</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-anchor"/></svg>gCaptain <span class="lg">en</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-gauge"/></svg>PEGELONLINE</span>
+      </div>
     </div>
   </div>
 </section>
@@ -912,6 +1249,212 @@ h1,h2,h3,h4,p{margin:0}
   </div>
 </section>
 
+<!-- ======================== WORKED EXAMPLE ======================== -->
+<section class="section case" id="case">
+  <div class="wrap">
+    <div class="head rv" style="max-width:none">
+      <span class="eyebrow">Worked example</span>
+      <h2 class="d2" style="margin-top:14px">Rotterdam &rarr; Basel &middot; called nine days early.</h2>
+      <p class="copy18" style="margin-top:16px;max-width:74ch">August 2026 &middot; Rhine low
+        water &middot; the inland leg was re-moded to rail nine days before operators stopped
+        quoting Basel barge bookings at all.</p>
+      <p class="cs-note">
+        <span class="chip synth">Synthetic scenario</span>
+        &nbsp;Authored, not a live reading. The corridor, the two routes and the gauges are
+        real &mdash; Kaub, Duisburg-Ruhrort and Emmerich from PEGELONLINE, the 78&nbsp;cm
+        loading threshold from <code>config.py</code>. The readings, vessel counts and dates
+        are written to show the shape of the call: no product metric, no outcome claimed.
+      </p>
+    </div>
+
+    <!-- The live half. Everything above the note below this panel is a real
+         reading; everything under it is authored. The boundary is physical so
+         nobody has to take it on trust. -->
+    <div class="gauges rv" data-gauges>
+      <div class="g-head">
+        <span class="chip" data-g-chip>Reading&hellip;</span>
+        <h3>The Rhine, right now</h3>
+        <span class="g-when" data-g-when>PEGELONLINE &middot; three gauges</span>
+      </div>
+      <div class="g-row" data-g-row>
+        <div class="g gone"><p class="g-name">Kaub</p><p class="g-val">&mdash;</p>
+          <div class="g-meter"></div><p class="g-sub">reading the gauge&hellip;</p></div>
+        <div class="g gone"><p class="g-name">Duisburg-Ruhrort</p><p class="g-val">&mdash;</p>
+          <div class="g-meter"></div><p class="g-sub">reading the gauge&hellip;</p></div>
+        <div class="g gone"><p class="g-name">Emmerich</p><p class="g-val">&mdash;</p>
+          <div class="g-meter"></div><p class="g-sub">reading the gauge&hellip;</p></div>
+      </div>
+      <p class="g-note" data-g-note>Read live from PEGELONLINE when this page loaded.
+        The notch on each bar is the level below which barges stop loading normally.</p>
+    </div>
+
+    <p class="cs-note rv">
+      <span class="chip synth">Synthetic scenario</span>
+      &nbsp;Everything below this line is authored, not read. The corridor, the gauges and
+      the two routes are the real ones Lanewatch watches &mdash; <code>R-RTM-RHINE</code>
+      against <code>R-RTM-RAIL</code>, and the 78&nbsp;cm loading threshold is the one in
+      <code>config.py</code> that the live panel above is measuring against. The readings,
+      the vessel counts and the dates in the write-up are written to show the shape of the
+      call. Nothing here is a product metric, and no outcome is being claimed.
+    </p>
+
+    <div class="cs-facts rv">
+      <div class="f">
+        <p class="k">Kaub gauge</p>
+        <p class="v">44<u>cm</u></p>
+        <p class="s">Loading threshold is 78 cm</p>
+      </div>
+      <div class="f">
+        <p class="k">Vessels held</p>
+        <p class="v">140</p>
+        <p class="s">Duisburg-Ruhrort up to Mainz</p>
+      </div>
+      <div class="f">
+        <p class="k">Barge payload</p>
+        <p class="v">25<u>%</u></p>
+        <p class="s">Of nominal, where barges still run</p>
+      </div>
+      <div class="f">
+        <p class="k">Called</p>
+        <p class="v">9<u>days early</u></p>
+        <p class="s">Before bookings were suspended</p>
+      </div>
+    </div>
+
+    <div class="grid g3 cs-grid">
+
+      <!-- 01 -->
+      <div class="cs rv">
+        <h3>01 &middot; Route comparison</h3>
+        <svg class="corridor" viewBox="0 0 300 392" role="img"
+             aria-label="The Rhine corridor from Rotterdam up to Basel. Rotterdam to Duisburg-Ruhrort is navigable; the reaches from Duisburg past Kaub up to Basel are payload-limited at 44 centimetres against a 78 centimetre loading threshold. A rail and road alternate runs Rotterdam to Basel for one extra day.">
+          <!-- the alternate first, so the river draws over it -->
+          <path class="leg-alt" d="M110 32C46 44 30 116 30 196S46 344 110 358"/>
+          <text class="bl" x="20" y="196" text-anchor="middle"
+                transform="rotate(-90 20 196)">RAIL + ROAD &#183; +1 d</text>
+
+          <!-- the river: navigable to Duisburg, payload-limited above it -->
+          <path class="leg-ok"  d="M110 32V198"/>
+          <path class="leg-sus" d="M110 198V358"/>
+
+          <circle class="node"  cx="110" cy="32"  r="4.5"/>
+          <circle class="gauge" cx="110" cy="116" r="3.5"/>
+          <circle class="gauge" cx="110" cy="198" r="3.5"/>
+          <circle class="gauge bind" cx="110" cy="286" r="4"/>
+          <circle class="node"  cx="110" cy="358" r="4.5"/>
+
+          <text class="on" x="128" y="36">ROTTERDAM</text>
+
+          <text x="128" y="113">EMMERICH</text>
+          <text x="128" y="126">51 cm</text>
+
+          <text x="128" y="195">DUISBURG-RUHRORT</text>
+          <text x="128" y="208">196 cm</text>
+
+          <text class="rd" x="128" y="283">KAUB</text>
+          <text class="rd" x="128" y="296">44 cm</text>
+          <text x="128" y="309">threshold 78</text>
+
+          <text class="on" x="128" y="362">BASEL</text>
+        </svg>
+
+        <div class="legend">
+          <span><i class="sus"></i>Rhine barge &middot; payload-limited</span>
+          <span><i></i>Rail + road &middot; the re-mode</span>
+        </div>
+
+        <p class="cs-cap">The sea leg is not the problem. Rotterdam discharges on schedule
+          &mdash; the constraint is the run upcountry, and it binds at Kaub, where the river
+          is shallowest.</p>
+
+        <div class="nums">
+          <div><p class="k">Baseline</p><p class="v">38 d</p></div>
+          <div><p class="k">Re-moded</p><p class="v">39 d</p></div>
+          <div><p class="k">Penalty</p><p class="v">+1 d</p></div>
+        </div>
+      </div>
+
+      <!-- 02 -->
+      <div class="cs rv">
+        <h3>02 &middot; Escalation &middot; 15 days</h3>
+        <ul class="cs-tl">
+          <li>
+            <p class="d">Aug 06</p>
+            <p class="t">A regional outlet upstream carries a third dry week in the
+              catchments. The Kaub gauge is already falling through its loading band.</p>
+          </li>
+          <li>
+            <p class="d">Aug 09</p>
+            <p class="t">Kaub 96 cm. Operators cut loaded draught and the first part-load
+              notices reach shippers.</p>
+          </li>
+          <li class="call">
+            <p class="d">Aug 12</p>
+            <p class="t"><b>Lanewatch re-modes SHP-006 from Rhine barge to rail</b> and takes
+              the slot while capacity is still quotable.</p>
+          </li>
+          <li>
+            <p class="d">Aug 14</p>
+            <p class="t">Kaub 78 cm &mdash; the loading threshold. Large-tonnage barges sail
+              at roughly a third of nominal.</p>
+          </li>
+          <li>
+            <p class="d">Aug 17</p>
+            <p class="t">Kaub 61 cm. <b>34 vessels</b> waiting on draught at
+              Duisburg-Ruhrort.</p>
+          </li>
+          <li>
+            <p class="d">Aug 19</p>
+            <p class="t">Kaub 52 cm. <b>118 vessels</b> held between Duisburg and Mainz. Spot
+              barge rates triple.</p>
+          </li>
+          <li class="now">
+            <p class="d">Aug 21</p>
+            <p class="t">Kaub 44 cm. <b>140 vessels</b> held and operators stop quoting Basel
+              bookings outright.</p>
+          </li>
+        </ul>
+        <p class="cs-foot">The Aug 06 item was carried by a regional outlet and corroborated
+          by the Kaub gauge 36 hours before the international wires ran it.</p>
+      </div>
+
+      <!-- 03 -->
+      <div class="cs rv">
+        <h3>03 &middot; Verdict</h3>
+        <div class="cs-odds">
+          <div class="o"><p class="p">20%</p><p class="l">Rain returns inside 10 days</p></div>
+          <div class="o lead"><p class="p">55%</p><p class="l">Low water sustained</p></div>
+          <div class="o"><p class="p">25%</p><p class="l">Falls past the critical band</p></div>
+        </div>
+
+        <div class="cs-call">
+          <p class="h">Re-mode &middot; R-RTM-RAIL</p>
+          <p class="e">Revised ETA <code>Sep 18</code> &middot; original <code>Sep 17</code>
+            &middot; required by <code>Sep 20</code></p>
+          <p class="b">Rail and road out of Rotterdam book ten to fourteen days ahead, so the
+            slot has to be taken before the queue forms rather than after it. Cost index rises
+            100 &rarr; 114. The sea leg and the discharge port are untouched &mdash; only the
+            inland leg moves, which is why this is a re-mode and not a reroute.</p>
+        </div>
+
+        <p class="cs-sub">What the advisor weighed</p>
+        <ul class="trail">
+          <li>Three days of slack against a one-day penalty &mdash; <b>it fits</b>.</li>
+          <li>The active risk sits on the barge leg. The sea leg and Rotterdam are clean,
+            so a discharge-port change buys nothing.</li>
+          <li><code>R-COGH-BSL</code> was on the table and <b>refused</b> &mdash; 49 days,
+            far outside the slack.</li>
+        </ul>
+
+        <p class="cs-foot">Three days of slack absorb the extra day. SHP-006 is the only
+          Rhine-barge leg on the board, so the other six shipments stay on plan &mdash; the
+          system does not cry wolf across the whole book.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
 <!-- ======================== REASONING ======================== -->
 <section class="section" id="reasoning">
   <div class="wrap">
@@ -1059,11 +1602,10 @@ firm revised ETA as soon as terminals restart.</p>
         <rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
       <div>
         <p class="h16">Human-in-the-loop is the design, not a missing feature.</p>
-        <p class="copy14" style="margin-top:5px">There is no SMTP, no email library and no
-          transport of any kind imported anywhere in the codebase, and a test parses
-          every file in <span class="mono" style="font-size:13px">src/</span> on each run
-          to keep it that way. Approval flips a state in the browser; there is nothing for
-          it to trigger.</p>
+        <p class="copy14" style="margin-top:5px">No SMTP, no email library, no transport of
+          any kind in the codebase — a test re-parses every file in
+          <span class="mono" style="font-size:13px">src/</span> on each run. Approval flips
+          a state in the browser; there is nothing for it to trigger.</p>
       </div>
     </div>
   </div>
@@ -1277,12 +1819,11 @@ firm revised ETA as soon as terminals restart.</p>
 
     <div class="callout rv" style="margin-top:32px">
       <p class="copy16"><b style="color:var(--fg);font-weight:500">Everything outbound sits
-        behind the same gate.</b> A drafted reply, a drafted quote and a queued write-back
-        are all actions that leave the building, so all three wait on a person exactly as the
-        carrier and customer emails do — <span class="mono" style="font-size:13px">DRAFT -
-        not sent</span> and <span class="mono" style="font-size:13px">QUEUED - not
-        written</span>. The test that proves the emails cannot be sent now checks these
-        too.</p>
+        behind the same gate.</b> A drafted reply, a drafted quote and a queued write-back all
+        leave the building, so all three wait on a person —
+        <span class="mono" style="font-size:13px">DRAFT - not sent</span>,
+        <span class="mono" style="font-size:13px">QUEUED - not written</span>. The test that
+        proves the emails cannot be sent checks these too.</p>
     </div>
   </div>
 </section>
@@ -1390,26 +1931,20 @@ firm revised ETA as soon as terminals restart.</p>
   <div class="wrap">
     <div class="panel rv">
       <span class="eyebrow">What is real and what is not</span>
-      <blockquote class="h32" style="margin-top:18px">
+      <blockquote class="h24">
         “The risk detection is real — it runs against live news right now. The shipments are
         synthetic, so I can show you a disruption on demand instead of waiting for one.”
       </blockquote>
       <div class="who">
-        <span class="chip live">Live</span>
-        <span class="copy14">news pull, classification, decisions, drafts</span>
-        <span class="chip synth">Synthetic</span>
-        <span class="copy14">the five shipments and the injected Hamburg strike</span>
+        <span><span class="chip live">Live</span>
+          <span class="copy14">news pull, classification, decisions, drafts</span></span>
+        <span><span class="chip synth">Synthetic</span>
+          <span class="copy14">the five shipments and the injected Hamburg strike</span></span>
       </div>
-      <p class="copy14" style="margin-top:20px;max-width:70ch">
-        The injected strike uses the same event format as a live one, so it flows through the
-        real pipeline rather than around it. That is what makes the demo honest and repeatable
-        at the same time — and it is why the Risk Monitor stays genuinely live even though
-        everything downstream runs on authored data.
-      </p>
-      <p class="copy14" style="margin-top:14px;max-width:70ch">
-        This is a strong learning artifact and a compelling demo. It is not a live product —
-        the gap between the two is the integration, trust and liability wall, which is real
-        work for later.
+      <p class="copy14">
+        The injected strike uses the same event format as a live one, so it runs through the
+        real pipeline rather than around it. A demo, not a live product — the gap between the
+        two is the integration, trust and liability wall.
       </p>
     </div>
   </div>
@@ -1432,6 +1967,23 @@ firm revised ETA as soon as terminals restart.</p>
       <span class="copy13" style="color:var(--faint)">Or run it yourself</span>
       <code>uvicorn src.app:app --reload</code>
     </div>
+  </div>
+</section>
+
+<!-- ======================== SIGNUP (PLACEHOLDER) ======================== -->
+<section class="signup" id="subscribe">
+  <div class="wrap rv">
+    <h2 class="d2">The next one is already forming somewhere.</h2>
+    <p class="copy18">Worked examples like the Rhine piece above, when a lane does something
+      worth writing up.</p>
+    <div class="row2">
+      <input type="email" placeholder="you@company.com" aria-label="Email address"
+             autocomplete="email" spellcheck="false">
+      <button class="btn btn-primary btn-lg" type="button" data-sub>Subscribe</button>
+    </div>
+    <p class="note">Placeholder. This field is not wired to anything &mdash; there is no form
+      element here and no transport anywhere in the app.</p>
+    <p class="walk">Prefer a walkthrough? <a href="/app">Open the demo instead &rarr;</a></p>
   </div>
 </section>
 
@@ -1475,6 +2027,19 @@ firm revised ETA as soon as terminals restart.</p>
           <li><a href="/api/initial">Initial board</a></li>
         </ul>
       </div>
+      <div>
+        <h4>Contact</h4>
+        <!-- Placeholders. The address uses the reserved .example TLD so it
+             cannot be mistaken for a real inbox, and the two social entries
+             are plain text rather than dead links. -->
+        <ul class="placeholder">
+          <li><span>contact@lanewatch.example</span></li>
+          <li><span>LinkedIn</span></li>
+          <li><span>X</span></li>
+          <li><a href="#subscribe">Subscribe</a></li>
+        </ul>
+        <p class="ph-note">Placeholders &mdash; nothing to write to yet.</p>
+      </div>
     </div>
     <div class="bar">
       <span>Prototype. Drafts emails; sends nothing.</span>
@@ -1499,6 +2064,190 @@ firm revised ETA as soon as terminals restart.</p>
     });
   }, { rootMargin: "0px 0px -8% 0px", threshold: 0.05 });
   items.forEach(function (el) { io.observe(el); });
+})();
+
+/* The Rhine gauges - the one thing on this page that is actually read rather
+   than written. /api/gauges asks PEGELONLINE and returns whatever came back.
+
+   The panel always resolves to exactly one of three states: live, a stale last
+   reading, or unavailable. It never sits on "reading" forever, because a page
+   that still looks like it is loading reads as broken - so there is a timeout
+   on this side too, not only on the server's. And it never invents a number:
+   when the gauge is down it says the gauge is down, which is the whole reason
+   the live claim is worth making. */
+(function () {
+  var panel = document.querySelector("[data-gauges]");
+  if (!panel) return;
+
+  var row  = panel.querySelector("[data-g-row]");
+  var chip = panel.querySelector("[data-g-chip]");
+  var when = panel.querySelector("[data-g-when]");
+  var note = panel.querySelector("[data-g-note]");
+
+  /* Four bands, three colours. The label is what tells them apart - colour is
+     the second channel, never the only one. */
+  var STATES = {
+    normal:     { cls: "green", label: "Normal" },
+    watch:      { cls: "amber", label: "Watch" },
+    restricted: { cls: "red",   label: "Restricted" },
+    critical:   { cls: "red",   label: "Critical" }
+  };
+
+  function esc(text) {
+    var d = document.createElement("div");
+    d.textContent = text == null ? "" : String(text);
+    return d.innerHTML;
+  }
+
+  function clock(iso) {
+    var d = new Date(iso);
+    if (isNaN(d)) return "";
+    return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  }
+
+  function cell(g) {
+    if (!g.ok) {
+      return '<div class="g gone"><p class="g-name">' + esc(g.name) + "</p>" +
+             '<p class="g-val">&mdash;</p><div class="g-meter"></div>' +
+             '<p class="g-sub">' + esc(g.error || "no reading") + "</p></div>";
+    }
+    var s = STATES[g.state] || STATES.normal;
+    /* Full scale is three times the level at which restrictions start, which
+       is a property of the gauge and not of today's reading - so the bar means
+       the same thing on every visit and a falling river visibly retreats past
+       the notch. Deriving the top from the reading instead looks reasonable
+       and is not: it made 214 cm and 240 cm draw the identical bar. A reading
+       over full scale is clamped, and the number above it is always exact. */
+    var top  = g.warn_cm * 3;
+    var fill = Math.min(100, (g.level_cm / top) * 100);
+    var mark = Math.min(100, (g.high_cm  / top) * 100);
+
+    return '<div class="g">' +
+      '<p class="g-name">' + esc(g.name) + "</p>" +
+      '<p class="g-val">' + esc(g.level_cm) + "<u>cm</u></p>" +
+      '<div class="g-meter g-' + s.cls + '">' +
+        '<span class="g-fill" style="width:' + fill.toFixed(1) + '%"></span>' +
+        '<i class="g-mark" style="left:' + mark.toFixed(1) + '%"></i></div>' +
+      '<p class="g-state"><span class="st-badge st-' + s.cls + '"><i></i>' +
+        s.label + "</span></p>" +
+      '<p class="g-sub">Loading restricted below ' + esc(g.high_cm) + " cm</p></div>";
+  }
+
+  function unavailable(why) {
+    chip.className = "chip";
+    chip.textContent = "Unavailable";
+    when.textContent = "PEGELONLINE";
+    row.innerHTML = ["Kaub", "Duisburg-Ruhrort", "Emmerich"]
+      .map(function (n) { return cell({ name: n, ok: false, error: why }); }).join("");
+    note.textContent =
+      "The gauges are not answering right now. They are the one live reading on this " +
+      "page, so when the source is down it says so rather than showing a number that " +
+      "is not there.";
+  }
+
+  function render(data) {
+    var gauges = data.gauges || [];
+    /* No gauges at all means the request itself got nowhere. If gauges came
+       back and simply failed, render them anyway: each one carries the reason
+       it failed, and a fallback that does not say why is a dead end. */
+    if (!gauges.length) return unavailable("could not reach the gauge service");
+
+    row.innerHTML = gauges.map(cell).join("");
+    var first = gauges.filter(function (g) { return g.ok; })[0];
+    var at = first ? clock(first.measured_at) : "";
+
+    if (!data.ok) {
+      chip.className = "chip";
+      chip.textContent = "Unavailable";
+      when.textContent = "PEGELONLINE";
+      note.textContent = "The gauges are not answering right now, and each one above " +
+        "says what came back. They are the only live reading on this page, so when the " +
+        "source is down it says so rather than showing a number that is not there.";
+      return;
+    }
+
+    if (data.stale) {
+      chip.className = "chip synth";
+      chip.textContent = "Last good reading";
+      note.textContent = "PEGELONLINE did not answer just now, so this is the last " +
+        "reading that came back" + (at ? ", taken at " + at : "") +
+        ". Nothing here is estimated to fill the gap.";
+    } else {
+      chip.className = "chip live";
+      chip.textContent = "Live";
+      note.textContent = "Read from PEGELONLINE when this page loaded" +
+        (at ? ", gauged at " + at : "") + ". The gauges refresh about every fifteen " +
+        "minutes. Each bar is scaled to its own gauge's restriction levels, and the " +
+        "notch is where barges stop loading normally \u2014 left of it the river is " +
+        "working against the shipper. Everything under the line below is authored.";
+    }
+    when.textContent = "PEGELONLINE \u00b7 " + gauges.length + " gauges";
+  }
+
+  /* AbortController is what stops a hung request leaving the panel mid-read.
+     Where it is missing the fetch still resolves or rejects on its own; the
+     timer below just makes sure something is shown either way. */
+  var done = false;
+  var ctrl = window.AbortController ? new AbortController() : null;
+  var giveUp = setTimeout(function () {
+    if (done) return;
+    done = true;
+    if (ctrl) ctrl.abort();
+    unavailable("no answer in time");
+  }, 12000);
+
+  fetch("/api/gauges", { signal: ctrl && ctrl.signal })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (done) return;
+      done = true; clearTimeout(giveUp);
+      render(data);
+    })
+    .catch(function () {
+      if (done) return;
+      done = true; clearTimeout(giveUp);
+      /* Opening landing.html straight off disk lands here too, which is fine:
+         no server, no gauges, and the panel says exactly that. */
+      unavailable("could not reach the gauge service");
+    });
+})();
+
+/* The source band. One row is written in the HTML; two hidden copies are
+   cloned beside it here, so the list is only ever edited in one place. Three
+   copies is what makes the loop seamless: the track slides left by exactly
+   one copy's width, and at that point copy 2 is standing where copy 1 was.
+   Three rather than two so the band still fills a very wide screen at the
+   moment it restarts.
+
+   The animation is only switched on once the copies exist - if this script
+   never runs, the strip stays a plain static list rather than a short band
+   sliding off into empty space. */
+(function () {
+  var track = document.querySelector(".strip .strip-track");
+  var row = track && track.querySelector(".strip-row");
+  if (!row) return;
+  for (var i = 0; i < 2; i++) {
+    var copy = row.cloneNode(true);
+    copy.classList.add("dup");
+    copy.setAttribute("aria-hidden", "true");
+    track.appendChild(copy);
+  }
+  track.classList.add("go");
+})();
+
+/* The subscribe button is the same gesture again: it rewrites the note under
+   the field and does nothing else. There is no form element to submit and no
+   transport in the app for it to reach, which is the point being made. */
+(function () {
+  var btn = document.querySelector("[data-sub]");
+  var note = document.querySelector(".signup .note");
+  if (!btn || !note) return;
+  btn.addEventListener("click", function () {
+    note.textContent =
+      "Nothing was sent. There is no form element on this page and no transport " +
+      "anywhere in the app - the same reason the Comms Agent drafts but cannot send.";
+    note.style.color = "var(--muted)";
+  });
 })();
 
 /* The approve buttons are the same gesture as the real board: a state change

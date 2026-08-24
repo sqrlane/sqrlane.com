@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lanewatch — Technical whitepaper</title>
+<meta name="description" content="How Lanewatch closes the loop from disruption to decision to drafted comms: the four components, which open model suits each task, EU-hosted inference, and every way it has broken so far.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><rect width='20' height='20' rx='5' fill='%23171717'/><path d='M3.2 14h13.6M3.2 10h8.6M3.2 6h4.6' stroke='%23fff' stroke-width='2.1' stroke-linecap='round'/></svg>">
+
+<style>
+/* ---------------------------------------------------------------------------
+   Same tokens, same self-hosted faces as the landing page and the dashboard.
+   No CDN and no external font: a page that loses its type in front of an
+   audience looks broken, and flaky wifi must not be able to do that.
+   --------------------------------------------------------------------------- */
+@font-face{
+  font-family:"Geist";
+  src:url("/fonts/Geist-Variable.woff2") format("woff2-variations"),
+      url("/fonts/Geist-Variable.woff2") format("woff2");
+  font-weight:100 900; font-style:normal; font-display:swap;
+}
+@font-face{
+  font-family:"Geist Mono";
+  src:url("/fonts/GeistMono-Variable.woff2") format("woff2-variations"),
+      url("/fonts/GeistMono-Variable.woff2") format("woff2");
+  font-weight:100 900; font-style:normal; font-display:swap;
+}
+
+:root{
+  --bg:#fafafa; --card:#ffffff; --card-muted:#fafafa;
+  --fg:#171717; --muted:#4d4d4d; --faint:#8f8f8f;
+  --border:#00000014; --border-strong:#00000024;
+  --gray-100:#f2f2f2; --gray-200:#ebebeb;
+
+  --blue:#006bff;   --blue-100:#f0f7ff; --blue-400:#cae7ff;
+  --green:#107d32;  --green-100:#ecfdec; --green-400:#b9f5bc;
+  --amber:#aa4d00;  --amber-100:#fff6de; --amber-400:#ffdc73;
+  --red:#ea001d;    --red-100:#ffeeef;  --red-400:#ffd7d6;
+
+  --r-sm:6px; --r-md:12px; --r-lg:16px;
+  --shadow-card:0 2px 2px rgba(0,0,0,.04);
+  --ease:cubic-bezier(.175,.885,.32,1.1);
+  --gutter:24px; --maxw:1120px;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font-family:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:16px; line-height:24px;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+.mono{font-family:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+
+.d2{font-size:44px; line-height:50px; letter-spacing:-2px; font-weight:600}
+.h32{font-size:32px; line-height:40px; letter-spacing:-1.28px; font-weight:600}
+.h24{font-size:24px; line-height:32px; letter-spacing:-.96px; font-weight:600}
+.h20{font-size:20px; line-height:28px; letter-spacing:-.4px; font-weight:600}
+.h16{font-size:16px; line-height:24px; letter-spacing:-.32px; font-weight:600}
+.copy18{font-size:18px; line-height:28px; letter-spacing:-.2px; color:var(--muted)}
+.copy16{font-size:16px; line-height:25px; color:var(--muted)}
+.copy14{font-size:14px; line-height:21px; color:var(--muted)}
+.copy13{font-size:13px; line-height:19px; color:var(--muted)}
+.eyebrow{font-size:11px; line-height:16px; font-weight:500; letter-spacing:.08em;
+         text-transform:uppercase; color:var(--faint)}
+
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 var(--gutter)}
+a{color:inherit}
+a:focus-visible{outline:2px solid var(--blue); outline-offset:3px; border-radius:3px}
+
+/* ---------- nav (shared with the landing page) ---------- */
+.nav{position:sticky; top:0; z-index:50; background:rgba(250,250,250,.82);
+     backdrop-filter:saturate(180%) blur(12px);
+     -webkit-backdrop-filter:saturate(180%) blur(12px);
+     border-bottom:1px solid var(--border)}
+.nav .wrap{display:flex; align-items:center; gap:28px; height:60px}
+.brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit}
+.mark{width:26px; height:26px; border-radius:var(--r-sm); background:var(--fg);
+      display:flex; align-items:center; justify-content:center; flex:none}
+.name{font-size:15px; font-weight:600; letter-spacing:-.3px}
+.nav-links{display:flex; gap:22px; margin-left:8px}
+.nav-links a{font-size:14px; color:var(--muted); text-decoration:none}
+.nav-links a:hover{color:var(--fg)}
+.nav-links a.on{color:var(--fg); font-weight:500}
+.nav .right{margin-left:auto; display:flex; align-items:center; gap:12px}
+@media(max-width:860px){.nav-links{display:none}}
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:8px;
+     height:40px; padding:0 16px; border-radius:var(--r-sm); border:1px solid transparent;
+     font-size:14px; line-height:20px; font-weight:500; cursor:pointer; text-decoration:none;
+     transition:background .15s var(--ease), border-color .15s var(--ease), transform .15s var(--ease)}
+.btn-primary{background:var(--fg); color:#fff}
+.btn-primary:hover{background:#383838; transform:translateY(-1px)}
+.btn-secondary{background:var(--card); color:var(--fg); border-color:var(--border-strong)}
+.btn-secondary:hover{background:var(--gray-100)}
+
+/* ---------- masthead ---------- */
+.mast{padding:72px 0 40px; border-bottom:1px solid var(--border)}
+.mast h1{max-width:16ch; margin:14px 0 18px}
+.mast .stand{max-width:58ch; margin:0 0 28px}
+.mast .facts{display:flex; flex-wrap:wrap; gap:10px 28px; font-size:13px; color:var(--faint)}
+.mast .facts b{color:var(--fg); font-weight:500}
+@media(max-width:700px){.mast h1{font-size:34px; line-height:40px; letter-spacing:-1.4px}}
+
+/* ---------- document layout: sticky contents + reading column ---------- */
+.doc{display:grid; grid-template-columns:216px minmax(0,1fr); gap:56px; padding:52px 0 96px}
+@media(max-width:980px){.doc{grid-template-columns:1fr; gap:0}}
+.toc{position:sticky; top:88px; align-self:start; font-size:13.5px}
+@media(max-width:980px){.toc{display:none}}
+.toc .eyebrow{margin-bottom:12px}
+.toc a{display:block; padding:5px 0 5px 12px; color:var(--muted); text-decoration:none;
+       border-left:2px solid var(--border); line-height:19px}
+.toc a:hover{color:var(--fg); border-left-color:var(--border-strong)}
+.toc a.on{color:var(--fg); font-weight:500; border-left-color:var(--fg)}
+
+/* Prose keeps a reading measure; tables and the stage grid break out to the
+   full column, which is what they need and what gives the page its rhythm. */
+.body{max-width:none}
+.body p, .body ul, .body h2, .body h3{max-width:70ch}
+.body section{padding-bottom:52px}
+.body section + section{border-top:1px solid var(--border); padding-top:44px}
+.body h2{margin:0 0 10px; scroll-margin-top:84px}
+.body h3{margin:30px 0 6px; font-size:16px; line-height:24px; letter-spacing:-.32px; font-weight:600}
+.body p{margin:0 0 16px}
+.body ul{margin:0 0 16px; padding-left:20px}
+.body li{margin:0 0 9px; color:var(--muted); font-size:15.5px; line-height:24px}
+.body li::marker{color:var(--faint)}
+.body li b,.body li strong{color:var(--fg); font-weight:500}
+.lede{margin:0 0 24px}
+code{font-family:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13px;
+     background:var(--gray-100); padding:1px 5px; border-radius:4px; color:var(--fg)}
+
+/* ---------- the loop ---------- */
+.stages{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:26px 0 10px}
+@media(max-width:1100px){.stages{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.stages{grid-template-columns:1fr}}
+.stage{background:var(--card); border:1px solid var(--border); border-radius:var(--r-md);
+       padding:16px 17px; box-shadow:var(--shadow-card)}
+.stage .n{font-family:"Geist Mono",ui-monospace,monospace; font-size:11px; font-weight:600;
+          letter-spacing:.1em; color:var(--blue); display:block; margin-bottom:8px}
+.stage .t{font-size:15px; font-weight:600; letter-spacing:-.3px; margin-bottom:5px}
+.stage .d{font-size:13px; line-height:19px; color:var(--faint)}
+.chip{display:inline-block; margin-top:11px; font-size:10.5px; font-weight:600; letter-spacing:.07em;
+      text-transform:uppercase; padding:2px 8px; border-radius:999px}
+.chip.live{background:var(--green-100); color:var(--green); border:1px solid var(--green-400)}
+.chip.script{background:var(--amber-100); color:var(--amber); border:1px solid var(--amber-400)}
+.loopnote{border-top:1px dashed var(--border-strong); padding-top:12px; margin-top:6px;
+          font-size:12.5px; color:var(--faint); text-align:center}
+
+/* ---------- tables ---------- */
+.scroller{overflow-x:auto; margin:24px 0; border:1px solid var(--border); border-radius:var(--r-md);
+          background:var(--card); box-shadow:var(--shadow-card)}
+table{border-collapse:collapse; width:100%; min-width:680px; font-size:14px}
+caption{caption-side:top; text-align:left; padding:15px 18px 0; font-size:13px; line-height:19px;
+        color:var(--faint)}
+th,td{padding:11px 18px; text-align:left; vertical-align:top; border-bottom:1px solid var(--border)}
+thead th{font-size:11px; font-weight:500; letter-spacing:.07em; text-transform:uppercase;
+         color:var(--faint); background:var(--card-muted); white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+td b{font-weight:500}
+td.k{font-family:"Geist Mono",ui-monospace,monospace; font-size:12.5px; color:var(--fg)}
+td.n{font-family:"Geist Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums;
+     text-align:right; white-space:nowrap; color:var(--fg)}
+.sub{display:block; font-size:12.5px; line-height:18px; color:var(--faint); margin-top:3px}
+.tag{display:inline-block; font-size:10.5px; font-weight:600; letter-spacing:.07em;
+     text-transform:uppercase; padding:2px 8px; border-radius:999px; white-space:nowrap}
+.tag.ok{background:var(--green-100); color:var(--green); border:1px solid var(--green-400)}
+.tag.warn{background:var(--amber-100); color:var(--amber); border:1px solid var(--amber-400)}
+.tag.bad{background:var(--red-100); color:var(--red); border:1px solid var(--red-400)}
+
+/* ---------- callouts ---------- */
+.note{border:1px solid var(--border); border-left:3px solid var(--blue); background:var(--card);
+      border-radius:0 var(--r-md) var(--r-md) 0; padding:16px 20px; margin:24px 0}
+.note.caution{border-left-color:var(--amber)}
+.note.hard{border-left-color:var(--red)}
+.note .lab{margin-bottom:8px}
+.note p{margin:0 0 10px; font-size:15px; line-height:23px; color:var(--muted)}
+.note p:last-child{margin:0}
+.note b,.note strong{color:var(--fg); font-weight:500}
+
+/* ---------- figure row ---------- */
+.figs{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin:24px 0}
+.fig{background:var(--card); border:1px solid var(--border); border-radius:var(--r-md);
+     padding:16px 17px; box-shadow:var(--shadow-card)}
+.fig .v{font-size:26px; line-height:32px; font-weight:600; letter-spacing:-1px;
+        font-variant-numeric:tabular-nums}
+.fig .k{font-size:12.5px; line-height:18px; color:var(--faint); margin-top:5px}
+
+/* ---------- footer ---------- */
+footer{border-top:1px solid var(--border); background:var(--card)}
+footer .wrap{padding-top:44px; padding-bottom:52px}
+footer .cols{display:grid; grid-template-columns:1.6fr 1fr; gap:44px; max-width:900px}
+@media(max-width:760px){footer .cols{grid-template-columns:1fr; gap:28px}}
+footer ul{margin:10px 0 0; padding-left:18px}
+footer li{margin-bottom:7px; font-size:13px; line-height:19px; color:var(--muted)}
+footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="/">
+      <span class="mark"><svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+        <path d="M3.2 14h13.6M3.2 10h8.6M3.2 6h4.6" stroke="#fff" stroke-width="2.1"
+              stroke-linecap="round"/></svg></span>
+      <span class="name">Lanewatch</span>
+    </a>
+    <nav class="nav-links">
+      <a href="/#loop">How it works</a>
+      <a href="/#edge">The edge</a>
+      <a href="/#sources">Sources</a>
+      <a href="/whitepaper" class="on">Whitepaper</a>
+    </nav>
+    <div class="right">
+      <a class="btn btn-secondary" href="/">Back to overview</a>
+      <a class="btn btn-primary" href="/app">Open the demo</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <header class="mast">
+    <p class="eyebrow">Technical whitepaper · Working prototype</p>
+    <h1 class="d2">Trade-lane risk, decided.</h1>
+    <p class="stand copy18">
+      Freight forwarders find out about disruption late, and then handle it by hand.
+      Lanewatch closes the gap between knowing and doing — it watches the world for events
+      that break trade lanes, works out which shipments are exposed, decides reroute or
+      hold for each one, and drafts the emails a person would otherwise write. Every call
+      keeps its reasoning.
+    </p>
+    <div class="facts">
+      <span><b>Status</b> working prototype, demo-grade</span>
+      <span><b>Stack</b> Python · FastAPI · open-weight models</span>
+      <span><b>Sends</b> nothing, structurally</span>
+    </div>
+  </header>
+</div>
+
+<div class="wrap">
+<div class="doc">
+
+  <aside class="toc" id="toc">
+    <p class="eyebrow">Contents</p>
+    <a href="#summary">In one paragraph</a>
+    <a href="#problem">The problem</a>
+    <a href="#loop">How the loop works</a>
+    <a href="#real">Real vs staged</a>
+    <a href="#split">Model vs code</a>
+    <a href="#models">The model layer</a>
+    <a href="#europe">Running it in Europe</a>
+    <a href="#label">Built in Europe</a>
+    <a href="#breaks">How this breaks</a>
+    <a href="#notgoals">What this is not</a>
+    <a href="#next">Toward production</a>
+  </aside>
+
+  <main class="body">
+
+    <section id="summary">
+      <h2 class="h32">In one paragraph</h2>
+      <p class="copy16">
+        A disruption — a port strike, a river running low, a corridor closing — is known
+        locally long before it is news globally. Lanewatch reads around twenty sources close
+        to those events, decides which of your bookings are affected, and produces three
+        things for each one: a decision, the reasoning behind it, and the carrier and customer
+        emails it implies. Nothing is ever sent. A person approves, or does not. The whole
+        loop runs on open-weight models that can be hosted inside the European Union, so the
+        shipment data never has to leave.
+      </p>
+    </section>
+
+    <section id="problem">
+      <h2 class="h32">The problem this addresses</h2>
+      <p class="copy16">
+        A mid-size forwarder's operations desk does two jobs badly, through no fault of its
+        own. It <b>watches</b> for disruption, which means someone reading trade press
+        between other work. And it <b>reacts</b> to disruption, which means opening the
+        booking system, checking which boxes are exposed, weighing the options, and writing
+        the same six emails it wrote last time.
+      </p>
+      <p class="copy16">
+        Existing risk platforms do the first job and stop. They raise an alert and leave the
+        desk exactly where it was — knowing something is wrong, with all the work still to
+        do. They are also priced for enterprise shippers, not for a forwarder with a few
+        hundred bookings in the water.
+      </p>
+      <p class="copy16">
+        The gap is not detection. It is <b>everything after detection</b>.
+      </p>
+    </section>
+
+    <section id="loop">
+      <h2 class="h32">How the loop works</h2>
+      <p class="lede copy14">
+        Four components, run in order, on demand. The numbering is real: each stage consumes
+        the previous stage's output.
+      </p>
+
+      <div class="stages">
+        <div class="stage">
+          <span class="n">01</span>
+          <div class="t">Risk Monitor</div>
+          <div class="d">Reads news, trade press and government gauges. Classifies each item:
+            is this a logistics disruption, where, what kind, how bad.</div>
+          <span class="chip live">Live</span>
+        </div>
+        <div class="stage">
+          <span class="n">02</span>
+          <div class="t">Route Advisor</div>
+          <div class="d">Maps each booking's route against active risk, then weighs schedule
+            slack against added transit and expected delay.</div>
+          <span class="chip live">Live</span>
+        </div>
+        <div class="stage">
+          <span class="n">03</span>
+          <div class="t">Comms Agent</div>
+          <div class="d">Drafts the carrier email and the customer email each decision
+            implies. Two different voices, two separate calls.</div>
+          <span class="chip live">Live</span>
+        </div>
+        <div class="stage">
+          <span class="n">04</span>
+          <div class="t">The desk</div>
+          <div class="d">Booking amendments, invoice reconciliation, customs entry, TMS
+            write-back — everything a decision lands on downstream.</div>
+          <span class="chip script">Scripted</span>
+        </div>
+      </div>
+      <p class="loopnote">Every stage records why it did what it did — the loop is auditable, not just automatic</p>
+
+      <h3>The part that makes it a loop</h3>
+      <p class="copy16">
+        Risk platforms stop at stage 01. Execution tools start at stage 04 and assume someone
+        already decided. Welding the two together — and writing down the reasoning in
+        between — is the whole idea. A shipment rerouted on Tuesday is on the new route on
+        Wednesday, and is no longer exposed to the thing that moved it. A shipment that is
+        held accrues a day of delay for every day it waits, and carries that delay when it
+        resumes. Holding is not free, and the system says so.
+      </p>
+    </section>
+
+    <section id="real">
+      <h2 class="h32">What is real, and what is staged</h2>
+      <p class="lede copy14">
+        This is a prototype. Being precise about which half is which is what makes the
+        demonstrable half worth anything.
+      </p>
+
+      <div class="scroller">
+        <table>
+          <caption>Every claim in the product carries one of these two labels on screen.</caption>
+          <thead><tr><th>Component</th><th>Status</th><th>What that means</th></tr></thead>
+          <tbody>
+            <tr><td><b>News monitoring</b></td><td><span class="tag ok">Real</span></td>
+              <td>Around twenty live sources, read on every run. The classification is a real model call against real current headlines.</td></tr>
+            <tr><td><b>Routing decisions</b></td><td><span class="tag ok">Real</span></td>
+              <td>The model genuinely weighs the trade-off and writes the justification. Nothing is pre-written.</td></tr>
+            <tr><td><b>Email drafts</b></td><td><span class="tag ok">Real</span></td>
+              <td>Generated per shipment, per audience. Never sent — there is no email library anywhere in the codebase.</td></tr>
+            <tr><td><b>The shipments</b></td><td><span class="tag warn">Synthetic</span></td>
+              <td>Seven authored bookings. Real ones need a customer's TMS, which sits on the far side of the trust wall.</td></tr>
+            <tr><td><b>The triggering event</b></td><td><span class="tag warn">Scripted</span></td>
+              <td>So a disruption can be shown on demand instead of waiting for one. It uses the same data shape as a live event and flows through the same pipeline.</td></tr>
+            <tr><td><b>Downstream desk workers</b></td><td><span class="tag warn">Scripted</span></td>
+              <td>Booking, invoice, customs, TMS. They react correctly to each decision, but they replay authored data and are labelled as such.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <p class="eyebrow lab">The line we hold</p>
+        <p>“The risk detection is real — it runs against live news right now. The shipments
+          are synthetic, so I can show you a disruption on demand instead of waiting for one.”</p>
+      </div>
+    </section>
+
+    <section id="split">
+      <h2 class="h32">Where the model decides, and where it must not</h2>
+      <p class="copy16">
+        The most common way an AI logistics tool loses trust is by letting a language model do
+        arithmetic. Lanewatch splits the work along a hard line.
+      </p>
+      <p class="copy16">
+        <b>Code computes the facts.</b> Which chokepoints a route passes through. Which of
+        them carry active risk. How many days an alternative adds. Whether that fits inside the
+        schedule slack. What the revised arrival date is. All ordinary, testable code. Dates
+        and sums never go near a model.
+      </p>
+      <p class="copy16">
+        <b>The model makes the call and explains it.</b> Given those facts, is the right answer
+        to move the box, hold it, or leave it alone — and why, in language an operations lead
+        would accept.
+      </p>
+      <p class="copy16">
+        This split has a useful side effect: a booking whose route carries no active risk never
+        reaches the model at all. That is a genuine answer, not a shortcut, and it keeps a
+        meaningful share of the board deterministic.
+      </p>
+
+      <h3>Guard rails around the model's answer</h3>
+      <ul>
+        <li>If the model proposes a route it was never offered, the reroute is <b>refused and downgraded to a hold</b>.</li>
+        <li>If it returns a decision value that isn't one of the three allowed, the result falls back to <b>no-action</b>.</li>
+        <li>If the provider fails entirely, transparent rules decide instead and every affected card is <b>badged as rule-decided</b>.</li>
+        <li>Each of those interventions is written into the shipment's reasoning record, so a refused answer is visible rather than silently swallowed.</li>
+      </ul>
+    </section>
+
+    <section id="models">
+      <h2 class="h32">The model layer</h2>
+      <p class="lede copy14">
+        Four jobs with genuinely different requirements. Sizing each one separately is where
+        nearly all the cost and latency savings live.
+      </p>
+
+      <div class="scroller">
+        <table>
+          <caption>
+            Prices are USD per million tokens from the Lyceum Inference Studio catalogue
+            (July 2026, subject to change). Cached input is billed lower again.
+          </caption>
+          <thead><tr><th>Task</th><th>Shape of the work</th><th>Model</th><th>In / Out</th><th>Why this one</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><b>Screening headlines</b></td>
+              <td>High volume, short inputs, strict structured output. Batched eight at a time.</td>
+              <td class="k">Qwen3.5-9B<span class="sub">or Gemma-3-27B</span></td>
+              <td class="n">$0.15 / $0.20</td>
+              <td>Nearly every item is irrelevant. This is a filter, not a thinker — and it is the only stage whose call volume scales with the number of sources.</td>
+            </tr>
+            <tr>
+              <td><b>The routing decision</b></td>
+              <td>Real judgement over supplied facts, structured JSON plus prose. Three calls a cycle.</td>
+              <td class="k">Qwen3-235B-A22B<span class="sub">step up to DeepSeek-V4-Pro if the reasoning needs it</span></td>
+              <td class="n">$0.20 / $0.60</td>
+              <td>The one call worth spending on. It produces the output a customer will read and challenge, and it runs rarely enough that price barely matters.</td>
+            </tr>
+            <tr>
+              <td><b>Drafting the emails</b></td>
+              <td>Prose quality, two distinct voices, six calls a cycle — the output-heaviest stage.</td>
+              <td class="k">Llama-3.3-70B<span class="sub">or Qwen3-235B-A22B</span></td>
+              <td class="n">$0.13 / $0.40</td>
+              <td>Tone is the deliverable. This stage generates the most output tokens, so the output price is the one that actually moves the bill.</td>
+            </tr>
+            <tr>
+              <td><b>Reading non-English sources</b></td>
+              <td>Short multilingual text, one pass, must not distort meaning.</td>
+              <td class="k">Qwen3.5-9B<span class="sub">Teuken-7B / EuroLLM if model provenance must be European too</span></td>
+              <td class="n">$0.15 / $0.20</td>
+              <td>Handled inside the screening call rather than as a separate translation step — one pass is cheaper and loses less than translate-then-classify.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>What that costs, measured rather than assumed</h3>
+      <p class="copy16">
+        A cycle under the Hamburg scenario makes fourteen calls — five to screen headlines,
+        three decisions, six drafts. Measuring the actual prompts and outputs gives roughly
+        <b>12,800 input tokens and 3,700 output tokens</b> per cycle, at the usual
+        four-characters-per-token approximation.
+      </p>
+
+      <div class="scroller">
+        <table>
+          <caption>One cycle, priced against the catalogue. The right-hand column is what a busy desk would spend in a year.</caption>
+          <thead><tr><th>Approach</th><th>Per cycle</th><th>10 cycles/day</th><th>50 cycles/day</th></tr></thead>
+          <tbody>
+            <tr><td><b>Per-task mix</b> <span class="sub">as recommended above</span></td>
+                <td class="n">$0.0034</td><td class="n">$12 / yr</td><td class="n">$62 / yr</td></tr>
+            <tr><td>Frontier model for every call <span class="sub">DeepSeek-V4-Pro throughout</span></td>
+                <td class="n">$0.0355</td><td class="n">$130 / yr</td><td class="n">$648 / yr</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="copy16">
+        Sizing each stage separately is <b>about ten times cheaper</b> than reaching for a
+        frontier model everywhere, for output a desk would not be able to tell apart on the
+        two stages that do not need it. That ratio, not the absolute figure, is the point:
+        inference is not the cost centre here, but carelessness with it is the easiest
+        avoidable one.
+      </p>
+
+      <div class="note caution">
+        <p class="eyebrow lab">Why there are no version numbers</p>
+        <p>
+          This project has already been bitten once. A model name was hard-coded, the provider
+          retired it, and the API answered with a <code>404</code> that is indistinguishable
+          from a broken key — so every decision silently fell through to the rule-based
+          fallback while the demo appeared to work. The system now asks the provider what it
+          can run and picks from that list at start-up.
+        </p>
+        <p>
+          Treat the table above the same way: pick the <i>class</i>, verify the current best
+          member of it at deployment time, and never pin a name you are not prepared to
+          monitor. <b>Any hard-coded model name is a scheduled outage.</b>
+        </p>
+      </div>
+    </section>
+
+    <section id="europe">
+      <h2 class="h32">Running it in Europe</h2>
+      <p class="lede copy14">
+        Shipment data is commercially sensitive: lanes, volumes, customers, rates. The
+        architecture is designed so none of it has to leave the EU.
+      </p>
+      <p class="copy16">
+        Every model in the table above is open-weight, which means it can be served from
+        infrastructure you choose rather than reached through a vendor's own cloud. That is
+        the sovereignty argument in full — not a policy promise about where data is
+        processed, but an arrangement in which the question does not arise.
+      </p>
+      <p class="copy16">
+        <a href="https://lyceum.technology/" style="color:var(--blue)">Lyceum Inference
+        Studio</a>, run from Berlin, serves a catalogue of open-weight models from
+        <code>eu-north1</code> on a pay-per-token basis, with no commitment. Three properties
+        of it matter here more than the price does.
+      </p>
+
+      <div class="scroller">
+        <table>
+          <caption>What makes it usable for this workload specifically.</caption>
+          <thead><tr><th>Property</th><th>Why it matters to Lanewatch</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><b>EU data residency</b><span class="sub">default models run in eu-north1</span></td>
+              <td>Booking data, customer names and rates are processed in Europe. This is the claim the whole page rests on, and it is a deployment fact rather than an intention.</td>
+            </tr>
+            <tr>
+              <td><b>Zero data retention</b><span class="sub">prompts and outputs not stored or trained on</span></td>
+              <td>A forwarder's lane economics are in those prompts. "Not retained, not trained on" is the difference between a demo and something a commercial director will sign off.</td>
+            </tr>
+            <tr>
+              <td><b>Structured output and function calling</b></td>
+              <td>Not a nicety. Every decision this system makes comes back as JSON that gets validated and guard-railed; a provider without reliable structured output cannot run this pipeline at all.</td>
+            </tr>
+            <tr>
+              <td><b>Drop-in OpenAI-compatible API</b><span class="sub">one base URL</span></td>
+              <td>The provider layer here is a single file. Migration is a base-URL change and a model name, not a rewrite — which is the only reason the switch is realistic at prototype stage.</td>
+            </tr>
+            <tr>
+              <td><b>Pay per token, no commitment</b></td>
+              <td>Lanewatch is bursty by design: idle until a disruption is detected or someone asks, then a short burst of calls. Reserved GPU capacity would be mostly paying for silence.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Why per-token beats renting a GPU here</h3>
+      <p class="copy16">
+        It is worth being explicit, because the alternative looks cheaper on a spreadsheet.
+        A dedicated GPU is priced by the hour whether or not anything is running. This system
+        makes roughly fourteen calls when a disruption lands and then nothing for hours. At
+        ten cycles a day the recommended model mix costs about <b>twelve dollars a year</b>;
+        a single rented GPU left running would cost more than that before lunch on the first
+        day. Reserved capacity starts to make sense when the desk is large enough to keep the
+        endpoint genuinely busy, or when a fixed latency SLA is worth paying for — and
+        dedicated endpoints exist for that case.
+      </p>
+
+      <div class="note caution">
+        <p class="eyebrow lab">Where these numbers are soft</p>
+        <p>
+          Token counts are measured from the real prompts this system builds, but converted
+          at the usual four-characters-per-token approximation rather than by the actual
+          tokeniser — expect a margin either way, and more on non-English text, which tokenises
+          less efficiently. Output length varies with how much the model chooses to write.
+          Catalogue prices are dated July 2026 and stated as subject to change. None of this
+          moves the conclusion, which is about the ratio between approaches rather than the
+          absolute figure.
+        </p>
+      </div>
+    </section>
+
+    <section id="label">
+      <h2 class="h32">Built in Europe, for Europe</h2>
+      <p class="copy16">
+        That phrase is doing a lot of marketing work across the sector at the moment, so it is
+        worth being exact about what it means here and what it does not.
+      </p>
+
+      <h3>Two different claims, often blurred together</h3>
+      <p class="copy16">
+        There are two separate axes here and the marketing usually collapses them.
+        <b>Residency</b> is where your data is processed. <b>Provenance</b> is where the model
+        weights came from. They are not the same thing, and only one of them is settled by
+        choosing an EU host.
+      </p>
+
+      <div class="scroller">
+        <table>
+          <thead><tr><th>Axis</th><th>What is true</th><th>Standing</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><b>Data residency</b></td>
+              <td>Processing in <code>eu-north1</code>, no retention, no training on your prompts. Booking data, customer names and rates stay in Europe.</td>
+              <td><span class="tag ok">Achievable now</span></td>
+            </tr>
+            <tr>
+              <td><b>Model provenance</b></td>
+              <td>The strongest open-weight models in the catalogue come from Chinese and American labs — Qwen, DeepSeek, Moonshot, Llama, Gemma. They are openly licensed, but they are not European in origin.</td>
+              <td><span class="tag warn">Partly</span></td>
+            </tr>
+            <tr>
+              <td><b>European provenance, if required</b></td>
+              <td>Teuken-7B came out of a German research consortium and covers all twenty-four official EU languages; EuroLLM is an EU-funded project with the same coverage; Mistral is French. All openly licensed — but smaller, and they would need confirming as available on whichever host you pick.</td>
+              <td><span class="tag warn">Trade-off</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="copy16">
+        For most forwarders the residency axis is the one that matters, because the risk they
+        are managing is commercial confidentiality rather than model lineage. If a procurement
+        process demands European weights as well, that is available — at some cost in
+        capability on the harder reasoning stage.
+      </p>
+
+      <h3>What is genuinely European here</h3>
+      <ul>
+        <li><b>The problem is.</b> The lanes, chokepoints and regulations modelled are the North Range ports, the Rhine, the Mediterranean corridors and EU customs entry — not a global abstraction with European labels applied.</li>
+        <li><b>The processing can be.</b> EU-hosted inference with zero retention, from a European provider.</li>
+        <li><b>The data need never leave.</b> Because the models are open-weight, they are served where you choose. That is a property of the architecture, not a clause in a contract.</li>
+        <li><b>It suits the regulatory direction.</b> Recorded reasoning for every decision, and a human approval gate before anything leaves the building, are exactly the properties an EU AI Act conversation asks about.</li>
+      </ul>
+
+      <div class="note hard">
+        <p class="eyebrow lab">What it does not mean yet</p>
+        <p>
+          <b>The prototype as it stands calls a US inference provider.</b> It was built against
+          a free tier for speed of iteration. Everything above describes an architecture that
+          supports EU-only operation, and a provider layer designed to make the switch cheap —
+          but the switch has not been made, and no one should read the current deployment as
+          sovereign. Saying otherwise would be exactly the kind of unbacked claim this project
+          refuses to make everywhere else.
+        </p>
+      </div>
+    </section>
+
+    <section id="breaks">
+      <h2 class="h32">Assumptions, and how this breaks</h2>
+      <p class="lede copy14">
+        Every item below is a real failure that occurred during development, not a hypothetical
+        risk register.
+      </p>
+
+      <div class="scroller">
+        <table>
+          <thead><tr><th>Assumption</th><th>What actually happened</th><th>Standing</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><b>The model we ship keeps working</b></td>
+              <td>The provider retired it. The API returned a <code>404</code> identical to a bad-key error, so every decision fell back to rules while the demo appeared healthy.</td>
+              <td><span class="tag ok">Fixed</span><span class="sub">Model resolved at start-up from what the key can actually run</span></td>
+            </tr>
+            <tr>
+              <td><b>The API answers when called</b></td>
+              <td>Free-tier rate limits. The last call in a cycle — the customer email — reliably hit a <code>429</code> and quietly fell back to a template.</td>
+              <td><span class="tag warn">Mitigated</span><span class="sub">Bounded retry honouring the provider's own back-off; the fallback now states its reason on screen</span></td>
+            </tr>
+            <tr>
+              <td><b>A dead news source fails fast</b></td>
+              <td>It does. A <i>slow</i> one does not: a source that answers but sends a byte at a time never trips a between-bytes timeout, and one such feed hung an entire run indefinitely.</td>
+              <td><span class="tag ok">Fixed</span><span class="sub">Total deadline and size cap per source, with a watchdog that closes the socket</span></td>
+            </tr>
+            <tr>
+              <td><b>Reading sources in turn is fine</b></td>
+              <td>Not inside a serverless time limit. Sequentially, only the first source would have been read — collapsing the breadth the whole approach depends on.</td>
+              <td><span class="tag ok">Fixed</span><span class="sub">Sources read concurrently under a hard overall budget</span></td>
+            </tr>
+            <tr>
+              <td><b>Scripted and live events share a shape</b></td>
+              <td>Broken three separate times, each by adding a field to one and not the other.</td>
+              <td><span class="tag warn">Watched</span><span class="sub">Tested both ways; still the most common way a change breaks this system</span></td>
+            </tr>
+            <tr>
+              <td><b>A defensible day is a defensible week</b></td>
+              <td>It is not. Across a simulated week a booking bounced between two ports on consecutive days. Every single day's arithmetic was correct; the sequence was nonsense.</td>
+              <td><span class="tag ok">Fixed</span><span class="sub">A booking is never re-offered the route it just left</span></td>
+            </tr>
+            <tr>
+              <td><b>Colours chosen by eye are readable</b></td>
+              <td>Two chart categories sat close enough to be indistinguishable under the most common form of colour blindness. It looked fine on screen.</td>
+              <td><span class="tag ok">Fixed</span><span class="sub">Palette validated against contrast and colour-vision thresholds rather than judged visually</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>The pattern worth taking away</h3>
+      <p class="copy16">
+        Every one of those was found by looking at real output, not by reasoning about the
+        code. The rate limit in particular survived three rounds of confident wrong diagnosis
+        until the fallback was made to state its own reason on screen. A system that degrades
+        silently is worse than one that fails loudly, because you will demonstrate it in that
+        state without knowing.
+      </p>
+    </section>
+
+    <section id="notgoals">
+      <h2 class="h32">What this is not</h2>
+      <p class="copy16">
+        Scope discipline is what kept this buildable. None of the following are in it, and none
+        are accidental omissions.
+      </p>
+      <ul>
+        <li><b>Not route optimisation.</b> Candidate routes are pre-defined. The system chooses among them and justifies the choice; it does not compute new ones.</li>
+        <li><b>Not a sending system.</b> Emails, booking amendments, customs entries and TMS write-backs are all drafted and held. There is no transport layer in the codebase, and a test fails the build if one is ever imported.</li>
+        <li><b>Not integrated with any real TMS.</b> The connector models the field mapping and describes the change a decision implies. It contacts nothing.</li>
+        <li><b>Not always-on.</b> It runs on demand. For a demonstration, a button beats a background job.</li>
+        <li><b>Not measured.</b> There are no accuracy figures, hit rates or time-saved claims anywhere in this document, because none have been measured. Inventing them is the fastest way to lose a room that knows the domain.</li>
+      </ul>
+    </section>
+
+    <section id="next">
+      <h2 class="h32">What production would require</h2>
+      <p class="copy16">
+        The distance between this prototype and a product is not mostly model work. It is
+        integration, trust and liability.
+      </p>
+      <ul>
+        <li><b>A real booking feed.</b> One TMS integration, properly done, replaces the synthetic pool and is the single highest-value next step.</li>
+        <li><b>Inference moved in-region.</b> Deploy the model classes above on EU capacity and benchmark them, replacing the illustrative costs here with measured ones.</li>
+        <li><b>Evaluation the domain would accept.</b> A held-out set of historical disruptions, scored on whether the decision matches what the desk actually did — the only credible answer to “how good is it”.</li>
+        <li><b>Sending, deliberately and last.</b> The approval gate exists because trust is earned in that order. Drafting well for months is the argument for eventually being allowed to send.</li>
+      </ul>
+    </section>
+
+  </main>
+</div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <p class="eyebrow">On sourcing</p>
+        <p class="copy14" style="margin-top:10px">
+          Model prices and region information are taken from Lyceum's own inference deck
+          (July–August 2026), which states that they are subject to change; re-verify before
+          using them in a commercial document. Model capabilities are described by family and size class rather
+          than by version, deliberately. Every figure describing Lanewatch itself — source
+          counts, call counts, decision outcomes — is counted from the running system.
+        </p>
+      </div>
+      <div>
+        <p class="eyebrow">References</p>
+        <ul>
+          <li><a href="https://lyceum.technology/">Lyceum Inference Studio</a> — EU-hosted serverless inference, Berlin; catalogue and prices from their inference deck, July–August 2026</li>
+          <li><a href="https://huggingface.co/openGPT-X/Teuken-7B-instruct-commercial-v0.4">Teuken-7B</a> — OpenGPT-X, 24 EU languages</li>
+          <li><a href="https://arxiv.org/pdf/2506.04079">EuroLLM-9B</a> — technical report</li>
+          <li><a href="https://interoperable-europe.ec.europa.eu/collection/open-source-observatory-osor/news/eurollm-pioneering-european-open-source-ai">European Commission OSOR</a> on EuroLLM</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* Highlight the section currently in view. Purely an aid to reading a long
+   document - the page is complete and navigable without it. */
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll(".toc a"));
+  var ids = links.map(function(a){ return a.getAttribute("href").slice(1); });
+  var seen = {};
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ seen[e.target.id] = e.isIntersecting; });
+    for (var i = 0; i < ids.length; i++) {
+      if (seen[ids[i]]) {
+        links.forEach(function(a){ a.classList.remove("on"); });
+        links[i].classList.add("on");
+        break;
+      }
+    }
+  }, {rootMargin:"-84px 0px -70% 0px"});
+  ids.forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) io.observe(el);
+  });
+})();
+</script>
+</body>
+</html>

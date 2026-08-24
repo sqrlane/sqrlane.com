@@ -55,6 +55,12 @@ def _short_error(exc, host_hint: str = "") -> str:
         return f"DNS lookup failed ({host_hint})"
     if "timed out" in text.lower():
         return f"timed out after {config.HTTP_TIMEOUT_SECONDS}s ({host_hint})"
+    # A refusal carries its status code and nothing else worth reading: the raw
+    # text is the whole request URL again, which is a wall on a dashboard and
+    # unreadable on a public page.
+    status = getattr(getattr(exc, "response", None), "status_code", None)
+    if status:
+        return f"HTTP {status} from {host_hint or 'the source'}"
     return f"{name}: {text[:110]}"
 
 
@@ -338,6 +344,102 @@ def _strip_html(text: str) -> str:
 # ---------------------------------------------------------------------------
 # These come back as numbers, not prose. A water level does not need an LLM to
 # be understood, so these are classified by threshold and become events directly.
+#
+# Two callers want these gauges for different reasons: the risk monitor wants
+# events, the landing page wants the readings themselves. Both go through
+# _read_one_gauge and _gauge_state, so neither the request nor the threshold
+# bands can drift between them - which is how the injected and live event
+# schemas came apart three times.
+
+# The bands, in the order they are tested: a reading at or below the threshold
+# named on the left is in that band. Above them all, the gauge is unremarkable.
+GAUGE_BANDS = [
+    # threshold key   severity  state         delay days  what it means
+    ("critical_cm",   "high",   "critical",   [3, 6], "barge traffic largely halted"),
+    ("high_cm",       "medium", "restricted", [2, 4], "barges loading well below capacity"),
+    ("warn_cm",       "low",    "watch",      [1, 2], "loading restrictions beginning to bite"),
+]
+
+
+def _gauge_state(gauge: dict, level_cm: float) -> tuple:
+    """(severity, state, expected delay days, note) for one reading.
+
+    severity is None when the river is simply running, which is the common case
+    and the reason most days produce no Rhine event at all.
+    """
+    for key, severity, state, delay, note in GAUGE_BANDS:
+        if level_cm <= gauge[key]:
+            return severity, state, delay, note
+    return None, "normal", None, "running normally"
+
+
+def _read_one_gauge(gauge: dict, timeout: float) -> dict:
+    """One gauge, read and classified. Never raises - the error is the result."""
+    label = gauge["name"]
+    try:
+        response = _get_capped(
+            f"{config.PEGELONLINE_ENDPOINT}/{gauge['station']}/W/currentmeasurement.json",
+            timeout=timeout,
+        )
+        measurement = response.json()
+        level_cm = float(measurement.get("value"))
+    except (requests.RequestException, ValueError, TypeError) as exc:
+        return {"station": gauge["station"], "name": label, "ok": False,
+                "error": _short_error(exc, "pegelonline.wsv.de")}
+
+    severity, state, _delay, note = _gauge_state(gauge, level_cm)
+    return {
+        "station": gauge["station"],
+        "name": label,
+        "ok": True,
+        "level_cm": round(level_cm),
+        "measured_at": measurement.get("timestamp") or _now_iso(),
+        "severity": severity,          # None when the river is running normally
+        "state": state,                # normal | watch | restricted | critical
+        "note": note,
+        "warn_cm": gauge["warn_cm"],
+        "high_cm": gauge["high_cm"],   # the loading threshold - the line that matters
+        "critical_cm": gauge["critical_cm"],
+    }
+
+
+def read_rhine_gauges() -> dict:
+    """Every Rhine gauge at once, for callers that want the numbers not events.
+
+    Read concurrently and on a tight leash: this one is called from a page load
+    rather than from the button, and three sequential timeouts against a source
+    having a slow day is a page that hangs in front of whoever opened it.
+    """
+    timeout = min(config.GAUGE_TIMEOUT_SECONDS, config.GAUGE_BUDGET_SECONDS)
+    results = {}
+    # Not a `with` block, for the reason given in fetch_rss: its exit joins every
+    # worker, so one wedged gauge would block here instead.
+    pool = ThreadPoolExecutor(max_workers=len(config.RHINE_GAUGES))
+    try:
+        futures = {pool.submit(_read_one_gauge, g, timeout): g
+                   for g in config.RHINE_GAUGES}
+        try:
+            for future in as_completed(futures, timeout=config.GAUGE_BUDGET_SECONDS):
+                gauge = futures[future]
+                try:
+                    results[gauge["station"]] = future.result()
+                except Exception as exc:                     # noqa: BLE001
+                    results[gauge["station"]] = {
+                        "station": gauge["station"], "name": gauge["name"], "ok": False,
+                        "error": _short_error(exc, "pegelonline.wsv.de")}
+        except FuturesTimeout:
+            pass          # whatever did not answer is marked below
+    finally:
+        pool.shutdown(wait=False, cancel_futures=True)
+
+    # Reported in the configured order so the strip is stable read to read.
+    gauges = [results.get(g["station"], {
+        "station": g["station"], "name": g["name"], "ok": False,
+        "error": "no answer inside the time budget"}) for g in config.RHINE_GAUGES]
+    return {"source": "PEGELONLINE",
+            "read_at": _now_iso(),
+            "gauges": gauges,
+            "ok": any(g["ok"] for g in gauges)}
 
 
 def fetch_rhine_levels(report: SourceReport, budget: "Budget") -> list[dict]:
@@ -347,35 +449,25 @@ def fetch_rhine_levels(report: SourceReport, budget: "Budget") -> list[dict]:
         if budget.spent():
             report.skipped(label, "live-pull time budget spent")
             continue
-        try:
-            response = _get_capped(
-                f"{config.PEGELONLINE_ENDPOINT}/{gauge['station']}/W/currentmeasurement.json",
-                timeout=budget.timeout(),
-            )
-            measurement = response.json()
-            level_cm = float(measurement.get("value"))
-        except (requests.RequestException, ValueError, TypeError) as exc:
-            report.failed(label, _short_error(exc, "pegelonline.wsv.de"))
+
+        reading = _read_one_gauge(gauge, budget.timeout())
+        if not reading["ok"]:
+            report.failed(label, reading["error"])
             continue
 
-        event = _rhine_event(gauge, level_cm, measurement.get("timestamp") or _now_iso())
+        event = _rhine_event(gauge, reading["level_cm"], reading["measured_at"])
         if event:
             events.append(event)
-            report.ok(label, 1, f"{level_cm:.0f} cm - {event['severity']}")
+            report.ok(label, 1, f"{reading['level_cm']} cm - {event['severity']}")
         else:
-            report.ok(label, 0, f"{level_cm:.0f} cm - normal, no event")
+            report.ok(label, 0, f"{reading['level_cm']} cm - normal, no event")
     return events
 
 
 def _rhine_event(gauge, level_cm, timestamp):
     """Turn a gauge reading into an event, or None if the level is unremarkable."""
-    if level_cm <= gauge["critical_cm"]:
-        severity, delay, note = "high", [3, 6], "barge traffic largely halted"
-    elif level_cm <= gauge["high_cm"]:
-        severity, delay, note = "medium", [2, 4], "barges loading well below capacity"
-    elif level_cm <= gauge["warn_cm"]:
-        severity, delay, note = "low", [1, 2], "loading restrictions beginning to bite"
-    else:
+    severity, _state, delay, note = _gauge_state(gauge, level_cm)
+    if severity is None:
         return None
 
     return {
