@@ -1,0 +1,21 @@
+# Secrets - NEVER commit
+.env
+
+# Runtime state
+risk_state.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Local caches
+.cache/
+data/cache/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

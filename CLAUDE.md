@@ -1,0 +1,332 @@
+# CLAUDE.md
+
+Guidance for Claude Code working in this repository.
+
+---
+
+## What this project is
+
+**Trade-Lane Risk & Reroute Agent** — a demo-grade AI-agent prototype for freight forwarding.
+
+Small agents watch global news (in multiple languages) for events that disrupt shipping. When a
+disruption hits, the system checks which shipments are affected, decides whether to **reroute** or
+**hold** each one — and *explains why* — then drafts the carrier and customer emails a human would
+need to send. Risk → decision → communication as one closed loop, with the reasoning recorded. A
+light "5U AI-style AI Worker" wrapper sits on top purely as demo framing.
+
+**The problem it models:** forwarders watch for disruptions *and* react to them by hand. Signals
+that surface first in non-English sources (a German port strike, an Arabic-language Red Sea
+incident) are seen late. Incumbent risk tools (Everstream, Interos, Resilinc) stop at the alert —
+they don't decide or act, and they're priced out of the mid-market.
+
+**Modelled end user:** Head of Operations at a mid-size DACH/Benelux forwarder.
+**Actual audience:** whoever is being shown the demo — a forwarder ops lead, investor, or interviewer.
+
+### The two differentiators (the whole story — nothing else)
+
+1. **Earlier signal from non-English sources.** English-only tools miss a German `Warnstreik` until
+   it hits the wires. Reading regional/multilingual sources *first* is a real informational edge.
+2. **A closed risk → reroute → comms loop with recorded reasoning.** Risk incumbents stop at the
+   alert; execution players don't touch risk. Welding them — and recording *why* each decision was
+   made — is the whitespace.
+
+### The build owner
+
+The repo owner has **no coding experience** and is not writing code by hand — they paste the
+phase prompts from `BUILD-GUIDE.md` into Claude Code. So: explain what you built and **how to run
+it**, in plain language, at the end of every phase. Prefer obvious code over clever code.
+
+---
+
+## Current state
+
+**Docs only — no code has been written yet.** The repo contains the seven planning documents and
+`trade-risk-agent-docs.zip` (a duplicate copy of the same seven files; not a source of truth).
+
+Phase 0 (orientation) is effectively what this file captures. **Phase 1 is next.**
+
+> **Path note:** `DESIGN.md` shows the tree rooted at `trade-risk-agent/`. This repo is checked out
+> as `Logistics-Freight-Forwarding`. Build at the **repo root** — `src/`, `data/`, `static/` go
+> directly here. Don't create a nested `trade-risk-agent/` folder.
+
+---
+
+## The demo narrative — this IS the spec
+
+Everything serves this. **If a feature doesn't help this story land, it doesn't get built.**
+Target: runs start to finish in **under ~2 minutes**, on command, without breaking.
+
+1. **"Here are 5 shipments in transit."** Dashboard shows 5 shipment cards, all green.
+2. **"Watch — a strike hits the Port of Hamburg."** Click a trigger button.
+3. **"The system caught it from a German-language source before the English news wires."** The risk
+   feed shows the event, flagged as detected from a German source first.
+4. **"It triaged all 5 shipments in seconds."** Cards change state — two reroute, one hold, two stay
+   green (the system doesn't cry wolf).
+5. **"Here's the reasoning for each decision."** Click a rerouted card → plain-English justification
+   (slack vs. added transit vs. strike delay).
+6. **"And here are the emails it drafted."** Two drafts appear — carrier and customer. *Nothing is sent.*
+7. **"All of that, from one news event, on command."**
+
+### The honest line (keep it visible in the UI)
+
+> "The risk detection is real — it runs against live news right now. The shipments are synthetic, so
+> I can show you a disruption on demand instead of waiting for one."
+
+This is why the Risk Monitor stays **genuinely live** even though everything downstream runs on
+authored data. The injected strike uses the **same event format** as live events so it flows through
+the real pipeline.
+
+---
+
+## Architecture — four components
+
+```
+  [ Risk Monitor ] --writes--> risk_state.json
+        |  (live news, multilingual, GDELT/RSS/gauges)
+        v
+  [ Orchestrator ] --reads shipments + risk--> decides which shipments are affected
+        |
+        v
+  [ Route Advisor ] --per affected shipment--> reroute | hold | no-action + reasoning
+        |
+        v
+  [ Comms Agent ] --per actioned shipment--> draft carrier email + customer email
+        |
+        v
+  [ Dashboard ] <-- shipment states, reasoning, drafts; has the trigger button
+```
+
+1. **Risk Monitor** (the real, live part) — pulls CORE free sources, LLM-classifies each item for
+   logistics relevance → chokepoint / type / severity, writes `risk_state.json`. Also loads the
+   injected Hamburg event in the same format.
+2. **Route Advisor** — maps each candidate route's chokepoints against active risk; LLM weighs
+   **schedule slack vs. added transit vs. expected disruption delay** → `reroute` / `hold` /
+   `no-action` + plain-English reasoning + a recorded reasoning trail.
+3. **Comms Agent** — LLM drafts a carrier email (booking change / hold instruction) and a customer
+   email (status + revised ETA). Returns text. **Sends nothing** — no email library, no SMTP.
+4. **Orchestrator + Dashboard** — on trigger: refresh risk → Route Advisor over all shipments →
+   Comms Agent for actioned ones → one result object → rendered as cards, risk feed, expandable
+   reasoning, drafts.
+
+---
+
+## Stack
+
+- **Backend:** Python + **FastAPI**. One endpoint the button calls: `POST /run`.
+- **Frontend:** a **single HTML page**, vanilla CSS/JS, no framework. Calls `/run`, renders result.
+  The look is part of the deliverable — clear hierarchy, restrained palette, readable in a room.
+- **AI calls:** one wrapper module `src/llm.py` so the provider (Groq / Gemini / Ollama) swaps in
+  **one file**. Never call a provider directly from anywhere else.
+- **Data:** JSON files. **No database.**
+- **Fallback:** if the web UI gets fiddly, the whole thing can be a **Streamlit** app. Default to
+  FastAPI + HTML for the visual drama of cards flipping state.
+
+### Target file structure (build at repo root)
+
+```
+├── *.md                      # the seven planning docs + this file
+├── .env                      # runtime AI key — NEVER committed
+├── .gitignore                # must list .env, __pycache__/, .venv/, risk_state.json
+├── requirements.txt
+├── data/
+│   ├── shipments.json        # from DATASET.md
+│   ├── routes.json           # candidate routes + chokepoints
+│   ├── chokepoints.json
+│   └── injected_events.json  # the scripted Hamburg strike
+├── src/
+│   ├── llm.py                # provider wrapper — the ONLY place AI is called
+│   ├── config.py             # keys, model names, source list
+│   ├── risk_monitor.py       # component 1
+│   ├── route_advisor.py      # component 2
+│   ├── comms_agent.py        # component 3
+│   ├── orchestrator.py       # component 4 (the loop)
+│   └── app.py                # FastAPI: serves the page + /run
+├── static/
+│   └── index.html            # the dashboard (HTML+CSS+JS in one file)
+└── risk_state.json           # written at runtime (gitignored)
+```
+
+---
+
+## The dataset (the screenplay)
+
+Authored for **drama, not realism** — positioned so *one* injected disruption yields three
+different, defensible decisions. Full tables in `DATASET.md`; turn them into the `data/` JSON files.
+
+- **Chokepoints:** HAM, RTM, ANR, SUEZ, REDSEA, COGH, RHINE.
+- **Routes:** each has discharge port, transit_days, `cost_index` (relative, 100 = baseline), and the
+  chokepoints it passes. Key pair: `R-HAM-STD` (32d/100) vs. `R-RTM-ALT` (34d/108) — the +2-day
+  Rotterdam alternate.
+
+**The 5 shipments and their expected outcomes on the injected strike — this is the payoff:**
+
+| id | cargo | route | slack | expected decision |
+|---|---|---|---|---|
+| SHP-001 | Automotive parts, Shanghai → Munich | R-HAM-STD → R-RTM-ALT | 4d | **REROUTE** — strike blocks HAM ~3–5d; alt adds 2d; slack absorbs it |
+| SHP-002 | Reefer pharma, Ningbo → Hamburg | R-HAM-STD (no good alt) | 1d | **HOLD + NOTIFY** — customer *is* in Hamburg; rerouting adds road transit + a cold-chain transfer |
+| SHP-003 | Furniture, Shanghai → Rotterdam | R-RTM-STD | 3d | **NO ACTION** — doesn't touch Hamburg |
+| SHP-004 | Electronics, Shenzhen → Antwerp | R-ANR-STD | 2d | **NO ACTION** — unaffected |
+| SHP-005 | Machinery, Busan → Hamburg | R-HAM-STD → R-RTM-ALT | 3d | **REROUTE** — same logic; 3d slack ≥ 2d penalty |
+
+> **SHP-002 is the centrepiece.** The "no good option, here's the least-bad one" call is what shows
+> judgment. Make its reasoning explicit.
+
+**The injected event** (`EVT-HAM-STRIKE`): chokepoint HAM, type `strike`, severity `high`,
+48–72h expected duration, `source_language: de`, first detected from German-language RSS,
+English-wire lag ~1 day. DE title: *"Warnstreik im Hamburger Hafen — ver.di ruft zu ganztägigem
+Ausstand auf"*. The demo points at the **source language** — that *is* the differentiation, made visible.
+
+---
+
+## Data sources — wire CORE only
+
+Full rationale in `DATA-SOURCES.md`. **Every extra source is one more thing that can break live in
+front of an audience.** Three keyless sources carry the whole story:
+
+| Source | Role | Key? |
+|---|---|---|
+| **GDELT DOC 2.0** | Global news backbone, ~15 min refresh, filter by keyword/language/country | No |
+| **RSS via `feedparser`** | Reuters, DW, Al Jazeera (EN + AR), gCaptain, **plus German: tagesschau / NDR / ver.di** — this is where the earliness edge lives | No |
+| **PEGELONLINE** | Rhine water levels → RHINE chokepoint. DACH-specific domain-depth signal | No |
+
+**Runtime LLM (pick one, key in `.env`):** Groq (recommended default) / Google Gemini / Ollama local.
+Note: Claude Code Max pays for *building*, not for the agents' *runtime* calls.
+
+**Skip:** everything marked OPTIONAL (Open-Meteo, NewsAPI, World News API, AISstream, Nominatim)
+until the core demo works end to end. **Never** wire MarineTraffic / VesselFinder / Datalastic /
+Kpler — all paid.
+
+Keep **each source in its own small function** so one can be added or removed without touching the others.
+
+---
+
+## Build phases
+
+Each phase is independently demoable. Do one, hit its checkpoint, commit, then move on — don't batch.
+Full copy-paste prompts live in `BUILD-GUIDE.md`.
+
+| Phase | What | Checkpoint | Status |
+|---|---|---|---|
+| **0** | Orient: read the docs, confirm understanding, write no code | Summary matches the narrative + four components | ✅ (this file) |
+| **1** | `data/` JSON + `llm.py`, `config.py`, `risk_monitor.py` | Run the Risk Monitor alone from the terminal; see real current news classified; confirm ≥1 non-English source is actually read; injected event loadable | ✅ (live pull unverified — see below) |
+| **2** | `route_advisor.py` | Run against the 5 shipments with the strike active; the three expected outcomes appear with reasoning that reads *well* | ✅ (LLM wording unverified — see below) |
+| **3** | `comms_agent.py` | Drafts for SHP-001 (reroute) and SHP-002 (hold) read like something a person would actually send | ✅ (LLM wording unverified — see below) |
+| **4** | `orchestrator.py`, `app.py`, `static/index.html` | Open the URL, click the button, the whole narrative plays on screen. **This is the demo.** | ⬜ **next** |
+| **5** | Polish: AI-Worker framing · graceful degradation if a source is down · live-vs-synthetic legend · README | Runs cold, survives flaky wifi, the honest framing is visible | ⬜ |
+
+**No scheduler, nothing always-running.** For a demo, a button beats a background job — the magic
+has to happen on screen, on command.
+
+**After every phase:** commit with a clear message describing what was built, and push.
+
+### Two things still need a human to confirm
+
+Phases 1 and 2 were built in a sandbox with no outbound network and no AI key, so
+two claims are **written and tested but not yet witnessed against the real thing**:
+
+1. **The live news pull.** Every source failed closed and was recorded rather than
+   crashing (that path is well tested), but no real GDELT/RSS/PEGELONLINE response
+   has been parsed. Run `python -m src.risk_monitor` on a real connection and
+   confirm at least one non-English source returns items.
+2. **How the LLM's prose actually reads**, in both the Route Advisor and the Comms
+   Agent. Routing and fallbacks are verified against stubs, and the deterministic
+   templates already produce the correct 2/1/2 split and readable emails. But the
+   wording — the demo's centrepiece — depends on the live model. Run
+   `python -m src.comms_agent --inject` with a key, read SHP-002's reasoning and its
+   two drafts aloud. If they don't sound like a person, tune `ADVISOR_SYSTEM` in
+   `route_advisor.py` and `CARRIER_SYSTEM` / `CUSTOMER_SYSTEM` in `comms_agent.py`.
+
+### How the decision layer splits the work
+
+Code computes the **facts** (which chokepoints a route touches, active risk on them,
+added transit days, whether it fits the slack, the revised ETA). The LLM makes the
+**call** and explains it. Arithmetic and date maths never go to the model.
+
+Guard rails already in place: a model that names a route it wasn't offered has the
+reroute refused and downgraded to hold; an invalid decision value falls back to
+`no-action`; a provider failure falls back to transparent rules. Every one of those
+is recorded in the shipment's `reasoning_trail`.
+
+Shipments whose route carries **no active risk short-circuit without an LLM call** —
+that is a real answer, not a shortcut, and it keeps 2 of the 5 outcomes deterministic.
+
+### The Comms Agent sends nothing, structurally
+
+No SMTP, no email library, no transport of any kind is imported anywhere in `src/`,
+and a test asserts it stays that way. Every draft carries `status: "DRAFT - not sent"`
+in the data, not just in the UI. Say this out loud in the demo — it is the responsible
+design, not a missing feature.
+
+Carrier and customer get **different voices and separate calls**: a carrier email is a
+transaction between operators, a customer email is a relationship. Internal vocabulary
+(route codes like `R-RTM-ALT`, chokepoint ids like `HAM`) is fine in a carrier email and
+is flagged as a warning if it ever appears in a customer one.
+
+---
+
+## Non-goals — protect the scope
+
+Scope creep is the failure mode here. None of these are in this build:
+
+- **No real route optimisation.** Routes are pre-authored candidates; the agent *chooses among them
+  and justifies the choice*. It does not compute routes.
+- **No sending of anything.** Emails are drafted and displayed only.
+- **No real shipment/TMS integration.** Shipments are synthetic.
+- **No scheduler / always-on.** Button-triggered.
+- **No database.** In-memory + JSON files.
+- **No paid data.** Free sources only.
+- **No accounts, billing, multi-tenant, or the real 5U AI product.** The AI-Worker layer is cosmetic.
+
+---
+
+## Design principles
+
+- **One file per job, one job per file.** If a file does two things, split it.
+- **`llm.py` is the only door to the AI provider.** Everything else calls `llm.py`.
+- **Each component runnable alone.** The Risk Monitor must produce visible output before the Route
+  Advisor exists.
+- **Human-in-the-loop is a feature, not a limitation.** The Comms Agent drafts; it never sends. Say
+  this in the demo — it's the responsible design.
+- **No agent framework.** The orchestrator is plain functions calling functions plus shared JSON
+  state. Reach for CrewAI/LangGraph only if that genuinely becomes painful — they hide the exact
+  thing being learned here.
+- **Fail soft in front of an audience.** If a live source is slow or down, run the injected scenario
+  anyway and show a small note. Never crash the demo.
+- **Never commit `.env`.** If it's about to be staged, stop.
+
+---
+
+## Definition of done
+
+Five criteria, from `PRD.md`. If these hold, the prototype is finished and nothing else is in scope:
+
+1. The demo narrative runs start to finish in under ~2 minutes, on command, without breaking.
+2. The Risk Monitor genuinely pulls live news — the credibility anchor.
+3. The injected strike produces three distinct, defensible decisions across the 5 shipments, each
+   with plain-English reasoning.
+4. Drafted emails read like something a human would actually send.
+5. It looks good enough to present — cards, states, and drafts legible on a screen in a room.
+
+---
+
+## Document map
+
+| File | What it's for |
+|---|---|
+| `START-HERE.md` | Orientation, the pitch, the demo narrative, build order |
+| `SETUP.md` | One-time human setup: Node/Claude Code/Python, GitHub CLI, free AI key, `.env` |
+| `PRD.md` | *What* and *why* — problem, success criteria, non-goals, differentiation |
+| `DESIGN.md` | *How* — architecture, stack, file structure, design principles |
+| `DATASET.md` | The screenplay — chokepoints, routes, 5 shipments, the injected strike |
+| `DATA-SOURCES.md` | Curated free APIs: which to wire (CORE) and which to skip |
+| `BUILD-GUIDE.md` | The copy-paste phase prompts — the spine of the build |
+| `trade-risk-agent-docs.zip` | Duplicate archive of the seven docs above; not a source of truth |
+
+---
+
+## Honest framing (carry it, don't bury it)
+
+This is scripted where it needs to be (the injected disruption) and real where it earns credibility
+(the news pull). It's a strong learning artifact and a compelling demo — **not a live product**. The
+gap between this and a business is the integration/trust/liability wall, which is real work for
+later. Build this first; it teaches every piece of how an agent actually works.
