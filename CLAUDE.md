@@ -208,9 +208,9 @@ Full copy-paste prompts live in `BUILD-GUIDE.md`.
 | Phase | What | Checkpoint | Status |
 |---|---|---|---|
 | **0** | Orient: read the docs, confirm understanding, write no code | Summary matches the narrative + four components | ✅ (this file) |
-| **1** | `data/` JSON + `llm.py`, `config.py`, `risk_monitor.py` | Run the Risk Monitor alone from the terminal; see real current news classified; confirm ≥1 non-English source is actually read; injected event loadable | ⬜ **next** |
-| **2** | `route_advisor.py` | Run against the 5 shipments with the strike active; the three expected outcomes appear with reasoning that reads *well* | ⬜ |
-| **3** | `comms_agent.py` | Drafts for SHP-001 (reroute) and SHP-002 (hold) read like something a person would actually send | ⬜ |
+| **1** | `data/` JSON + `llm.py`, `config.py`, `risk_monitor.py` | Run the Risk Monitor alone from the terminal; see real current news classified; confirm ≥1 non-English source is actually read; injected event loadable | ✅ (live pull unverified — see below) |
+| **2** | `route_advisor.py` | Run against the 5 shipments with the strike active; the three expected outcomes appear with reasoning that reads *well* | ✅ (LLM wording unverified — see below) |
+| **3** | `comms_agent.py` | Drafts for SHP-001 (reroute) and SHP-002 (hold) read like something a person would actually send | ⬜ **next** |
 | **4** | `orchestrator.py`, `app.py`, `static/index.html` | Open the URL, click the button, the whole narrative plays on screen. **This is the demo.** | ⬜ |
 | **5** | Polish: AI-Worker framing · graceful degradation if a source is down · live-vs-synthetic legend · README | Runs cold, survives flaky wifi, the honest framing is visible | ⬜ |
 
@@ -218,6 +218,36 @@ Full copy-paste prompts live in `BUILD-GUIDE.md`.
 has to happen on screen, on command.
 
 **After every phase:** commit with a clear message describing what was built, and push.
+
+### Two things still need a human to confirm
+
+Phases 1 and 2 were built in a sandbox with no outbound network and no AI key, so
+two claims are **written and tested but not yet witnessed against the real thing**:
+
+1. **The live news pull.** Every source failed closed and was recorded rather than
+   crashing (that path is well tested), but no real GDELT/RSS/PEGELONLINE response
+   has been parsed. Run `python -m src.risk_monitor` on a real connection and
+   confirm at least one non-English source returns items.
+2. **How the LLM's reasoning actually reads.** Decision *routing* is verified against
+   stubs, and the deterministic fallback already produces the correct 2/1/2 split.
+   But the plain-English wording — the demo's centrepiece — depends on the live
+   model. Run `python -m src.route_advisor --inject` with a key and read SHP-002's
+   reasoning aloud. If it doesn't sound like a person, tune `ADVISOR_SYSTEM` and the
+   prompt in `route_advisor.py`.
+
+### How the decision layer splits the work
+
+Code computes the **facts** (which chokepoints a route touches, active risk on them,
+added transit days, whether it fits the slack, the revised ETA). The LLM makes the
+**call** and explains it. Arithmetic and date maths never go to the model.
+
+Guard rails already in place: a model that names a route it wasn't offered has the
+reroute refused and downgraded to hold; an invalid decision value falls back to
+`no-action`; a provider failure falls back to transparent rules. Every one of those
+is recorded in the shipment's `reasoning_trail`.
+
+Shipments whose route carries **no active risk short-circuit without an LLM call** —
+that is a real answer, not a shortcut, and it keeps 2 of the 5 outcomes deterministic.
 
 ---
 
