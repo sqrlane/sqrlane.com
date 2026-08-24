@@ -446,15 +446,27 @@ h1,h2,h3,h4,p{margin:0}
 /* The cards are the boxes here, so the panel around them is not one too -
    nesting a card inside a card is the thing the single card rule exists to
    stop. */
-.gauges .g-body{display:grid; grid-template-columns:minmax(0,1fr) 228px; gap:16px;
-                align-items:stretch}
-.gauges .g-cards{display:flex; flex-direction:column; gap:12px}
+/* Three windows in a row: what the gauges read, how they got there, and
+   where they are. Areas rather than bare columns, so the two fallbacks below
+   can reorder without re-stating the whole grid. */
+.gauges .g-body{display:grid; gap:16px; align-items:stretch;
+                grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) 212px;
+                grid-template-areas:"read fall map"}
+.gauges .w-read{grid-area:read} .gauges .w-fall{grid-area:fall; display:flex; flex-direction:column}
+.gauges .w-map{grid-area:map}
 
-.gauges .g{padding:14px 16px; border:1px solid var(--border); border-radius:var(--r-md);
-           background:var(--card); box-shadow:var(--shadow-card);
-           transition:transform .5s var(--ease), opacity .5s var(--ease),
-                      border-color .2s var(--ease)}
-.gauges .g:hover{border-color:var(--border-strong)}
+/* The windows are the boxes; what is inside them is not boxed again. */
+.gauges .win{padding:14px 16px 15px; border:1px solid var(--border);
+             border-radius:var(--r-md); background:var(--card);
+             box-shadow:var(--shadow-card); margin:0}
+.gauges .win-t{display:flex; align-items:center; gap:8px; margin-bottom:14px;
+               font-size:11px; line-height:16px; font-weight:500; letter-spacing:.07em;
+               text-transform:uppercase; color:var(--faint)}
+.gauges .g-cards{display:flex; flex-direction:column; gap:10px}
+
+.gauges .g{padding:0 0 10px; border-bottom:1px solid var(--border);
+           transition:transform .5s var(--ease), opacity .5s var(--ease)}
+.gauges .g:last-child{border-bottom:0; padding-bottom:0}
 /* Entrance, staggered by --i. Held off until the reading lands so the numbers
    do not animate in and then change. */
 .gauges .g.enter{opacity:0; transform:translateY(10px)}
@@ -471,9 +483,9 @@ h1,h2,h3,h4,p{margin:0}
    mostly empty, and three empty cards stand much taller than the map beside
    them. Side by side they read as one dashboard line and the heights match. */
 .gauges .g-read{margin-top:10px; display:flex; align-items:baseline; gap:20px}
-.gauges .g-val{font-size:30px; line-height:34px; font-weight:600;
-               letter-spacing:-1.2px; color:var(--fg); flex:none;
-               min-width:104px}
+.gauges .g-val{font-size:27px; line-height:32px; font-weight:600;
+               letter-spacing:-1.1px; color:var(--fg); flex:none;
+               min-width:92px}
 .gauges .g-val u{text-decoration:none; font-size:14px; font-weight:500;
                  letter-spacing:-.2px; color:var(--faint); margin-left:4px}
 
@@ -505,13 +517,8 @@ h1,h2,h3,h4,p{margin:0}
    with a cos(lat) correction so the corridor keeps its true proportions. The
    river is drawn in a neutral gray on purpose - on this page colour means
    state, never decoration, so the only colour on the map is the gauges'. */
-.gauges .g-map{margin:0; padding:14px 14px 12px; border:1px solid var(--border);
-               border-radius:var(--r-md); background:var(--card);
-               box-shadow:var(--shadow-card)}
-.gauges .g-map svg{display:block; width:auto; height:300px; margin:0 auto;
+.gauges .g-map svg{display:block; width:auto; height:264px; margin:0 auto;
                    max-width:100%}
-.gauges .g-map figcaption{margin-top:8px; font-size:11px; line-height:15px;
-                          color:var(--faint); text-align:center}
 .gauges .g-map .grat{stroke:var(--border); stroke-width:1; fill:none}
 .gauges .g-map .river{stroke:var(--gray-400); stroke-width:2.4; fill:none;
                       stroke-linecap:round; stroke-linejoin:round;
@@ -549,10 +556,16 @@ h1,h2,h3,h4,p{margin:0}
 
 .gauges .g-note{margin-top:14px; font-size:12px; line-height:17px; color:var(--faint)}
 
-@media (max-width:900px){
-  .gauges .g-body{grid-template-columns:1fr}
-  /* The map is a tall column; given the full width it would tower. */
-  .gauges .g-map{max-width:260px; margin:0 auto}
+@media (max-width:1080px){
+  /* The heatmap is the widest of the three, so it drops to its own row first
+     and the other two keep their side-by-side reading. */
+  .gauges .g-body{grid-template-columns:minmax(0,1fr) 212px;
+                  grid-template-areas:"read map" "fall fall"}
+}
+@media (max-width:720px){
+  .gauges .g-body{grid-template-columns:1fr;
+                  grid-template-areas:"read" "fall" "map"}
+  .gauges .w-map{max-width:262px; margin:0 auto; width:100%}
 }
 @media (prefers-reduced-motion:reduce){
   .gauges .g,.gauges .g-fill,.gauges .g-map .river,.gauges .g-map .pin{
@@ -579,18 +592,15 @@ h1,h2,h3,h4,p{margin:0}
    gaps, single hue, and a lightest step still readable on the card. A normal
    reading is deliberately outside the ramp in neutral gray: on this page
    colour is spent on state, and "the river is fine" is not one. */
-.heat{margin-top:32px; padding:18px 20px 16px; border:1px solid var(--border);
-      border-radius:var(--r-md); background:var(--card); box-shadow:var(--shadow-card)}
-.heat-head{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:16px}
-.heat-head h3{font-size:14px; line-height:20px; font-weight:600; letter-spacing:-.28px}
-.heat-head .sp{margin-left:auto; font-family:"Geist Mono",ui-monospace,monospace;
-               font-size:11px; line-height:16px; color:var(--faint)}
-
-.heat-grid{display:grid; grid-template-columns:124px repeat(16, minmax(0,1fr));
+/* In a third of the row there is no width for a label column, so each gauge
+   names itself above its own strip. */
+.heat-grid{display:grid; grid-template-columns:repeat(16, minmax(0,1fr));
            gap:3px; align-items:center}
-.heat .hr-name{font-size:10px; line-height:14px; font-weight:500; letter-spacing:.06em;
-               text-transform:uppercase; color:var(--faint); white-space:nowrap}
-.heat .hc{display:block; width:100%; height:30px; border-radius:3px;
+.heat .hr-name{grid-column:1/-1; margin-top:8px; font-size:9.5px; line-height:13px;
+               font-weight:500; letter-spacing:.06em; text-transform:uppercase;
+               color:var(--faint); white-space:nowrap}
+.heat .hr-name:first-child{margin-top:0}
+.heat .hc{display:block; width:100%; height:24px; border-radius:3px;
           background:var(--gray-200); box-shadow:inset 0 0 0 1px rgba(0,0,0,.04)}
 .heat .hc.b1{background:#ff8a8f; box-shadow:none}
 .heat .hc.b2{background:#ea001d; box-shadow:none}
@@ -607,16 +617,16 @@ h1,h2,h3,h4,p{margin:0}
           transition-delay:var(--d, 0ms)}
 .heat.in .hc{opacity:1; transform:none}
 
-.heat-axis{display:grid; grid-template-columns:124px repeat(16, minmax(0,1fr));
-           gap:3px; margin-top:8px}
+.heat-axis{display:grid; grid-template-columns:repeat(16, minmax(0,1fr));
+           gap:3px; margin-top:9px}
 .heat-axis span{font-family:"Geist Mono",ui-monospace,monospace; font-size:9.5px;
                 line-height:14px; color:var(--faint); white-space:nowrap}
 .heat-axis .mid{text-align:center} .heat-axis .end{text-align:right}
 .heat-axis .lit{color:var(--fg)}
 
-.heat-foot{margin-top:14px; padding-top:13px; border-top:1px solid var(--border);
-           display:flex; align-items:center; gap:8px 18px; flex-wrap:wrap}
-.heat-key{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+.heat-foot{margin-top:auto; padding-top:13px; display:flex; flex-direction:column;
+           gap:8px}
+.heat-key{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
 .heat-key span{display:inline-flex; align-items:center; gap:6px; font-size:11.5px;
                line-height:16px; color:var(--muted)}
 .heat-key i{width:10px; height:10px; border-radius:2.5px; flex:none;
@@ -624,17 +634,9 @@ h1,h2,h3,h4,p{margin:0}
 .heat-key i.b1{background:#ff8a8f; box-shadow:none}
 .heat-key i.b2{background:#ea001d; box-shadow:none}
 .heat-key i.b3{background:#c50017; box-shadow:none}
-.heat-fact{margin-left:auto; font-size:11.5px; line-height:16px; color:var(--faint);
-           text-align:right}
+.heat-fact{font-size:11.5px; line-height:16px; color:var(--faint)}
 .heat-fact b{color:var(--fg); font-weight:500}
 
-@media (max-width:760px){
-  /* A 104px label column plus sixteen cells leaves the cells sub-pixel on a
-     phone. The names go above their own row instead. */
-  .heat-grid,.heat-axis{grid-template-columns:repeat(16, minmax(0,1fr))}
-  .heat .hr-name{grid-column:1/-1; margin-top:6px}
-  .heat-axis{margin-top:6px}
-}
 @media (prefers-reduced-motion:reduce){
   .heat .hc{opacity:1; transform:none; transition:none; transition-delay:0s}
 }
@@ -1518,24 +1520,101 @@ h1,h2,h3,h4,p{margin:0}
       </div>
 
       <div class="g-body">
-        <div class="g-cards" data-g-row>
-          <div class="g gone" style="--i:0"><div class="g-top"><p class="g-name">Kaub</p></div>
-            <div class="g-read"><p class="g-val">&mdash;</p>
-              <div class="g-line"><div class="g-meter"></div></div></div></div>
-          <div class="g gone" style="--i:1"><div class="g-top"><p class="g-name">Duisburg-Ruhrort</p></div>
-            <div class="g-read"><p class="g-val">&mdash;</p>
-              <div class="g-line"><div class="g-meter"></div></div></div></div>
-          <div class="g gone" style="--i:2"><div class="g-top"><p class="g-name">Emmerich</p></div>
-            <div class="g-read"><p class="g-val">&mdash;</p>
-              <div class="g-line"><div class="g-meter"></div></div></div></div>
-        </div>
+        <section class="win w-read">
+          <p class="win-t">Readings</p>
+          <div class="g-cards" data-g-row>
+            <div class="g gone" style="--i:0"><div class="g-top"><p class="g-name">Kaub</p></div>
+              <div class="g-read"><p class="g-val">&mdash;</p>
+                <div class="g-line"><div class="g-meter"></div></div></div></div>
+            <div class="g gone" style="--i:1"><div class="g-top"><p class="g-name">Duisburg-Ruhrort</p></div>
+              <div class="g-read"><p class="g-val">&mdash;</p>
+                <div class="g-line"><div class="g-meter"></div></div></div></div>
+            <div class="g gone" style="--i:2"><div class="g-top"><p class="g-name">Emmerich</p></div>
+              <div class="g-read"><p class="g-val">&mdash;</p>
+                <div class="g-line"><div class="g-meter"></div></div></div></div>
+          </div>
+        </section>
 
-        <!-- The corridor, drawn from real coordinates: every point is the
-             actual place, projected equirectangular with a cos(lat) correction
-             so the Rhine keeps its true shape rather than a drawn-by-eye one.
-             The cards carry the readings, so the map itself is decorative to a
-             screen reader and the caption says what it is. -->
-        <figure class="g-map" data-g-map>
+        <!-- The one window in a panel headed LIVE that is not. It carries its
+             own chip rather than relying on where it sits, because position is
+             not a label and this is the boundary the whole page turns on. -->
+        <section class="win w-fall heat rv" data-heat>
+          <p class="win-t">The fall <span class="chip synth">Authored</span></p>
+        <div class="heat-grid">
+            <span class="hr-name">Kaub</span>
+            <i class="hc b0" style="--d:0ms" title="Kaub · Aug 06 · 118 cm · normal"></i>
+            <i class="hc b0" style="--d:458ms" title="Kaub · Aug 07 · 110 cm · normal"></i>
+            <i class="hc b0" style="--d:226ms" title="Kaub · Aug 08 · 103 cm · normal"></i>
+            <i class="hc b1" style="--d:684ms" title="Kaub · Aug 09 · 96 cm · watch"></i>
+            <i class="hc b1" style="--d:452ms" title="Kaub · Aug 10 · 92 cm · watch"></i>
+            <i class="hc b1" style="--d:220ms" title="Kaub · Aug 11 · 85 cm · watch"></i>
+            <i class="hc b1 call" style="--d:678ms" title="Kaub · Aug 12 · 82 cm · watch"></i>
+            <i class="hc b1" style="--d:446ms" title="Kaub · Aug 13 · 80 cm · watch"></i>
+            <i class="hc b2" style="--d:214ms" title="Kaub · Aug 14 · 78 cm · restricted"></i>
+            <i class="hc b2" style="--d:672ms" title="Kaub · Aug 15 · 71 cm · restricted"></i>
+            <i class="hc b2" style="--d:440ms" title="Kaub · Aug 16 · 66 cm · restricted"></i>
+            <i class="hc b2" style="--d:208ms" title="Kaub · Aug 17 · 61 cm · restricted"></i>
+            <i class="hc b2" style="--d:666ms" title="Kaub · Aug 18 · 57 cm · restricted"></i>
+            <i class="hc b2" style="--d:434ms" title="Kaub · Aug 19 · 52 cm · restricted"></i>
+            <i class="hc b2" style="--d:201ms" title="Kaub · Aug 20 · 47 cm · restricted"></i>
+            <i class="hc b2" style="--d:659ms" title="Kaub · Aug 21 · 44 cm · restricted"></i>
+            <span class="hr-name">Duisburg-Ruhrort</span>
+            <i class="hc b0" style="--d:582ms" title="Duisburg-Ruhrort · Aug 06 · 286 cm · normal"></i>
+            <i class="hc b0" style="--d:376ms" title="Duisburg-Ruhrort · Aug 07 · 272 cm · normal"></i>
+            <i class="hc b0" style="--d:460ms" title="Duisburg-Ruhrort · Aug 08 · 258 cm · normal"></i>
+            <i class="hc b1" style="--d:165ms" title="Duisburg-Ruhrort · Aug 09 · 244 cm · watch"></i>
+            <i class="hc b1" style="--d:577ms" title="Duisburg-Ruhrort · Aug 10 · 232 cm · watch"></i>
+            <i class="hc b1" style="--d:488ms" title="Duisburg-Ruhrort · Aug 11 · 221 cm · watch"></i>
+            <i class="hc b1 call" style="--d:86ms" title="Duisburg-Ruhrort · Aug 12 · 212 cm · watch"></i>
+            <i class="hc b1" style="--d:170ms" title="Duisburg-Ruhrort · Aug 13 · 206 cm · watch"></i>
+            <i class="hc b2" style="--d:194ms" title="Duisburg-Ruhrort · Aug 14 · 199 cm · restricted"></i>
+            <i class="hc b2" style="--d:243ms" title="Duisburg-Ruhrort · Aug 15 · 190 cm · restricted"></i>
+            <i class="hc b2" style="--d:155ms" title="Duisburg-Ruhrort · Aug 16 · 182 cm · restricted"></i>
+            <i class="hc b2" style="--d:418ms" title="Duisburg-Ruhrort · Aug 17 · 174 cm · restricted"></i>
+            <i class="hc b2" style="--d:468ms" title="Duisburg-Ruhrort · Aug 18 · 171 cm · restricted"></i>
+            <i class="hc b2" style="--d:207ms" title="Duisburg-Ruhrort · Aug 19 · 167 cm · restricted"></i>
+            <i class="hc b2" style="--d:84ms" title="Duisburg-Ruhrort · Aug 20 · 163 cm · restricted"></i>
+            <i class="hc b2" style="--d:496ms" title="Duisburg-Ruhrort · Aug 21 · 160 cm · restricted"></i>
+            <span class="hr-name">Emmerich</span>
+            <i class="hc b1" style="--d:473ms" title="Emmerich · Aug 06 · 96 cm · watch"></i>
+            <i class="hc b1" style="--d:501ms" title="Emmerich · Aug 07 · 88 cm · watch"></i>
+            <i class="hc b1" style="--d:63ms" title="Emmerich · Aug 08 · 80 cm · watch"></i>
+            <i class="hc b1" style="--d:669ms" title="Emmerich · Aug 09 · 72 cm · watch"></i>
+            <i class="hc b2" style="--d:230ms" title="Emmerich · Aug 10 · 66 cm · restricted"></i>
+            <i class="hc b2" style="--d:457ms" title="Emmerich · Aug 11 · 58 cm · restricted"></i>
+            <i class="hc b2 call" style="--d:330ms" title="Emmerich · Aug 12 · 52 cm · restricted"></i>
+            <i class="hc b2" style="--d:557ms" title="Emmerich · Aug 13 · 46 cm · restricted"></i>
+            <i class="hc b2" style="--d:463ms" title="Emmerich · Aug 14 · 41 cm · restricted"></i>
+            <i class="hc b2" style="--d:638ms" title="Emmerich · Aug 15 · 36 cm · restricted"></i>
+            <i class="hc b2" style="--d:286ms" title="Emmerich · Aug 16 · 31 cm · restricted"></i>
+            <i class="hc b3" style="--d:49ms" title="Emmerich · Aug 17 · 27 cm · critical"></i>
+            <i class="hc b3" style="--d:172ms" title="Emmerich · Aug 18 · 23 cm · critical"></i>
+            <i class="hc b3" style="--d:149ms" title="Emmerich · Aug 19 · 19 cm · critical"></i>
+            <i class="hc b3" style="--d:340ms" title="Emmerich · Aug 20 · 16 cm · critical"></i>
+            <i class="hc b3" style="--d:661ms" title="Emmerich · Aug 21 · 14 cm · critical"></i>
+        </div>
+        <div class="heat-axis">
+          <span></span><span style="grid-column:2/7">Aug 06</span>
+          <span class="mid lit" style="grid-column:7/8">&uarr; call</span>
+          <span class="end" style="grid-column:8/18">Aug 21</span>
+        </div>
+          <div class="heat-foot">
+            <div class="heat-key">
+              <span><i></i>Normal</span>
+              <span><i class="b1"></i>Watch</span>
+              <span><i class="b2"></i>Restricted</span>
+              <span><i class="b3"></i>Critical</span>
+            </div>
+            <p class="heat-fact"><b>140</b> vessels held &middot; called <b>9 days early</b></p>
+          </div>
+        </section>
+
+        <!-- Real geography: every point is the actual place, projected
+             equirectangular with a cos(lat) correction so the Rhine keeps its
+             true shape. The readings window carries the numbers, so the map is
+             decorative to a screen reader. -->
+        <figure class="win w-map g-map" data-g-map>
+          <p class="win-t">Corridor</p>
           <svg viewBox="0 0 250 400" role="img" aria-hidden="true" focusable="false">
             <g class="grat">
               <path d="M8 101.6h234M8 179.4h234M8 257.2h234M8 335h234"/>
@@ -1575,7 +1654,6 @@ h1,h2,h3,h4,p{margin:0}
               <text x="176" y="176" text-anchor="end" data-pin-label="KAUB">KAUB</text>
             </g>
           </svg>
-          <figcaption>Rhine corridor &middot; Rotterdam to Basel</figcaption>
         </figure>
       </div>
 
@@ -1591,88 +1669,6 @@ h1,h2,h3,h4,p{margin:0}
       the vessel counts and the dates in the write-up are written to show the shape of the
       call. Nothing here is a product metric, and no outcome is being claimed.
     </p>
-
-    <!-- What the four stat boxes here used to say, as the shape they came
-         from. Cells are generated by scratch/genheat.py and banded by the same
-         _gauge_state rule the live panel uses; the delays are baked in so the
-         page's own reveal observer is all that starts the animation. -->
-    <div class="heat rv" data-heat>
-      <div class="heat-head">
-        <h3>The fall</h3>
-        <span class="sp">Kaub 118 &rarr; 44 cm</span>
-      </div>
-
-      <div class="heat-grid">
-          <span class="hr-name">Kaub</span>
-          <i class="hc b0" style="--d:0ms" title="Kaub · Aug 06 · 118 cm · normal"></i>
-          <i class="hc b0" style="--d:458ms" title="Kaub · Aug 07 · 110 cm · normal"></i>
-          <i class="hc b0" style="--d:226ms" title="Kaub · Aug 08 · 103 cm · normal"></i>
-          <i class="hc b1" style="--d:684ms" title="Kaub · Aug 09 · 96 cm · watch"></i>
-          <i class="hc b1" style="--d:452ms" title="Kaub · Aug 10 · 92 cm · watch"></i>
-          <i class="hc b1" style="--d:220ms" title="Kaub · Aug 11 · 85 cm · watch"></i>
-          <i class="hc b1 call" style="--d:678ms" title="Kaub · Aug 12 · 82 cm · watch"></i>
-          <i class="hc b1" style="--d:446ms" title="Kaub · Aug 13 · 80 cm · watch"></i>
-          <i class="hc b2" style="--d:214ms" title="Kaub · Aug 14 · 78 cm · restricted"></i>
-          <i class="hc b2" style="--d:672ms" title="Kaub · Aug 15 · 71 cm · restricted"></i>
-          <i class="hc b2" style="--d:440ms" title="Kaub · Aug 16 · 66 cm · restricted"></i>
-          <i class="hc b2" style="--d:208ms" title="Kaub · Aug 17 · 61 cm · restricted"></i>
-          <i class="hc b2" style="--d:666ms" title="Kaub · Aug 18 · 57 cm · restricted"></i>
-          <i class="hc b2" style="--d:434ms" title="Kaub · Aug 19 · 52 cm · restricted"></i>
-          <i class="hc b2" style="--d:201ms" title="Kaub · Aug 20 · 47 cm · restricted"></i>
-          <i class="hc b2" style="--d:659ms" title="Kaub · Aug 21 · 44 cm · restricted"></i>
-          <span class="hr-name">Duisburg-Ruhrort</span>
-          <i class="hc b0" style="--d:582ms" title="Duisburg-Ruhrort · Aug 06 · 286 cm · normal"></i>
-          <i class="hc b0" style="--d:376ms" title="Duisburg-Ruhrort · Aug 07 · 272 cm · normal"></i>
-          <i class="hc b0" style="--d:460ms" title="Duisburg-Ruhrort · Aug 08 · 258 cm · normal"></i>
-          <i class="hc b1" style="--d:165ms" title="Duisburg-Ruhrort · Aug 09 · 244 cm · watch"></i>
-          <i class="hc b1" style="--d:577ms" title="Duisburg-Ruhrort · Aug 10 · 232 cm · watch"></i>
-          <i class="hc b1" style="--d:488ms" title="Duisburg-Ruhrort · Aug 11 · 221 cm · watch"></i>
-          <i class="hc b1 call" style="--d:86ms" title="Duisburg-Ruhrort · Aug 12 · 212 cm · watch"></i>
-          <i class="hc b1" style="--d:170ms" title="Duisburg-Ruhrort · Aug 13 · 206 cm · watch"></i>
-          <i class="hc b2" style="--d:194ms" title="Duisburg-Ruhrort · Aug 14 · 199 cm · restricted"></i>
-          <i class="hc b2" style="--d:243ms" title="Duisburg-Ruhrort · Aug 15 · 190 cm · restricted"></i>
-          <i class="hc b2" style="--d:155ms" title="Duisburg-Ruhrort · Aug 16 · 182 cm · restricted"></i>
-          <i class="hc b2" style="--d:418ms" title="Duisburg-Ruhrort · Aug 17 · 174 cm · restricted"></i>
-          <i class="hc b2" style="--d:468ms" title="Duisburg-Ruhrort · Aug 18 · 171 cm · restricted"></i>
-          <i class="hc b2" style="--d:207ms" title="Duisburg-Ruhrort · Aug 19 · 167 cm · restricted"></i>
-          <i class="hc b2" style="--d:84ms" title="Duisburg-Ruhrort · Aug 20 · 163 cm · restricted"></i>
-          <i class="hc b2" style="--d:496ms" title="Duisburg-Ruhrort · Aug 21 · 160 cm · restricted"></i>
-          <span class="hr-name">Emmerich</span>
-          <i class="hc b1" style="--d:473ms" title="Emmerich · Aug 06 · 96 cm · watch"></i>
-          <i class="hc b1" style="--d:501ms" title="Emmerich · Aug 07 · 88 cm · watch"></i>
-          <i class="hc b1" style="--d:63ms" title="Emmerich · Aug 08 · 80 cm · watch"></i>
-          <i class="hc b1" style="--d:669ms" title="Emmerich · Aug 09 · 72 cm · watch"></i>
-          <i class="hc b2" style="--d:230ms" title="Emmerich · Aug 10 · 66 cm · restricted"></i>
-          <i class="hc b2" style="--d:457ms" title="Emmerich · Aug 11 · 58 cm · restricted"></i>
-          <i class="hc b2 call" style="--d:330ms" title="Emmerich · Aug 12 · 52 cm · restricted"></i>
-          <i class="hc b2" style="--d:557ms" title="Emmerich · Aug 13 · 46 cm · restricted"></i>
-          <i class="hc b2" style="--d:463ms" title="Emmerich · Aug 14 · 41 cm · restricted"></i>
-          <i class="hc b2" style="--d:638ms" title="Emmerich · Aug 15 · 36 cm · restricted"></i>
-          <i class="hc b2" style="--d:286ms" title="Emmerich · Aug 16 · 31 cm · restricted"></i>
-          <i class="hc b3" style="--d:49ms" title="Emmerich · Aug 17 · 27 cm · critical"></i>
-          <i class="hc b3" style="--d:172ms" title="Emmerich · Aug 18 · 23 cm · critical"></i>
-          <i class="hc b3" style="--d:149ms" title="Emmerich · Aug 19 · 19 cm · critical"></i>
-          <i class="hc b3" style="--d:340ms" title="Emmerich · Aug 20 · 16 cm · critical"></i>
-          <i class="hc b3" style="--d:661ms" title="Emmerich · Aug 21 · 14 cm · critical"></i>
-      </div>
-
-      <div class="heat-axis">
-        <span></span><span style="grid-column:2/7">Aug 06</span>
-        <span class="mid lit" style="grid-column:7/8">&uarr; call</span>
-        <span class="end" style="grid-column:8/18">Aug 21</span>
-      </div>
-
-      <div class="heat-foot">
-        <div class="heat-key">
-          <span><i></i>Normal</span>
-          <span><i class="b1"></i>Watch</span>
-          <span><i class="b2"></i>Restricted</span>
-          <span><i class="b3"></i>Critical</span>
-        </div>
-        <p class="heat-fact"><b>140 vessels</b> held by Aug 21 &middot; the call came
-          Aug 12, <b>nine days early</b></p>
-      </div>
-    </div>
 
     <div class="grid g3 cs-grid">
 
@@ -2693,8 +2689,7 @@ firm revised ETA as soon as terminals restart.</p>
     when.textContent = "PEGELONLINE";
     row.innerHTML = ["Kaub", "Duisburg-Ruhrort", "Emmerich"]
       .map(function (n, i) { return cell({ name: n, ok: false, error: why }, i); }).join("");
-    note.textContent = "The gauges are not answering. They are the only live reading " +
-      "on this page, so when the source is down it says so.";
+    note.textContent = "The gauges are not answering, so nothing is shown for them.";
     if (map) map.classList.add("in");
   }
 
@@ -2716,20 +2711,18 @@ firm revised ETA as soon as terminals restart.</p>
     if (!data.ok) {
       chip.className = "chip";
       chip.textContent = "Unavailable";
-      note.textContent = "The gauges are not answering, and each card says what came back.";
+      note.textContent = "Not answering; each row says what came back.";
       return;
     }
     if (data.stale) {
       chip.className = "chip synth";
       chip.textContent = "Last good reading";
-      note.textContent = "PEGELONLINE did not answer just now, so this is the last reading " +
-        "that came back. Nothing is estimated to fill the gap.";
+      note.textContent = "Last good reading. Nothing is estimated to fill the gap.";
       return;
     }
     chip.className = "chip live";
     chip.textContent = "Live";
-    note.textContent = "The notch on each bar is where barges stop loading normally. " +
-      "Everything below the line is authored.";
+    note.textContent = "Read on load. The notch on each bar is the loading limit.";
   }
 
   /* AbortController is what stops a hung request leaving the panel mid-read.
