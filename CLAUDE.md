@@ -646,6 +646,9 @@ days and ordering exactly as the screenplay authored them.
 uvicorn src.app:app --reload      # then open http://127.0.0.1:8000
 ```
 
+`/` is the landing page, `/whitepaper` is the technical whitepaper and `/app` is the
+dashboard; all three are single self-contained files. `GET /api/initial` renders the calm five-green-cards board instantly; `POST /run`
+is the button. `GET /api/health` reports what a running instance can actually see — the
 `/` is the landing page and `/app` is the dashboard; both are single self-contained
 files. `GET /api/initial` renders the calm five-green-cards board instantly; `POST /run`
 is the button. `GET /api/gauges` reads the three Rhine gauges live from PEGELONLINE for
@@ -665,6 +668,40 @@ python -m src.route_advisor --inject --shipment SHP-002
 python -m src.comms_agent  --inject
 python -m src.orchestrator --no-live      # the whole loop, no network
 ```
+
+### The whitepaper page
+
+`/whitepaper` is the technical paper, served from `static/whitepaper.html` and linked
+from the landing nav. It carries the same tokens, the same self-hosted Geist and the
+same nav as the other two pages — no CDN, no Google Fonts, nothing external, which
+`verify_paper.py` asserts by failing on any off-origin request.
+
+It is the one document that states the project's assumptions and failures in public, so
+four claims in it are load-bearing and tested for by string:
+
+- the prototype **calls a US inference provider** today, so "built in Europe" describes
+  an architecture and not the current deployment;
+- the per-cycle cost figure **is an assumption, not a measurement**;
+- **any hard-coded model name is a scheduled outage**;
+- there are **no accuracy figures** anywhere, because none have been measured.
+
+Model guidance names **specific models from Lyceum's own catalogue with their per-token
+prices**, taken from their inference deck rather than from secondary sources, and dated
+July–August 2026 with their own subject-to-change caveat.
+
+Two things the deck settled that the earlier draft had wrong:
+
+- **It is per-token serverless, not GPU rental.** That fits this workload far better —
+  the system is idle until a disruption lands, then makes about fourteen calls. Costing
+  it needed no assumption about GPU seconds: the per-cycle token volume is measured from
+  the real prompts (~12.8k in, ~3.7k out) and priced against the catalogue. The
+  recommended per-task mix is **about ten times cheaper** than a frontier model
+  everywhere, which is the number worth quoting.
+- **EU residency is not the same as European model provenance.** The catalogue's strong
+  models are Chinese and American in origin, openly licensed and hosted in `eu-north1`
+  with zero retention. Teuken-7B, EuroLLM and Mistral are the answer if provenance must
+  be European too, at a cost in capability. The page keeps those two axes apart in a
+  table rather than blurring them, and `verify_paper.py` asserts both are named.
 
 ### Deployed on Vercel
 

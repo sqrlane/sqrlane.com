@@ -28,6 +28,7 @@ from src import config, llm, orchestrator, simulation
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 INDEX = STATIC_DIR / "index.html"        # the dashboard, served at /app
 LANDING = STATIC_DIR / "landing.html"    # the marketing page, served at /
+PAPER = STATIC_DIR / "whitepaper.html"   # the technical whitepaper, served at /whitepaper
 FONTS_DIR = STATIC_DIR / "fonts"         # Geist, self-hosted: no CDN, ever
 
 app = FastAPI(title="Trade-Lane Risk & Reroute Agent",
@@ -60,6 +61,12 @@ def _page(path: Path, what: str):
 def landing():
     """The front door: what Lanewatch is, and what is real about it."""
     return _page(LANDING, "Landing page")
+
+
+@app.get("/whitepaper")
+def whitepaper():
+    """The technical whitepaper: how the loop works, and where it breaks."""
+    return _page(PAPER, "Whitepaper")
 
 
 @app.get("/app")
@@ -106,6 +113,7 @@ def health(request: Request):
         "serverless": config.SERVERLESS,
         "dashboard_present": INDEX.exists(),
         "landing_present": LANDING.exists(),
+        "whitepaper_present": PAPER.exists(),
         "fonts_present": sorted(f.name for f in FONTS_DIR.glob("*.woff2")),
         "data_files_present": {
             f.name: f.exists() for f in (
