@@ -297,6 +297,8 @@ h1,h2,h3,h4,p{margin:0}
      box-shadow:var(--shadow-pop); overflow:hidden;
      display:flex; flex-direction:column}
 .art-b{flex:1}          /* pushes .mail-foot to the bottom of a stretched card */
+.callout{background:var(--card); border:1px solid var(--border);
+         border-radius:var(--r-md); padding:20px 22px}
 .art-h{padding:11px 14px; border-bottom:1px solid var(--border); display:flex;
        align-items:center; gap:9px; background:var(--card-muted)}
 .art-h .ttl{font-size:12.5px; font-weight:600; letter-spacing:-.2px}
@@ -952,6 +954,72 @@ firm revised ETA as soon as terminals restart.</p>
   </div>
 </section>
 
+<!-- ======================== THE WORKFLOW LAYER ======================== -->
+<section class="section" id="desk">
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">The rest of the desk</span>
+      <h2 class="d2">A disruption is not one email. It is a day of them.</h2>
+      <p class="copy18">The carrier sends a notice. The customer asks where their box is.
+        A rate request lands on the same lane you are busy re-planning. And the booking in
+        the TMS still says the old discharge port. Deciding is the interesting half; this
+        is the half that actually eats the day.</p>
+    </div>
+
+    <div class="grid g3 rv" style="margin-top:40px">
+      <div class="art">
+        <div class="art-h"><span class="ttl">Inbox Worker</span>
+          <span class="r chip synth">SCRIPTED</span></div>
+        <div class="art-b">
+          <p class="copy16">Inbound mail read, classified by intent, linked to the booking
+            it concerns, and answered with a draft. What arrives depends on the decision:
+            a rerouted box draws an omit-notice and a status chase, a held one draws berth
+            options.</p>
+          <p class="src" style="margin-top:12px">A booking left on plan gets a routine
+            milestone and <b style="color:var(--fg);font-weight:500">no drafted reply</b> —
+            answering everything is volume, not judgement.</p>
+        </div>
+      </div>
+
+      <div class="art">
+        <div class="art-h"><span class="ttl">RFQ Worker</span>
+          <span class="r chip synth">SCRIPTED</span></div>
+        <div class="art-b">
+          <p class="copy16">A rate request arrives as prose. It is read into fields — lane,
+            equipment, commodity, ready date — priced against the carriers on that lane, and
+            answered with a drafted quote.</p>
+          <p class="src" style="margin-top:12px">The active disruption is priced in. A quote
+            written during a closure that ignores the surcharge is a quote that loses
+            money.</p>
+        </div>
+      </div>
+
+      <div class="art">
+        <div class="art-h"><span class="ttl">TMS Link</span>
+          <span class="r chip synth">DEMO CONNECTOR</span></div>
+        <div class="art-b">
+          <p class="copy16">Bookings read in; the decision written back out — discharge port,
+            routing code, revised ETA. Each write-back is derived from the decision that was
+            actually made, so a shipment left on plan produces none.</p>
+          <p class="src" style="margin-top:12px">No TMS is contacted. There is no client, no
+            credential and no endpoint — a write-back is a described change, and it stays
+            one.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout rv" style="margin-top:32px">
+      <p class="copy16"><b style="color:var(--fg);font-weight:500">Everything outbound sits
+        behind the same gate.</b> A drafted reply, a drafted quote and a queued write-back
+        are all actions that leave the building, so all three wait on a person exactly as the
+        carrier and customer emails do — <span class="mono" style="font-size:13px">DRAFT -
+        not sent</span> and <span class="mono" style="font-size:13px">QUEUED - not
+        written</span>. The test that proves the emails cannot be sent now checks these
+        too.</p>
+    </div>
+  </div>
+</section>
+
 <!-- ======================== SOURCES ======================== -->
 <section class="section" id="sources">
   <div class="wrap">
@@ -1121,6 +1189,7 @@ firm revised ETA as soon as terminals restart.</p>
           <li><a href="#edge">The source edge</a></li>
           <li><a href="#reasoning">Recorded reasoning</a></li>
           <li><a href="#drafts">Drafts &amp; approval</a></li>
+          <li><a href="#desk">The workflow layer</a></li>
         </ul>
       </div>
       <div>

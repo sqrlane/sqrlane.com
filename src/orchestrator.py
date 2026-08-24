@@ -25,7 +25,7 @@ import sys
 import time
 from datetime import datetime, timezone
 
-from src import comms_agent, config, llm, risk_monitor, roster, route_advisor
+from src import comms_agent, config, llm, risk_monitor, roster, route_advisor, tms
 
 # What the dashboard colours a card by.
 STATE_FOR_DECISION = {"reroute": "rerouted", "hold": "hold", "no-action": "green"}
@@ -137,12 +137,20 @@ def run_cycle(*, live=True, inject=True, use_llm=True, verbose=False,
     total_events = len(risk["events"])
     workers["risk"].update(
         status="done", seconds=round(time.monotonic() - stage_started, 1),
-        summary=(f"{len(read)} of {len(risk['sources'])} sources read · "
+        summary=(f"{risk['live_sources_read']} of {risk['live_sources_total']} "
+                 f"sources read · "
                  f"{total_events} event{'' if total_events == 1 else 's'}"),
-        detail=[f"{len(live_events)} from live sources, "
-                f"{total_events - len(live_events)} scripted",
-                f"drawn from {len(risk['sources'])} sources worldwide",
-                f"a regional source was first on {led_by_regional} of {total_events} events"])
+        detail=[d for d in [
+            f"{len(live_events)} from live sources, "
+            f"{total_events - len(live_events)} scripted",
+            # Only worth saying when a live pull actually happened: offline runs
+            # report a single placeholder source, and "drawn from 1 source
+            # worldwide" would read as a claim rather than a debug mode.
+            (f"drawn from {risk['live_sources_total']} sources worldwide"
+             if risk["live_sources_total"] > 1 else None),
+            f"a regional source was first on {led_by_regional} of "
+            f"{total_events} event{'' if total_events == 1 else 's'}",
+        ] if d])
 
     failed = [s for s in risk["sources"] if s["status"] == "failed"]
     attempted = [s for s in risk["sources"] if s["status"] != "skipped"]
@@ -240,6 +248,9 @@ def run_cycle(*, live=True, inject=True, use_llm=True, verbose=False,
         },
         "risk": risk,
         "shipments": cards,
+        # The demo TMS connection, board-wide: what synced, and the booking
+        # changes each decision implies. Every one stays queued - see tms.py.
+        "tms": tms.connection(cards),
         "summary": dict(tally, drafts=len(drafts)),
         "notes": notes,
     }

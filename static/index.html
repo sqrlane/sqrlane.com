@@ -178,7 +178,7 @@ button{font:inherit; color:inherit}
 .scen-note b{color:var(--fg)}
 
 /* ---------- worker roster strip ---------- */
-.roster{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:8px;margin-bottom:20px}
+.roster{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:20px}
 .wchip{border:1px solid var(--border);background:var(--card);border-radius:var(--r);
        padding:10px 12px;cursor:pointer;text-align:left;box-shadow:var(--shadow);
        display:flex;flex-direction:column;gap:5px}
@@ -191,7 +191,9 @@ button{font:inherit; color:inherit}
       padding:1.5px 5px;border-radius:3px}
 .wtag.live{background:var(--green-bg);color:var(--green)}
 .wtag.scripted{background:var(--amber-bg);color:var(--amber)}
-.wchip .st{font-size:11px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wchip .bot{display:flex;align-items:center;gap:6px;min-width:0}
+.wchip .st{font-size:11px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;
+           white-space:nowrap;flex:1;min-width:0}
 
 /* ---------- worker panel band ---------- */
 .wpanel{border:1px solid var(--border);background:var(--card);border-radius:var(--r);
@@ -318,6 +320,17 @@ table.q tr.pick td{background:var(--surface)}
         padding:3px 8px;border-radius:4px}
 .gate-s.awaiting{background:var(--amber-bg);color:var(--amber)}
 .gate-s.approved{background:var(--green-bg);color:var(--green)}
+.pnote{font-size:12px;color:var(--faint);margin:0 0 12px;line-height:1.5}
+.inb{border:1px solid var(--border);border-radius:var(--r);padding:12px 13px;margin-bottom:10px}
+.inb-h{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:6px}
+.inb-h .who{font-size:12.5px;font-weight:500;color:var(--fg)}
+.inb-h .ago{margin-left:auto;font-size:11px;color:var(--faint)}
+.inb-s{font-size:13px;font-weight:500;margin-bottom:5px}
+.inb-b{font-size:12.5px;color:var(--muted);line-height:1.55}
+.inb-r{margin-top:10px;padding:10px 11px;background:var(--card-muted);border-radius:var(--r);
+  font-size:12.5px;line-height:1.55;color:var(--fg)}
+.inb-rl{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);
+  margin-bottom:5px}
 .approve{background:var(--fg);color:var(--card);border:0;border-radius:var(--r);
          padding:6px 13px;font-size:12.5px;font-weight:500;cursor:pointer}
 .approve:hover{opacity:.88}
@@ -446,7 +459,7 @@ function statRow(){
     <div class="stat"><div class="lab">Shipments tracked</div><div class="val">${board.length}</div>
       <div class="sub">${s["no-action"]||0} on plan, ${attention()} actioned</div></div>
     <div class="stat"><div class="lab">Risk events</div><div class="val">${(risk.events||[]).length}</div>
-      <div class="sub">${(risk.sources||[]).filter(x=>x.status==="ok").length} of ${(risk.sources||[]).length} sources read</div></div>
+      <div class="sub">${risk.live_sources_read||0} of ${risk.live_sources_total||0} sources read</div></div>
     <div class="stat ${late?"act":""}"><div class="lab">Deadlines at risk</div><div class="val">${late}</div>
       <div class="sub">${late?"customer date missed":"all within required-by"}</div></div>
     <div class="stat ${pending()?"act":""}"><div class="lab">Awaiting your approval</div><div class="val">${pending()}</div>
@@ -500,11 +513,14 @@ function rosterStrip(){
   if (!workers.length) return "";
   return `<p class="sec-t">Workers</p><div class="roster">${workers.map(w=>{
     const mode = w.mode==="live" ? "live" : "scripted";
+    /* The tag sits under the name, not beside it. On a roster this size the two
+       compete for one line and the name is what loses - "Milestones Worker"
+       became "Mile…", which is not a Worker anyone can identify. */
     return `<button class="wchip ${openWorker===w.id?"on":""}" data-worker="${esc(w.id)}">
       <span class="top"><span class="wdot" style="margin:0"></span>
-        <span class="nm">${esc(w.name)}</span>
-        <span class="wtag ${mode}">${mode}</span></span>
-      <span class="st">${esc(w.summary || w.role)}</span></button>`;}).join("")}</div>`;
+        <span class="nm">${esc(w.name)}</span></span>
+      <span class="bot"><span class="wtag ${mode}">${mode}</span>
+        <span class="st">${esc(w.summary || w.role)}</span></span></button>`;}).join("")}</div>`;
 }
 
 function workerPanel(){
@@ -561,6 +577,62 @@ function scriptedPanelBody(w, ship){
       <div class="fields">${p.fields.map(f=>
         `<span class="f">${esc(f.field)}</span><span>${esc(f.value)}</span>`).join("")}</div>
       ${p.flag?`<div class="warn">${esc(p.flag)}</div>`:""}`;
+  if (w.id === "inbox")
+    return `<p class="sec-t">${esc(p.headline)}</p>
+      <p class="pnote">${esc(p.note)}</p>
+      ${p.items.map(m=>`<div class="inb">
+        <div class="inb-h">
+          <span class="who">${esc(m.from)}</span>
+          <span class="qtag">${esc(m.intent)}</span>
+          <span class="qtag">${esc(m.linked_booking)}</span>
+          <span class="ago">${esc(m.received)}</span>
+        </div>
+        <div class="inb-s">${esc(m.subject)}</div>
+        <div class="inb-b">${esc(m.body)}</div>
+        ${m.suggested_reply?`<div class="inb-r">
+          <div class="inb-rl">Drafted reply</div>${esc(m.suggested_reply)}</div>`:""}
+        <span class="gate-s ${m.approval_status==="closed"?"approved":"awaiting"}">${
+          esc(m.status)}</span>
+      </div>`).join("")}`;
+
+  if (w.id === "rfq")
+    return `<p class="sec-t">${esc(p.headline)}</p>
+      <p class="pnote">${esc(p.note)}</p>
+      <div class="inb">
+        <div class="inb-h"><span class="who">${esc(p.request.from)}</span>
+          <span class="qtag">rate request</span>
+          <span class="ago">${esc(p.request.received)}</span></div>
+        <div class="inb-b">${esc(p.request.raw)}</div>
+        <div class="inb-rl" style="margin-top:10px">Read into fields</div>
+        <div class="fields">${Object.entries(p.parsed||p.request.parsed).map(([k,v])=>
+          `<span class="f">${esc(k.replace(/_/g," "))}</span><span>${esc(v)}</span>`).join("")}</div>
+      </div>
+      <table class="q"><thead><tr><th>Carrier</th><th>Via</th><th>Transit</th>
+        <th>Cost index</th></tr></thead><tbody>
+        ${p.options.map(o=>`<tr class="${o===p.options[0]?"pick":""}">
+          <td>${esc(o.carrier)}</td><td>${esc(o.discharge_port)}</td>
+          <td>${esc(o.transit_days)}d</td>
+          <td>${esc(o.cost_index)}${o.surcharge?`<span class="qtag">${esc(o.surcharge)}</span>`:""}</td>
+        </tr>`).join("")}
+      </tbody></table>
+      ${p.draft_reply?`<div class="inb-r"><div class="inb-rl">Drafted quote</div>${
+        esc(p.draft_reply)}</div>`:""}
+      <span class="gate-s awaiting">${esc(p.status)}</span>`;
+
+  if (w.id === "tms")
+    return `<p class="sec-t">${esc(p.headline)}</p>
+      <p class="pnote">${esc(p.note)}</p>
+      <div class="fields">${p.field_map.map(f=>
+        `<span class="f">${esc(f.tms_field)}</span>
+         <span>${esc(f.lanewatch_field)} <span class="qtag">${esc(f.direction)}</span></span>`
+        ).join("")}</div>
+      ${p.writeback?`<div class="inb">
+        <div class="inb-rl">Write-back this decision implies</div>
+        <div class="fields">${p.writeback.changes.map(c=>
+          `<span class="f">${esc(c.field)}</span><span>→ ${esc(c.to)}</span>`).join("")}</div>
+        <span class="gate-s awaiting">${esc(p.writeback.status)}</span>
+      </div>`:`<div class="pnote">On plan — this booking needs no write-back.</div>`}`;
+
   return `<p class="sec-t">${esc(p.headline)}</p><ul class="qa">${p.qa.map(x=>
     `<li><div class="q">${esc(x.q)}</div><div class="a">${esc(x.a)}</div></li>`).join("")}</ul>`;
 }
@@ -579,12 +651,12 @@ function workersCard(){
 
 function riskCard(compact){
   const ev = risk.events||[];
-  /* The scripted scenario reports itself as a source so the CLI can show where
-     each event came from. It must not pad this line: "N of M sources read" is
-     the live-news claim, and counting a scripted entry in it would inflate both
-     halves of exactly the number an audience uses to check that claim. */
+  /* live_sources_* are counted in risk_monitor, which is the one place that
+     knows the scripted scenario reports itself as a source. Counting it here
+     would inflate both halves of the number an audience uses to check that the
+     news pull is real. The failed list is filtered the same way. */
   const srcs = (risk.sources||[]).filter(s=>!/^scenario:/.test(s.name||""));
-  const ok = srcs.filter(s=>s.status==="ok").length;
+  const ok = risk.live_sources_read||0, total = risk.live_sources_total||srcs.length;
   const bad = srcs.filter(s=>s.status==="failed");
   return `<div class="card">
     <div class="card-h"><h2>Risk feed</h2><span class="chip live">live</span><span class="n">${ev.length}</span></div>
@@ -603,7 +675,7 @@ function riskCard(compact){
       ${detectionTrail(e, compact)}
     </div>`).join("") : `<div class="empty">No active events.<br>Press <b>Inject Hamburg strike</b> to start.</div>`}
     ${srcs.length?`<div class="srcline">
-      <div class="r">✓ ${ok} of ${srcs.length} sources read</div>
+      <div class="r">✓ ${ok} of ${total} sources read</div>
       ${bad.length?`<div class="r">! unavailable: ${esc(bad.slice(0,4).map(s=>s.name.replace(/^(RSS|GDELT|PEGELONLINE): /,"").replace(/\s*\[\w{2}\]$/,"")).join(", "))}${bad.length>4?` +${bad.length-4} more`:""}</div>`:""}
     </div>`:""}</div>`;
 }

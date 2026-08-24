@@ -18,10 +18,19 @@ every message held for human approval.
 | **Rate Worker** | Quote and rate lookups across the carriers on a lane | `SCRIPTED` |
 | **Milestones Worker** | Milestones and position for a booking | `SCRIPTED` |
 | **Docs Worker** | Field extraction from bills of lading | `SCRIPTED` |
+| **Inbox Worker** | Triages inbound carrier and customer mail, and drafts the reply | `SCRIPTED` |
+| **RFQ Worker** | Reads an inbound rate request and drafts the quote back | `SCRIPTED` |
+| **TMS Link** | Booking sync, and the write-back a decision implies | `SCRIPTED` |
 | **Assistant** | Answers questions about what is on the board | `SCRIPTED` |
 
-The first three genuinely run. The last four replay authored data and say so on screen —
+The first three genuinely run. The other seven replay authored data and say so on screen —
 they react to the scenario and the selected shipment, but they are not reasoning.
+
+**Nothing leaves the app, and that includes the workflow layer.** A drafted reply, a drafted
+quote and a queued TMS write-back all sit behind the same approval gate as the carrier and
+customer emails, because they are all outbound actions. `tests/test_comms_agent_sends_nothing.py`
+checks every one of them, and separately parses every file in `src/` to prove no transport
+library exists to send them with.
 **The tag is the honesty.**
 
 ## Four disruptions, one shipment pool

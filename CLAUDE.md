@@ -129,9 +129,9 @@ the real pipeline.
 
 ### The product layer
 
-**Seven Workers, three of them real.** Risk, Routing and Comms genuinely run and are
-tagged `LIVE`. Rate, Milestones, Docs and Assistant replay authored data from
-`src/roster.py` and are tagged `SCRIPTED`. **The tag is the honesty** — never present a
+**Ten Workers, three of them real.** Risk, Routing and Comms genuinely run and are
+tagged `LIVE`. Rate, Milestones, Docs, Inbox, RFQ, TMS Link and Assistant replay
+authored data from `src/roster.py` and are tagged `SCRIPTED`. **The tag is the honesty** — never present a
 scripted Worker as reasoning live. They are still *reactive*: each panel is built from
 the active scenario and the selected shipment, so switching either visibly changes it.
 What is authored is the content, not the shape.
@@ -157,6 +157,35 @@ is counted from that run; nothing is illustrative.
 
 A **decision-engine strip** names the model in use and the model-vs-rules split, so the
 central claim is checkable at a glance rather than asserted.
+
+### The workflow layer — inbound comms, RFQs and the TMS link
+
+The Comms Agent covers *outbound*. Three scripted Workers cover the rest of the
+desk a disruption actually lands on:
+
+- **Inbox Worker** — inbound carrier and customer mail, triaged: intent classified,
+  linked to the booking, and a reply drafted. Which mail arrives is derived from the
+  decision the Route Advisor made, so a reroute produces an omit-notice and a status
+  chase, a hold produces berth options, and an on-plan booking produces a routine
+  milestone with **no reply drafted at all**. Answering everything would be showing
+  volume rather than judgement.
+- **RFQ Worker** — an inbound rate request read into structured fields, priced against
+  the lane with the active scenario's surcharge, and answered with a drafted quote.
+- **TMS Link** (`src/tms.py`) — a **demo connector**. It models the field mapping and
+  turns each actioned decision into the booking change it implies (discharge port,
+  routing code, ETA, or a hold status). A shipment left on plan produces no write-back,
+  which is a real answer rather than an omission.
+
+**None of it sends, and none of it writes.** A drafted reply, a drafted quote and a
+queued write-back are all outbound actions, so all three sit behind the same approval
+gate as an email — `DRAFT - not sent` and `QUEUED - not written`, both
+`awaiting_approval`. `tests/test_comms_agent_sends_nothing.py` now checks all of them:
+the original checks only ever looked at `card["drafts"]`, which none of these appear in.
+
+`src/tms.py` imports nothing but `datetime`. There is no client, no credential and no
+endpoint — a write-back is a dict describing a change, and it stays a dict. Never
+present the connector as a live TMS link; it says `connected (demo)` everywhere it is
+surfaced, and a test asserts that.
 
 Drafts sit behind a **human-approval gate**: `awaiting_approval` → *Approve* →
 `approved`. Approval is a state change in the browser and nothing else — there is no
@@ -193,7 +222,8 @@ transport anywhere in `src/` for it to trigger, and a test asserts that.
 │   ├── risk_monitor.py       # component 1
 │   ├── route_advisor.py      # component 2
 │   ├── comms_agent.py        # component 3
-│   ├── roster.py             # the four SCRIPTED Workers - authored, never live
+│   ├── roster.py             # the seven SCRIPTED Workers - authored, never live
+│   ├── tms.py                # the demo TMS connector - describes changes, writes none
 │   ├── orchestrator.py       # component 4 (the loop)
 │   └── app.py                # FastAPI: serves the page + /run
 ├── static/
@@ -504,7 +534,10 @@ Scope creep is the failure mode here. None of these are in this build:
 - **No real route optimisation.** Routes are pre-authored candidates; the agent *chooses among them
   and justifies the choice*. It does not compute routes.
 - **No sending of anything.** Emails are drafted and displayed only.
-- **No real shipment/TMS integration.** Shipments are synthetic.
+- **No real shipment/TMS integration.** Shipments are synthetic. The TMS Link is a *demo
+  connector*: it models the field mapping and describes the write-back a decision implies,
+  and contacts nothing. Wiring a real TMS is on the far side of the integration/trust wall,
+  not in this build.
 - **No scheduler / always-on.** Button-triggered.
 - **No database.** In-memory + JSON files.
 - **No paid data.** Free sources only.

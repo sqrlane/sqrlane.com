@@ -162,5 +162,63 @@ class EveryDraftSaysSo(unittest.TestCase):
                                      f"{field} suggests the draft left the process.")
 
 
+class TheWorkflowLayerSendsNothingEither(unittest.TestCase):
+    """The same rule, applied to the workflow Workers.
+
+    The Inbox Worker drafts replies to inbound mail, the RFQ Worker drafts a
+    quote, and the TMS link describes a booking change. Every one of those is an
+    outbound action a person has to approve, so every one of them belongs under
+    the same gate as an email - and the checks above only ever looked at
+    `card["drafts"]`, which none of these appear in.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        from src import orchestrator
+        cls.result = orchestrator.run_cycle(live=False, inject=True, use_llm=False)
+        cls.rosters = [s.get("roster") or {} for s in cls.result["shipments"]]
+
+    def test_the_cycle_produced_workflow_output_to_check(self):
+        replies = [i for r in self.rosters for i in (r.get("inbox") or {}).get("items", [])
+                   if i.get("suggested_reply")]
+        quotes = [r["rfq"] for r in self.rosters if (r.get("rfq") or {}).get("draft_reply")]
+        self.assertGreater(len(replies), 0, "No drafted replies means this tests nothing.")
+        self.assertGreater(len(quotes), 0, "No drafted quotes means this tests nothing.")
+
+    def test_every_drafted_reply_is_held(self):
+        for roster in self.rosters:
+            for item in (roster.get("inbox") or {}).get("items", []):
+                if not item.get("suggested_reply"):
+                    continue                      # nothing drafted, nothing to gate
+                with self.subTest(booking=item["linked_booking"], intent=item["intent"]):
+                    self.assertEqual(item["status"], "DRAFT - not sent")
+                    self.assertEqual(item["approval_status"], "awaiting_approval")
+
+    def test_every_drafted_quote_is_held(self):
+        for roster in self.rosters:
+            rfq = roster.get("rfq") or {}
+            if not rfq.get("draft_reply"):
+                continue
+            with self.subTest(headline=rfq.get("headline")):
+                self.assertEqual(rfq["status"], "DRAFT - not sent")
+                self.assertEqual(rfq["approval_status"], "awaiting_approval")
+
+    def test_no_tms_writeback_is_ever_written(self):
+        board = self.result["tms"]
+        self.assertGreater(board["queued"], 0,
+                           "The injected strike actions shipments, so write-backs should "
+                           "be queued. None means this tests nothing.")
+        for writeback in board["writebacks"]:
+            with self.subTest(booking=writeback["booking_ref"]):
+                self.assertEqual(writeback["status"], "QUEUED - not written")
+                self.assertEqual(writeback["approval_status"], "awaiting_approval")
+
+    def test_the_tms_connector_never_claims_to_be_real(self):
+        board = self.result["tms"]
+        self.assertIn("demo", board["connector"].lower() + board["status"].lower(),
+                      "The TMS link is a demo connector and has to say so wherever it "
+                      "is surfaced.")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -719,9 +719,16 @@ def run(*, live=True, inject=False, use_llm=True, verbose=True, scenario=None) -
     languages_read = sorted({s["name"].split("[")[-1].rstrip("]")
                              for s in report.entries
                              if s["status"] == "ok" and "[" in s["name"]})
+    # The scripted scenario reports itself as a source so the CLI can show where
+    # each event came from. It is not a live source, and "N of M sources read" is
+    # the claim an audience uses to check that the news pull is real - so the
+    # count is taken here, once, rather than filtered differently on each screen.
+    live_sources = [e for e in report.entries if not e["name"].startswith("scenario:")]
     state = {
         "generated_at": _now_iso(),
         "languages_read": languages_read,
+        "live_sources_total": len(live_sources),
+        "live_sources_read": sum(1 for e in live_sources if e["status"] == "ok"),
         "provider": llm.describe() if stats["llm_used"] else "none (no LLM call made)",
         "sources": report.entries,
         "stats": stats,
