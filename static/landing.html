@@ -1113,12 +1113,13 @@ h1,h2,h3,h4,p{margin:0}
     <h1 class="d1">Trade-lane risk, decided.</h1>
 
     <p class="sub copy18">
-      Risk platforms stop at the alert. Lanewatch reads the disruption — usually from a
-      local source, ahead of the international wires — works out which shipments are
-      exposed, decides
+      Risk platforms stop at the alert. Lanewatch runs on the bookings in your TMS: it reads
+      the disruption — usually from a local source, ahead of the international wires — works
+      out which of them are exposed, decides
       <b style="color:var(--fg);font-weight:500">reroute</b> or
-      <b style="color:var(--fg);font-weight:500">hold</b> for each, and drafts the emails
-      a human would otherwise write. Every call keeps its reasoning.
+      <b style="color:var(--fg);font-weight:500">hold</b> for each, writes the change back
+      onto the booking, and drafts the emails a human would otherwise write. Every call keeps
+      its reasoning, and every write waits for you.
     </p>
 
     <div class="cta">
@@ -1128,8 +1129,8 @@ h1,h2,h3,h4,p{margin:0}
           <path d="M5 12h13M12 5l7 7-7 7"/></svg></a>
       <a class="btn btn-secondary btn-lg" href="#loop">See how the loop closes</a>
     </div>
-    <p class="under">One button. Five shipments. Three different, defensible decisions
-      in under two minutes.</p>
+    <p class="under">One button. Five bookings out of the TMS. Three different, defensible
+      decisions — and the write-back each one implies — in under two minutes.</p>
 
     <!-- A rendering of the actual board, drawn in HTML so it stays sharp. -->
     <div class="shot">
@@ -1333,16 +1334,18 @@ h1,h2,h3,h4,p{margin:0}
       <div class="gap-card dim">
         <span class="n">02</span>
         <h3 class="h20">Execution tools</h3>
-        <p class="copy14">TMS and visibility stacks move the booking once someone has
-          already decided it should move. They do not watch the world.</p>
+        <p class="copy14">The TMS and the visibility stack hold the booking and move it once
+          someone has already decided it should move. They do not watch the world, and they do
+          not decide.</p>
         <p class="stops">Starts at: <b>the decision already made</b></p>
       </div>
       <div class="gap-card us">
         <span class="n">03</span>
         <h3 class="h20">Lanewatch</h3>
-        <p class="copy14">Reads the event, triages the book, makes the call per shipment,
-          explains it, and writes the two emails that call requires.</p>
-        <p class="stops">Closes: <b>risk → reroute → comms</b></p>
+        <p class="copy14">Sits on the TMS you already run. Reads the event, triages the book,
+          makes the call per booking, explains it, writes the change back onto the record, and
+          drafts the two emails that call requires.</p>
+        <p class="stops">Closes: <b>risk → reroute → comms → the TMS</b></p>
       </div>
     </div>
 
@@ -1359,13 +1362,29 @@ h1,h2,h3,h4,p{margin:0}
   <div class="wrap">
     <div class="head rv">
       <span class="eyebrow">How it works</span>
-      <h2 class="d2">Three agents, one closed loop.</h2>
+      <h2 class="d2">Three agents, one closed loop — run on your TMS.</h2>
       <p class="copy18">No framework, no scheduler, no queue. Plain functions calling
         functions over shared JSON state — which is exactly why you can read what
-        happened afterwards.</p>
+        happened afterwards. The loop opens and closes in the same place: the bookings
+        come out of the system of record, and every decision goes back into it.</p>
     </div>
 
     <div class="steps rv">
+      <div class="step">
+        <div class="num">00</div>
+        <div class="body">
+          <h3 class="h24">TMS link <span class="chip synth">Demo connector</span></h3>
+          <p class="copy16">The book is not ours. Every booking the agents work on is read out
+            of the TMS through one connector — reference, commodity, load and discharge port,
+            routing code, ETA, required-by, temperature regime. There is one door in, so the
+            day it points at a real TMS, the whole board follows it.</p>
+          <div class="facts">
+            <span class="fact">One read path — <b>nothing else opens the book</b></span>
+            <span class="fact">The demo's records are <b>synthetic</b>, the mapping is not</span>
+          </div>
+        </div>
+      </div>
+
       <div class="step">
         <div class="num">01</div>
         <div class="body">
@@ -1411,6 +1430,23 @@ h1,h2,h3,h4,p{margin:0}
           <div class="facts">
             <span class="fact">Every draft carries <b>status: DRAFT — not sent</b></span>
             <span class="fact">Nothing leaves the process</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="num">04</div>
+        <div class="body">
+          <h3 class="h24">Back into the TMS <span class="chip synth">Demo connector</span></h3>
+          <p class="copy16">A decision nobody records is a decision nobody acts on, so each
+            agent's output is expressed as a change to the record it came from: the Risk Worker
+            flags the exception on the booking, the Routing Worker changes discharge port,
+            routing code, ETA or status, and the Comms Worker files each drafted email against
+            the booking's communication log. A booking left on plan writes nothing at all.</p>
+          <div class="facts">
+            <span class="fact">Every change is <b>QUEUED — not written</b></span>
+            <span class="fact">No client, no credential, <b>no endpoint</b></span>
+            <span class="fact">A person approves the write</span>
           </div>
         </div>
       </div>
@@ -2096,9 +2132,9 @@ firm revised ETA as soon as terminals restart.</p>
       <span class="eyebrow">The rest of the desk</span>
       <h2 class="d2">A disruption is not one email. It is a day of them.</h2>
       <p class="copy18">The carrier sends a notice. The customer asks where their box is.
-        A rate request lands on the lane you are busy re-planning. And the TMS still says
-        the old discharge port. Deciding is the interesting half; this is the half that
-        eats the day.</p>
+        A rate request lands on the lane you are busy re-planning. And until someone types it
+        in, the TMS still says the old discharge port. Deciding is the interesting half; this
+        is the half that eats the day — and all of it is work on the same booking record.</p>
     </div>
 
     <div class="grid g3 rv" style="margin-top:40px">
@@ -2235,7 +2271,7 @@ firm revised ETA as soon as terminals restart.</p>
       </div>
 
       <div class="art wv-card">
-        <div class="art-h"><span class="ttl">TMS Link</span>
+        <div class="art-h"><span class="ttl">TMS Link — the system of record</span>
           <span class="r chip synth">DEMO CONNECTOR</span></div>
         <div class="art-b">
           <div class="wv">
@@ -2270,16 +2306,25 @@ firm revised ETA as soon as terminals restart.</p>
                   <span class="k">temperature_regime</span><span class="v"><span class="ar">→</span> cold_chain
                     <span class="chip">in</span></span>
                 </div>
-                <p class="wv-note">Bookings read in; routing, discharge port and ETA
-                  written back once a person approves.</p>
+                <p class="wv-note">Bookings read in; the risk exception, routing, discharge
+                  port, ETA, booking status and the communication log written back once a
+                  person approves.</p>
               </div>
               <div class="wv-s" data-do="write-back derived">
-                <div class="wv-r"><div class="wv-rl">Write-back · SHP-001</div>
+                <div class="wv-r"><div class="wv-rl">Write-backs · SHP-001 · one per Worker</div>
                   <div class="wv-f" style="margin-top:0">
+                    <span class="k">exception_flag</span>
+                    <span class="v">none <span class="ar">→</span> EVT-HAM-STRIKE
+                      <span class="chip">Risk</span></span>
                     <span class="k">port_of_discharge</span>
-                    <span class="v">HAM <span class="ar">→</span> RTM</span>
+                    <span class="v">HAM <span class="ar">→</span> RTM
+                      <span class="chip">Routing</span></span>
                     <span class="k">routing_code</span>
-                    <span class="v">R-HAM-STD <span class="ar">→</span> R-RTM-ALT</span>
+                    <span class="v">R-HAM-STD <span class="ar">→</span> R-RTM-ALT
+                      <span class="chip">Routing</span></span>
+                    <span class="k">communication_log</span>
+                    <span class="v">carrier + customer drafts
+                      <span class="chip">Comms</span></span>
                   </div>
                 </div>
               </div>
@@ -2306,8 +2351,8 @@ firm revised ETA as soon as terminals restart.</p>
 
     <div class="callout rv" style="margin-top:32px">
       <p class="copy16"><b style="color:var(--fg);font-weight:500">Everything outbound sits
-        behind the same gate.</b> A drafted reply, a drafted quote and a queued write-back all
-        leave the building, so all three wait on a person —
+        behind the same gate.</b> A drafted reply, a drafted quote and a change queued into the
+        TMS all leave the building, so all three wait on a person —
         <span class="mono" style="font-size:13px">DRAFT - not sent</span>,
         <span class="mono" style="font-size:13px">QUEUED - not written</span>. The test that
         proves the emails cannot be sent checks these too.</p>
@@ -2397,9 +2442,11 @@ firm revised ETA as soon as terminals restart.</p>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/>
           <path d="M5.6 5.6l12.8 12.8"/></svg>
-        <div><p class="k">No TMS integration</p>
-          <p class="v">The shipments are synthetic and authored so one disruption yields three
-            different, defensible decisions.</p></div>
+        <div><p class="k">No live TMS connection — yet</p>
+          <p class="v">Working through the TMS is the design, and the connector models both
+            directions of it. What is missing is the far end: no vendor, no credential, no
+            endpoint. The bookings behind it are synthetic, authored so one disruption yields
+            three different, defensible decisions.</p></div>
       </div>
       <div class="not">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -2427,11 +2474,16 @@ firm revised ETA as soon as terminals restart.</p>
           <span class="copy14">news pull, classification, decisions, drafts</span></span>
         <span><span class="chip synth">Synthetic</span>
           <span class="copy14">the five shipments and the injected Hamburg strike</span></span>
+        <span><span class="chip synth">Demo connector</span>
+          <span class="copy14">the TMS the bookings are read from and written back to</span></span>
       </div>
       <p class="copy14">
         The injected strike uses the same event format as a live one, so it runs through the
-        real pipeline rather than around it. A demo, not a live product — the gap between the
-        two is the integration, trust and liability wall.
+        real pipeline rather than around it. The TMS link is the same idea in the other
+        direction: the read is the only door to the book and every decision is expressed as a
+        change to the record it came from, but no TMS is contacted and nothing is written.
+        A demo, not a live product — the gap between the two is the integration, trust and
+        liability wall, and that wall is exactly where this connector stops.
       </p>
     </div>
   </div>

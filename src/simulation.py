@@ -35,7 +35,7 @@ import json
 import sys
 from datetime import datetime, timedelta
 
-from src import config, risk_monitor, route_advisor
+from src import config, risk_monitor, route_advisor, tms
 
 HELD = "held"
 MOVING = "moving"
@@ -129,8 +129,21 @@ def run(*, use_llm: bool = False, until_day: int | None = None, verbose: bool = 
         events = list(active.values())
         cards, tally = [], {"reroute": 0, "hold": 0, "no-action": 0}
 
+        queued = 0
         for shipment in shipments:
+            booked = routes.get(shipment["primary_route"], {})
             decision = route_advisor.advise(shipment, routes, events, use_llm=use_llm)
+            # What this day would put back on the booking. The simulation does not
+            # draft, so these are the Risk and Routing Workers' writes only - which
+            # is the honest count rather than a padded one.
+            queued += len(tms.writebacks_for({
+                "id": shipment["id"],
+                "discharge_port": booked.get("discharge_port"),
+                "route_id": shipment["primary_route"],
+                "eta": shipment["eta"],
+                "decision": dict(decision, recommended_discharge_port=routes.get(
+                    decision.get("recommended_route"), {}).get("discharge_port")),
+            }))
             change = _apply(shipment, decision)
             tally[decision.get("decision", "no-action")] += 1
             cards.append({
@@ -157,6 +170,9 @@ def run(*, use_llm: bool = False, until_day: int | None = None, verbose: bool = 
             "shipments": cards,
             "summary": tally,
             "actioned": tally["reroute"] + tally["hold"],
+            # Every day's decisions land on the bookings they came from, the same
+            # way one cycle's do. Counted, never written.
+            "tms_queued": queued,
         })
 
         if verbose:
@@ -190,6 +206,7 @@ def _totals(days: list[dict]) -> dict:
         "shipments_moved": len(moved),
         "shipments_held": len(held),
         "longest_hold_days": hold_days,
+        "tms_writebacks": sum(d.get("tms_queued", 0) for d in days),
         "busiest_day": max(days, key=lambda d: d["actioned"])["label"] if days else None,
     }
 
@@ -217,6 +234,8 @@ def _print_totals(result: dict) -> None:
     print(f"  {t['decisions']} decisions · {t['shipments_moved']} shipments moved · "
           f"{t['shipments_held']} held")
     print(f"  longest hold: {t['longest_hold_days']} day(s) · busiest day: {t['busiest_day']}")
+    print(f"  {t['tms_writebacks']} changes the week would queue back into the TMS "
+          f"(none written)")
     print(f"\n  {result['honesty']}\n")
 
 

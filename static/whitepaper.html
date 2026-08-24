@@ -146,7 +146,9 @@ code{font-family:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace; font-
      background:var(--gray-100); padding:1px 5px; border-radius:4px; color:var(--fg)}
 
 /* ---------- the loop ---------- */
-.stages{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:26px 0 10px}
+/* Six stages now the loop opens and closes on the TMS: three across, two down,
+   so the read and the write-back sit at the two ends of the same block. */
+.stages{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:26px 0 10px}
 @media(max-width:1100px){.stages{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:600px){.stages{grid-template-columns:1fr}}
 /* Each card holds a different amount of text, so the chips have to be pushed to
@@ -296,12 +298,15 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
       <h2 class="h32">In one paragraph</h2>
       <p class="copy16">
         A disruption — a port strike, a river running low, a corridor closing — is known
-        locally long before it is news globally. Lanewatch reads around twenty sources close
-        to those events, decides which of your bookings are affected, and produces three
-        things for each one: a decision, the reasoning behind it, and the carrier and customer
-        emails it implies. Nothing is ever sent. A person approves, or does not. The whole
-        loop runs on open-weight models that can be hosted inside the European Union, so the
-        shipment data never has to leave.
+        locally long before it is news globally. Lanewatch runs on the bookings in a
+        forwarder's TMS: it reads around twenty sources close to those events, decides which
+        of those bookings are affected, and produces three things for each one: a decision,
+        the reasoning behind it, and the carrier and customer emails it implies. Each of those
+        is expressed as a change to the booking record it came from and queued back into the
+        TMS — the exception on the booking, the new discharge port and ETA, the drafted mail
+        on its communication log. Nothing is sent and nothing is written until a person
+        approves it. The whole loop runs on open-weight models that can be hosted inside the
+        European Union, so the shipment data never has to leave.
       </p>
     </section>
 
@@ -328,11 +333,19 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
     <section id="loop">
       <h2 class="h32">How the loop works</h2>
       <p class="lede copy14">
-        Four components, run in order, on demand. The numbering is real: each stage consumes
-        the previous stage's output.
+        Six stages, run in order, on demand. The numbering is real: each stage consumes the
+        previous stage's output — and the first and last are the same system, because the
+        agents work on the forwarder's records rather than on a book of their own.
       </p>
 
       <div class="stages">
+        <div class="stage">
+          <span class="n">00</span>
+          <div class="t">TMS link — read</div>
+          <div class="d">The bookings come out of the system of record through one connector.
+            Nothing else in the codebase opens the book.</div>
+          <span class="chip script">Demo connector</span>
+        </div>
         <div class="stage">
           <span class="n">01</span>
           <div class="t">Risk Monitor</div>
@@ -357,18 +370,28 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
         <div class="stage">
           <span class="n">04</span>
           <div class="t">The desk</div>
-          <div class="d">Booking amendments, invoice reconciliation, customs entry, TMS
-            write-back — everything a decision lands on downstream.</div>
+          <div class="d">Booking amendments, invoice reconciliation, customs entry —
+            everything a decision lands on downstream.</div>
           <span class="chip script">Scripted</span>
+        </div>
+        <div class="stage">
+          <span class="n">05</span>
+          <div class="t">TMS link — write back</div>
+          <div class="d">Each agent's output as a change to the record it came from:
+            exception flagged, booking amended, drafted mail filed. All of it queued for a
+            person; a booking on plan writes nothing.</div>
+          <span class="chip script">Demo connector</span>
         </div>
       </div>
       <p class="loopnote">Every stage records why it did what it did — the loop is auditable, not just automatic</p>
 
       <h3>The part that makes it a loop</h3>
       <p class="copy16">
-        Risk platforms stop at stage 01. Execution tools start at stage 04 and assume someone
-        already decided. Welding the two together — and writing down the reasoning in
-        between — is the whole idea. A shipment rerouted on Tuesday is on the new route on
+        Risk platforms stop at stage 01. The TMS and the execution stack own stages 00 and 05
+        and assume someone already decided the middle. Welding the two together — reading the
+        book out of the system of record, deciding, writing down the reasoning, and putting
+        the result back on the same record — is the whole idea. The agents do not run beside
+        the TMS; they run on it. A shipment rerouted on Tuesday is on the new route on
         Wednesday, and is no longer exposed to the thing that moved it. A shipment that is
         held accrues a day of delay for every day it waits, and carries that delay when it
         resumes. Holding is not free, and the system says so.
@@ -395,10 +418,12 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
               <td>Generated per shipment, per audience. Never sent — there is no email library anywhere in the codebase.</td></tr>
             <tr><td><b>The shipments</b></td><td><span class="tag warn">Synthetic</span></td>
               <td>Seven authored bookings. Real ones need a customer's TMS, which sits on the far side of the trust wall.</td></tr>
+            <tr><td><b>The TMS link</b></td><td><span class="tag warn">Demo connector</span></td>
+              <td>Both directions are modelled and the read is the only door to the book, so every component follows it. But no TMS is contacted: there is no client, no credential and no endpoint, and a write-back is a described change that stays queued.</td></tr>
             <tr><td><b>The triggering event</b></td><td><span class="tag warn">Scripted</span></td>
               <td>So a disruption can be shown on demand instead of waiting for one. It uses the same data shape as a live event and flows through the same pipeline.</td></tr>
             <tr><td><b>Downstream desk workers</b></td><td><span class="tag warn">Scripted</span></td>
-              <td>Booking, invoice, customs, TMS. They react correctly to each decision, but they replay authored data and are labelled as such.</td></tr>
+              <td>Booking, invoice, customs. They react correctly to each decision and work on the same booking records, but they replay authored content and are labelled as such.</td></tr>
           </tbody>
         </table>
       </div>
@@ -744,7 +769,7 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
       <ul>
         <li><b>Not route optimisation.</b> Candidate routes are pre-defined. The system chooses among them and justifies the choice; it does not compute new ones.</li>
         <li><b>Not a sending system.</b> Emails, booking amendments, customs entries and TMS write-backs are all drafted and held. There is no transport layer in the codebase, and a test fails the build if one is ever imported.</li>
-        <li><b>Not integrated with any real TMS.</b> The connector models the field mapping and describes the change a decision implies. It contacts nothing.</li>
+        <li><b>Not connected to a real TMS.</b> Working through the TMS is the design and both directions are modelled — the read is the only door to the book, and every agent action is expressed as a change to a booking record. What is absent is the far end: no vendor, no credential, no endpoint. It contacts nothing.</li>
         <li><b>Not always-on.</b> It runs on demand. For a demonstration, a button beats a background job.</li>
         <li><b>Not measured.</b> There are no accuracy figures, hit rates or time-saved claims anywhere in this document, because none have been measured. Inventing them is the fastest way to lose a room that knows the domain.</li>
       </ul>
@@ -757,7 +782,7 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
         integration, trust and liability.
       </p>
       <ul>
-        <li><b>A real booking feed.</b> One TMS integration, properly done, replaces the synthetic pool and is the single highest-value next step.</li>
+        <li><b>A real TMS connection.</b> The shape is already here — one read path and a write-back per agent action — so the work is the far end of it: a vendor's API, credentials, field mapping against their schema, and the reconciliation that follows when the two systems disagree. Replacing the synthetic pool with a live book is the single highest-value next step, and everything downstream of it already assumes it.</li>
         <li><b>Inference moved in-region.</b> Deploy the model classes above on EU capacity and benchmark them, replacing the illustrative costs here with measured ones.</li>
         <li><b>Evaluation the domain would accept.</b> A held-out set of historical disruptions, scored on whether the decision matches what the desk actually did — the only credible answer to “how good is it”.</li>
         <li><b>Sending, deliberately and last.</b> The approval gate exists because trust is earned in that order. Drafting well for months is the argument for eventually being allowed to send.</li>
