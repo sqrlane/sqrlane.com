@@ -192,6 +192,58 @@ html[data-theme="dark"]{
 .chart .blab{text-anchor:middle;font-size:11px;font-weight:600;fill:var(--s-delay)}
 .chart .grp:hover .b{opacity:.82}
 .chart-f{font-size:12.5px;color:var(--faint);margin:12px 0 0}
+.sl{display:flex;align-items:center;gap:16px}
+.sl-t{display:flex;flex-direction:column;gap:4px}
+.sl-t b{font-size:13.5px}
+.sl-t span{font-size:12.5px;color:var(--muted);line-height:1.5}
+.sl-t .sl-x{color:var(--red);font-weight:500}
+
+.ap-g{margin-bottom:22px}
+.ap-h{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.ap-h b{font-size:14px}
+.ap-c{font-size:12.5px;color:var(--muted)}
+
+/* ---------- element kit: segmented control, empty state, skeleton, gauge ---- */
+.seg{display:inline-flex;gap:2px;padding:3px;background:var(--surface);border-radius:var(--r);
+     margin-bottom:16px}
+.seg-b{display:flex;align-items:center;gap:7px;border:0;background:none;color:var(--muted);
+       font:inherit;font-size:13px;padding:6px 12px;border-radius:4px;cursor:pointer}
+.seg-b:hover{color:var(--fg)}
+.seg-b.on{background:var(--card);color:var(--fg);font-weight:500;box-shadow:var(--shadow)}
+.seg-n{font-size:11.5px;font-variant-numeric:tabular-nums;color:var(--faint);
+       background:var(--card-muted);border-radius:999px;padding:0 6px}
+.seg-b.on .seg-n{background:var(--surface);color:var(--muted)}
+
+.empty-s{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;
+         padding:44px 24px;border:1px dashed var(--border-strong);border-radius:var(--r-md);
+         background:var(--card)}
+.empty-i{display:flex;align-items:center;justify-content:center;width:38px;height:38px;
+         border-radius:999px;background:var(--surface);color:var(--faint);margin-bottom:4px}
+.empty-t{font-size:14px;font-weight:600;margin:0}
+.empty-b{font-size:13px;color:var(--muted);margin:0;max-width:46ch;line-height:1.55}
+
+.sk-wrap{display:flex;flex-direction:column;gap:10px}
+.sk-row{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);
+        border-radius:var(--r-md);padding:16px 18px}
+.sk{display:block;border-radius:6px;background:linear-gradient(90deg,var(--surface) 25%,
+    var(--surface-2) 37%,var(--surface) 63%);background-size:400% 100%;
+    animation:sk 1.4s ease-in-out infinite}
+@keyframes sk{0%{background-position:100% 50%}100%{background-position:0 50%}}
+.sk-dot{width:8px;height:8px;border-radius:999px;flex:none}
+.sk-a{width:82px;height:11px;flex:none}
+.sk-b{flex:1;height:11px;max-width:320px}
+.sk-c{width:90px;height:11px;margin-left:auto;flex:none}
+@media(prefers-reduced-motion:reduce){.sk{animation:none}}
+
+.ng{display:flex;justify-content:center}
+.ng svg{width:120px;height:78px}
+.ng-n{stroke:var(--surface-2);stroke-width:3.4;stroke-linecap:round}
+.ng-n.on{stroke:var(--s-plan)}
+.ng-n.on.warn{stroke:var(--s-hold)}
+.ng-n.on.bad{stroke:var(--red)}
+.ng-v{text-anchor:middle;font-size:19px;font-weight:600;fill:var(--fg);letter-spacing:-.03em}
+.ng-l{text-anchor:middle;font-size:9.5px;fill:var(--faint)}
+
 /* ---------- element kit: search, palette, page headers ---------- */
 .sidesearch{display:flex;align-items:center;gap:9px;width:calc(100% - 24px);margin:2px 12px 8px;
             padding:8px 10px;border:1px solid var(--border);background:var(--card-muted);
@@ -676,6 +728,7 @@ let sim = {}, simDay = null, simBusy = false;   // the authored week (src/simula
 let atlas = {}, mapPick = null;                 // the board on a map (src/geo.py)
 let ranAt = null;                               // when the last run finished
 const approved = new Set();     // approval is browser state only; nothing is transmitted
+let running = false;            // a run is in flight - views show their skeleton
 let view = "overview", openId = null;
 
 /* ---------- theme ---------- */
@@ -762,7 +815,9 @@ const MAPTONE = {rerouted:"reroute", hold:"hold", green:"plan"};
 
 function mapView(){
   const a = atlas || {};
-  if (!(a.lanes||[]).length) return `<div class="hint">The map draws on the first render.</div>`;
+  if (!(a.lanes||[]).length) return emptyState({
+    icon:"map", title:"No lanes to draw yet",
+    body:"The map builds from the board. Press <b>Run</b> and every booking appears on the lane it actually sails."});
   const f = a.frame || {width:1000, height:560};
   const pick = mapPick && a.lanes.find(l => l.id === mapPick);
   const shown = pick ? [pick] : a.lanes;
@@ -835,9 +890,8 @@ function simulationView(){
         <p>Eight days, five disruptions, the same seven shipments. State carries from
            one day to the next.</p></div>
         <span class="tag inj">scripted</span></div>
-      <div class="hint" style="margin-top:16px">
-        <b>Nothing has run yet.</b> Press <b>Play the week</b> to step the board through
-        a walkout, a river running low, a corridor closing, and the climb back.</div>
+      ${emptyState({icon:"simulation", title:"The week has not been played",
+        body:"Step the board through a walkout, a river running low, a corridor closing, and the climb back. State carries from one day to the next."})}
       <button class="run" id="sim-run" style="margin-top:16px">${
         simBusy ? "Running…" : "Play the week"}</button>
     </div>`;
@@ -902,8 +956,9 @@ function simulationView(){
 
 function connectionsView(){
   const t = tmsLink || {};
-  if (!t.connector) return `<div class="hint">The connection reports itself on a run.
-    Press <b>Run</b> above to sync the board.</div>`;
+  if (!t.connector) return emptyState({
+    icon:"connections", title:"The connector has not reported yet",
+    body:"It reports itself on a run — what synced, what a decision would change, and every one of those changes held at the approval gate."});
   const wb = t.writebacks || [];
   return `<div class="card conn">
     <div class="conn-h">
@@ -963,6 +1018,64 @@ let palOpen = false, palSel = 0, palRows = [];
 /* One header shape for every page. Before this, some views opened with a card
    and some with a bare table, so moving between them felt like moving between
    two products. */
+/* ---- element kit ---------------------------------------------------------
+   Ported patterns, not code: both reference libraries are React + Tailwind and
+   this page is one vanilla file with no build step. What is portable is the
+   anatomy - a segmented control, an empty state that names the next action, a
+   skeleton with the shape of what is loading, and a notch gauge. */
+
+/* Segmented control. One row, one active segment, counts on the right. */
+function segmented(items, activeId, attr){
+  return `<div class="seg" role="tablist">${items.map(i => `
+    <button class="seg-b ${i.id===activeId?"on":""}" role="tab" aria-selected="${i.id===activeId}"
+            data-${attr}="${esc(i.id)}">${esc(i.label)}${
+      i.n != null ? `<span class="seg-n">${i.n}</span>` : ""}</button>`).join("")}</div>`;
+}
+
+/* Empty states point at the next action rather than announcing emptiness. */
+function emptyState({icon, title, body, action}){
+  return `<div class="empty-s">
+    <span class="empty-i">${ICON[icon] || ICON.overview}</span>
+    <p class="empty-t">${esc(title)}</p>
+    <p class="empty-b">${body}</p>
+    ${action || ""}</div>`;
+}
+
+/* A skeleton is the shape of the thing that is coming, not a spinner - so the
+   layout does not jump when the run lands. */
+function skeletonRows(n){
+  return `<div class="sk-wrap">${Array.from({length:n}, () => `
+    <div class="sk-row"><span class="sk sk-dot"></span>
+      <span class="sk sk-a"></span><span class="sk sk-b"></span>
+      <span class="sk sk-c"></span></div>`).join("")}</div>`;
+}
+
+/* Notch gauge, after the reference library's: a track cut into notches, filled
+   to a 0-100 level, with the figure in the middle. Used for slack consumed,
+   which is a real proportion - the delay against the slack the booking had. */
+function notchGauge(pct, label, tone){
+  // The track tops out at 100, so the figure does too: a full arc labelled
+  // "500%" reads as a bug. The exact days sit in the line beside it, so nothing
+  // is lost by capping the headline.
+  const N = 28, START = -220, END = 40, span = END - START;
+  const lit = Math.round(Math.min(pct, 100) / 100 * N);
+  const R = 46, cx = 60, cy = 58;
+  const notches = Array.from({length:N}, (_, i) => {
+    const a = (START + span * (i / (N - 1))) * Math.PI / 180;
+    const x1 = cx + Math.cos(a) * (R - 9), y1 = cy + Math.sin(a) * (R - 9);
+    const x2 = cx + Math.cos(a) * R,        y2 = cy + Math.sin(a) * R;
+    return `<line class="ng-n ${i < lit ? "on " + (tone||"") : ""}"
+       x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}"
+       x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
+  }).join("");
+  return `<div class="ng">
+    <svg viewBox="0 0 120 78" role="img" aria-label="${esc(label)}: ${Math.round(pct)} percent">
+      ${notches}
+      <text class="ng-v" x="${cx}" y="${cy - 2}">${pct > 100 ? "100%+" : Math.round(pct) + "%"}</text>
+      <text class="ng-l" x="${cx}" y="${cy + 13}">${esc(label)}</text>
+    </svg></div>`;
+}
+
 const PAGES = {
   overview:   ["Overview", "The board, the run, and what the Workers did with it"],
   shipments:  ["Shipments", "Every booking on the board, grouped by what it needs"],
@@ -1597,15 +1710,17 @@ function render(){
   if (view === "overview") $("v-overview").innerHTML = pageHeader("overview") + statRow() +
     (hasRun ? `<div class="grid-chart">${schedulePressure()}${outcomeRing()}</div>` : "") +
     legendCard() +
-    (hasRun?"":`<div class="hint" style="margin-bottom:20px">
-      <b>Nothing has happened yet.</b> Press <b>Inject Hamburg strike</b> above — the Workers read live news,
-      triage all ${board.length} shipments, and draft the emails each one needs. Everything then
-      waits for your approval.</div>`) +
+    (hasRun ? "" : emptyState({icon:"overview", title:"Nothing has happened yet",
+      body:`Press <b>Run</b> — the Workers read live news, triage all ${board.length}
+            bookings, and draft the emails each one needs. Everything then waits
+            for your approval.`}) + "<div style='height:20px'></div>") +
     notes.map(n=>`<div class="note">${esc(n)}</div>`).join("") +
     `<div class="grid2"><div>${shipmentGroups()}</div><div>${workersCard()}${riskCard(true)}</div></div>`;
 
-  if (view === "shipments") $("v-shipments").innerHTML = pageHeader("shipments") + statRow() + shipmentGroups();
-  if (view === "risk")      $("v-risk").innerHTML = pageHeader("risk") + riskCard(false);
+  if (view === "shipments") $("v-shipments").innerHTML = pageHeader("shipments") +
+    (running ? skeletonRows(5) : statRow() + shipmentGroups());
+  if (view === "risk")      $("v-risk").innerHTML = pageHeader("risk") +
+    (running ? skeletonRows(3) : riskCard(false));
   if (view === "approvals") $("v-approvals").innerHTML = pageHeader("approvals") + approvalsView();
   if (view === "connections") $("v-connections").innerHTML = pageHeader("connections") + connectionsView();
   if (view === "simulation")  $("v-simulation").innerHTML = pageHeader("simulation") + simulationView();
@@ -1616,6 +1731,9 @@ function render(){
     // With a Worker panel open, picking a shipment drives that panel instead of
     // opening the detail drawer - that reactivity is the point of the roster.
     if (openWorker) render(); else openPanel(b.dataset.open);
+  });
+  document.querySelectorAll("[data-atab]").forEach(b => b.onclick = () => {
+    approvalTab = b.dataset.atab; render();
   });
   document.querySelectorAll("[data-mappick]").forEach(b => b.onclick = () => {
     mapPick = (mapPick === b.dataset.mappick) ? null : b.dataset.mappick; render();
@@ -1644,19 +1762,49 @@ function render(){
   renderNav();
 }
 
+let approvalTab = "waiting";
+
 function approvalsView(){
-  const withDrafts = board.filter(s=>(s.drafts||[]).length);
-  if (!withDrafts.length) return `<div class="hint">No drafts yet. Run a cycle — any shipment that
-    needs action gets a carrier and a customer email, and both wait here for you.</div>`;
-  const left = pending();
-  return `<p class="sec-t">${left?`${left} awaiting your approval`:"All approved"} · nothing is ever sent</p>` +
-    withDrafts.map(s=>`<div style="margin-bottom:22px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px">
-        <span class="badge ${s.state}">${LABEL[s.state]}</span>
-        <b style="font-size:14px">${esc(s.id)} · ${esc(s.cargo)}</b>
-        <span style="font-size:12.5px;color:var(--muted)">${esc(s.customer||"")}</span>
+  if (running) return skeletonRows(4);
+  const withDrafts = board.filter(s => (s.drafts||[]).length);
+  if (!withDrafts.length) return emptyState({
+    icon: "approvals", title: "No drafts yet",
+    body: `Press <b>Run</b> and any booking that needs action gets a carrier and a
+           customer email. Both wait here for you — nothing is ever sent.`});
+
+  const isWaiting = m => !approved.has(key(m));
+  const counts = {waiting: 0, approved: 0};
+  withDrafts.forEach(sh => sh.drafts.forEach(m => counts[isWaiting(m) ? "waiting" : "approved"]++));
+
+  const tabs = segmented([
+    {id:"waiting",  label:"Awaiting you", n:counts.waiting},
+    {id:"approved", label:"Approved",     n:counts.approved},
+    {id:"all",      label:"All",          n:counts.waiting + counts.approved},
+  ], approvalTab, "atab");
+
+  const groups = withDrafts.map(sh => {
+    const mails = sh.drafts.filter(m =>
+      approvalTab === "all" ? true :
+      approvalTab === "waiting" ? isWaiting(m) : !isWaiting(m));
+    if (!mails.length) return "";
+    return `<div class="ap-g">
+      <div class="ap-h">
+        <span class="badge ${sh.state}">${LABEL[sh.state]}</span>
+        <b>${esc(sh.id)} · ${esc(sh.cargo)}</b>
+        <span class="ap-c">${esc(sh.customer||"")}</span>
       </div>
-      ${s.drafts.map(m=>mailHTML(m)).join("")}</div>`).join("");
+      ${mails.map(m => mailHTML(m)).join("")}</div>`;
+  }).join("");
+
+  const body = groups || emptyState({
+    icon: "approvals",
+    title: approvalTab === "waiting" ? "Nothing waiting on you" : "Nothing approved yet",
+    body: approvalTab === "waiting"
+      ? "Every draft on the board has been approved. Approving is a state change here and nothing else — there is no transport in the app to send them."
+      : "Approve a draft and it moves here."});
+
+  return `${tabs}<p class="sec-t">${counts.waiting ? `${counts.waiting} awaiting your approval`
+    : "All approved"} · nothing is ever sent</p>${body}`;
 }
 
 function mailHTML(m){
@@ -1695,7 +1843,25 @@ function openPanel(id, keep){
       <div style="font-size:12.5px;color:var(--muted);margin-top:4px">
         ${esc(s.origin)} → ${esc(s.final_destination)} · ${esc(s.customer||"")}</div></div>
     <button class="icon-btn" id="panel-x">${ICON.close}</button>`;
+  // Slack consumed is the number the whole decision turns on: the delay this
+  // disruption imposes against the slack the booking had. Over 100% means the
+  // delay does not fit, which is exactly when there is no clean answer.
+  const slack = d.slack_days || 0, delay = d.delay_days || 0;
+  const pct = slack > 0 ? (delay / slack) * 100 : (delay ? 100 : 0);
+  const tone = pct > 100 ? "bad" : pct > 66 ? "warn" : "";
+  const fits = delay <= slack;
+
   $("panel-b").innerHTML =
+    `<div class="sec sl">
+      ${notchGauge(pct, "slack used", tone)}
+      <div class="sl-t">
+        <b>${delay}d of delay against ${slack}d of slack</b>
+        <span>${fits ? "The delay fits inside the schedule it had."
+          : "The delay does not fit — there is no option that arrives on time."}</span>
+        ${d.deadline_breached ? `<span class="sl-x">Misses the required-by date of ${
+          esc(d.required_by||"")}</span>` : ""}
+      </div>
+    </div>` +
     `<div class="sec"><p class="sec-t">Why</p><div class="reason">${esc(d.reasoning)}</div>
       ${(d.rejected_options||[]).length?`<ul class="rejected">${d.rejected_options.map(o=>
         `<li><b>${esc(o.route_id)}</b> — ${esc(o.why_not)}</li>`).join("")}</ul>`:""}</div>` +
@@ -1759,7 +1925,7 @@ async function load(){
 
 async function run(){
   const btn = $("run");
-  btn.disabled = true; approved.clear();
+  btn.disabled = true; approved.clear(); running = true;
   let stage = 0;
   const names = ["Reading sources…","Triaging shipments…","Drafting communications…"];
   const advance = () => {
@@ -1775,6 +1941,10 @@ async function run(){
       body:JSON.stringify({live:true,inject:true,use_llm:true,
         scenario:chosenScenario})}).then(r=>r.json());
     clearInterval(tick);
+    // Clear this BEFORE the render below: the views key their skeleton off it,
+    // and the finally block runs after that render, so leaving it there left
+    // every view stuck on its skeleton with the real data already in hand.
+    running = false;
     if (res.state === "error"){
       notes = [res.error]; workers = workers.map(w=>({...w,status:"idle"}));
     } else {
@@ -1790,9 +1960,10 @@ async function run(){
     render(); renderEngine();
   } catch(err){
     clearInterval(tick);
+    running = false;
     notes = [`Could not reach the server: ${err.message}`]; render();
   } finally {
-    btn.disabled = false;
+    btn.disabled = false; running = false;   // belt and braces if we never got that far
     const nm = (scenarios.find(x=>x.id===chosenScenario)||{}).name;
     btn.innerHTML = `<span>${esc(nm ? "Run "+nm : "Run again")}</span>`;
   }

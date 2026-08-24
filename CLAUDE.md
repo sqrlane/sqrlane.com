@@ -159,6 +159,43 @@ is counted from that run; nothing is illustrative.
 A **decision-engine strip** names the model in use and the model-vs-rules split, so the
 central claim is checkable at a glance rather than asserted.
 
+### The element kit — ported, not imported
+
+Two more references sit behind the UI: [`bklit/bklit-ui`](https://github.com/bklit/bklit-ui)
+and [`kokonut-labs/kokonutui`](https://github.com/kokonut-labs/kokonutui). bklit-ui is
+the **upstream of limns-admin** — the same chart component names — so the Geist direction
+is one lineage, not three.
+
+Both are React + Tailwind. This page is one self-contained vanilla file with no build
+step, so what carries over is **anatomy, never code**:
+
+- **Command palette** on Ctrl/Cmd-K, plus the sidebar search box. It searches the seven
+  views and every booking by id, cargo, origin and destination; Enter selects the booking
+  and opens its panel. It reaches something rather than decorating the sidebar.
+- **One page header everywhere** — title, what the page is, actions, last-run stamp.
+  Before it, some views opened with a card and some with a bare table.
+- **Segmented control** on Approvals (awaiting / approved / all).
+- **Empty states** that name the next action. `verify_shell.py` asserts zero ad-hoc
+  `.hint` blocks survive.
+- **Skeletons** shaped like the thing that is loading, so the layout does not jump.
+- **Notch gauge**, after bklit's, on the shipment drawer: **slack consumed** — the delay
+  against the slack the booking had. A real proportion, and the number every decision
+  turns on. SHP-002 reads `100%+` in red.
+
+Two things worth keeping:
+
+- **The gauge figure is capped to its track.** SHP-002 is 5 days of delay against 1 of
+  slack — literally 500%. A full arc labelled "500%" reads as a bug, so the headline caps
+  at `100%+` and the exact days sit in the line beside it. Nothing is lost.
+- **A `running` flag must be cleared before the render that consumes it.** It was being
+  cleared in `finally`, which runs *after* the success path's `render()`, so every
+  skeletoned view stayed on its skeleton with the real data already in hand. Two browser
+  suites caught it; no unit test would have.
+
+Not ported, deliberately: kokonutui's decorative pieces (glitch-text, liquid-glass,
+background-paths) and anything needing teams or avatar stacks. The first fight a demo
+that has to read clearly in a room; the second would be invented data.
+
 ### The simulation loop — a week, not a snapshot
 
 The button runs **one** cycle: one set of active events, one set of decisions. That
