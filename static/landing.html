@@ -353,9 +353,8 @@ h1,h2,h3,h4,p{margin:0}
    piece of pure decoration on the page: a tick asserts "true" and carries
    nothing else, and colour here is meant to be spent on state. The row
    leads with a key naming what the claim is about instead - the same
-   key-then-sentence anatomy the page already uses for the non-goals
-   (.not) and the mail header fields (.mail .f), and the same hairline
-   rules the dashboard's own lists use. It reads as a spec sheet rather
+   key-then-sentence anatomy the mail header fields (.mail .f) use, and
+   the same hairline rules the dashboard's own lists keep. It reads as a spec sheet rather
    than a marketing checklist, and the key is scannable in a way a tick
    never is. */
 .feature .claims{margin:24px 0 0; padding:0; list-style:none;
@@ -936,14 +935,6 @@ h1,h2,h3,h4,p{margin:0}
 .wv-cur.tap::after{animation:wvtap .5s var(--ease)}
 @keyframes wvtap{from{opacity:.6; transform:scale(.3)} to{opacity:0; transform:scale(1)}}
 
-/* ---------- non-goals ---------- */
-.nots{margin-top:36px}
-.not{display:flex; gap:12px; padding:16px 18px; border:1px solid var(--border);
-     border-radius:var(--r-md); background:var(--card-muted)}
-.not svg{flex:none; margin-top:2px; color:var(--gray-600)}
-.not .k{font-size:14px; font-weight:500; letter-spacing:-.2px}
-.not .v{font-size:13px; line-height:19px; color:var(--muted); margin-top:3px}
-
 /* ---------- honest band ----------
    The same card rule as everything else on the page - hairline border, 12px
    radius, --shadow-card - which is bklit-ui's anatomy, it being a shadcn
@@ -1105,7 +1096,6 @@ h1,h2,h3,h4,p{margin:0}
       <a href="#case">Case study</a>
       <a href="#reasoning">Reasoning</a>
       <a href="#sources">Sources</a>
-      <a href="#scope">Scope</a>
       <a href="/whitepaper">Whitepaper</a>
     </nav>
     <div class="right">
@@ -2370,54 +2360,6 @@ firm revised ETA as soon as terminals restart.</p>
   </div>
 </section>
 
-<!-- ======================== SCOPE ======================== -->
-<section class="section" id="scope">
-  <div class="wrap">
-    <div class="head rv">
-      <span class="eyebrow">Scope</span>
-      <h2 class="d2">What it deliberately does not do.</h2>
-      <p class="copy18">Scope creep is the failure mode for a prototype like this. These are
-        not roadmap items being coy — they are out, by decision.</p>
-    </div>
-
-    <div class="grid g2 nots rv">
-      <div class="not">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/>
-          <path d="M5.6 5.6l12.8 12.8"/></svg>
-        <div><p class="k">No route optimisation</p>
-          <p class="v">Routes are pre-authored candidates. The agent chooses among them and
-            justifies the choice; it never computes a route.</p></div>
-      </div>
-      <div class="not">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/>
-          <path d="M5.6 5.6l12.8 12.8"/></svg>
-        <div><p class="k">No sending</p>
-          <p class="v">Emails are drafted and displayed. No transport of any kind is
-            imported anywhere in the codebase, and a test enforces it.</p></div>
-      </div>
-      <div class="not">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/>
-          <path d="M5.6 5.6l12.8 12.8"/></svg>
-        <div><p class="k">No TMS integration</p>
-          <p class="v">The shipments are synthetic, and the connector that would carry a decision
-            back to a booking describes the change rather than writing it. A real one sits behind
-            the integration, trust and liability wall.</p></div>
-      </div>
-      <div class="not">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/>
-          <path d="M5.6 5.6l12.8 12.8"/></svg>
-        <div><p class="k">No scheduler, no database</p>
-          <p class="v">Button-triggered, JSON files, in memory. For a demo, magic on command
-            beats a background job.</p></div>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- ======================== HONEST BAND ======================== -->
 <section class="section honest" id="honest">
   <div class="wrap">
@@ -2507,7 +2449,6 @@ firm revised ETA as soon as terminals restart.</p>
         <h4>Detail</h4>
         <ul>
           <li><a href="#sources">Data sources</a></li>
-          <li><a href="#scope">Scope &amp; non-goals</a></li>
           <li><a href="#honest">What's real</a></li>
         </ul>
       </div>
