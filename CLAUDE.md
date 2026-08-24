@@ -12,16 +12,35 @@ colours, taglines or Worker names**, and never invent a metric — no traction, 
 percentage claims. Real reasoning on synthetic shipments is the honest pitch, and a
 sharp audience catches invented numbers.
 
+**Lanewatch works through the forwarder's TMS. That is the product, not a feature of it.**
+It is not another book to keep: the bookings are read out of the system of record, the
+agents decide against those records, and every action they take is written back onto them.
+Risk → decision → communication → the system of record, closed. Nothing the agents do
+happens beside the TMS.
+
 Small agents watch global news (in multiple languages) for events that disrupt shipping. When a
-disruption hits, the system checks which shipments are affected, decides whether to **reroute** or
-**hold** each one — and *explains why* — then drafts the carrier and customer emails a human would
-need to send. Risk → decision → communication as one closed loop, with the reasoning recorded. A
-light "5U AI-style AI Worker" wrapper sits on top purely as demo framing.
+disruption hits, the system checks which of those bookings are affected, decides whether to
+**reroute** or **hold** each one — and *explains why* — drafts the carrier and customer emails a
+human would need to send, and queues the booking change each decision implies back into the TMS:
+the exception on the booking, the new discharge port, routing code and ETA, the drafted mail on
+the communication log. Every message and every write waits for a person. A light "5U AI-style AI
+Worker" wrapper sits on top purely as demo framing.
+
+**In this build the TMS is a demo connector** (`src/tms.py`), and that word is on screen
+everywhere it is surfaced. Both directions are modelled and the read is genuinely the only
+door to the book — `tests/test_tms_is_the_system_of_record.py` fails if anything else in
+`src/` opens it — but no TMS is contacted: no client, no credential, no endpoint. A
+write-back is a dict describing a change, and it stays a dict. **Never present the
+connector as a live TMS link, and never quietly drop the "runs through the TMS" framing
+either — the first is a lie about this build, the second is a lie about the product.**
 
 **The problem it models:** forwarders watch for disruptions *and* react to them by hand. Signals
 that surface first in non-English sources (a German port strike, an Arabic-language Red Sea
 incident) are seen late. Incumbent risk tools (Everstream, Interos, Resilinc) stop at the alert —
-they don't decide or act, and they're priced out of the mid-market.
+they don't decide or act, and they're priced out of the mid-market. On the other side, the TMS and
+the visibility stack hold the booking and move it once someone has already decided it should
+move — they don't watch the world. The desk is the manual bridge between the two, and re-keying
+the decision into the TMS is a real part of what eats the day.
 
 **Modelled end user:** Head of Operations at a mid-size DACH/Benelux forwarder.
 **Actual audience:** whoever is being shown the demo — a forwarder ops lead, investor, or interviewer.
@@ -41,9 +60,12 @@ they don't decide or act, and they're priced out of the mid-market.
    the UI says "regional" and "international wires" throughout. Real outlet names
    (Al Jazeera Arabic, DW Deutsch) are fine: those identify a source, they do not claim an
    edge. `verify_neutral.py` holds this. See [The detection trail](#the-detection-trail).
-2. **A closed risk → reroute → comms loop with recorded reasoning.** Risk incumbents stop at the
-   alert; execution players don't touch risk. Welding them — and recording *why* each decision was
-   made — is the whitespace.
+2. **A closed risk → reroute → comms loop that runs on the TMS, with recorded reasoning.**
+   Risk incumbents stop at the alert; execution players start after the decision and don't
+   touch risk. Welding them — reading the book out of the system of record, deciding,
+   recording *why*, and putting the result back on the same record — is the whitespace. The
+   loop opening and closing in the same place is what makes it operational rather than
+   advisory: a decision that never reaches the TMS is a decision nobody acts on.
 
 ### The build owner
 
@@ -75,7 +97,9 @@ One claim still needs a human to judge it — see
 Everything serves this. **If a feature doesn't help this story land, it doesn't get built.**
 Target: runs start to finish in **under ~2 minutes**, on command, without breaking.
 
-1. **"Here are 5 shipments in transit."** Dashboard shows 5 shipment cards, all green.
+1. **"Here are 5 bookings out of your TMS, in transit."** Dashboard shows 5 shipment cards,
+   all green. Every one is a record read through the connector — the board is a view of the
+   book, not a second copy of it.
 2. **"Watch — a strike hits the Port of Hamburg."** Click a trigger button.
 3. **"The system caught it from a German-language source before the English news wires."** The risk
    feed shows the event, flagged as detected from a German source first.
@@ -84,7 +108,11 @@ Target: runs start to finish in **under ~2 minutes**, on command, without breaki
 5. **"Here's the reasoning for each decision."** Click a rerouted card → plain-English justification
    (slack vs. added transit vs. strike delay).
 6. **"And here are the emails it drafted."** Two drafts appear — carrier and customer. *Nothing is sent.*
-7. **"All of that, from one news event, on command."**
+7. **"And here is what goes back into the TMS."** The changes each decision implies, queued
+   against the booking they came from — exception, discharge port, routing code, ETA,
+   communication log — each one `QUEUED - not written`, waiting on a person. The bookings
+   left on plan queue nothing, which is a real answer.
+8. **"All of that, from one news event, on command."**
 
 ### The honest line (keep it visible in the UI)
 
@@ -97,9 +125,15 @@ the real pipeline.
 
 ---
 
-## Architecture — four components
+## Architecture — five components
+
+The loop opens and closes in the same place. That is the shape of the product: the agents
+work on the TMS's records, not on a book of their own.
 
 ```
+  [ TMS link ] --read_bookings()--> the book: every shipment on the board
+        |  (src/tms.py - the ONLY door in. Nothing else opens shipments.json)
+        v
   [ Risk Monitor ] --writes--> risk_state.json
         |  (live news, multilingual, GDELT/RSS/gauges)
         v
@@ -112,9 +146,22 @@ the real pipeline.
   [ Comms Agent ] --per actioned shipment--> draft carrier email + customer email
         |
         v
-  [ Dashboard ] <-- shipment states, reasoning, drafts; has the trigger button
+  [ TMS link ] --writebacks_for()--> every agent action as a change to the booking:
+        |   Risk    -> exception_flag on the booking
+        |   Routing -> port_of_discharge / routing_code / eta / booking_status
+        |   Comms   -> each draft filed on the communication_log
+        |   all of it QUEUED - not written, behind the approval gate
+        v
+  [ Dashboard ] <-- shipment states, reasoning, drafts, the write-back queue;
+                    has the trigger button
 ```
 
+0. **TMS link** (`src/tms.py`) — both ends of the loop. `read_bookings()` is the only door to
+   the book: every component that needs shipments resolves back to it, so the day the
+   connector points at a real TMS the whole board follows. `writebacks_for()` turns each
+   agent's output into the change it implies on that record, named by the Worker that made
+   it and gated. Imports nothing but `json`, `datetime` and `config` — no client, no
+   credential, no endpoint.
 1. **Risk Monitor** (the real, live part) — pulls CORE free sources, LLM-classifies each item for
    logistics relevance → chokepoint / type / severity, writes `risk_state.json`. Also loads the
    injected Hamburg event in the same format.
@@ -123,19 +170,29 @@ the real pipeline.
    `no-action` + plain-English reasoning + a recorded reasoning trail.
 3. **Comms Agent** — LLM drafts a carrier email (booking change / hold instruction) and a customer
    email (status + revised ETA). Returns text. **Sends nothing** — no email library, no SMTP.
-4. **Orchestrator + Dashboard** — on trigger: refresh risk → Route Advisor over all shipments →
-   Comms Agent for actioned ones → one result object → rendered as cards, risk feed, expandable
-   reasoning, drafts.
+4. **Orchestrator + Dashboard** — on trigger: read the book from the TMS → refresh risk →
+   Route Advisor over all bookings → Comms Agent for actioned ones → queue every action back
+   into the TMS → one result object → rendered as cards, risk feed, expandable reasoning,
+   drafts and the write-back queue.
 
 ### The product layer
 
 **Thirteen Workers, three of them real.** Risk, Routing and Comms genuinely run and are
-tagged `LIVE`. Rate, Milestones, Docs, Inbox, RFQ, Booking, Invoice, Customs, TMS Link
-and Assistant replay
-authored data from `src/roster.py` and are tagged `SCRIPTED`. **The tag is the honesty** — never present a
-scripted Worker as reasoning live. They are still *reactive*: each panel is built from
-the active scenario and the selected shipment, so switching either visibly changes it.
-What is authored is the content, not the shape.
+tagged `LIVE`. Rate, Milestones, Docs, Inbox, RFQ, Booking, Invoice, Customs and Assistant
+replay authored data from `src/roster.py` and are tagged `SCRIPTED`. **The tag is the
+honesty** — never present a scripted Worker as reasoning live. They are still *reactive*:
+each panel is built from the active scenario and the selected shipment, so switching either
+visibly changes it. What is authored is the content, not the shape.
+
+**The TMS Link is the exception, and carries its own tag** — `mode: "demo"`, rendered
+`DEMO`. Nothing in it is replayed: its write-backs are derived from the decisions the real
+advisor made on that run, and its summary reports what the run actually read and queued.
+What makes it a demo is the far end, not the content, so calling it `SCRIPTED` would be
+untrue in one direction and calling it `LIVE` untrue in the other.
+
+**Every Worker works on the same records.** A booking amendment, an invoice query, an
+entry, a routing change — each one is a change to a booking that came out of the TMS.
+That is what makes the roster a desk rather than a set of unrelated panels.
 
 **Four scenarios over one shared shipment pool** (`data/scenarios.json`). The pool never
 changes; the active risk event does. That is the point — the same board reacting
@@ -314,21 +371,35 @@ desk a disruption actually lands on:
   volume rather than judgement.
 - **RFQ Worker** — an inbound rate request read into structured fields, priced against
   the lane with the active scenario's surcharge, and answered with a drafted quote.
-- **TMS Link** (`src/tms.py`) — a **demo connector**. It models the field mapping and
-  turns each actioned decision into the booking change it implies (discharge port,
-  routing code, ETA, or a hold status). A shipment left on plan produces no write-back,
-  which is a real answer rather than an omission.
+- **TMS Link** (`src/tms.py`) — the **system of record**, on a demo connector. Both ends
+  of the loop: `read_bookings()` is the only door to the book, and `writebacks_for()` turns
+  each agent's output into the change it implies on that record — the Risk Worker's
+  exception flag, the Routing Worker's discharge port / routing code / ETA / booking
+  status, and each of the Comms Worker's drafts filed on the communication log. Every
+  operation names the Worker that produced it, because that is the claim: the Workers do
+  not work beside the TMS, they work in it. A booking left on plan produces no write-back
+  at all, which is a real answer rather than an omission.
 
 **None of it sends, and none of it writes.** A drafted reply, a drafted quote and a
 queued write-back are all outbound actions, so all three sit behind the same approval
 gate as an email — `DRAFT - not sent` and `QUEUED - not written`, both
 `awaiting_approval`. `tests/test_comms_agent_sends_nothing.py` now checks all of them:
 the original checks only ever looked at `card["drafts"]`, which none of these appear in.
+The dashboard's **Approvals** view and the bell count both kinds together, because a
+queue a person never sees is not a gate.
 
-`src/tms.py` imports nothing but `datetime`. There is no client, no credential and no
-endpoint — a write-back is a dict describing a change, and it stays a dict. Never
-present the connector as a live TMS link; it says `connected (demo)` everywhere it is
-surfaced, and a test asserts that.
+`src/tms.py` imports `json`, `datetime` and `config` — and nothing else. There is no
+client, no credential and no endpoint: a write-back is a dict describing a change, and it
+stays a dict. Never present the connector as a live TMS link; it says `connected (demo)`
+everywhere it is surfaced, and a test asserts that.
+
+**`tests/test_tms_is_the_system_of_record.py` holds the other half of the claim**, the one
+that is easy to lose by accident. Structurally: nothing except the connector may open
+`SHIPMENTS_FILE`, so there stays exactly one door to the book — a second door is how "the
+board is the TMS's book" quietly stops being true. Behaviourally: all three live Workers
+must have written something back on a run, every actioned booking must have a write-back,
+every on-plan booking must have none, and every operation must be `QUEUED - not written`.
+Note what it deliberately does *not* assert — that a TMS was contacted. It was not.
 
 **The roster covers the desk, under our own names.** The function set a forwarding
 desk actually runs — quoting, booking, shipment tracking, TMS data entry, invoice
@@ -353,10 +424,11 @@ Three of them earn their place by reacting to the decision rather than decoratin
   **escalates rather than files**, which is the honest behaviour and matches how these
   systems are supposed to treat a novel exception.
 
-**The connection point** is its own view in the sidebar under `System`, not just a Worker
-chip: connector name, `connected (demo)`, bookings synced, changes queued, the field
-mapping table, and every queued write-back with the change it describes. All of it from
-`src/tms.py`, which still imports nothing but `datetime`.
+**The connection point** is its own view in the sidebar — **TMS link**, under `System` —
+not just a Worker chip: connector name, `connected (demo)`, the one-line positioning,
+bookings read in, changes queued back, bookings affected, which Worker writes to which
+record, the field mapping with its direction and its author, and every queued write-back
+with the change it describes and its own approve button. All of it from `src/tms.py`.
 
 **The topbar bell** carries the real pending-approval count and shows a dot only when
 something is actually waiting — a permanent badge would be decoration. Clicking it opens
@@ -398,7 +470,8 @@ transport anywhere in `src/` for it to trigger, and a test asserts that.
 │   ├── route_advisor.py      # component 2
 │   ├── comms_agent.py        # component 3
 │   ├── roster.py             # the seven SCRIPTED Workers - authored, never live
-│   ├── tms.py                # the demo TMS connector - describes changes, writes none
+│   ├── tms.py                # the system of record - the ONLY door to the book,
+│   │                         #   and every agent action as a queued booking change
 │   ├── orchestrator.py       # component 4 (the loop)
 │   └── app.py                # FastAPI: serves the page + /run
 ├── static/
@@ -768,10 +841,13 @@ Scope creep is the failure mode here. None of these are in this build:
 - **No real route optimisation.** Routes are pre-authored candidates; the agent *chooses among them
   and justifies the choice*. It does not compute routes.
 - **No sending of anything.** Emails are drafted and displayed only.
-- **No real shipment/TMS integration.** Shipments are synthetic. The TMS Link is a *demo
-  connector*: it models the field mapping and describes the write-back a decision implies,
-  and contacts nothing. Wiring a real TMS is on the far side of the integration/trust wall,
-  not in this build.
+- **No *live* TMS connection.** Working through the TMS is the design, not a non-goal —
+  what is out of scope is the far end of it. The TMS Link is a *demo connector*: it models
+  both directions, owns the only read path, and describes the write-back each decision
+  implies, but there is no vendor, no credential and no endpoint, and nothing is ever
+  written. The bookings behind it are synthetic. Wiring a real TMS is on the far side of
+  the integration/trust wall, not in this build — and it is the single highest-value thing
+  on the other side of it.
 - **No scheduler / always-on.** Button-triggered.
 - **No database.** In-memory + JSON files.
 - **No paid data.** Free sources only.
@@ -783,6 +859,13 @@ Scope creep is the failure mode here. None of these are in this build:
 
 - **One file per job, one job per file.** If a file does two things, split it.
 - **`llm.py` is the only door to the AI provider.** Everything else calls `llm.py`.
+- **`tms.py` is the only door to the book.** Every component that needs shipments calls
+  `tms.read_bookings()` — never `shipments.json` directly. One door means the day the
+  connector points at a real TMS, the whole board follows it; a second door is how that
+  quietly stops being true, and a test fails the build if one appears.
+- **An agent's output is a change to a record, not a message on a screen.** Anything a
+  Worker decides should be expressible as a write-back to the booking it came from. If it
+  cannot be, ask whether the desk would actually act on it.
 - **Each component runnable alone.** The Risk Monitor must produce visible output before the Route
   Advisor exists.
 - **Human-in-the-loop is a feature, not a limitation.** The Comms Agent drafts; it never sends. Say
@@ -802,7 +885,8 @@ Scope creep is the failure mode here. None of these are in this build:
 
 ## Definition of done
 
-Five criteria, from `PRD.md`. If these hold, the prototype is finished and nothing else is in scope:
+Six criteria — five from `PRD.md`, plus the one the product rests on. If these hold, the
+prototype is finished and nothing else is in scope:
 
 1. The demo narrative runs start to finish in under ~2 minutes, on command, without breaking.
 2. The Risk Monitor genuinely pulls live news — the credibility anchor.
@@ -810,6 +894,9 @@ Five criteria, from `PRD.md`. If these hold, the prototype is finished and nothi
    with plain-English reasoning.
 4. Drafted emails read like something a human would actually send.
 5. It looks good enough to present — cards, states, and drafts legible on a screen in a room.
+6. Every decision lands on the booking it came from. The board is read out of the TMS
+   through one door, each Worker's action is queued back against the record, and all of it
+   waits for a person — visible on screen, not just true in the payload.
 
 ---
 
@@ -831,7 +918,8 @@ Five criteria, from `PRD.md`. If these hold, the prototype is finished and nothi
 
 ## Honest framing (carry it, don't bury it)
 
-This is scripted where it needs to be (the injected disruption) and real where it earns credibility
-(the news pull). It's a strong learning artifact and a compelling demo — **not a live product**. The
+This is scripted where it needs to be (the injected disruption), modelled where it must be
+(the TMS connector - the read is the only door and the write-backs are derived from real
+decisions, but no TMS is contacted), and real where it earns credibility (the news pull). It's a strong learning artifact and a compelling demo — **not a live product**. The
 gap between this and a business is the integration/trust/liability wall, which is real work for
 later. Build this first; it teaches every piece of how an agent actually works.

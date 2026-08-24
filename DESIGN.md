@@ -2,11 +2,14 @@
 
 *How it's built. Read alongside PRD.md (why) and DATASET.md (the data).*
 
-## Architecture — four components
+## Architecture — five components
 
-The same shape 5U AI uses (listener → worker → approval → communicator), which is a good sign the instincts are right.
+The same shape 5U AI uses (listener → worker → approval → communicator), which is a good sign the instincts are right. With one addition that is the product rather than a detail: **the loop opens and closes on the forwarder's TMS.** The agents work on the system of record's bookings, not on a book of their own.
 
 ```
+  [ TMS link ] --read_bookings()--> the book: every shipment on the board
+        |  (src/tms.py - the ONLY door in. Nothing else opens shipments.json)
+        v
   [ Risk Monitor ] --writes--> risk_state.json
         |  (live news, multilingual, GDELT/RSS/gauges)
         v
@@ -19,8 +22,19 @@ The same shape 5U AI uses (listener → worker → approval → communicator), w
   [ Comms Agent ] --per actioned shipment--> draft carrier email + customer email
         |
         v
-  [ Dashboard ] <-- shows shipment states, reasoning, drafts; has the trigger button
+  [ TMS link ] --writebacks_for()--> each agent action as a change to the booking:
+        |   Risk    -> exception_flag        Routing -> discharge port / route / ETA / status
+        |   Comms   -> the draft filed on the communication log
+        |   all of it QUEUED - not written, behind the approval gate
+        v
+  [ Dashboard ] <-- shipment states, reasoning, drafts, the write-back queue;
+                    has the trigger button
 ```
+
+### 0. TMS link (`src/tms.py`)
+- **The system of record.** `read_bookings()` is the only door to the book: every component that needs shipments resolves back to it, so the day the connector points at a real TMS the whole board follows it.
+- `writebacks_for()` turns each agent's output into the booking change it implies, named by the Worker that made it. A booking left on plan produces nothing — a real answer, not an omission.
+- **A demo connector in this build.** Imports `json`, `datetime` and `config` and nothing else: no client, no credential, no endpoint. A write-back is a dict describing a change, and it stays a dict, `QUEUED - not written` behind the same approval gate as an email.
 
 ### 1. Risk Monitor (the real, live part — build first)
 - Pulls from **free** sources: GDELT (no key), RSS feeds (feedparser), and at least one German-language source so the "caught it first" story is true. The exact curated list — and which sources to skip — lives in **DATA-SOURCES.md**; use the ones marked CORE.
@@ -68,6 +82,8 @@ trade-risk-agent/
 ├── src/
 │   ├── llm.py                # provider wrapper — the ONLY place AI is called
 │   ├── config.py             # keys, model names, source list
+│   ├── tms.py                # component 0 — the system of record: the ONLY door
+│   │                         #   to the book, and every action as a queued change
 │   ├── risk_monitor.py       # component 1
 │   ├── route_advisor.py      # component 2
 │   ├── comms_agent.py        # component 3
@@ -81,6 +97,7 @@ trade-risk-agent/
 ## Design principles (hold these)
 
 - **One file per job, one job per file.** If a file does two things, split it.
+- **`tms.py` is the only door to the book.** Anything that needs shipments calls `tms.read_bookings()`, never `shipments.json`. One door means a real TMS can be wired in one place.
 - **`llm.py` is the only door to the AI provider.** Everything else calls `llm.py`.
 - **Each component runnable alone.** You must be able to run the Risk Monitor by itself and see output before the Route Advisor exists.
 - **Human-in-the-loop is a feature, not a limitation.** The Comms Agent drafts; it never sends. Say this in the demo — it's the responsible design.

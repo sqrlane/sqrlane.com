@@ -360,11 +360,14 @@ html[data-theme="dark"] .atlas .land{fill:#161616;stroke:#2a2a2a}
 .wb{border:1px solid var(--border);border-radius:var(--r-md);padding:12px 13px;margin-top:12px;
     background:var(--card-muted)}
 .wb-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.wb-b{display:grid;grid-template-columns:auto auto 1fr;gap:6px 10px;align-items:center;
+.wb-b{display:grid;grid-template-columns:auto auto auto 1fr;gap:6px 10px;align-items:center;
       margin-top:10px;font-size:13px}
 .wb-b .arr{color:var(--faint)}
 .wb-b .now{font-weight:600}
 .wb-f{color:var(--muted);font-size:12px}
+.wb-b .was{color:var(--faint);text-decoration:line-through}
+.wb-op{font-size:12px;color:var(--faint);margin-left:auto}
+.wb .gate{margin:11px -13px -12px;border-radius:0 0 var(--r-md) var(--r-md)}
 .wb-r{font-size:12.5px;color:var(--faint);margin-top:10px}
 
 /* The bell only carries a dot when something is actually waiting. */
@@ -475,6 +478,9 @@ html[data-theme="dark"] .atlas .land{fill:#161616;stroke:#2a2a2a}
       padding:1.5px 5px;border-radius:3px}
 .wtag.live{background:var(--green-bg);color:var(--green)}
 .wtag.scripted{background:var(--amber-bg);color:var(--amber)}
+/* The link is neither live nor scripted: its write-backs are derived from the
+   run, but no TMS is contacted. Its own tag, so neither word has to stretch. */
+.wtag.demo{background:var(--blue-bg);color:var(--blue)}
 .wchip .bot{display:flex;align-items:center;gap:6px;min-width:0}
 .wchip .st{font-size:11px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;
            white-space:nowrap;flex:1;min-width:0}
@@ -632,6 +638,7 @@ table.q tr.pick td{background:var(--surface)}
 .sw.live{background:var(--green-bg);border:1.5px solid var(--green)}
 .sw.synth{background:var(--amber-bg);border:1.5px solid var(--amber)}
 .sw.draft{background:var(--surface);border:1.5px dashed var(--border-strong)}
+.sw.tms{background:var(--blue-bg);border:1.5px solid var(--blue)}
 .key b{color:var(--fg);font-weight:600}
 .said{margin-top:11px;padding-top:11px;border-top:1px solid var(--border);
       font-size:13px;font-style:italic}
@@ -723,7 +730,9 @@ const ICON = {
 
 let board=[], workers=[], risk={events:[],sources:[]}, ai=null, summary=null, notes=[], hasRun=false;
 let scenarios=[], scenario=null, chosenScenario=null, openWorker=null, selected=null;
-let tmsLink = {};        // the demo TMS connection, board-wide (src/tms.py)
+/* The system of record. Every booking on this board was read out of it, and
+   every change the Workers decide is queued straight back into it (src/tms.py). */
+let tmsLink = {};
 let sim = {}, simDay = null, simBusy = false;   // the authored week (src/simulation.py)
 let atlas = {}, mapPick = null;                 // the board on a map (src/geo.py)
 let ranAt = null;                               // when the last run finished
@@ -741,8 +750,16 @@ function theme(next){
 $("theme").onclick = () => theme(document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark");
 
 /* ---------- nav ---------- */
-function pending(){ return board.flatMap(s=>s.drafts||[]).filter(d=>!approved.has(key(d))).length; }
+/* Everything waiting on a person. A drafted email and a queued TMS change are
+   the same kind of thing - work the Workers finished that leaves the building -
+   so they sit behind one gate and are counted together. */
+function pending(){
+  return board.flatMap(s=>s.drafts||[]).filter(d=>!approved.has(key(d))).length
+       + queuedWrites().filter(w=>!approved.has(wkey(w))).length;
+}
 function key(d){ return `${d.shipment_id}|${d.audience}`; }
+function queuedWrites(){ return tmsLink.writebacks || []; }
+function wkey(w){ return `tms|${w.booking_ref}|${w.record}|${w.action}`; }
 function attention(){ return board.filter(s=>s.state!=="green" && s.decision).length; }
 
 /* Grouped nav, then the board itself as a list - the same shape the reference
@@ -759,7 +776,7 @@ const NAV_GROUPS = [
     {id:"map", label:"Map", count:() => (atlas.lanes||[]).length, quiet:true},
     {id:"simulation", label:"Simulation",
      count:() => (sim.days||[]).length, quiet:true},
-    {id:"connections", label:"Connections",
+    {id:"connections", label:"TMS link",
      count:() => (tmsLink.queued || 0), quiet:true},
   ]},
 ];
@@ -918,10 +935,10 @@ function simulationView(){
                   sub:`${t.hold_decisions||0} hold across the week`})}
       ${statCard({label:"Shipments moved", value:t.shipments_moved||0,
                   pill:`${t.shipments_held||0} held`, tone:(t.shipments_held?"amber":"green"),
-                  sub:"of the seven on the board"})}
-      ${statCard({label:"Longest hold", value:`${t.longest_hold_days||0}d`,
-                  pill:`busiest ${esc(t.busiest_day||"-")}`, tone:"",
-                  sub:"a day of delay for each day waited"})}
+                  sub:`of the seven · longest hold ${t.longest_hold_days||0}d`})}
+      ${statCard({label:"Queued to the TMS", value:t.tms_writebacks||0,
+                  pill:"none written", tone:(t.tms_writebacks?"amber":"green"),
+                  sub:"every day's decisions land on the booking"})}
     </div>
     <div class="warn" style="margin-top:18px">${esc(sim.honesty||"")}</div>
   </div>
@@ -929,7 +946,8 @@ function simulationView(){
   <div class="simstrip">${sim.days.map(d => `
     <button class="simday ${d.day===open?"on":""}" data-simday="${d.day}">
       <span class="sd-l">${esc(d.label)}</span>
-      <span class="sd-n">${d.actioned ? `${d.actioned} actioned` : "all on plan"}</span>
+      <span class="sd-n">${d.actioned ? `${d.actioned} actioned · ${d.tms_queued||0} queued`
+        : "all on plan"}</span>
       <span class="sd-bar">${["reroute","hold","no-action"].map(k =>
         (d.summary[k] ? `<i class="${SIMTONE[k]}" style="flex:${d.summary[k]}"></i>` : "")
       ).join("")}</span>
@@ -958,26 +976,58 @@ function simulationView(){
   </div>`;
 }
 
+/* One write-back, rendered the same way wherever it appears: the connections
+   view, the approvals queue and the shipment drawer are three views of one
+   list, so they share this. The gate is part of it - a change that could be
+   written without a person is not what this system does. */
+function wbChanges(w){
+  return (w.changes||[]).map(c=>`
+    <span class="wb-f mono">${esc(c.field)}</span>
+    <span class="was">${c.from ? esc(c.from) : ""}</span>
+    <span class="arr">&rarr;</span><span class="now">${esc(c.to)}</span>`).join("");
+}
+
+function wbHTML(w){
+  const k = wkey(w), ok = approved.has(k);
+  return `<div class="wb">
+    <div class="wb-h"><span class="mono">${esc(w.booking_ref)}</span>
+      <span class="qtag">${esc(w.agent)}</span>
+      <span class="wb-op mono">${esc(w.operation)} · ${esc(w.record)}</span></div>
+    <div class="wb-b">${wbChanges(w)}</div>
+    ${w.reason?`<div class="wb-r">${esc(w.reason)}</div>`:""}
+    <div class="gate">
+      <span class="gate-s ${ok?"approved":"awaiting"}">${
+        ok?"Approved — ready to write":esc(w.status)}</span>
+      ${ok?"":`<button class="approve" data-approve="${esc(k)}">Approve</button>`}
+      <span class="never">nothing is written — approval is a state change</span>
+    </div></div>`;
+}
+
 function connectionsView(){
   const t = tmsLink || {};
   if (!t.connector) return emptyState({
-    icon:"connections", title:"The connector has not reported yet",
-    body:"It reports itself on a run — what synced, what a decision would change, and every one of those changes held at the approval gate."});
+    icon:"connections", title:"The link has not reported yet",
+    body:"The board is read out of the TMS. Press <b>Run</b> and every change the Workers decide is queued back against the booking it came from — held here for you."});
   const wb = t.writebacks || [];
+  const byAgent = t.queued_by_agent || {};
   return `<div class="card conn">
     <div class="conn-h">
       <div>
-        <h2>${esc(t.connector)}</h2>
-        <p>${esc(t.direction_note||"")}</p>
+        <h2>${esc(t.connector)} <span class="qtag">${esc(t.role||"system of record")}</span></h2>
+        <p>${esc(t.positioning||t.direction_note||"")}</p>
       </div>
       <span class="conn-s"><i></i>${esc(t.status)}</span>
     </div>
     <div class="stats" style="margin:18px 0 0">
-      ${statCard({label:"Bookings synced", value:t.records_synced||0,
-                  pill:"read in", tone:"", sub:"from the connector into the board"})}
-      ${statCard({label:"Changes queued", value:t.queued||0,
+      ${statCard({label:"Bookings read in", value:t.bookings_read||t.records_synced||0,
+                  pill:"the board", tone:"",
+                  sub:"every card here is one of these records"})}
+      ${statCard({label:"Changes queued back", value:t.queued||0,
                   pill:(t.queued?"held":"none"), tone:(t.queued?"amber":"green"),
                   sub:(t.queued?"waiting on a person":"nothing to write back")})}
+      ${statCard({label:"Bookings affected", value:t.bookings_affected||0,
+                  pill:"of "+(t.bookings_read||0), tone:"",
+                  sub:"the rest are on plan and write nothing"})}
       ${statCard({label:"Fields mapped", value:(t.field_map||[]).length,
                   pill:"both ways", tone:"", sub:"booking fields this demo models"})}
     </div>
@@ -985,29 +1035,35 @@ function connectionsView(){
   </div>
 
   <div class="card conn" style="margin-top:20px">
-    <div class="conn-h"><div><h2>Field mapping</h2>
-      <p>Where each booking field lands, and which way it moves</p></div></div>
+    <div class="conn-h"><div><h2>What each Worker writes</h2>
+      <p>The Workers do not work beside the TMS. Each one writes to a record in it.</p></div></div>
     <table class="q" style="margin-top:14px">
-      <thead><tr><th>TMS field</th><th>Lanewatch field</th><th>Direction</th></tr></thead>
+      <thead><tr><th>Worker</th><th>TMS record</th><th>What it writes</th><th>Queued now</th></tr></thead>
+      <tbody>${(t.agent_records||[]).map(a=>`<tr>
+        <td>${esc(a.agent)}</td>
+        <td class="mono">${esc(a.record)}</td>
+        <td>${esc(a.writes)}</td>
+        <td class="mono">${esc(byAgent[a.agent]||0)}</td></tr>`).join("")}
+      </tbody></table>
+  </div>
+
+  <div class="card conn" style="margin-top:20px">
+    <div class="conn-h"><div><h2>Field mapping</h2>
+      <p>Where each booking field lands, which way it moves, and who writes it</p></div></div>
+    <table class="q" style="margin-top:14px">
+      <thead><tr><th>TMS field</th><th>Lanewatch field</th><th>Direction</th><th>Written by</th></tr></thead>
       <tbody>${(t.field_map||[]).map(f=>`<tr>
         <td class="mono">${esc(f.tms_field)}</td>
         <td class="mono">${esc(f.lanewatch_field)}</td>
-        <td><span class="qtag">${esc(f.direction)}</span></td></tr>`).join("")}
+        <td><span class="qtag">${esc(f.direction)}</span></td>
+        <td>${f.written_by?esc(f.written_by):"<span class=\"wb-f\">read only</span>"}</td></tr>`).join("")}
       </tbody></table>
   </div>
 
   <div class="card conn" style="margin-top:20px">
     <div class="conn-h"><div><h2>Queued write-backs</h2>
-      <p>The booking change each decision implies. None is written.</p></div></div>
-    ${wb.length ? wb.map(w=>`<div class="wb">
-      <div class="wb-h"><span class="mono">${esc(w.booking_ref)}</span>
-        <span class="qtag">${esc(w.action)}</span>
-        <span class="gate-s awaiting">${esc(w.status)}</span></div>
-      <div class="wb-b">${(w.changes||[]).map(c=>`
-        <span class="wb-f mono">${esc(c.field)}</span>
-        <span class="arr">&rarr;</span><span class="now">${esc(c.to)}</span>`).join("")}</div>
-      <div class="wb-r">${esc(w.reason||"")}</div>
-    </div>`).join("") : `<div class="pnote" style="margin-top:12px">
+      <p>Every change this run puts back on a booking. None is written.</p></div></div>
+    ${wb.length ? wb.map(wbHTML).join("") : `<div class="pnote" style="margin-top:12px">
       Nothing to write back — every booking is on plan.</div>`}
   </div>`;
 }
@@ -1087,7 +1143,7 @@ const PAGES = {
   approvals:  ["Approvals", "Drafted work waiting on a person. Nothing is sent"],
   map:        ["Map", "Lanes drawn through what they transit, and what is blocked"],
   simulation: ["Simulation", "An authored week, decided for real, day by day"],
-  connections:["Connections", "The demo TMS link and the changes it would write"],
+  connections:["TMS link", "The system of record this board runs on — bookings in, every Worker's action back out"],
 };
 
 function pageHeader(id, actions){
@@ -1107,7 +1163,7 @@ function palSource(){
     {id:"approvals", label:"Approvals", hint:"Drafts waiting on a person"},
     {id:"map", label:"Map", hint:"Lanes, chokepoints and blockades"},
     {id:"simulation", label:"Simulation", hint:"The authored week, replayed"},
-    {id:"connections", label:"Connections", hint:"The demo TMS link"},
+    {id:"connections", label:"TMS link", hint:"The system of record the board runs on"},
   ].map(v => ({...v, kind:"view", go:() => go(v.id)}));
 
   const ships = board.map(sh => ({
@@ -1179,7 +1235,7 @@ function paintBell(){
   const n = pending();
   const b = $("bell");
   b.innerHTML = ICON.bell + (n ? `<span class="dot" aria-hidden="true"></span>` : "");
-  b.title = n ? `${n} draft${n===1?"":"s"} awaiting your approval` : "Nothing awaiting approval";
+  b.title = n ? `${n} item${n===1?"":"s"} awaiting your approval` : "Nothing awaiting approval";
   b.setAttribute("aria-label", b.title);
   b.classList.toggle("has", !!n);
 }
@@ -1222,7 +1278,7 @@ function go(id){
   document.querySelectorAll(".view").forEach(v => v.classList.remove("on"));
   $("v-"+id).classList.add("on");
   $("crumb").textContent = {overview:"Overview",shipments:"Shipments",risk:"Risk feed",
-                           approvals:"Approvals",connections:"Connections",
+                           approvals:"Approvals",connections:"TMS link",
                            simulation:"Simulation",map:"Map"}[id];
   $("scroll").scrollTop = 0;
   render();
@@ -1370,10 +1426,11 @@ function statRow(){
   const late = board.filter(b => b.decision && b.decision.deadline_breached).length;
   const onPlan = s["no-action"] || 0;
   const read = risk.live_sources_read || 0, total = risk.live_sources_total || 0;
+  const queued = queuedWrites().length;
   return `<div class="stats">
-    ${statCard({label:"Shipments tracked", value:board.length,
+    ${statCard({label:"Bookings from the TMS", value:board.length,
                 pill:`${attention()} actioned`, tone:attention()?"blue":"",
-                sub:`${onPlan} on plan, ${attention()} actioned`})}
+                sub:`${onPlan} on plan · ${queued} change${queued===1?"":"s"} queued back`})}
     ${statCard({label:"Risk events", value:(risk.events||[]).length,
                 pill:read?"live":"no live source", tone:read?"green":"amber",
                 sub:`${read} of ${total} sources read`})}
@@ -1431,7 +1488,7 @@ function scenarioSwitcher(){
 function rosterStrip(){
   if (!workers.length) return "";
   return `<p class="sec-t">Workers</p><div class="roster">${workers.map(w=>{
-    const mode = w.mode==="live" ? "live" : "scripted";
+    const mode = w.mode==="live" ? "live" : w.mode==="demo" ? "demo" : "scripted";
     /* The tag sits under the name, not beside it. On a roster this size the two
        compete for one line and the name is what loses - "Milestones Worker"
        became "Mile…", which is not a Worker anyone can identify. */
@@ -1446,7 +1503,7 @@ function workerPanel(){
   if (!openWorker) return "";
   const w = workers.find(x=>x.id===openWorker); if (!w) return "";
   const ship = board.find(x=>x.id===selected) || board.find(x=>x.state!=="green") || board[0];
-  const mode = w.mode==="live" ? "live" : "scripted";
+  const mode = w.mode==="live" ? "live" : w.mode==="demo" ? "demo" : "scripted";
   const ctx = `${ship?esc(ship.id):"no shipment"}${scenario?` · ${esc(scenario.name)}`:""}`;
   let body;
   if (mode === "live")      body = livePanelBody(w, ship);
@@ -1580,18 +1637,23 @@ function scriptedPanelBody(w, ship){
       <span class="gate-s awaiting">${esc(p.status)}</span>`;
 
   if (w.id === "tms")
-    return `<p class="sec-t">${esc(p.headline)}</p>
-      <p class="pnote">${esc(p.note)}</p>
-      <div class="fields">${p.field_map.map(f=>
-        `<span class="f">${esc(f.tms_field)}</span>
-         <span>${esc(f.lanewatch_field)} <span class="qtag">${esc(f.direction)}</span></span>`
-        ).join("")}</div>
-      ${p.writeback?`<div class="inb">
-        <div class="inb-rl">Write-back this decision implies</div>
-        <div class="fields">${p.writeback.changes.map(c=>
-          `<span class="f">${esc(c.field)}</span><span>→ ${esc(c.to)}</span>`).join("")}</div>
-        <span class="gate-s awaiting">${esc(p.writeback.status)}</span>
-      </div>`:`<div class="pnote">On plan — this booking needs no write-back.</div>`}`;
+    return `<p class="sec-t">${esc(p.headline)}
+        <span class="chip">${esc(p.status)}</span></p>
+      <p class="pnote">${esc(p.positioning||"")}</p>
+      <div class="fields">
+        <span class="f">record</span><span class="mono">${esc(p.record.booking_ref)}
+          <span class="qtag">${esc(p.record.record_status)}</span></span>
+        <span class="f">carrier booking</span><span class="mono">${esc(p.record.carrier_booking)}</span>
+        <span class="f">source system</span><span>${esc(p.record.source_system)}</span>
+      </div>
+      <div class="inb-rl" style="margin-top:12px">What each Worker writes to this booking</div>
+      <div class="fields">${(p.agent_records||[]).map(a=>
+        `<span class="f">${esc(a.agent)}</span>
+         <span>${esc(a.writes)} <span class="qtag">${esc(a.record)}</span></span>`).join("")}</div>
+      <div class="inb-rl" style="margin-top:12px">Queued back against it</div>
+      ${(p.writebacks||[]).length ? p.writebacks.map(wbHTML).join("")
+        : `<div class="pnote">On plan — this booking needs no write-back.</div>`}
+      <p class="pnote" style="margin-top:12px">${esc(p.note)}</p>`;
 
   return `<p class="sec-t">${esc(p.headline)}</p><ul class="qa">${p.qa.map(x=>
     `<li><div class="q">${esc(x.q)}</div><div class="a">${esc(x.a)}</div></li>`).join("")}</ul>`;
@@ -1700,9 +1762,12 @@ function legendCard(){
       <span class="key"><i class="sw live"></i><span><b>Live</b> — the risk feed. Real news from sources worldwide, pulled now.</span></span>
       <span class="key"><i class="sw synth"></i><span><b>Synthetic</b> — the five shipments and the injected strike.</span></span>
       <span class="key"><i class="sw draft"></i><span><b>Drafted, never sent</b> — approval changes state only.</span></span>
+      <span class="key"><i class="sw tms"></i><span><b>Through the TMS</b> — bookings read from the system of record; every action queued back to it.</span></span>
     </div>
     <div class="said">“The risk detection is real — it runs against live news right now. The shipments are
-      synthetic, so I can show you a disruption on demand instead of waiting for one.”</div></div>`;
+      synthetic, so I can show you a disruption on demand instead of waiting for one.
+      The Workers act on them the way they would act on your book: read from the TMS, written back to it,
+      approved by you.”</div></div>`;
 }
 
 /* ---------- views ---------- */
@@ -1775,14 +1840,20 @@ let approvalTab = "waiting";
 function approvalsView(){
   if (running) return skeletonRows(4);
   const withDrafts = board.filter(s => (s.drafts||[]).length);
-  if (!withDrafts.length) return emptyState({
-    icon: "approvals", title: "No drafts yet",
-    body: `Press <b>Run</b> and any booking that needs action gets a carrier and a
-           customer email. Both wait here for you — nothing is ever sent.`});
+  // The write-backs belong here too. A change queued into the system of record
+  // is as outbound as an email, and a queue a person never sees is not a gate.
+  const writes = queuedWrites();
+  if (!withDrafts.length && !writes.length) return emptyState({
+    icon: "approvals", title: "Nothing waiting yet",
+    body: `Press <b>Run</b>. Any booking that needs action gets a carrier and a
+           customer email, and the change it implies is queued back into the TMS.
+           All of it waits here for you — nothing is sent, and nothing is written.`});
 
   const isWaiting = m => !approved.has(key(m));
+  const wWaiting = w => !approved.has(wkey(w));
   const counts = {waiting: 0, approved: 0};
   withDrafts.forEach(sh => sh.drafts.forEach(m => counts[isWaiting(m) ? "waiting" : "approved"]++));
+  writes.forEach(w => counts[wWaiting(w) ? "waiting" : "approved"]++);
 
   const tabs = segmented([
     {id:"waiting",  label:"Awaiting you", n:counts.waiting},
@@ -1804,15 +1875,27 @@ function approvalsView(){
       ${mails.map(m => mailHTML(m)).join("")}</div>`;
   }).join("");
 
-  const body = groups || emptyState({
+  const shownWrites = writes.filter(w =>
+    approvalTab === "all" ? true :
+    approvalTab === "waiting" ? wWaiting(w) : !wWaiting(w));
+
+  const tmsBlock = shownWrites.length ? `<div class="ap-g">
+    <div class="ap-h">
+      <span class="qtag">TMS</span>
+      <b>Queued to ${esc(tmsLink.connector || "the system of record")}</b>
+      <span class="ap-c">${esc(tmsLink.status || "")}</span>
+    </div>
+    ${shownWrites.map(wbHTML).join("")}</div>` : "";
+
+  const body = (groups + tmsBlock) || emptyState({
     icon: "approvals",
     title: approvalTab === "waiting" ? "Nothing waiting on you" : "Nothing approved yet",
     body: approvalTab === "waiting"
-      ? "Every draft on the board has been approved. Approving is a state change here and nothing else — there is no transport in the app to send them."
-      : "Approve a draft and it moves here."});
+      ? "Every draft and every write-back has been approved. Approving is a state change here and nothing else — there is no transport in the app to send an email, and no client to write to a TMS."
+      : "Approve something and it moves here."});
 
   return `${tabs}<p class="sec-t">${counts.waiting ? `${counts.waiting} awaiting your approval`
-    : "All approved"} · nothing is ever sent</p>${body}`;
+    : "All approved"} · nothing is sent, and nothing is written</p>${body}`;
 }
 
 function mailHTML(m){
@@ -1886,11 +1969,22 @@ function openPanel(id, keep){
       </div><ul class="trail">${(d.reasoning_trail||[]).map(t=>
         `<li><span class="k">${esc(t.check)}</span> — ${esc(t.finding)}</li>`).join("")}</ul></div></div>` +
     ((s.drafts||[]).length?`<div class="sec"><p class="sec-t">Drafted communications</p>
-      ${s.drafts.map(mailHTML).join("")}</div>`:"");
+      ${s.drafts.map(mailHTML).join("")}</div>`:"") +
+    // Where the decision actually lands. The card is a view of a TMS booking,
+    // and this is the change queued back onto that record.
+    (tmsWrites(s.id).length?`<div class="sec">
+      <p class="sec-t">Queued to ${esc(tmsLink.connector||"the TMS")}
+        <span class="chip">${esc(tmsLink.status||"")}</span></p>
+      <p class="pnote">${esc(s.source_system?`Booking read from ${s.source_system}. `:"")}${
+        esc(tmsLink.honesty||"")}</p>
+      ${tmsWrites(s.id).map(wbHTML).join("")}</div>`:"");
   $("panel").classList.add("on"); $("scrim").classList.add("on");
   $("panel-x").onclick = closePanel;
   bindApprove();
 }
+/* Every change this run queues back onto one booking. */
+function tmsWrites(id){ return queuedWrites().filter(w => w.booking_ref === id); }
+
 function closePanel(){ openId=null; $("panel").classList.remove("on"); $("scrim").classList.remove("on"); }
 $("scrim").onclick = closePanel;
 document.addEventListener("keydown", e => { if (e.key === "Escape") closePanel(); });

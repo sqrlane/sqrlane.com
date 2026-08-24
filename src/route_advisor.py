@@ -29,9 +29,9 @@ Run it on its own:
 import argparse
 import json
 import sys
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timezone
 
-from src import config, llm
+from src import config, llm, tms
 
 DECISIONS = ["reroute", "hold", "no-action"]
 
@@ -57,42 +57,15 @@ def _load_json(path):
         return json.load(handle)
 
 
-# The shipments were authored to sit mid-voyage on a particular day. Left alone,
-# a demo run months later shows cargo "in transit" with ETAs in the past, which
-# is the first thing an audience notices. Rolling every date forward by the same
-# whole number of weeks keeps the board plausible and leaves every relationship
-# the screenplay depends on - slack, ordering, the gaps between shipments -
-# exactly as authored.
-DATE_FIELDS = ("etd", "eta", "required_by")
-
-
-def _weeks_since_authored(authored_on: str) -> int:
-    """Whole weeks between the authoring date and today, never negative.
-
-    Whole weeks rather than days so ETAs keep their weekday: cargo authored to
-    arrive on a Tuesday still arrives on a Tuesday.
-    """
-    try:
-        authored = date.fromisoformat(authored_on)
-    except (ValueError, TypeError):
-        return 0
-    return max(0, (date.today() - authored).days // 7)
-
-
 def load_shipments() -> list[dict]:
-    raw = _load_json(config.SHIPMENTS_FILE)
-    shipments = raw["shipments"]
+    """The book, read out of the TMS.
 
-    shift = _weeks_since_authored(raw.get("_authored_on", "")) * 7
-    if not shift:
-        return shipments
-
-    for shipment in shipments:
-        for field in DATE_FIELDS:
-            if shipment.get(field):
-                shipment[field] = _shift_date(shipment[field], shift)
-        shipment["_dates_rolled_forward_days"] = shift
-    return shipments
+    The advisor does not own the shipments and never reads the file itself: a
+    forwarder's bookings live in their TMS, so they come in through the connector
+    (src/tms.py) like everything else. That is one door, deliberately - the day
+    the connector talks to a real TMS, every component on the board follows.
+    """
+    return tms.read_bookings()
 
 
 def load_routes() -> dict[str, dict]:
@@ -464,10 +437,8 @@ def _projected_delay(assessment, decision, route_id) -> int:
 
 
 def _shift_date(iso_date: str, days: int) -> str:
-    try:
-        return (date.fromisoformat(iso_date) + timedelta(days=days)).isoformat()
-    except (ValueError, TypeError):
-        return iso_date
+    """One date, moved by whole days. Defined once, at the TMS edge."""
+    return tms.shift_date(iso_date, days)
 
 
 def advise(shipment: dict, routes: dict, events: list[dict], *, use_llm=True) -> dict:
