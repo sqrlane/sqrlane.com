@@ -292,13 +292,16 @@ def _post_with_retries(url: str, *, headers=None, json_body=None, params=None) -
     not a demo.
     """
     last_error = None
+    waited = 0.0                       # total seconds slept across this call
     for attempt in range(config.LLM_MAX_RETRIES):
+        retry_after = None
         try:
             response = requests.post(url, headers=headers, json=json_body,
                                      params=params, timeout=config.LLM_TIMEOUT_SECONDS)
         except requests.RequestException as exc:
             last_error = f"network error: {exc}"
         else:
+            retry_after = _retry_after_seconds(response)
             if response.status_code == 200:
                 return response.json()
             if response.status_code in (408, 409, 429, 500, 502, 503, 504):
@@ -311,8 +314,39 @@ def _post_with_retries(url: str, *, headers=None, json_body=None, params=None) -
                     raise ModelNotAvailable(f"HTTP {response.status_code}: {body}")
                 raise LLMError(f"HTTP {response.status_code}: {body}")
         if attempt < config.LLM_MAX_RETRIES - 1:
-            time.sleep(2 ** attempt)
+            # Prefer what the provider asked for over a guess, but never spend
+            # more than the budget - a stalled retry loop would take the whole
+            # cycle past the function timeout.
+            wait = retry_after if retry_after is not None else float(2 ** attempt)
+            wait = min(wait, config.RETRY_WAIT_BUDGET_SECONDS - waited)
+            if wait <= 0:
+                last_error = (f"{last_error} (gave up after waiting "
+                              f"{waited:.0f}s of a {config.RETRY_WAIT_BUDGET_SECONDS}s budget)")
+                break
+            time.sleep(wait)
+            waited += wait
     raise LLMError(f"provider unreachable after {config.LLM_MAX_RETRIES} attempts - {last_error}")
+
+
+def _retry_after_seconds(response) -> float | None:
+    """How long the provider asked us to wait, if it said.
+
+    Groq answers a 429 with retry-after (and x-ratelimit-reset-* on some plans).
+    Reading it is the difference between backing off for the real window and
+    guessing three seconds at a limit that resets by the minute.
+    """
+    # Defensive: this runs while handling an error, and a crash here would hide
+    # the failure it is meant to explain.
+    headers = getattr(response, "headers", None) or {}
+    for header in ("retry-after", "x-ratelimit-reset-tokens", "x-ratelimit-reset-requests"):
+        raw = headers.get(header)
+        if not raw:
+            continue
+        try:
+            return max(0.0, float(str(raw).rstrip("s")))
+        except ValueError:
+            continue
+    return None
 
 
 def _groq_chat(model, prompt, system, temperature, max_tokens) -> str:
