@@ -143,6 +143,25 @@ Serverless changes two things, both handled automatically:
 
 ---
 
+## Before you present it
+
+The demo runs itself; these are the things only a person can check.
+
+1. **Open the risk feed and read the source line** — "N of 14 sources read". If N is
+   0 or 1, the live news pull is not working and the `LIVE` chip is overclaiming.
+   `python -m src.risk_monitor` says which sources failed and why.
+2. **Open all three actioned cards**, not just one. SHP-001 and SHP-005 reroute;
+   SHP-002 holds. They take different branches and read differently.
+3. **Check for `template` badges** on the emails. One means the model did not write
+   that draft — the reason prints underneath it.
+4. **Read SHP-002's customer email aloud.** It is the centrepiece: no good option,
+   here is the least-bad one. If you would not send it as written, the prompts in
+   `comms_agent.py` are what to change.
+5. **Run it from `uvicorn` locally**, not the deployed link. A cold serverless
+   function plus a dozen model calls sits close to the 60-second ceiling.
+
+---
+
 ## What this is not
 
 No real route optimisation (routes are pre-authored candidates the agent *chooses among*

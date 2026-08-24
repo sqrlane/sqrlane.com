@@ -1,7 +1,17 @@
 {
   "_comment": "The 5 shipments from DATASET.md - a screenplay, authored for drama not realism. Positioned so ONE injected Hamburg strike splits them 2 reroute / 1 hold / 2 green.",
-  "_fields_from_dataset_md": ["id", "cargo", "origin", "final_destination", "primary_route", "alternates", "deadline_slack_days", "notes"],
-  "_fields_authored_for_the_demo": "customer, carrier, booking_ref, container, etd, eta, required_by, cold_chain, special_requirements - added so the Route Advisor (Phase 2) and Comms Agent (Phase 3) produce specific, reproducible output instead of inventing names and dates on every run. Dates are static ISO dates; refresh them if you demo long after 2026-09.",
+  "_fields_from_dataset_md": [
+    "id",
+    "cargo",
+    "origin",
+    "final_destination",
+    "primary_route",
+    "alternates",
+    "deadline_slack_days",
+    "notes"
+  ],
+  "_fields_authored_for_the_demo": "customer, carrier, booking_ref, container, etd, eta, required_by, cold_chain, special_requirements - added so the Route Advisor (Phase 2) and Comms Agent (Phase 3) produce specific, reproducible output instead of inventing names and dates on every run. Dates are real ISO dates so the file stays readable, but they are anchored to _authored_on and rolled forward in whole weeks at load time, so the board still reads as in-transit whenever the demo is run. See load_shipments().",
+  "_authored_on": "2026-08-24",
   "shipments": [
     {
       "id": "SHP-001",
@@ -10,7 +20,10 @@
       "origin": "Shanghai",
       "final_destination": "Munich",
       "primary_route": "R-HAM-STD",
-      "alternates": ["R-RTM-ALT", "R-COGH-ALT"],
+      "alternates": [
+        "R-RTM-ALT",
+        "R-COGH-ALT"
+      ],
       "deadline_slack_days": 4,
       "notes": "Comfortable slack. Clean reroute candidate.",
       "customer": "Bavaria Drivetrain GmbH",
@@ -94,7 +107,10 @@
       "origin": "Busan",
       "final_destination": "Hamburg",
       "primary_route": "R-HAM-STD",
-      "alternates": ["R-RTM-ALT", "R-COGH-ALT"],
+      "alternates": [
+        "R-RTM-ALT",
+        "R-COGH-ALT"
+      ],
       "deadline_slack_days": 3,
       "notes": "Slack absorbs the +2 days of the Rotterdam alternate. Second reroute.",
       "customer": "Elbe Werkzeugbau GmbH",
