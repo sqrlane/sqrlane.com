@@ -68,6 +68,9 @@ def health(request: Request):
         "risk_state_path": str(config.RISK_STATE_FILE),
         "risk_state_dir_writable": os.access(config.RISK_STATE_FILE.parent, os.W_OK),
         "ai_provider": llm.describe() if llm.is_configured() else None,
+        # Groq's model is resolved at runtime, so name the one really in use.
+        "ai_model": llm.active_model() if llm.is_configured() else None,
+        "ai_model_source": llm.resolution_note() or "not resolved yet",
         "live_pull_budget_seconds": config.LIVE_PULL_BUDGET_SECONDS,
     }
 
