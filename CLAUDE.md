@@ -192,7 +192,35 @@ What was taken from the reference's layout:
 
 The ring shows **board outcome** — reroute / hold / on plan — because that is a real
 part-to-whole from the run. Every number in it is counted, and the shares are asserted to
-add to 100.
+add to 100. Beside it, in the slot where the reference puts its revenue chart, is
+**schedule pressure**: each shipment's slack against the delay the disruption imposes.
+That is the advisor's own arithmetic drawn — where the delay bar clears the slack bar
+there is no clean answer, which is exactly SHP-002.
+
+### Chart colour is computed, not chosen
+
+Series colours live in their own tokens (`--s-slack`, `--s-delay`, `--s-reroute`,
+`--s-hold`, `--s-plan`), **not** the UI's `--blue` / `--amber` / `--green`. Those are
+tuned for text contrast, and reusing them put "Held" and "On plan" at **ΔE 5.6 under
+deuteranopia** — a deuteranope could not tell the two slices apart. That shipped
+undetected until the palette was actually run through a validator.
+
+Every set is checked against its own surface for lightness band, chroma floor,
+all-pairs CVD separation, normal-vision floor, and contrast. Two findings worth
+keeping:
+
+- **Dark steps are chosen, never flipped.** The light values all sit outside the dark
+  lightness band (0.48–0.67), so dark mode has its own validated triple.
+- **The obvious pairings are the broken ones.** Blue against purple is ΔE 1.3 under
+  deuteranopia; amber against a dark green is ΔE 3.9. Greying the "on plan" bucket
+  fails too — gray against amber is ΔE 13.4 to *normal* vision, below the floor that
+  secondary encoding cannot excuse. The fix each time was a different step, not a
+  different idea.
+
+Gridlines are **solid hairlines**. The reference draws them dashed; dashing reads as a
+threshold when it is only a grid, so that one detail is deliberately not copied.
+Direct labels are selective — only the shipment whose delay exceeds its slack — because
+a number on every bar goes unread.
 
 ### The workflow layer — inbound comms, RFQs and the TMS link
 

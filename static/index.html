@@ -152,7 +152,47 @@ body.side-collapsed .side > *{opacity:0; pointer-events:none}
 @media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr)}}
 .stat{background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);
       padding:20px;box-shadow:var(--shadow)}
-.ring-card{margin-bottom:20px;padding:20px}
+/* Chart series colours. Both pairs were run through the palette validator
+   against their own surface - the dark steps are chosen for the dark card, not
+   flipped from the light ones. */
+/* Series colours are their own tokens, not the UI's --blue/--amber/--green:
+   those are tuned for text contrast, and reusing them put "Held" and "On plan"
+   at deltaE 5.6 under deuteranopia - indistinguishable. Each set below was run
+   through the palette validator against its own surface (lightness band, chroma
+   floor, all-pairs CVD separation, normal-vision floor, contrast). The dark
+   steps are chosen for the dark card, never flipped from the light ones. */
+:root{
+  --s-slack:#006bff;  --s-delay:#96580a;
+  --s-reroute:#006bff; --s-hold:#96580a; --s-plan:#28a948;
+}
+html[data-theme="dark"]{
+  --s-slack:#3d95f5;  --s-delay:#c8811a;
+  --s-reroute:#3d95f5; --s-hold:#c8811a; --s-plan:#2ba455;
+}
+
+.grid-chart{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:20px;align-items:start}
+@media(max-width:1000px){.grid-chart{grid-template-columns:1fr}}
+.chart-card{padding:20px}
+.chart-h{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.chart-h h2{font-size:16px;font-weight:600;letter-spacing:-.02em;margin:0}
+.chart-h p{font-size:14px;color:var(--muted);margin:4px 0 0}
+.chart-lg{display:flex;gap:14px;flex:none;padding-top:2px}
+.chart-lg span{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.chart-lg i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.chart-lg i.slack{background:var(--s-slack)}
+.chart-lg i.delay{background:var(--s-delay)}
+.chart{width:100%;height:auto;display:block;margin-top:14px;overflow:visible}
+.chart .gl{stroke:var(--border);stroke-width:1}
+.chart .axis{stroke:var(--border-strong);stroke-width:1}
+.chart .ytick,.chart .xtick{fill:var(--faint);font-size:11px;font-variant-numeric:tabular-nums}
+.chart .ytick{text-anchor:end}
+.chart .xtick{text-anchor:middle;font-family:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+.chart .b.slack{fill:var(--s-slack)}
+.chart .b.delay{fill:var(--s-delay)}
+.chart .blab{text-anchor:middle;font-size:11px;font-weight:600;fill:var(--s-delay)}
+.chart .grp:hover .b{opacity:.82}
+.chart-f{font-size:12.5px;color:var(--faint);margin:12px 0 0}
+.ring-card{padding:20px}
 .ring-h h2{font-size:16px;font-weight:600;letter-spacing:-.02em;margin:0}
 .ring-h p{font-size:14px;color:var(--muted);margin:4px 0 0}
 .ring-b{position:relative;display:flex;justify-content:center;margin:18px 0 4px}
@@ -566,15 +606,94 @@ function go(id){
    this run rather than a trend. There is no history here to compare against, so
    a "+12% vs. previous 30 days" would be invented, and an invented number is the
    one thing this board cannot show. Same shape, honest contents. */
+/* Schedule pressure - the decision rule, drawn. Every shipment carries slack;
+   the disruption imposes a delay. Where the delay bar clears the slack bar there
+   is no clean answer, and that is precisely the shipment worth reading. Both
+   numbers come from the run, so this is the advisor's own arithmetic on screen.
+
+   Series colours were validated for both themes (OKLCH lightness band, chroma
+   floor, CVD separation and contrast against the card) rather than picked by
+   eye - blue against purple, the obvious pairing, is near-identical under
+   protanopia. */
+function schedulePressure(){
+  if (!hasRun) return "";
+  const rows = board.map(s => ({
+    id: s.id,
+    slack: ((s.decision||{}).slack_days) || 0,
+    delay: ((s.decision||{}).delay_days) || 0,
+  }));
+  if (!rows.length) return "";
+
+  const W = 640, H = 252, L = 30, R = 10, T = 14, B = 42;
+  const plotW = W - L - R, plotH = H - T - B;
+  const peak = Math.max(2, ...rows.map(r => Math.max(r.slack, r.delay)));
+  const top  = Math.ceil(peak / 2) * 2;               // even, so ticks are whole days
+  const yOf  = v => T + plotH - (v / top) * plotH;
+  const groupW = plotW / rows.length;
+  const BW = Math.min(22, Math.max(8, (groupW - 14) / 2 - 1));   // <=24px, air either side
+  const base = T + plotH;
+
+  let ticks = [];
+  for (let v = 0; v <= top; v += 2) ticks.push(v);
+  // Hairline, solid, one step off the surface - a dashed grid reads as a
+  // threshold when it is only a grid.
+  const grid = ticks.map(v => `
+    <line class="gl" x1="${L}" x2="${W-R}" y1="${yOf(v)}" y2="${yOf(v)}"/>
+    <text class="ytick" x="${L-8}" y="${yOf(v)+4}">${v}</text>`).join("");
+
+  // 4px rounded data-end, square where it meets the baseline.
+  const barPath = (x, v, w) => {
+    const h = (v / top) * plotH, yT = base - h, r = Math.min(4, h, w / 2);
+    return `M${x},${base} L${x},${yT+r} Q${x},${yT} ${x+r},${yT}
+            L${x+w-r},${yT} Q${x+w},${yT} ${x+w},${yT+r} L${x+w},${base} Z`;
+  };
+
+  const groups = rows.map((r, i) => {
+    const cx = L + groupW * i + groupW / 2;
+    const xS = cx - BW - 1, xD = cx + 1;          // the 2px surface gap between them
+    const tight = r.delay > r.slack;              // the one that forces a decision
+    return `
+      <g class="grp">
+        ${r.slack > 0 ? `<path class="b slack" d="${barPath(xS, r.slack, BW)}">
+          <title>${esc(r.id)} - ${r.slack} days of slack</title></path>` : ""}
+        ${r.delay > 0 ? `<path class="b delay ${tight?"tight":""}" d="${barPath(xD, r.delay, BW)}">
+          <title>${esc(r.id)} - ${r.delay} days of delay</title></path>` : ""}
+        ${tight ? `<text class="blab" x="${xD + BW/2}" y="${yOf(r.delay) - 7}">${r.delay}d</text>` : ""}
+        <text class="xtick" x="${cx}" y="${base + 18}">${esc(r.id.replace("SHP-",""))}</text>
+      </g>`;
+  }).join("");
+
+  const over = rows.filter(r => r.delay > r.slack).length;
+  return `<div class="card chart-card">
+    <div class="chart-h">
+      <div><h2>Schedule pressure</h2>
+        <p>Slack in hand against the delay this disruption imposes, in days</p></div>
+      <div class="chart-lg">
+        <span><i class="slack"></i>Slack</span><span><i class="delay"></i>Delay</span>
+      </div>
+    </div>
+    <svg viewBox="0 0 ${W} ${H}" class="chart" preserveAspectRatio="xMidYMid meet" role="img"
+         aria-label="Slack against imposed delay for each shipment, in days.${
+           over ? ` ${over} shipment${over===1?"":"s"} face more delay than slack.` : ""}">
+      ${grid}
+      <line class="axis" x1="${L}" x2="${W-R}" y1="${base}" y2="${base}"/>
+      ${groups}
+    </svg>
+    <p class="chart-f">${over
+      ? `Where the delay bar clears the slack bar there is no clean answer — ${over} here.`
+      : `Every delay fits inside the slack it had.`}</p>
+  </div>`;
+}
+
 /* Board outcome, as the reference draws a distribution: a ring with the total in
    the middle and a legend carrying count and share. Every number is counted from
    the run - three outcomes over one pool is exactly what the ring is for. */
 function outcomeRing(){
   if (!hasRun) return "";
   const parts = [
-    {name:"Rerouted", n:(summary||{})["reroute"]||0, color:"var(--blue)"},
-    {name:"Held",     n:(summary||{})["hold"]||0,    color:"var(--amber)"},
-    {name:"On plan",  n:(summary||{})["no-action"]||0, color:"var(--green)"},
+    {name:"Rerouted", n:(summary||{})["reroute"]||0, color:"var(--s-reroute)"},
+    {name:"Held",     n:(summary||{})["hold"]||0,    color:"var(--s-hold)"},
+    {name:"On plan",  n:(summary||{})["no-action"]||0, color:"var(--s-plan)"},
   ].filter(p => p.n > 0);
   const total = parts.reduce((a,b) => a + b.n, 0);
   if (!total) return "";
@@ -921,13 +1040,15 @@ function render(){
     if (v !== view) $("v-"+v).innerHTML = "";
   });
 
-  if (view === "overview") $("v-overview").innerHTML = legendCard() + statRow() +
+  if (view === "overview") $("v-overview").innerHTML = statRow() +
+    (hasRun ? `<div class="grid-chart">${schedulePressure()}${outcomeRing()}</div>` : "") +
+    legendCard() +
     (hasRun?"":`<div class="hint" style="margin-bottom:20px">
       <b>Nothing has happened yet.</b> Press <b>Inject Hamburg strike</b> above — the Workers read live news,
       triage all ${board.length} shipments, and draft the emails each one needs. Everything then
       waits for your approval.</div>`) +
     notes.map(n=>`<div class="note">${esc(n)}</div>`).join("") +
-    `<div class="grid2"><div>${shipmentGroups()}</div><div>${outcomeRing()}${workersCard()}${riskCard(true)}</div></div>`;
+    `<div class="grid2"><div>${shipmentGroups()}</div><div>${workersCard()}${riskCard(true)}</div></div>`;
 
   if (view === "shipments") $("v-shipments").innerHTML = statRow() + shipmentGroups();
   if (view === "risk")      $("v-risk").innerHTML = riskCard(false);
