@@ -369,6 +369,10 @@ def draft_one(audience: str, decision: dict, shipment: dict, routes: dict,
         "body": body,
         # Said in the data, not just in the UI: nothing here has been sent.
         "status": "DRAFT - not sent",
+        # The human-approval gate. A draft starts here and a person moves it to
+        # "approved". Approval is a state change and nothing else - there is no
+        # transport in this project for it to trigger.
+        "approval_status": "awaiting_approval",
         "warnings": _draft_warnings(audience, subject, body),
         # True when the model was meant to write this and could not, so the
         # dashboard can say so rather than passing a template off as authored.

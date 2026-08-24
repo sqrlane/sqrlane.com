@@ -91,6 +91,11 @@ def initial():
         })
     state["provider"] = llm.describe() if llm.is_configured() else None
     state["forwarder"] = config.FORWARDER["company"]
+    state["ai"] = {
+        "provider": config.LLM_PROVIDER if llm.is_configured() else None,
+        "model": llm.active_model() if llm.is_configured() else None,
+        "model_source": llm.resolution_note(),
+    }
     return state
 
 

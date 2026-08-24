@@ -3,20 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Trade-Lane Risk &amp; Reroute Agent</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23141a21'/%3E%3Cpath d='M3 11h10M5 8h6M7 5h2' stroke='%23fff' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E">
+<title>Lanewatch — trade-lane risk, decided</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3.5' fill='%230d6068'/%3E%3Cpath d='M3 11.2h10M3 8h6.5M3 4.8h3.5' stroke='%23fff' stroke-width='1.7' stroke-linecap='round'/%3E%3C/svg%3E">
 <style>
-  /* Restrained palette. One accent per state, and red reserved strictly for
-     "this misses the customer's date" so it never gets diluted. */
+  /* Lanewatch. One brand accent (deep slate-teal) carries the product and the
+     "action taken" state; amber holds, green is on-plan, red is reserved
+     strictly for a missed customer date so it never gets diluted. */
   :root{
-    --bg:#f6f7f9; --surface:#fff; --line:#e3e6ea; --line-strong:#cfd4da;
-    --ink:#141a21; --ink-2:#4a5560; --ink-3:#79848f;
+    --bg:#f5f7f8; --surface:#fff; --line:#e2e7e9; --line-strong:#ccd4d7;
+    --ink:#111a1c; --ink-2:#46565b; --ink-3:#76878c;
+    --brand:#0d6068; --brand-bg:#e7f1f2; --brand-dark:#094950;
     --green:#1f8a4c; --green-bg:#eaf6ee;
-    --blue:#1f5fbf;  --blue-bg:#eaf0fb;
-    --amber:#a86412; --amber-bg:#fdf2e2;
-    --red:#b4232a;   --red-bg:#fceceb;
-    --radius:10px;
-    --shadow:0 1px 2px rgba(16,24,32,.05), 0 4px 12px rgba(16,24,32,.05);
+    --amber:#a2600f; --amber-bg:#fdf2e2;
+    --red:#b4232a;   --red-bg:#fcecec;
+    --radius:11px;
+    --shadow:0 1px 2px rgba(11,26,28,.05), 0 4px 14px rgba(11,26,28,.05);
   }
   *{box-sizing:border-box}
   body{
@@ -24,100 +25,113 @@
     font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     -webkit-font-smoothing:antialiased;
   }
-  .wrap{max-width:1280px; margin:0 auto; padding:0 24px 56px}
+  .wrap{max-width:1340px; margin:0 auto; padding:0 26px 60px}
 
-  /* ---------- header ---------- */
-  header{background:var(--surface); border-bottom:1px solid var(--line); margin-bottom:24px}
-  .head-in{max-width:1280px; margin:0 auto; padding:20px 24px; display:flex;
-           align-items:center; gap:24px; flex-wrap:wrap}
-  h1{margin:0; font-size:19px; letter-spacing:-.01em}
-  .sub{margin:2px 0 0; color:var(--ink-3); font-size:13px}
-  .spacer{flex:1}
-  /* AI Worker framing - cosmetic product dressing, nothing behind it. */
-  .brand{display:flex; align-items:center; gap:12px}
-  .mark{width:36px; height:36px; border-radius:9px; background:var(--ink); flex:none;
+  /* ---------- masthead ---------- */
+  header{background:var(--surface); border-bottom:1px solid var(--line)}
+  .head-in{max-width:1340px; margin:0 auto; padding:18px 26px; display:flex;
+           align-items:center; gap:22px; flex-wrap:wrap}
+  .brand{display:flex; align-items:center; gap:13px}
+  .mark{width:38px; height:38px; border-radius:10px; background:var(--brand); flex:none;
         display:flex; align-items:center; justify-content:center}
-  .kicker{font-size:10.5px; font-weight:700; letter-spacing:.13em; text-transform:uppercase;
-          color:var(--ink-3)}
-  .status{display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--ink-2);
+  .word{font-size:19px; font-weight:700; letter-spacing:.02em; line-height:1.1}
+  .word span{color:var(--brand)}
+  .tagline{font-size:12px; color:var(--ink-3); margin-top:2px}
+  .spacer{flex:1}
+  .status{display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--ink-2);
           background:var(--bg); border:1px solid var(--line); border-radius:20px;
-          padding:5px 13px 5px 10px; white-space:nowrap}
+          padding:5px 14px 5px 11px; white-space:nowrap}
   .status i{width:7px; height:7px; border-radius:50%; background:var(--ink-3); flex:none}
-  .status.working i{background:var(--blue); animation:pulse 1.1s ease-in-out infinite}
+  .status.working i{background:var(--brand); animation:pulse 1.1s ease-in-out infinite}
   .status.done i{background:var(--green)}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+  button.run{
+    background:var(--brand); color:#fff; border:0; border-radius:9px;
+    padding:11px 20px; font-size:14px; font-weight:600; cursor:pointer;
+    display:flex; align-items:center; gap:9px; transition:background .15s;
+  }
+  button.run:hover:not(:disabled){background:var(--brand-dark)}
+  button.run:disabled{opacity:.65; cursor:default}
+  .dot{width:7px;height:7px;border-radius:50%;background:#ffd23f;flex:none}
+  .spin{width:13px;height:13px;border:2px solid rgba(255,255,255,.35);
+        border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;flex:none}
+  @keyframes sp{to{transform:rotate(360deg)}}
 
-  /* The live-vs-synthetic legend: the honest answer to "is this real?" */
+  /* ---------- provenance legend ---------- */
   .legend{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
-          padding:14px 16px; margin-bottom:22px; box-shadow:var(--shadow)}
-  .keys{display:flex; gap:22px; flex-wrap:wrap; margin-bottom:10px}
+          padding:14px 17px; margin:22px 0; box-shadow:var(--shadow)}
+  .keys{display:flex; gap:24px; flex-wrap:wrap; margin-bottom:11px}
   .key{display:flex; align-items:flex-start; gap:8px; font-size:12.5px; color:var(--ink-2)}
   .sw{width:11px; height:11px; border-radius:3px; flex:none; margin-top:3px}
   .sw.live{background:var(--green-bg); border:1.5px solid var(--green)}
   .sw.synth{background:var(--amber-bg); border:1.5px solid var(--amber)}
   .sw.draft{background:var(--bg); border:1.5px dashed var(--line-strong)}
   .key b{color:var(--ink); font-weight:600}
-  .said{border-top:1px solid var(--line); padding-top:10px; font-size:13.5px;
+  .said{border-top:1px solid var(--line); padding-top:11px; font-size:13.5px;
         color:var(--ink); font-style:italic}
-  .panel-h .chip{font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
-                 padding:2.5px 7px; border-radius:4px}
-  .chip.live{background:var(--green-bg); color:var(--green)}
-  .chip.synth{background:var(--amber-bg); color:var(--amber)}
-  button.run{
-    background:var(--ink); color:#fff; border:0; border-radius:8px;
-    padding:11px 20px; font-size:14px; font-weight:600; cursor:pointer;
-    display:flex; align-items:center; gap:9px; transition:background .15s;
-  }
-  button.run:hover:not(:disabled){background:#2b3540}
-  button.run:disabled{opacity:.6; cursor:default}
-  .dot{width:7px;height:7px;border-radius:50%;background:#ff5d52;flex:none}
-  .spin{width:13px;height:13px;border:2px solid rgba(255,255,255,.3);
-        border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;flex:none}
-  @keyframes sp{to{transform:rotate(360deg)}}
-
-  /* the honest line - visible, not buried */
-  .honest{
-    background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--ink-3);
-    border-radius:var(--radius); padding:13px 16px; margin-bottom:22px;
-    font-size:13.5px; color:var(--ink-2);
-  }
-  .honest b{color:var(--ink); font-weight:600}
 
   .cols{display:grid; grid-template-columns:340px 1fr; gap:24px; align-items:start}
-  @media (max-width:980px){.cols{grid-template-columns:1fr}}
-
+  @media (max-width:1040px){.cols{grid-template-columns:1fr}}
   .panel{background:var(--surface); border:1px solid var(--line);
-         border-radius:var(--radius); box-shadow:var(--shadow)}
+         border-radius:var(--radius); box-shadow:var(--shadow); margin-bottom:22px}
   .panel-h{padding:13px 16px; border-bottom:1px solid var(--line);
-           display:flex; align-items:center; gap:8px}
-  .panel-h h2{margin:0; font-size:12px; font-weight:700; letter-spacing:.07em;
+           display:flex; align-items:center; gap:9px}
+  .panel-h h2{margin:0; font-size:11.5px; font-weight:700; letter-spacing:.08em;
               text-transform:uppercase; color:var(--ink-3)}
   .count{margin-left:auto; font-size:12px; color:var(--ink-3);
          background:var(--bg); border-radius:20px; padding:2px 9px}
+  .chip{font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+        padding:2.5px 7px; border-radius:4px}
+  .chip.live{background:var(--green-bg); color:var(--green)}
+  .chip.synth{background:var(--amber-bg); color:var(--amber)}
+
+  /* ---------- the three Workers ---------- */
+  .worker{padding:13px 16px; display:flex; gap:11px; align-items:flex-start}
+  .worker+.worker{border-top:1px solid var(--line)}
+  .wdot{width:9px; height:9px; border-radius:50%; background:var(--line-strong);
+        flex:none; margin-top:5px; transition:background .3s}
+  .worker.working .wdot{background:var(--brand); animation:pulse 1s ease-in-out infinite}
+  .worker.done .wdot{background:var(--green)}
+  .wname{font-size:13.5px; font-weight:600; display:flex; align-items:baseline; gap:8px}
+  .wsecs{font-size:11px; color:var(--ink-3); font-variant-numeric:tabular-nums}
+  .wrole{font-size:12px; color:var(--ink-3); margin-top:2px; line-height:1.45}
+  .wsum{font-size:12.5px; color:var(--ink); margin-top:6px; font-weight:500}
+  .wdet{margin:4px 0 0; padding:0; list-style:none}
+  .wdet li{font-size:11.5px; color:var(--ink-2); padding-left:10px; position:relative}
+  .wdet li:before{content:"·"; position:absolute; left:2px}
+
+  /* ---------- engine strip ---------- */
+  .engine{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+          box-shadow:var(--shadow); padding:12px 16px; margin-bottom:11px;
+          display:flex; gap:22px; align-items:center; flex-wrap:wrap; font-size:12.5px}
+  .engine .lab{font-size:10.5px; text-transform:uppercase; letter-spacing:.06em;
+               color:var(--ink-3); display:block}
+  .engine .val{font-weight:600; font-variant-numeric:tabular-nums}
+  .engine code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px;
+               background:var(--brand-bg); color:var(--brand-dark); padding:1px 6px;
+               border-radius:4px}
+  .src-note{font-size:11px; color:var(--ink-3); margin-top:2px}
 
   /* ---------- risk feed ---------- */
   .feed{padding:6px}
   .empty{padding:26px 16px; text-align:center; color:var(--ink-3); font-size:13px}
   .event{padding:12px; border-radius:8px; margin:4px 0}
-  .event+.event{border-top:1px solid var(--line)}
   .event.injected{background:var(--amber-bg)}
   .tags{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:7px; align-items:center}
   .tag{font-size:10.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
        padding:2.5px 7px; border-radius:4px; background:var(--bg); color:var(--ink-2)}
-  .tag.live{background:var(--green-bg); color:var(--green)}
-  .tag.inj{background:#f4dfc0; color:var(--amber)}
+  .tag.livesrc{background:var(--green-bg); color:var(--green)}
+  .tag.inj{background:#f3ddbe; color:var(--amber)}
   .tag.high{background:var(--red-bg); color:var(--red)}
   .tag.medium{background:var(--amber-bg); color:var(--amber)}
   .tag.low{background:var(--bg); color:var(--ink-2)}
-  .tag.lang{background:#e7e3f7; color:#4c3d9e}
+  .tag.lang{background:#e4e6f6; color:#414a9e}
   .event .title{font-size:13.5px; font-weight:600; line-height:1.4}
-  /* The original-language headline is the differentiator, so it is shown, not summarised. */
-  .orig{margin-top:6px; padding:7px 9px; background:rgba(255,255,255,.75);
-        border-left:2px solid #4c3d9e; border-radius:0 4px 4px 0;
+  .orig{margin-top:6px; padding:7px 9px; background:rgba(255,255,255,.8);
+        border-left:2px solid #414a9e; border-radius:0 4px 4px 0;
         font-size:12.5px; color:var(--ink-2); font-style:italic}
   .src{margin-top:7px; font-size:11.5px; color:var(--ink-3)}
   .why{margin-top:6px; font-size:12.5px; color:var(--ink-2)}
-
   .sources{padding:11px 16px; border-top:1px solid var(--line); font-size:11.5px; color:var(--ink-3)}
   .sources .row{display:flex; gap:7px; padding:1.5px 0}
   .ok-m{color:var(--green)} .fail-m{color:var(--red)}
@@ -126,81 +140,97 @@
   .grid{display:grid; gap:11px}
   .card{background:var(--surface); border:1px solid var(--line);
         border-left:3px solid var(--line-strong); border-radius:var(--radius);
-        box-shadow:var(--shadow); transition:border-color .35s, box-shadow .2s}
+        box-shadow:var(--shadow); transition:border-color .4s, box-shadow .2s}
   .card.green{border-left-color:var(--green)}
-  .card.rerouted{border-left-color:var(--blue)}
+  .card.rerouted{border-left-color:var(--brand)}
   .card.hold{border-left-color:var(--amber)}
   .card.flip{animation:flip .5s ease-out}
-  @keyframes flip{
-    0%{transform:translateY(0)} 30%{transform:translateY(-4px)} 100%{transform:translateY(0)}
-  }
+  @keyframes flip{0%{transform:translateY(0)}30%{transform:translateY(-4px)}100%{transform:translateY(0)}}
   .card-h{padding:14px 16px; display:flex; align-items:center; gap:14px; cursor:pointer}
-  .card-h:hover{background:#fafbfc}
+  .card-h:hover{background:#fafcfc}
   .card.idle .card-h{cursor:default}
   .card.idle .card-h:hover{background:transparent}
   .badge{font-size:10.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
-         padding:4px 9px; border-radius:5px; white-space:nowrap; flex:none; min-width:82px;
+         padding:4px 9px; border-radius:5px; white-space:nowrap; flex:none; min-width:84px;
          text-align:center}
   .badge.green{background:var(--green-bg); color:var(--green)}
-  .badge.rerouted{background:var(--blue-bg); color:var(--blue)}
+  .badge.rerouted{background:var(--brand-bg); color:var(--brand-dark)}
   .badge.hold{background:var(--amber-bg); color:var(--amber)}
   .who{flex:1; min-width:0}
   .who .id{font-size:11.5px; color:var(--ink-3); font-variant-numeric:tabular-nums}
   .who .cargo{font-weight:600; font-size:14.5px; margin:1px 0}
   .who .lane{font-size:12.5px; color:var(--ink-2)}
-  .head-line{font-size:12.5px; color:var(--ink-2); max-width:270px; text-align:right}
-  .eta{text-align:right; flex:none; min-width:112px}
+  .head-line{font-size:12.5px; color:var(--ink-2); max-width:320px; text-align:right;
+           display:flex; align-items:center; justify-content:flex-end; gap:0; flex-wrap:wrap}
+  .eta{text-align:right; flex:none; min-width:114px}
   .eta .lab{font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-3)}
   .eta .val{font-size:13.5px; font-variant-numeric:tabular-nums; font-weight:600}
   .eta .was{text-decoration:line-through; color:var(--ink-3); font-weight:400; margin-right:5px}
   .eta .breach{color:var(--red); font-size:11px; font-weight:600}
   .chev{color:var(--ink-3); flex:none; transition:transform .2s; font-size:11px}
   .card.open .chev{transform:rotate(90deg)}
+  .fb{font-size:10.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+      background:var(--amber-bg); color:var(--amber); border:1px solid #f0dcc0;
+      border-radius:4px; padding:2px 6px; margin-left:8px; white-space:nowrap}
+  .ai-tag{font-size:10.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+          background:var(--brand-bg); color:var(--brand-dark); border-radius:4px;
+          padding:2px 6px; margin-left:8px}
 
   .body{display:none; padding:0 16px 16px; border-top:1px solid var(--line)}
   .card.open .body{display:block}
-  .sec{margin-top:15px}
-  .sec h3{margin:0 0 7px; font-size:11px; font-weight:700; letter-spacing:.07em;
-          text-transform:uppercase; color:var(--ink-3)}
+  .sec{margin-top:16px}
+  .sec h3{margin:0 0 8px; font-size:11px; font-weight:700; letter-spacing:.08em;
+          text-transform:uppercase; color:var(--ink-3); display:flex; align-items:baseline; gap:9px}
+  .sec h3 .stamp{font-weight:400; letter-spacing:0; text-transform:none; font-size:11px}
   .reason{font-size:14px; line-height:1.6; color:var(--ink)}
-  .rejected{margin:8px 0 0; padding:0; list-style:none}
-  .rejected li{font-size:12.5px; color:var(--ink-2); padding:4px 0 4px 15px; position:relative}
+  .rejected{margin:9px 0 0; padding:0; list-style:none}
+  .rejected li{font-size:12.5px; color:var(--ink-2); padding:4px 0 4px 16px; position:relative}
   .rejected li:before{content:"×"; position:absolute; left:0; color:var(--ink-3); font-weight:700}
-  .rejected b{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px;
-              color:var(--ink)}
+  .rejected b{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px; color:var(--ink)}
 
-  /* the recorded reasoning trail - the defensible part, so it is shown in full */
-  .trail{margin:0; padding:0; list-style:none; border-left:1.5px solid var(--line); padding-left:14px}
+  /* the decision record - the defensible part, so it is a first-class panel */
+  .record{border:1px solid var(--line); border-radius:9px; overflow:hidden}
+  .record-h{background:#fafcfc; padding:9px 13px; border-bottom:1px solid var(--line);
+            font-size:11.5px; color:var(--ink-3); display:flex; gap:10px; flex-wrap:wrap}
+  .trail{margin:0; padding:12px 13px 13px 27px; list-style:none;
+         border-left:0; position:relative}
   .trail li{position:relative; padding:5px 0; font-size:12.5px; color:var(--ink-2)}
-  .trail li:before{content:""; position:absolute; left:-19px; top:11px; width:6px; height:6px;
+  .trail li:before{content:""; position:absolute; left:-18px; top:11px; width:7px; height:7px;
                    border-radius:50%; background:var(--line-strong)}
+  .trail li:after{content:""; position:absolute; left:-15px; top:18px; bottom:-5px; width:1px;
+                  background:var(--line)}
+  .trail li:last-child:after{display:none}
+  .trail li:last-child:before{background:var(--brand)}
   .trail .k{color:var(--ink); font-weight:600}
 
-  /* drafts */
-  .mail{border:1px solid var(--line); border-radius:8px; margin-top:9px; overflow:hidden}
-  .mail-h{background:#fafbfc; padding:9px 12px; border-bottom:1px solid var(--line);
+  /* drafts + the approval gate */
+  .mail{border:1px solid var(--line); border-radius:9px; margin-top:10px; overflow:hidden}
+  .mail-h{background:#fafcfc; padding:10px 13px; border-bottom:1px solid var(--line);
           font-size:12px; color:var(--ink-2)}
   .mail-h .to{font-weight:600; color:var(--ink)}
   .mail-h .subj{margin-top:2px}
-  .mail-b{padding:12px; font-size:13px; line-height:1.6; white-space:pre-wrap;
-          font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px}
-  .notsent{float:right; font-size:10px; font-weight:700; letter-spacing:.05em;
-           text-transform:uppercase; color:var(--ink-3); border:1px solid var(--line-strong);
-           border-radius:4px; padding:2px 6px}
-  .warn{margin:8px 0 0; font-size:12px; color:var(--amber);
-        background:var(--amber-bg); border-radius:5px; padding:7px 10px}
-  .meta{margin-top:12px; padding-top:10px; border-top:1px solid var(--line);
+  .mail-b{padding:13px; font-size:12.5px; line-height:1.65; white-space:pre-wrap;
+          font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .gate{display:flex; align-items:center; gap:11px; padding:10px 13px;
+        border-top:1px solid var(--line); background:#fcfdfd; flex-wrap:wrap}
+  .gate-state{font-size:11.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+              padding:3px 8px; border-radius:5px}
+  .gate-state.awaiting{background:var(--amber-bg); color:var(--amber)}
+  .gate-state.approved{background:var(--green-bg); color:var(--green)}
+  .approve{background:var(--brand); color:#fff; border:0; border-radius:7px;
+           padding:6px 14px; font-size:12.5px; font-weight:600; cursor:pointer}
+  .approve:hover{background:var(--brand-dark)}
+  .gate .never{margin-left:auto; font-size:11px; color:var(--ink-3)}
+  .warn{margin:9px 0 0; font-size:12px; color:var(--amber);
+        background:var(--amber-bg); border-radius:6px; padding:7px 10px}
+  .meta{margin-top:13px; padding-top:11px; border-top:1px solid var(--line);
         font-size:11.5px; color:var(--ink-3)}
-
-  .notes{margin-top:16px}
+  .notes{margin-bottom:22px}
   .note{background:var(--amber-bg); border:1px solid #f0dcc0; color:var(--amber);
         border-radius:8px; padding:10px 13px; font-size:13px; margin-bottom:8px}
   .tally{display:flex; gap:18px; padding:12px 16px; border-top:1px solid var(--line);
          font-size:12.5px; color:var(--ink-2)}
   .tally b{color:var(--ink)}
-  .fb{font-size:10.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
-      background:var(--amber-bg); color:var(--amber); border:1px solid #f0dcc0;
-      border-radius:4px; padding:2px 6px; margin-left:8px; white-space:nowrap}
 </style>
 </head>
 <body>
@@ -209,13 +239,13 @@
   <div class="head-in">
     <div class="brand">
       <div class="mark">
-        <svg width="19" height="19" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-          <path d="M3 14h14M5.5 10h9M8 6h4" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/>
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <path d="M3.2 14h13.6M3.2 10h8.6M3.2 6h4.6" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/>
         </svg>
       </div>
       <div>
-        <div class="kicker">AI Worker</div>
-        <h1>Trade-Lane Risk &amp; Reroute</h1>
+        <div class="word">Lane<span>watch</span></div>
+        <div class="tagline">Trade-lane risk, decided</div>
       </div>
     </div>
     <span class="status" id="status"><i></i><span id="status-t">Idle</span></span>
@@ -232,7 +262,7 @@
       <span class="key"><i class="sw synth"></i><span><b>Synthetic</b> &mdash; the five
         shipments and the injected strike, so a disruption can be shown on demand.</span></span>
       <span class="key"><i class="sw draft"></i><span><b>Drafted, never sent</b> &mdash;
-        no email leaves this machine.</span></span>
+        approval changes state only. No email leaves this machine.</span></span>
     </div>
     <div class="said">&ldquo;The risk detection is real &mdash; it runs against live news
       right now. The shipments are synthetic, so I can show you a disruption on demand
@@ -242,8 +272,13 @@
   <div class="cols">
     <div>
       <div class="panel">
+        <div class="panel-h"><h2>Workers</h2><span class="count" id="w-n">3</span></div>
+        <div id="workers"></div>
+      </div>
+
+      <div class="panel">
         <div class="panel-h"><h2>Risk feed</h2><span class="chip live">live</span>
-             <span class="count" id="ev-n">0</span></div>
+          <span class="count" id="ev-n">0</span></div>
         <div class="feed" id="feed">
           <div class="empty">No active events.<br>Press the button to run a cycle.</div>
         </div>
@@ -253,14 +288,20 @@
     </div>
 
     <div>
-      <div class="panel">
-        <div class="panel-h"><h2>Shipments in transit</h2><span class="chip synth">synthetic</span>
-             <span class="count" id="sh-n">5</span></div>
-        <div class="tally" id="tally">
-          <span><b>5</b> on plan</span>
-        </div>
+      <div class="engine" id="engine">
+        <div><span class="lab">Decision engine</span>
+          <span class="val" id="eng-model">not yet resolved</span>
+          <span class="src-note" id="eng-src"></span></div>
+        <div><span class="lab">Decisions</span><span class="val" id="eng-dec">&mdash;</span></div>
+        <div><span class="lab">Drafts</span><span class="val" id="eng-dra">&mdash;</span></div>
       </div>
-      <div class="grid" id="grid" style="margin-top:11px"></div>
+
+      <div class="panel" style="margin-bottom:11px">
+        <div class="panel-h"><h2>Shipments in transit</h2><span class="chip synth">synthetic</span>
+          <span class="count" id="sh-n">5</span></div>
+        <div class="tally" id="tally"><span><b>5</b> on plan</span></div>
+      </div>
+      <div class="grid" id="grid"></div>
     </div>
   </div>
 </div>
@@ -271,19 +312,53 @@ const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c =>
   ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const LABEL = {green:"On plan", rerouted:"Rerouted", hold:"Hold"};
 
-let board = [];
+let board = [], workers = [];
 const openCards = new Set();
+const approved = new Set();          // "SHP-002|customer" - approval is client state only
+
+/* ---------- Workers ---------- */
+function renderWorkers(){
+  $("workers").innerHTML = workers.map(w => `
+    <div class="worker ${w.status}">
+      <span class="wdot"></span>
+      <div style="flex:1;min-width:0">
+        <div class="wname">${esc(w.name)}
+          ${w.seconds != null ? `<span class="wsecs">${esc(w.seconds)}s</span>` : ""}</div>
+        <div class="wrole">${esc(w.role)}</div>
+        ${w.summary ? `<div class="wsum">${esc(w.summary)}</div>` : ""}
+        ${(w.detail || []).length
+          ? `<ul class="wdet">${w.detail.map(d => `<li>${esc(d)}</li>`).join("")}</ul>` : ""}
+      </div>
+    </div>`).join("");
+}
+
+/* ---------- engine strip ---------- */
+function renderEngine(ai){
+  if (!ai || !ai.model){
+    $("eng-model").innerHTML = `<span style="color:var(--amber)">no provider — rules only</span>`;
+    $("eng-src").textContent = "decisions and drafts came from the deterministic fallbacks";
+  } else {
+    $("eng-model").innerHTML = `<code>${esc(ai.model)}</code>`;
+    $("eng-src").textContent = ai.model_source || "";
+  }
+  if (ai && ai.decisions_total != null){
+    const dm = ai.decisions_from_model, dt = ai.decisions_total;
+    const rm = ai.drafts_from_model,   rt = ai.drafts_total;
+    $("eng-dec").innerHTML = `${dm} of ${dt} by model` +
+      (dm < dt ? ` <span style="color:var(--amber)">· ${dt-dm} by rules</span>` : "");
+    $("eng-dra").innerHTML = `${rm} of ${rt} by model` +
+      (rm < rt ? ` <span style="color:var(--amber)">· ${rt-rm} templated</span>` : "");
+  }
+}
 
 /* ---------- shipment cards ---------- */
 function cardHTML(s){
-  const d = s.decision;
-  const idle = !d;
+  const d = s.decision, idle = !d;
   const eta = d && d.delay_days
     ? `<span class="was">${esc(d.original_eta)}</span>${esc(d.revised_eta)}`
     : esc(s.eta);
   const breach = d && d.deadline_breached
     ? `<div class="breach">misses ${esc(d.required_by)}</div>` : "";
-
   return `
   <div class="card ${s.state} ${idle?"idle":""} ${openCards.has(s.id)?"open":""}" data-id="${esc(s.id)}">
     <div class="card-h">
@@ -294,7 +369,7 @@ function cardHTML(s){
         <div class="lane">${esc(s.origin)} &rarr; ${esc(s.final_destination)}</div>
       </div>
       ${d ? `<div class="head-line">${esc(d.headline)}${
-        d.fallback ? `<span class="fb" title="The AI provider was unavailable, so this came from the deterministic fallback">rule</span>` : ""}</div>` : ""}
+        d.fallback ? `<span class="fb" title="the model was unavailable; this came from the rules">rule</span>` : ""}</div>` : ""}
       <div class="eta">
         <div class="lab">${d && d.delay_days ? "Revised ETA" : "ETA"}</div>
         <div class="val">${eta}</div>${breach}
@@ -307,8 +382,7 @@ function cardHTML(s){
 
 function bodyHTML(s, d){
   let html = `<div class="sec"><h3>Why</h3><div class="reason">${esc(d.reasoning)}</div>`;
-
-  if (d.rejected_options && d.rejected_options.length){
+  if ((d.rejected_options || []).length){
     html += `<ul class="rejected">` + d.rejected_options.map(o =>
       `<li><b>${esc(o.route_id)}</b> &mdash; ${esc(o.why_not)}</li>`).join("") + `</ul>`;
   }
@@ -320,35 +394,54 @@ function bodyHTML(s, d){
       <span style="color:var(--ink-2);font-size:13px">
         ${esc(d.recommended_route_description || "")} &middot;
         discharge ${esc(d.recommended_discharge_port || "")} &middot;
-        then ${esc(d.recommended_inland_leg || "")}</span>
-    </div></div>`;
+        then ${esc(d.recommended_inland_leg || "")}</span></div></div>`;
   }
 
-  html += `<div class="sec"><h3>Reasoning trail</h3><ul class="trail">` +
+  /* the Decision Layer, as a first-class record */
+  html += `<div class="sec"><h3>Decision record
+      <span class="stamp">${esc((d.decided_at || "").replace("T", " ").replace("+00:00", " UTC"))}</span></h3>
+    <div class="record">
+      <div class="record-h">
+        <span>${esc(s.id)}</span>
+        <span>decided by ${esc(d.decided_by)}</span>
+        <span>confidence ${esc(d.confidence)}</span>
+        <span>${esc(d.slack_days)} day${d.slack_days === 1 ? "" : "s"} of slack</span>
+        ${(d.triggering_events || []).length
+          ? `<span>triggered by ${esc(d.triggering_events.join(", "))}</span>` : ""}
+      </div>
+      <ul class="trail">` +
     (d.reasoning_trail || []).map(t =>
       `<li><span class="k">${esc(t.check)}</span> &mdash; ${esc(t.finding)}</li>`).join("") +
-    `</ul></div>`;
+    `</ul></div></div>`;
 
-  if (s.drafts && s.drafts.length){
-    html += `<div class="sec"><h3>Drafted emails <span class="notsent">not sent</span></h3>` +
-      s.drafts.map(m => `
+  if ((s.drafts || []).length){
+    html += `<div class="sec"><h3>Drafted communications</h3>` +
+      s.drafts.map(m => {
+        const key = `${m.shipment_id}|${m.audience}`;
+        const isApproved = approved.has(key);
+        return `
         <div class="mail">
           <div class="mail-h">
             <div class="to">To the ${esc(m.audience)}: ${esc(m.to)}${
-              m.fallback ? `<span class="fb" title="${esc(m.fallback_reason || "the model did not write this one")}">template</span>` : ""}</div>
+              m.fallback ? `<span class="fb" title="${esc(m.fallback_reason || "")}">template</span>` : ""}</div>
+            <div class="subj">${esc(m.subject)}</div>
             ${m.fallback && m.fallback_reason
               ? `<div class="subj" style="color:var(--amber)">model unavailable: ${esc(m.fallback_reason)}</div>` : ""}
-            <div class="subj">${esc(m.subject)}</div>
           </div>
           <div class="mail-b">${esc(m.body)}</div>
+          <div class="gate" data-key="${esc(key)}">
+            <span class="gate-state ${isApproved?"approved":"awaiting"}">
+              ${isApproved ? "Approved &mdash; ready to send" : "Awaiting approval"}</span>
+            ${isApproved ? "" : `<button class="approve" data-approve="${esc(key)}">Approve</button>`}
+            <span class="never">nothing is transmitted &mdash; approval is a state change</span>
+          </div>
         </div>` +
-        (m.warnings && m.warnings.length
-          ? `<div class="warn">Fix before sending: ${m.warnings.map(esc).join("; ")}</div>` : "")
-      ).join("") + `</div>`;
+        (m.warnings || []).map(w => `<div class="warn">Fix before sending: ${esc(w)}</div>`).join("");
+      }).join("") + `</div>`;
   }
 
-  html += `<div class="meta">decided by ${esc(d.decided_by)} &middot;
-           confidence ${esc(d.confidence)} &middot; ${esc(d.slack_days)} days of slack</div>`;
+  html += `<div class="meta">Lanewatch decision record &middot; retained for audit &middot;
+           no communication has been transmitted</div>`;
   return html;
 }
 
@@ -362,18 +455,20 @@ function renderBoard(){
       card.classList.contains("open") ? openCards.add(id) : openCards.delete(id);
     };
   });
-}
-
-function setStatus(cls, text){
-  $("status").className = "status " + cls;
-  $("status-t").textContent = text;
+  document.querySelectorAll("[data-approve]").forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      approved.add(btn.dataset.approve);   // state change only; nothing is sent
+      renderBoard();
+    };
+  });
 }
 
 function renderTally(sum){
   $("tally").innerHTML = sum
     ? `<span><b>${sum.reroute}</b> rerouted</span><span><b>${sum.hold}</b> held</span>
        <span><b>${sum["no-action"]}</b> on plan</span>
-       <span><b>${sum.drafts}</b> drafts, none sent</span>`
+       <span><b>${sum.drafts}</b> drafts awaiting approval, none sent</span>`
     : `<span><b>${board.length}</b> on plan</span>`;
 }
 
@@ -384,7 +479,7 @@ function renderRisk(risk){
   $("feed").innerHTML = events.length ? events.map(e => `
     <div class="event ${e.origin}">
       <div class="tags">
-        <span class="tag ${e.origin === "injected" ? "inj" : "live"}">
+        <span class="tag ${e.origin === "injected" ? "inj" : "livesrc"}">
           ${e.origin === "injected" ? "scripted" : "live"}</span>
         <span class="tag ${esc(e.severity)}">${esc(e.severity)}</span>
         <span class="tag">${esc(e.chokepoint)} ${esc(e.type)}</span>
@@ -409,24 +504,38 @@ function renderRisk(risk){
       (bad.length > 4 ? ` +${bad.length-4} more` : "") + `</div>` : "");
 }
 
+function setStatus(cls, text){
+  $("status").className = "status " + cls;
+  $("status-t").textContent = text;
+}
+
 /* ---------- the run ---------- */
 async function load(){
   const r = await fetch("/api/initial").then(r => r.json());
-  board = r.shipments; renderBoard(); renderTally(null);
+  board = r.shipments; workers = r.workers || [];
+  renderBoard(); renderWorkers(); renderTally(null); renderEngine(r.ai);
 }
 
 async function run(){
   const btn = $("run");
-  setStatus("working", "Working");
   btn.disabled = true;
-  btn.innerHTML = `<span class="spin"></span><span>Reading sources&hellip;</span>`;
-  const steps = ["Reading sources…","Classifying events…",
-                 "Triaging 5 shipments…","Drafting emails…"];
-  let i = 0;
-  const tick = setInterval(() => {
-    i = Math.min(i + 1, steps.length - 1);
-    btn.innerHTML = `<span class="spin"></span><span>${steps[i]}</span>`;
-  }, 1400);
+  setStatus("working", "Working");
+  approved.clear();
+
+  // Step the Workers through while the single /run request is in flight. The
+  // numbers they end on are the real ones the server reports.
+  const order = ["risk", "routing", "comms"];
+  let stage = 0;
+  const advance = () => {
+    workers = workers.map((w, i) => ({...w,
+      status: i < stage ? "done" : i === stage ? "working" : "idle",
+      summary: i <= stage ? w.summary : "", detail: i <= stage ? w.detail : []}));
+    renderWorkers();
+    const names = ["Reading sources…", "Triaging shipments…", "Drafting communications…"];
+    btn.innerHTML = `<span class="spin"></span><span>${names[Math.min(stage, 2)]}</span>`;
+  };
+  advance();
+  const tick = setInterval(() => { stage = Math.min(stage + 1, order.length - 1); advance(); }, 1500);
 
   try{
     const res = await fetch("/run", {
@@ -437,15 +546,16 @@ async function run(){
 
     if (res.state === "error"){
       setStatus("", "Run failed");
+      workers = workers.map(w => ({...w, status:"idle"}));
+      renderWorkers();
       $("notes").innerHTML = `<div class="note">${esc(res.error)}</div>`;
     } else {
-      renderRisk(res.risk);
+      workers = res.workers || workers;
       board = res.shipments;
-      renderBoard();
-      renderTally(res.summary);
+      renderWorkers(); renderRisk(res.risk); renderBoard();
+      renderTally(res.summary); renderEngine(res.ai);
       $("notes").innerHTML = (res.notes || []).map(n => `<div class="note">${esc(n)}</div>`).join("");
       setStatus("done", `Cycle complete · ${res.duration_seconds}s`);
-      // Stagger the state change so the triage reads as a sweep, not a repaint.
       document.querySelectorAll(".card").forEach((c, n) =>
         setTimeout(() => c.classList.add("flip"), n * 110));
     }
