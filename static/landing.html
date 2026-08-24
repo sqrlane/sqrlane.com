@@ -563,23 +563,87 @@ h1,h2,h3,h4,p{margin:0}
   .gauges .g-map .pin.flash .pulse{animation:none}
 }
 
+/* ---------- the escalation heatmap ---------- */
+/* Three gauges down the side, sixteen days across, one cell per reading. The
+   four stat boxes this replaces could not become a heatmap: 44 cm, 140 vessels,
+   25% and 9 days are four scalars in four units with no second axis, so colour
+   would have encoded nothing. The thing they summarise is grid-shaped, and this
+   is it - the shape of the fall, which four static numbers cannot show.
+
+   Every cell is banded by the same _gauge_state rule the live panel and the
+   risk monitor use, so the three cannot disagree about what a reading means.
+
+   Colour is a sequential ramp, not the status tokens the badges wear: a
+   heatmap encodes magnitude, and magnitude takes one hue getting darker. The
+   three alert steps clear the ordinal checks - monotone lightness, adjacent
+   gaps, single hue, and a lightest step still readable on the card. A normal
+   reading is deliberately outside the ramp in neutral gray: on this page
+   colour is spent on state, and "the river is fine" is not one. */
+.heat{margin-top:32px; padding:18px 20px 16px; border:1px solid var(--border);
+      border-radius:var(--r-md); background:var(--card); box-shadow:var(--shadow-card)}
+.heat-head{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:16px}
+.heat-head h3{font-size:14px; line-height:20px; font-weight:600; letter-spacing:-.28px}
+.heat-head .sp{margin-left:auto; font-family:"Geist Mono",ui-monospace,monospace;
+               font-size:11px; line-height:16px; color:var(--faint)}
+
+.heat-grid{display:grid; grid-template-columns:124px repeat(16, minmax(0,1fr));
+           gap:3px; align-items:center}
+.heat .hr-name{font-size:10px; line-height:14px; font-weight:500; letter-spacing:.06em;
+               text-transform:uppercase; color:var(--faint); white-space:nowrap}
+.heat .hc{display:block; width:100%; height:30px; border-radius:3px;
+          background:var(--gray-200); box-shadow:inset 0 0 0 1px rgba(0,0,0,.04)}
+.heat .hc.b1{background:#ff8a8f; box-shadow:none}
+.heat .hc.b2{background:#ea001d; box-shadow:none}
+.heat .hc.b3{background:#c50017; box-shadow:none}
+/* The day the call was made. A ring rather than a colour, because the column
+   is already carrying a reading and colour here means severity. */
+.heat .hc.call{box-shadow:0 0 0 2px var(--card), 0 0 0 3.5px var(--fg)}
+
+/* bklit's heatmap reveal: cells fade and settle at pseudo-random delays spread
+   over the entrance, not in a sweep. --d is baked into each cell at build time
+   so the scatter is identical on every load and the block needs no script. */
+.heat .hc{opacity:0; transform:scale(.72);
+          transition:opacity .45s ease, transform .45s var(--ease);
+          transition-delay:var(--d, 0ms)}
+.heat.in .hc{opacity:1; transform:none}
+
+.heat-axis{display:grid; grid-template-columns:124px repeat(16, minmax(0,1fr));
+           gap:3px; margin-top:8px}
+.heat-axis span{font-family:"Geist Mono",ui-monospace,monospace; font-size:9.5px;
+                line-height:14px; color:var(--faint); white-space:nowrap}
+.heat-axis .mid{text-align:center} .heat-axis .end{text-align:right}
+.heat-axis .lit{color:var(--fg)}
+
+.heat-foot{margin-top:14px; padding-top:13px; border-top:1px solid var(--border);
+           display:flex; align-items:center; gap:8px 18px; flex-wrap:wrap}
+.heat-key{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+.heat-key span{display:inline-flex; align-items:center; gap:6px; font-size:11.5px;
+               line-height:16px; color:var(--muted)}
+.heat-key i{width:10px; height:10px; border-radius:2.5px; flex:none;
+            background:var(--gray-200); box-shadow:inset 0 0 0 1px rgba(0,0,0,.04)}
+.heat-key i.b1{background:#ff8a8f; box-shadow:none}
+.heat-key i.b2{background:#ea001d; box-shadow:none}
+.heat-key i.b3{background:#c50017; box-shadow:none}
+.heat-fact{margin-left:auto; font-size:11.5px; line-height:16px; color:var(--faint);
+           text-align:right}
+.heat-fact b{color:var(--fg); font-weight:500}
+
+@media (max-width:760px){
+  /* A 104px label column plus sixteen cells leaves the cells sub-pixel on a
+     phone. The names go above their own row instead. */
+  .heat-grid,.heat-axis{grid-template-columns:repeat(16, minmax(0,1fr))}
+  .heat .hr-name{grid-column:1/-1; margin-top:6px}
+  .heat-axis{margin-top:6px}
+}
+@media (prefers-reduced-motion:reduce){
+  .heat .hc{opacity:1; transform:none; transition:none; transition-delay:0s}
+}
+
 /* ---------- worked example (the case study) ---------- */
 .case .cs-note{margin-top:18px; max-width:80ch; font-size:13px; line-height:19px;
                color:var(--faint)}
 .case .cs-note code{font-family:"Geist Mono",ui-monospace,monospace; font-size:12px;
                     color:var(--muted)}
-
-/* The four facts the piece turns on, above the cards. */
-.cs-facts{margin-top:32px; display:grid; grid-template-columns:repeat(4,1fr); gap:20px;
-          padding:20px 22px; border:1px solid var(--border); border-radius:var(--r-md);
-          background:var(--card); box-shadow:var(--shadow-card)}
-.cs-facts .k{font-size:10px; line-height:14px; font-weight:500; letter-spacing:.07em;
-             text-transform:uppercase; color:var(--faint)}
-.cs-facts .v{margin-top:5px; font-size:26px; line-height:30px; font-weight:600;
-             letter-spacing:-1px; font-variant-numeric:tabular-nums}
-.cs-facts .v u{text-decoration:none; font-size:14px; font-weight:500; letter-spacing:-.2px;
-               color:var(--faint); margin-left:3px}
-.cs-facts .s{margin-top:3px; font-size:12px; line-height:16px; color:var(--faint)}
 
 .cs-grid{margin-top:16px}
 .cs{background:var(--card); border:1px solid var(--border); border-radius:var(--r-md);
@@ -933,9 +997,6 @@ h1,h2,h3,h4,p{margin:0}
   .nav-links{display:none}
   .g3,.g4{grid-template-columns:1fr 1fr}
   .mini-stats{grid-template-columns:repeat(2,1fr)}
-  /* Four facts across a phone puts "9 days early" on three lines. Two by two
-     keeps each number next to the caption that explains it. */
-  .cs-facts{grid-template-columns:repeat(2,1fr); gap:22px 24px}
 }
 @media (max-width:640px){
   :root{--gutter:18px}
@@ -1511,26 +1572,85 @@ h1,h2,h3,h4,p{margin:0}
       call. Nothing here is a product metric, and no outcome is being claimed.
     </p>
 
-    <div class="cs-facts rv">
-      <div class="f">
-        <p class="k">Kaub gauge</p>
-        <p class="v">44<u>cm</u></p>
-        <p class="s">Loading threshold is 78 cm</p>
+    <!-- What the four stat boxes here used to say, as the shape they came
+         from. Cells are generated by scratch/genheat.py and banded by the same
+         _gauge_state rule the live panel uses; the delays are baked in so the
+         page's own reveal observer is all that starts the animation. -->
+    <div class="heat rv" data-heat>
+      <div class="heat-head">
+        <h3>The fall</h3>
+        <span class="sp">Kaub 118 &rarr; 44 cm</span>
       </div>
-      <div class="f">
-        <p class="k">Vessels held</p>
-        <p class="v">140</p>
-        <p class="s">Duisburg-Ruhrort up to Mainz</p>
+
+      <div class="heat-grid">
+          <span class="hr-name">Kaub</span>
+          <i class="hc b0" style="--d:0ms" title="Kaub · Aug 06 · 118 cm · normal"></i>
+          <i class="hc b0" style="--d:458ms" title="Kaub · Aug 07 · 110 cm · normal"></i>
+          <i class="hc b0" style="--d:226ms" title="Kaub · Aug 08 · 103 cm · normal"></i>
+          <i class="hc b1" style="--d:684ms" title="Kaub · Aug 09 · 96 cm · watch"></i>
+          <i class="hc b1" style="--d:452ms" title="Kaub · Aug 10 · 92 cm · watch"></i>
+          <i class="hc b1" style="--d:220ms" title="Kaub · Aug 11 · 85 cm · watch"></i>
+          <i class="hc b1 call" style="--d:678ms" title="Kaub · Aug 12 · 82 cm · watch"></i>
+          <i class="hc b1" style="--d:446ms" title="Kaub · Aug 13 · 80 cm · watch"></i>
+          <i class="hc b2" style="--d:214ms" title="Kaub · Aug 14 · 78 cm · restricted"></i>
+          <i class="hc b2" style="--d:672ms" title="Kaub · Aug 15 · 71 cm · restricted"></i>
+          <i class="hc b2" style="--d:440ms" title="Kaub · Aug 16 · 66 cm · restricted"></i>
+          <i class="hc b2" style="--d:208ms" title="Kaub · Aug 17 · 61 cm · restricted"></i>
+          <i class="hc b2" style="--d:666ms" title="Kaub · Aug 18 · 57 cm · restricted"></i>
+          <i class="hc b2" style="--d:434ms" title="Kaub · Aug 19 · 52 cm · restricted"></i>
+          <i class="hc b2" style="--d:201ms" title="Kaub · Aug 20 · 47 cm · restricted"></i>
+          <i class="hc b2" style="--d:659ms" title="Kaub · Aug 21 · 44 cm · restricted"></i>
+          <span class="hr-name">Duisburg-Ruhrort</span>
+          <i class="hc b0" style="--d:582ms" title="Duisburg-Ruhrort · Aug 06 · 286 cm · normal"></i>
+          <i class="hc b0" style="--d:376ms" title="Duisburg-Ruhrort · Aug 07 · 272 cm · normal"></i>
+          <i class="hc b0" style="--d:460ms" title="Duisburg-Ruhrort · Aug 08 · 258 cm · normal"></i>
+          <i class="hc b1" style="--d:165ms" title="Duisburg-Ruhrort · Aug 09 · 244 cm · watch"></i>
+          <i class="hc b1" style="--d:577ms" title="Duisburg-Ruhrort · Aug 10 · 232 cm · watch"></i>
+          <i class="hc b1" style="--d:488ms" title="Duisburg-Ruhrort · Aug 11 · 221 cm · watch"></i>
+          <i class="hc b1 call" style="--d:86ms" title="Duisburg-Ruhrort · Aug 12 · 212 cm · watch"></i>
+          <i class="hc b1" style="--d:170ms" title="Duisburg-Ruhrort · Aug 13 · 206 cm · watch"></i>
+          <i class="hc b2" style="--d:194ms" title="Duisburg-Ruhrort · Aug 14 · 199 cm · restricted"></i>
+          <i class="hc b2" style="--d:243ms" title="Duisburg-Ruhrort · Aug 15 · 190 cm · restricted"></i>
+          <i class="hc b2" style="--d:155ms" title="Duisburg-Ruhrort · Aug 16 · 182 cm · restricted"></i>
+          <i class="hc b2" style="--d:418ms" title="Duisburg-Ruhrort · Aug 17 · 174 cm · restricted"></i>
+          <i class="hc b2" style="--d:468ms" title="Duisburg-Ruhrort · Aug 18 · 171 cm · restricted"></i>
+          <i class="hc b2" style="--d:207ms" title="Duisburg-Ruhrort · Aug 19 · 167 cm · restricted"></i>
+          <i class="hc b2" style="--d:84ms" title="Duisburg-Ruhrort · Aug 20 · 163 cm · restricted"></i>
+          <i class="hc b2" style="--d:496ms" title="Duisburg-Ruhrort · Aug 21 · 160 cm · restricted"></i>
+          <span class="hr-name">Emmerich</span>
+          <i class="hc b1" style="--d:473ms" title="Emmerich · Aug 06 · 96 cm · watch"></i>
+          <i class="hc b1" style="--d:501ms" title="Emmerich · Aug 07 · 88 cm · watch"></i>
+          <i class="hc b1" style="--d:63ms" title="Emmerich · Aug 08 · 80 cm · watch"></i>
+          <i class="hc b1" style="--d:669ms" title="Emmerich · Aug 09 · 72 cm · watch"></i>
+          <i class="hc b2" style="--d:230ms" title="Emmerich · Aug 10 · 66 cm · restricted"></i>
+          <i class="hc b2" style="--d:457ms" title="Emmerich · Aug 11 · 58 cm · restricted"></i>
+          <i class="hc b2 call" style="--d:330ms" title="Emmerich · Aug 12 · 52 cm · restricted"></i>
+          <i class="hc b2" style="--d:557ms" title="Emmerich · Aug 13 · 46 cm · restricted"></i>
+          <i class="hc b2" style="--d:463ms" title="Emmerich · Aug 14 · 41 cm · restricted"></i>
+          <i class="hc b2" style="--d:638ms" title="Emmerich · Aug 15 · 36 cm · restricted"></i>
+          <i class="hc b2" style="--d:286ms" title="Emmerich · Aug 16 · 31 cm · restricted"></i>
+          <i class="hc b3" style="--d:49ms" title="Emmerich · Aug 17 · 27 cm · critical"></i>
+          <i class="hc b3" style="--d:172ms" title="Emmerich · Aug 18 · 23 cm · critical"></i>
+          <i class="hc b3" style="--d:149ms" title="Emmerich · Aug 19 · 19 cm · critical"></i>
+          <i class="hc b3" style="--d:340ms" title="Emmerich · Aug 20 · 16 cm · critical"></i>
+          <i class="hc b3" style="--d:661ms" title="Emmerich · Aug 21 · 14 cm · critical"></i>
       </div>
-      <div class="f">
-        <p class="k">Barge payload</p>
-        <p class="v">25<u>%</u></p>
-        <p class="s">Of nominal, where barges still run</p>
+
+      <div class="heat-axis">
+        <span></span><span style="grid-column:2/7">Aug 06</span>
+        <span class="mid lit" style="grid-column:7/8">&uarr; call</span>
+        <span class="end" style="grid-column:8/18">Aug 21</span>
       </div>
-      <div class="f">
-        <p class="k">Called</p>
-        <p class="v">9<u>days early</u></p>
-        <p class="s">Before bookings were suspended</p>
+
+      <div class="heat-foot">
+        <div class="heat-key">
+          <span><i></i>Normal</span>
+          <span><i class="b1"></i>Watch</span>
+          <span><i class="b2"></i>Restricted</span>
+          <span><i class="b3"></i>Critical</span>
+        </div>
+        <p class="heat-fact"><b>140 vessels</b> held by Aug 21 &middot; the call came
+          Aug 12, <b>nine days early</b></p>
       </div>
     </div>
 
