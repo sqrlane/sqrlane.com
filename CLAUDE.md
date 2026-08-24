@@ -257,6 +257,15 @@ claims were written and tested but unwitnessed. Most are now confirmed.
 - **The pipeline fits the function timeout.** A full cycle makes up to a dozen
   sequential model calls, and a cold serverless function is capped at 60s. It
   completed. This was a real risk, not a theoretical one.
+- **Runtime model discovery works against the real Groq API.** The hard-coded
+  `llama-3.3-70b-versatile` 404'd on the live key and silently sent every decision
+  to the rule fallback — a retired model's 404 is indistinguishable from a broken
+  key's. `llm.py` now asks the key what it can run and picks from that. Confirmed
+  in production: a run produced no `rule` badges, so discovery resolved a real
+  model and the provider answered. This was previously stub-tested only.
+
+  The lesson is worth keeping: **any hard-coded model name is a scheduled outage.**
+  Don't reintroduce one.
 
 **Still open — and it needs judgement, not a test:**
 
