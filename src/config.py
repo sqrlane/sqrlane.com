@@ -86,7 +86,14 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434").strip()
 
 LLM_TIMEOUT_SECONDS = 60
-LLM_MAX_RETRIES = 3          # free tiers rate-limit; retry 429/5xx with backoff
+LLM_MAX_RETRIES = _env_int("LLM_MAX_RETRIES", 4)
+
+# A free tier rate-limits by the minute, so the old 1s + 2s backoff gave up long
+# before the window reopened. Groq says how long to wait in a retry-after header;
+# honour it, but never wait longer than this in total across one call, because a
+# serverless function is killed at its own ceiling and a stalled retry would take
+# the whole cycle down with it.
+RETRY_WAIT_BUDGET_SECONDS = _env_int("RETRY_WAIT_BUDGET_SECONDS", 12 if SERVERLESS else 40)
 LLM_TEMPERATURE = 0.0        # classification should be repeatable
 
 # --- HTTP ------------------------------------------------------------------
@@ -202,8 +209,8 @@ SEVERITIES = ["low", "medium", "high"]
 # answer, and those count against the completion budget. The customer email is
 # the longest single output this project asks for, so a tight cap truncates it
 # mid-JSON and the draft silently falls back to a template.
-DRAFT_MAX_TOKENS = _env_int("DRAFT_MAX_TOKENS", 2500)
-DECISION_MAX_TOKENS = _env_int("DECISION_MAX_TOKENS", 2000)
+DRAFT_MAX_TOKENS = _env_int("DRAFT_MAX_TOKENS", 1400)
+DECISION_MAX_TOKENS = _env_int("DECISION_MAX_TOKENS", 1400)
 
 CLASSIFY_BATCH_SIZE = 8      # items per LLM call - keeps free-tier usage sane
 MAX_ITEMS_TO_CLASSIFY = _env_int("MAX_ITEMS_TO_CLASSIFY", 16 if SERVERLESS else 40)
