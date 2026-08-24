@@ -165,6 +165,68 @@ button{font:inherit; color:inherit}
 .fb{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
     background:var(--amber-bg);color:var(--amber);border-radius:4px;padding:2px 5px;margin-left:7px}
 
+/* ---------- scenario switcher ---------- */
+.scen{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.scen-b{border:1px solid var(--border);background:var(--card);color:var(--muted);
+        border-radius:var(--r);padding:7px 12px;cursor:pointer;font-size:13px;
+        display:flex;flex-direction:column;gap:1px;text-align:left;min-width:150px}
+.scen-b:hover{border-color:var(--border-strong);color:var(--fg)}
+.scen-b.on{border-color:var(--fg);color:var(--fg);box-shadow:inset 0 0 0 1px var(--fg)}
+.scen-b .k{font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em}
+.scen-b .nm{font-weight:500}
+.scen-note{font-size:12.5px;color:var(--muted);margin:-4px 0 16px}
+.scen-note b{color:var(--fg)}
+
+/* ---------- worker roster strip ---------- */
+.roster{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:8px;margin-bottom:20px}
+.wchip{border:1px solid var(--border);background:var(--card);border-radius:var(--r);
+       padding:10px 12px;cursor:pointer;text-align:left;box-shadow:var(--shadow);
+       display:flex;flex-direction:column;gap:5px}
+.wchip:hover{border-color:var(--border-strong)}
+.wchip.on{border-color:var(--fg);box-shadow:inset 0 0 0 1px var(--fg)}
+.wchip .top{display:flex;align-items:center;gap:7px}
+.wchip .nm{font-size:12.5px;font-weight:500;flex:1;min-width:0;overflow:hidden;
+           text-overflow:ellipsis;white-space:nowrap}
+.wtag{font-size:9.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+      padding:1.5px 5px;border-radius:3px}
+.wtag.live{background:var(--green-bg);color:var(--green)}
+.wtag.scripted{background:var(--amber-bg);color:var(--amber)}
+.wchip .st{font-size:11px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---------- worker panel band ---------- */
+.wpanel{border:1px solid var(--border);background:var(--card);border-radius:var(--r);
+        box-shadow:var(--shadow);margin-bottom:20px}
+.wpanel-h{padding:12px 15px;border-bottom:1px solid var(--border);display:flex;
+          align-items:center;gap:9px;flex-wrap:wrap}
+.wpanel-h b{font-size:13px}
+.wpanel-b{padding:14px 15px}
+.wpanel .ctx{font-size:12px;color:var(--faint);margin-left:auto}
+table.q{width:100%;border-collapse:collapse;font-size:12.5px}
+table.q th{text-align:left;font-weight:500;color:var(--faint);font-size:11px;
+           text-transform:uppercase;letter-spacing:.05em;padding:0 10px 7px 0}
+table.q td{padding:7px 10px 7px 0;border-top:1px solid var(--border);
+           font-variant-numeric:tabular-nums}
+table.q tr.pick td{background:var(--surface)}
+.qtag{font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;
+      padding:1.5px 5px;border-radius:3px;background:var(--blue-bg);color:var(--blue);margin-left:6px}
+.qtag.cheap{background:var(--green-bg);color:var(--green)}
+.ms{margin:0;padding:0 0 0 20px;list-style:none}
+.ms li{position:relative;padding:6px 0;font-size:12.5px}
+.ms li:before{content:"";position:absolute;left:-14px;top:12px;width:7px;height:7px;
+              border-radius:50%;background:var(--border-strong)}
+.ms li.done:before{background:var(--green)}
+.ms li.dis:before{background:var(--amber)}
+.ms li:after{content:"";position:absolute;left:-11px;top:19px;bottom:-6px;width:1px;background:var(--border)}
+.ms li:last-child:after{display:none}
+.ms .at{color:var(--faint);font-variant-numeric:tabular-nums;margin-left:8px;font-size:11.5px}
+.fields{display:grid;grid-template-columns:auto 1fr;gap:5px 16px;font-size:12.5px}
+.fields .f{color:var(--faint)}
+.qa{margin:0;padding:0;list-style:none}
+.qa li{padding:9px 0;border-top:1px solid var(--border)}
+.qa li:first-child{border-top:0;padding-top:0}
+.qa .q{font-size:12.5px;font-weight:500}
+.qa .a{font-size:12.5px;color:var(--muted);margin-top:3px}
+
 /* ---------- workers ---------- */
 .worker{padding:12px 15px;display:flex;gap:10px;align-items:flex-start}
 .worker+.worker{border-top:1px solid var(--border)}
@@ -293,6 +355,7 @@ button{font:inherit; color:inherit}
     </div>
     <div class="scroll" id="scroll">
       <div class="wrap">
+        <div id="band"></div>
         <div class="view on" id="v-overview"></div>
         <div class="view" id="v-shipments"></div>
         <div class="view" id="v-risk"></div>
@@ -310,6 +373,7 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const LABEL = {green:"On plan", rerouted:"Rerouted", hold:"Hold"};
 const ICON = {
+  workers:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="7" cy="8" r="3"/><circle cx="17" cy="8" r="3"/><path d="M2 19c0-2.8 2.2-5 5-5M12 19c0-2.8 2.2-5 5-5s5 2.2 5 5"/></svg>',
   overview:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>',
   shipments:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 7h13v10H3zM16 10h3l2 3v4h-5"/><circle cx="7" cy="18" r="1.6"/><circle cx="18" cy="18" r="1.6"/></svg>',
   risk:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l9 16H3z"/><path d="M12 9v4M12 16.5v.5"/></svg>',
@@ -320,6 +384,7 @@ const ICON = {
 };
 
 let board=[], workers=[], risk={events:[],sources:[]}, ai=null, summary=null, notes=[], hasRun=false;
+let scenarios=[], scenario=null, chosenScenario=null, openWorker=null, selected=null;
 const approved = new Set();     // approval is browser state only; nothing is transmitted
 let view = "overview", openId = null;
 
@@ -357,7 +422,7 @@ function go(id){
   $("v-"+id).classList.add("on");
   $("crumb").textContent = {overview:"Overview",shipments:"Shipments",risk:"Risk feed",approvals:"Approvals"}[id];
   $("scroll").scrollTop = 0;
-  renderNav();
+  render();
 }
 
 /* ---------- pieces ---------- */
@@ -405,6 +470,87 @@ function shipmentGroups(){
       `<div class="rows">${act.map(rowHTML).join("")}</div>`:"") +
     (ok.length? head(`On plan — ${ok.length}`) +
       `<div class="rows">${ok.map(rowHTML).join("")}</div>`:"");
+}
+
+function scenarioSwitcher(){
+  if (!scenarios.length) return "";
+  const active = (scenario||{}).id || chosenScenario || (scenarios[0]||{}).id;
+  const sc = scenarios.find(x=>x.id===active) || scenarios[0];
+  return `<p class="sec-t">Scenario <span class="chip synth">scripted</span></p>
+    <div class="scen">${scenarios.map(x=>`
+      <button class="scen-b ${x.id===active?"on":""}" data-scen="${esc(x.id)}">
+        <span class="k">${esc(x.kind)}</span><span class="nm">${esc(x.name)}</span>
+      </button>`).join("")}</div>
+    <p class="scen-note"><b>${esc(sc.decision_type)}.</b> ${esc(sc.summary)}</p>`;
+}
+
+function rosterStrip(){
+  if (!workers.length) return "";
+  return `<p class="sec-t">Workers</p><div class="roster">${workers.map(w=>{
+    const mode = w.mode==="live" ? "live" : "scripted";
+    return `<button class="wchip ${openWorker===w.id?"on":""}" data-worker="${esc(w.id)}">
+      <span class="top"><span class="wdot" style="margin:0"></span>
+        <span class="nm">${esc(w.name)}</span>
+        <span class="wtag ${mode}">${mode}</span></span>
+      <span class="st">${esc(w.summary || w.role)}</span></button>`;}).join("")}</div>`;
+}
+
+function workerPanel(){
+  if (!openWorker) return "";
+  const w = workers.find(x=>x.id===openWorker); if (!w) return "";
+  const ship = board.find(x=>x.id===selected) || board.find(x=>x.state!=="green") || board[0];
+  const mode = w.mode==="live" ? "live" : "scripted";
+  const ctx = `${ship?esc(ship.id):"no shipment"}${scenario?` · ${esc(scenario.name)}`:""}`;
+  let body;
+  if (mode === "live")      body = livePanelBody(w, ship);
+  else if (!hasRun)         body = `<div class="empty">Run a scenario to populate this Worker.</div>`;
+  else                      body = scriptedPanelBody(w, ship);
+  return `<div class="wpanel"><div class="wpanel-h">
+      <b>${esc(w.name)}</b><span class="wtag ${mode}">${mode}</span>
+      <span class="ctx">${ctx}</span></div>
+    <div class="wpanel-b">${body}</div></div>`;
+}
+
+function livePanelBody(w, ship){
+  if (w.id === "risk") return riskCard(false);
+  if (!ship || !ship.decision) return `<div class="empty">Run a scenario to populate this Worker.</div>`;
+  const d = ship.decision;
+  if (w.id === "routing")
+    return `<div class="reason">${esc(d.reasoning)}</div>
+      <div class="record" style="margin-top:12px"><div class="record-h">
+        <span>${esc(ship.id)}</span><span>decided by ${esc(d.decided_by)}</span>
+        <span>confidence ${esc(d.confidence)}</span></div>
+      <ul class="trail">${(d.reasoning_trail||[]).map(t=>
+        `<li><span class="k">${esc(t.check)}</span> — ${esc(t.finding)}</li>`).join("")}</ul></div>`;
+  return (ship.drafts||[]).length ? ship.drafts.map(mailHTML).join("")
+    : `<div class="empty">Nothing to draft — this shipment needs no action.</div>`;
+}
+
+function scriptedPanelBody(w, ship){
+  const p = ((ship||{}).roster||{})[w.id];
+  if (!p) return `<div class="empty">No scripted data for this selection.</div>`;
+  if (w.id === "rate")
+    return `<p class="sec-t">${esc(p.headline)}</p>
+      ${p.surcharge_note?`<div class="warn" style="margin:0 0 10px">${esc(p.surcharge_note)}</div>`:""}
+      <table class="q"><thead><tr><th>Carrier</th><th>Routing</th><th>Discharge</th>
+        <th>Transit</th><th>Cost index</th></tr></thead><tbody>
+        ${p.quotes.map(q=>`<tr class="${q.chosen?"pick":""}">
+          <td>${esc(q.carrier)}</td><td>${esc(q.route_id)}</td><td>${esc(q.discharge_port)}</td>
+          <td>${esc(q.transit_days)}d</td>
+          <td>${esc(q.cost_index)}${q.cheapest?`<span class="qtag cheap">cheapest</span>`:""}${
+            q.chosen?`<span class="qtag">booked</span>`:""}</td></tr>`).join("")}
+      </tbody></table>`;
+  if (w.id === "track")
+    return `<p class="sec-t">${esc(p.headline)}</p><ul class="ms">${p.milestones.map(m=>
+      `<li class="${m.done?"done":""} ${m.disruption?"dis":""}">${esc(m.label)}
+        <span class="at">${esc(m.at)}</span></li>`).join("")}</ul>`;
+  if (w.id === "docs")
+    return `<p class="sec-t">${esc(p.headline)}</p>
+      <div class="fields">${p.fields.map(f=>
+        `<span class="f">${esc(f.field)}</span><span>${esc(f.value)}</span>`).join("")}</div>
+      ${p.flag?`<div class="warn">${esc(p.flag)}</div>`:""}`;
+  return `<p class="sec-t">${esc(p.headline)}</p><ul class="qa">${p.qa.map(x=>
+    `<li><div class="q">${esc(x.q)}</div><div class="a">${esc(x.a)}</div></li>`).join("")}</ul>`;
 }
 
 function workersCard(){
@@ -457,7 +603,14 @@ function legendCard(){
 
 /* ---------- views ---------- */
 function render(){
-  $("v-overview").innerHTML = legendCard() + statRow() +
+  $("band").innerHTML = scenarioSwitcher() + rosterStrip() + workerPanel();
+  // Only the visible view is built. Rendering all four left duplicate rows and
+  // duplicate handlers in the DOM, with the hidden copies first.
+  ["overview","shipments","risk","approvals"].forEach(v => {
+    if (v !== view) $("v-"+v).innerHTML = "";
+  });
+
+  if (view === "overview") $("v-overview").innerHTML = legendCard() + statRow() +
     (hasRun?"":`<div class="hint" style="margin-bottom:20px">
       <b>Nothing has happened yet.</b> Press <b>Inject Hamburg strike</b> above — the Workers read live news,
       triage all ${board.length} shipments, and draft the emails each one needs. Everything then
@@ -465,11 +618,23 @@ function render(){
     notes.map(n=>`<div class="note">${esc(n)}</div>`).join("") +
     `<div class="grid2"><div>${shipmentGroups()}</div><div>${workersCard()}${riskCard(true)}</div></div>`;
 
-  $("v-shipments").innerHTML = statRow() + shipmentGroups();
-  $("v-risk").innerHTML = riskCard(false);
-  $("v-approvals").innerHTML = approvalsView();
+  if (view === "shipments") $("v-shipments").innerHTML = statRow() + shipmentGroups();
+  if (view === "risk")      $("v-risk").innerHTML = riskCard(false);
+  if (view === "approvals") $("v-approvals").innerHTML = approvalsView();
 
-  document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => openPanel(b.dataset.open));
+  document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => {
+    selected = b.dataset.open;
+    // With a Worker panel open, picking a shipment drives that panel instead of
+    // opening the detail drawer - that reactivity is the point of the roster.
+    if (openWorker) render(); else openPanel(b.dataset.open);
+  });
+  document.querySelectorAll("[data-scen]").forEach(b => b.onclick = () => {
+    chosenScenario = b.dataset.scen; render(); run();
+  });
+  document.querySelectorAll("[data-worker]").forEach(b => b.onclick = () => {
+    openWorker = openWorker === b.dataset.worker ? null : b.dataset.worker;
+    render();
+  });
   bindApprove();
   renderNav();
 }
@@ -570,6 +735,7 @@ function renderEngine(){
 async function load(){
   const r = await fetch("/api/initial").then(r=>r.json());
   board = r.shipments; workers = r.workers||[]; ai = r.ai||null;
+  scenarios = r.scenarios||[]; chosenScenario = chosenScenario || (r.scenarios||[{}])[0].id;
   render(); renderEngine();
 }
 
@@ -588,21 +754,27 @@ async function run(){
   const tick = setInterval(()=>{ stage = Math.min(stage+1, 2); advance(); }, 1500);
   try{
     const res = await fetch("/run",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({live:true,inject:true,use_llm:true})}).then(r=>r.json());
+      body:JSON.stringify({live:true,inject:true,use_llm:true,
+        scenario:chosenScenario})}).then(r=>r.json());
     clearInterval(tick);
     if (res.state === "error"){
       notes = [res.error]; workers = workers.map(w=>({...w,status:"idle"}));
     } else {
       board=res.shipments; workers=res.workers||workers; risk=res.risk;
       ai=res.ai; summary=res.summary; notes=res.notes||[]; hasRun=true;
-      if (attention()) go("shipments");
+      scenario=res.scenario||null; scenarios=res.scenarios||scenarios;
+      if (scenario) chosenScenario = scenario.id;
+      if (!selected) selected = (board.find(x=>x.state!=="green")||{}).id || null;
+      if (attention() && view === "overview") go("shipments");
     }
     render(); renderEngine();
   } catch(err){
     clearInterval(tick);
     notes = [`Could not reach the server: ${err.message}`]; render();
   } finally {
-    btn.disabled = false; btn.innerHTML = `<span>Run again</span>`;
+    btn.disabled = false;
+    const nm = (scenarios.find(x=>x.id===chosenScenario)||{}).name;
+    btn.innerHTML = `<span>${esc(nm ? "Run "+nm : "Run again")}</span>`;
   }
 }
 $("run").onclick = run;

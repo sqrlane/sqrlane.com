@@ -1,5 +1,5 @@
 {
-  "_comment": "The 5 shipments from DATASET.md - a screenplay, authored for drama not realism. Positioned so ONE injected Hamburg strike splits them 2 reroute / 1 hold / 2 green.",
+  "_comment": "One shared shipment pool. Every scenario runs against the SAME shipments - that is the point: the board reacting differently to different disruptions is what shows the system generalises rather than performing one trick.",
   "_fields_from_dataset_md": [
     "id",
     "cargo",
@@ -44,7 +44,9 @@
       "origin": "Ningbo",
       "final_destination": "Hamburg",
       "primary_route": "R-HAM-STD",
-      "alternates": [],
+      "alternates": [
+        "R-COGH-ALT"
+      ],
       "deadline_slack_days": 1,
       "notes": "Cold chain, tight, final customer IS in Hamburg - reroute makes it worse.",
       "customer": "Nordmed Pharma Logistik AG",
@@ -65,7 +67,9 @@
       "origin": "Shanghai",
       "final_destination": "Rotterdam",
       "primary_route": "R-RTM-STD",
-      "alternates": [],
+      "alternates": [
+        "R-COGH-RTM"
+      ],
       "deadline_slack_days": 3,
       "notes": "Bound for Rotterdam. Does not touch Hamburg.",
       "customer": "Wonen Direct B.V.",
@@ -86,7 +90,9 @@
       "origin": "Shenzhen",
       "final_destination": "Antwerp",
       "primary_route": "R-ANR-STD",
-      "alternates": [],
+      "alternates": [
+        "R-COGH-ANR"
+      ],
       "deadline_slack_days": 2,
       "notes": "Bound for Antwerp. Unaffected.",
       "customer": "Kempen Electronics NV",
@@ -123,6 +129,54 @@
       "required_by": "2026-09-17",
       "cold_chain": false,
       "special_requirements": "Out-of-gauge flatrack cargo. Discharge port must have heavy-lift capability."
+    },
+    {
+      "id": "SHP-006",
+      "cargo": "Industrial chemicals",
+      "cargo_detail": "6 x 40FT ISO tank, non-hazardous specialty solvents",
+      "origin": "Shanghai",
+      "final_destination": "Basel",
+      "primary_route": "R-RTM-RHINE",
+      "alternates": [
+        "R-RTM-RAIL",
+        "R-COGH-BSL"
+      ],
+      "deadline_slack_days": 3,
+      "notes": "The only Rhine-barge leg on the board. Its exposure is inland, not at the discharge port.",
+      "customer": "Rheintal Spezialchemie AG",
+      "customer_contact": "Beat Zimmermann, Werkslogistik",
+      "carrier": "CMA CGM",
+      "booking_ref": "CMDU-5518824",
+      "container": "CMAU8830115 + 5",
+      "etd": "2026-08-10",
+      "eta": "2026-09-17",
+      "required_by": "2026-09-20",
+      "cold_chain": false,
+      "special_requirements": "ISO tanks. Barge loading depends on Rhine draught; low water cuts payload per barge."
+    },
+    {
+      "id": "SHP-007",
+      "cargo": "Textiles",
+      "cargo_detail": "9 x 40HC, finished garments on hangers",
+      "origin": "Shanghai",
+      "final_destination": "Lyon",
+      "primary_route": "R-FOS-STD",
+      "alternates": [
+        "R-ANR-LYON",
+        "R-COGH-FOS"
+      ],
+      "deadline_slack_days": 5,
+      "notes": "France touchpoint. Enters Europe through the Mediterranean, not the North Range.",
+      "customer": "Maison Cardelle SAS",
+      "customer_contact": "Claire Fontaine, Supply Chain",
+      "carrier": "MSC",
+      "booking_ref": "MEDU-2209471",
+      "container": "MSCU7714208 + 8",
+      "etd": "2026-08-18",
+      "eta": "2026-09-18",
+      "required_by": "2026-09-23",
+      "cold_chain": false,
+      "special_requirements": null
     }
   ]
 }

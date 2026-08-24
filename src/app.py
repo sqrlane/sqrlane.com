@@ -34,9 +34,10 @@ app = FastAPI(title="Trade-Lane Risk & Reroute Agent",
 
 class RunRequest(BaseModel):
     """Options the button can send. The defaults are what the demo uses."""
-    live: bool = True      # pull real news alongside the scripted event
-    inject: bool = True    # load the scripted Hamburg strike
-    use_llm: bool = True   # fall back to deterministic logic if this is false
+    live: bool = True             # pull real news alongside the scripted event
+    inject: bool = True           # load the selected scripted scenario
+    use_llm: bool = True          # fall back to deterministic logic if this is false
+    scenario: str | None = None   # hamburg, redsea, rhine, france. None = the default
 
 
 def _page(path: Path, what: str):
@@ -78,6 +79,16 @@ def font(filename: str):
         return JSONResponse(status_code=404, content={"error": "No such font."})
     return FileResponse(target, media_type="font/woff2", headers={
         "Cache-Control": "public, max-age=31536000, immutable"})
+
+
+@app.get("/api/scenarios")
+def scenarios():
+    """The switchable disruptions. All scripted, and labelled so on screen."""
+    from src import risk_monitor
+    return {"default": risk_monitor.default_scenario(),
+            "scenarios": [{k: s[k] for k in ("id", "name", "kind", "summary",
+                                             "decision_type", "expected")}
+                          for s in risk_monitor.load_scenarios()]}
 
 
 @app.get("/api/health")
@@ -143,7 +154,7 @@ def run(request: RunRequest | None = None):
     options = request or RunRequest()
     try:
         return orchestrator.run_cycle(live=options.live, inject=options.inject,
-                                      use_llm=options.use_llm)
+                                      use_llm=options.use_llm, scenario=options.scenario)
     except Exception as exc:  # noqa: BLE001 - never let the demo show a stack trace
         return JSONResponse(status_code=200, content={
             "state": "error",

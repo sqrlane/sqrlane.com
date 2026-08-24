@@ -25,7 +25,7 @@ import sys
 import time
 from datetime import datetime, timezone
 
-from src import comms_agent, config, llm, risk_monitor, route_advisor
+from src import comms_agent, config, llm, risk_monitor, roster, route_advisor
 
 # What the dashboard colours a card by.
 STATE_FOR_DECISION = {"reroute": "rerouted", "hold": "hold", "no-action": "green"}
@@ -45,7 +45,12 @@ WORKERS = [
 
 
 def _idle_workers() -> list[dict]:
-    return [dict(w, status="idle", summary="", detail=[], seconds=None) for w in WORKERS]
+    live = [dict(w, mode="live", status="idle", summary="", detail=[], seconds=None)
+            for w in WORKERS]
+    # Scripted Workers are never "working" - they replay authored data - so they
+    # sit at "ready" rather than borrowing the live Workers' status language.
+    scripted = [dict(w, status="ready", summary="", detail=[], seconds=None) for w in roster.ROSTER]
+    return live + scripted
 
 
 def _now_iso() -> str:
@@ -87,6 +92,10 @@ def initial_state() -> dict:
         "ran_at": None,
         "state": "idle",
         "workers": _idle_workers(),
+        "scenario": None,
+        "scenarios": [{k: sc[k] for k in ("id", "name", "kind", "summary",
+                                          "decision_type", "expected")}
+                      for sc in risk_monitor.load_scenarios()],
         "risk": {"events": [], "sources": [], "stats": {}},
         "shipments": [
             dict(_shipment_card(s, routes), state="green", decision=None, drafts=[])
@@ -97,19 +106,21 @@ def initial_state() -> dict:
     }
 
 
-def run_cycle(*, live=True, inject=True, use_llm=True, verbose=False) -> dict:
+def run_cycle(*, live=True, inject=True, use_llm=True, verbose=False,
+              scenario=None) -> dict:
     """The whole loop. Returns one object with everything the dashboard needs."""
     started = time.monotonic()
     notes = []
     routes = route_advisor.load_routes()
-    workers = {w["id"]: dict(w, status="idle", summary="", detail=[], seconds=None)
+    workers = {w["id"]: dict(w, mode="live", status="idle", summary="", detail=[], seconds=None)
                for w in WORKERS}
 
     # --- 1. Refresh risk -------------------------------------------------
     # Live sources are best-effort on purpose: a slow feed must never be the
     # reason a demo stalls in front of people.
     stage_started = time.monotonic()
-    risk = risk_monitor.run(live=live, inject=inject, use_llm=use_llm, verbose=verbose)
+    risk = risk_monitor.run(live=live, inject=inject, use_llm=use_llm, verbose=verbose,
+                            scenario=scenario)
     read = [s for s in risk["sources"] if s["status"] == "ok"]
     live_events = [e for e in risk["events"] if e.get("origin") == "live"]
     languages = sorted({e.get("source_language", "?") for e in risk["events"]})
@@ -181,6 +192,12 @@ def run_cycle(*, live=True, inject=True, use_llm=True, verbose=False) -> dict:
         })
         cards.append(card)
 
+    active_scenario = risk.get("scenario")
+    for card in cards:
+        shipment = shipments[card["id"]]
+        card["roster"] = roster.build(shipment, card["decision"],
+                                      (active_scenario or {}).get("id"), cards, active_scenario)
+
     tally = {d: sum(1 for c in cards if c["decision"]["decision"] == d)
              for d in route_advisor.DECISIONS}
 
@@ -191,7 +208,13 @@ def run_cycle(*, live=True, inject=True, use_llm=True, verbose=False) -> dict:
         "ran_at": _now_iso(),
         "state": "complete",
         "duration_seconds": round(time.monotonic() - started, 1),
-        "workers": [workers[w["id"]] for w in WORKERS],
+        "workers": [workers[w["id"]] for w in WORKERS] +
+                   [dict(w, status="ready", summary="scripted — replays authored data",
+                         detail=[], seconds=None) for w in roster.ROSTER],
+        "scenario": active_scenario,
+        "scenarios": [{k: sc[k] for k in ("id", "name", "kind", "summary",
+                                          "decision_type", "expected")}
+                      for sc in risk_monitor.load_scenarios()],
         # What actually ran this cycle, so the dashboard can show it rather than
         # asserting it. Counted from the run, never illustrative.
         "ai": {
@@ -215,11 +238,13 @@ def main():
     parser.add_argument("--no-live", action="store_true", help="skip the live news pull")
     parser.add_argument("--no-inject", action="store_true", help="skip the scripted strike")
     parser.add_argument("--no-llm", action="store_true", help="use deterministic fallbacks")
+    parser.add_argument("--scenario", help="hamburg, redsea, rhine or france")
     parser.add_argument("--json", action="store_true", help="print the whole result object")
     args = parser.parse_args()
 
     result = run_cycle(live=not args.no_live, inject=not args.no_inject,
-                       use_llm=not args.no_llm, verbose=not args.json)
+                       use_llm=not args.no_llm, verbose=not args.json,
+                       scenario=args.scenario)
 
     if args.json:
         print(json.dumps(result, indent=2, ensure_ascii=False))

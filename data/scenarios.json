@@ -1,0 +1,158 @@
+{
+  "_comment": "Baked-in disruptions, each swapping the active risk event over ONE shared shipment pool. Each is chosen to force a DIFFERENT decision type - if two produced the same decision, one would be redundant. Events use the same schema as live ones, so they flow through the real pipeline.",
+  "_timestamps": "published_offset_minutes is relative to load, so a scenario always reads as fresh.",
+  "_honesty": "Every scenario is SCRIPTED and labelled so on screen. The live news pull runs alongside as its own genuinely live element.",
+  "default": "hamburg",
+  "scenarios": [
+    {
+      "id": "hamburg",
+      "name": "Hamburg port strike",
+      "kind": "Port blocked",
+      "enabled": true,
+      "summary": "A full-day walkout closes Hamburg's container terminals. Shipments with slack move to Rotterdam; the tight cold-chain one is better off waiting.",
+      "decision_type": "Discharge-port reroute, weighed against holding",
+      "expected": "SHP-001 and SHP-005 reroute · SHP-002 holds · the rest unaffected",
+      "events": [
+        {
+          "event_id": "EVT-HAM-STRIKE",
+          "origin": "injected",
+          "chokepoint": "HAM",
+          "type": "strike",
+          "severity": "high",
+          "title": "Warning strike at Port of Hamburg - union calls full-day walkout",
+          "title_original": "Warnstreik im Hamburger Hafen — ver.di ruft zu ganztägigem Ausstand auf",
+          "summary": "The service union ver.di has called a full-day warning strike across container terminals at the Port of Hamburg in the current collective bargaining round. Terminal handling, gate operations and rail shunting are expected to stop for the duration of the walkout, with vessel backlogs clearing over the following days.",
+          "source": "NDR Hamburg (German-language regional RSS)",
+          "source_type": "rss",
+          "source_language": "de",
+          "url": "https://www.ndr.de/nachrichten/hamburg/",
+          "published_offset_minutes": -35,
+          "expected_duration_hours": [48, 72],
+          "expected_delay_days": [3, 5],
+          "detected_first_from": "German-language RSS (NDR / tagesschau / ver.di press)",
+          "english_wire_lag_hours": 24,
+          "confidence": 0.95,
+          "reasoning": "Union-called full-day walkout at all Hamburg container terminals; handling and gate operations stop, so any box discharging at HAM is exposed. Picked up from a German-language regional feed roughly a day before the English wires carried it."
+        }
+      ]
+    },
+    {
+      "id": "redsea",
+      "name": "Red Sea closure",
+      "kind": "Chokepoint closed",
+      "enabled": true,
+      "summary": "Attacks on shipping close the Bab-el-Mandeb approach, taking the Suez route with it. Almost the whole board routes that way, so every shipment has to weigh the Cape of Good Hope against waiting.",
+      "decision_type": "Forced long-haul reroute under cost and time pressure",
+      "expected": "The whole board lights up · the ones with slack take the Cape · the tight ones hold",
+      "events": [
+        {
+          "event_id": "EVT-REDSEA-CLOSURE",
+          "origin": "injected",
+          "chokepoint": "REDSEA",
+          "type": "geopolitical",
+          "severity": "high",
+          "title": "Carriers suspend Bab-el-Mandeb transits after further attacks on merchant shipping",
+          "title_original": "شركات الشحن توقف عبور باب المندب بعد هجمات جديدة على السفن التجارية",
+          "summary": "Major container lines have suspended southern Red Sea transits following further attacks on merchant vessels. Services are being re-routed around the Cape of Good Hope, adding roughly ten to fourteen days to Asia-Europe strings and tightening capacity across the trade.",
+          "source": "Al Jazeera Arabic (Arabic-language RSS)",
+          "source_type": "rss",
+          "source_language": "ar",
+          "url": "https://www.aljazeera.net/",
+          "published_offset_minutes": -80,
+          "expected_duration_hours": [336, 720],
+          "expected_delay_days": [10, 14],
+          "detected_first_from": "Arabic-language RSS (Al Jazeera), ahead of the English maritime wires",
+          "english_wire_lag_hours": 12,
+          "confidence": 0.92,
+          "reasoning": "Lines are suspending Bab-el-Mandeb transits outright rather than convoying, so anything routed through Suez is re-timed around Africa. This hits every Asia-Europe string on the board at once."
+        },
+        {
+          "event_id": "EVT-SUEZ-KNOCKON",
+          "origin": "injected",
+          "chokepoint": "SUEZ",
+          "type": "geopolitical",
+          "severity": "high",
+          "title": "Suez Canal transit bookings fall sharply as lines divert around Africa",
+          "title_original": null,
+          "summary": "Canal authority transit bookings have dropped as carriers route Asia-Europe services around the Cape, leaving Suez schedules unreliable for the coming weeks.",
+          "source": "gCaptain (maritime)",
+          "source_type": "rss",
+          "source_language": "en",
+          "url": "https://gcaptain.com/",
+          "published_offset_minutes": -55,
+          "expected_duration_hours": [336, 720],
+          "expected_delay_days": [10, 14],
+          "detected_first_from": "gCaptain (en)",
+          "english_wire_lag_hours": null,
+          "confidence": 0.85,
+          "reasoning": "Suez schedules are unreliable while the southern approach is being avoided, so a Suez routing cannot be relied on even where the canal itself is open."
+        }
+      ]
+    },
+    {
+      "id": "rhine",
+      "name": "Rhine low water",
+      "kind": "Inland waterway disrupted",
+      "enabled": true,
+      "summary": "Sustained low water at Kaub cuts barge payloads on the Rhine. The sea leg is untouched - the cargo reaches Rotterdam fine. The problem is the barge run upcountry.",
+      "decision_type": "Inland leg re-mode: barge to rail/road, not a port change",
+      "expected": "SHP-006 switches mode · everything else stays green",
+      "events": [
+        {
+          "event_id": "EVT-RHINE-LOWWATER",
+          "origin": "injected",
+          "chokepoint": "RHINE",
+          "type": "weather",
+          "severity": "high",
+          "title": "Rhine low water at Kaub cuts barge payloads to a fraction of capacity",
+          "title_original": "Niedrigwasser am Rhein: Pegel Kaub zwingt Binnenschiffe zu drastischen Teilladungen",
+          "summary": "The reference gauge at Kaub has fallen below the level at which Rhine barges can load normally, forcing operators to sail part-loaded. Sustained dry weather upstream means levels are expected to stay low, and freight is being shifted to rail and road where capacity allows.",
+          "source": "tagesschau (German-language RSS) corroborated by the PEGELONLINE Kaub gauge",
+          "source_type": "rss",
+          "source_language": "de",
+          "url": "https://www.tagesschau.de/",
+          "published_offset_minutes": -140,
+          "expected_duration_hours": [168, 504],
+          "expected_delay_days": [4, 8],
+          "detected_first_from": "German-language RSS plus the Kaub water-level gauge",
+          "english_wire_lag_hours": 36,
+          "confidence": 0.9,
+          "reasoning": "Kaub below the loading threshold means barges sail part-laden and slots requeue, so any Rhine barge leg is delayed even though the sea leg and the discharge port are working normally."
+        }
+      ]
+    },
+    {
+      "id": "france",
+      "name": "Southern France wildfire",
+      "kind": "Regional inland disruption",
+      "enabled": false,
+      "_enabled_note": "Authored and ready, switched off by default. Its decision type overlaps the Rhine scenario's inland theme, which is why it is the fourth rather than one of the core three.",
+      "summary": "Wildfire across the Rhone corridor closes road and rail inland of Fos-sur-Mer. The port keeps working; the route to Lyon does not.",
+      "decision_type": "Regional inland corridor blocked - reroute the land leg or wait",
+      "expected": "SHP-007 is actioned · everything else unaffected",
+      "events": [
+        {
+          "event_id": "EVT-FR-WILDFIRE",
+          "origin": "injected",
+          "chokepoint": "FRINL",
+          "type": "weather",
+          "severity": "high",
+          "title": "Wildfire closes A7 motorway and the Rhone rail corridor north of Fos-sur-Mer",
+          "title_original": "Incendie: l'A7 et la ligne ferroviaire de la vallée du Rhône coupées au nord de Fos-sur-Mer",
+          "summary": "A fast-moving wildfire has closed the A7 motorway and the parallel rail freight corridor north of Fos-sur-Mer. The port continues to work cargo, but inland movement towards Lyon is suspended while firefighting continues.",
+          "source": "French regional press (French-language RSS)",
+          "source_type": "rss",
+          "source_language": "fr",
+          "url": "https://www.francebleu.fr/",
+          "published_offset_minutes": -60,
+          "expected_duration_hours": [48, 120],
+          "expected_delay_days": [3, 6],
+          "detected_first_from": "French-language regional RSS",
+          "english_wire_lag_hours": 18,
+          "confidence": 0.88,
+          "reasoning": "The discharge port is working normally; the exposure is the land corridor to Lyon, so the decision is about the inland leg rather than the port."
+        }
+      ]
+    }
+  ]
+}

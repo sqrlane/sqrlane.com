@@ -298,6 +298,7 @@ def _rhine_event(gauge, level_cm, timestamp):
         "detected_at": _now_iso(),
         "expected_duration_hours": None,
         "expected_delay_days": delay,
+        "scenario": None,
         "detected_first_from": f"PEGELONLINE {gauge['name']} gauge (de)",
         "english_wire_lag_hours": None,
         "confidence": 0.9,
@@ -312,11 +313,34 @@ def _rhine_event(gauge, level_cm, timestamp):
 # ---------------------------------------------------------------------------
 
 
-def load_injected_events() -> list[dict]:
-    """The scripted Hamburg strike, stamped fresh so the feed reads as live."""
+def load_scenarios(include_disabled: bool = False) -> list[dict]:
+    """The baked-in disruptions. Each swaps the active risk over one shared pool."""
+    data = _load_json(config.SCENARIOS_FILE)
+    return [s for s in data["scenarios"] if include_disabled or s.get("enabled", True)]
+
+
+def default_scenario() -> str:
+    return _load_json(config.SCENARIOS_FILE).get("default", "hamburg")
+
+
+def find_scenario(scenario_id: str | None) -> dict | None:
+    """Look one up by id. A disabled scenario is still findable by name, so the
+    France one can be switched on without editing code."""
+    wanted = (scenario_id or default_scenario()).strip().lower()
+    for s in load_scenarios(include_disabled=True):
+        if s["id"] == wanted:
+            return s
+    return None
+
+
+def load_injected_events(scenario_id: str | None = None) -> list[dict]:
+    """One scenario's events, stamped fresh so the feed reads as live."""
+    scenario = find_scenario(scenario_id)
+    raw_events = scenario["events"] if scenario else []
     events = []
-    for raw in _load_json(config.INJECTED_EVENTS_FILE)["events"]:
+    for raw in raw_events:
         event = {k: v for k, v in raw.items() if not k.startswith("_")}
+        event["scenario"] = scenario["id"] if scenario else None
         offset = event.pop("published_offset_minutes", 0)
         now = datetime.now(timezone.utc).replace(microsecond=0)
         event["published_at"] = (now + timedelta(minutes=offset)).isoformat()
@@ -479,6 +503,7 @@ def _event_from_verdict(item, verdict) -> dict:
         "expected_delay_days": verdict.get("expected_delay_days"),
         # Where we caught it. On a non-English source this is the earliness edge,
         # recorded as data rather than asserted in the demo script.
+        "scenario": None,          # live news belongs to no scripted scenario
         "detected_first_from": f"{item['source']} ({item['language']})",
         # We cannot measure wire lag on a live pull, so we say so rather than guess.
         "english_wire_lag_hours": None,
@@ -511,7 +536,7 @@ def classify_without_llm(items, chokepoints) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
-def run(*, live=True, inject=False, use_llm=True, verbose=True) -> dict:
+def run(*, live=True, inject=False, use_llm=True, verbose=True, scenario=None) -> dict:
     """The whole monitor. Returns the risk_state dict it also writes to disk."""
     chokepoints = load_chokepoints()
     report = SourceReport()
@@ -553,16 +578,22 @@ def run(*, live=True, inject=False, use_llm=True, verbose=True) -> dict:
     else:
         report.skipped("live sources", "--inject-only: network skipped")
 
+    scenario_meta = None
     if inject:
-        injected = load_injected_events()
+        scenario_meta = find_scenario(scenario)
+        injected = load_injected_events(scenario)
         events += injected
-        report.ok("injected events (scripted)", len(injected), "data/injected_events.json")
+        report.ok(f"scenario: {scenario_meta['name'] if scenario_meta else 'unknown'} (scripted)",
+                  len(injected), scenario_meta["kind"] if scenario_meta else "")
 
     state = {
         "generated_at": _now_iso(),
         "provider": llm.describe() if stats["llm_used"] else "none (no LLM call made)",
         "sources": report.entries,
         "stats": stats,
+        "scenario": ({k: scenario_meta[k] for k in
+                      ("id", "name", "kind", "summary", "decision_type", "expected")}
+                     if scenario_meta else None),
         "events": events,
     }
     with open(config.RISK_STATE_FILE, "w", encoding="utf-8") as handle:
@@ -620,7 +651,9 @@ def print_state(state):
 def main():
     parser = argparse.ArgumentParser(description="Trade-lane Risk Monitor (component 1).")
     parser.add_argument("--inject", action="store_true",
-                        help="also load the scripted Hamburg strike")
+                        help="also load a scripted scenario (default: hamburg)")
+    parser.add_argument("--scenario", help="which scenario: hamburg, redsea, rhine, france")
+    parser.add_argument("--list-scenarios", action="store_true", help="show the scenarios and exit")
     parser.add_argument("--inject-only", action="store_true",
                         help="skip the network; load only the scripted strike")
     parser.add_argument("--no-llm", action="store_true",
@@ -628,11 +661,18 @@ def main():
     parser.add_argument("--quiet", action="store_true", help="less chatter while running")
     args = parser.parse_args()
 
+    if args.list_scenarios:
+        for s in load_scenarios(include_disabled=True):
+            print(f"  {s['id']:<9} {'on ' if s.get('enabled', True) else 'off'} "
+                  f"{s['name']:<26} {s['decision_type']}")
+        return 0
+
     state = run(
         live=not args.inject_only,
-        inject=args.inject or args.inject_only,
+        inject=args.inject or args.inject_only or bool(args.scenario),
         use_llm=not args.no_llm,
         verbose=not args.quiet,
+        scenario=args.scenario,
     )
     print_state(state)
 
