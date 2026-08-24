@@ -129,8 +129,9 @@ the real pipeline.
 
 ### The product layer
 
-**Ten Workers, three of them real.** Risk, Routing and Comms genuinely run and are
-tagged `LIVE`. Rate, Milestones, Docs, Inbox, RFQ, TMS Link and Assistant replay
+**Thirteen Workers, three of them real.** Risk, Routing and Comms genuinely run and are
+tagged `LIVE`. Rate, Milestones, Docs, Inbox, RFQ, Booking, Invoice, Customs, TMS Link
+and Assistant replay
 authored data from `src/roster.py` and are tagged `SCRIPTED`. **The tag is the honesty** — never present a
 scripted Worker as reasoning live. They are still *reactive*: each panel is built from
 the active scenario and the selected shipment, so switching either visibly changes it.
@@ -250,6 +251,38 @@ the original checks only ever looked at `card["drafts"]`, which none of these ap
 endpoint — a write-back is a dict describing a change, and it stays a dict. Never
 present the connector as a live TMS link; it says `connected (demo)` everywhere it is
 surfaced, and a test asserts that.
+
+**The roster covers the desk, under our own names.** The function set a forwarding
+desk actually runs — quoting, booking, shipment tracking, TMS data entry, invoice
+reconciliation, and customs — is all present. The names are ours: **never** use the
+names the reference product ships (`Rate Manager`, `DocuMind`, `Track & Trace`,
+`Copilot`), and `verify_product.py` fails on any of them appearing in the dashboard,
+the README, the roster source, the served Worker names, or the run payload. It caught
+one of those names in a source *comment*, which is the level of paranoia this deserves.
+
+Three of them earn their place by reacting to the decision rather than decorating:
+
+- **Booking Worker** — the carrier booking, and the amendment the decision forces: a
+  reroute is a change of discharge port, a hold is a hold at the load port, an on-plan
+  booking needs no amendment at all. An amendment is an outbound action, so it is
+  `DRAFT - not sent` / `awaiting_approval` like an email.
+- **Invoice Worker** — reconciles the carrier invoice against the rate agreed. It only
+  bites under a disruption: the carrier bills a surcharge that was never quoted, and the
+  discrepancy is the finding. With no disruption every line matches and it says so.
+- **Customs Worker** — the one that only exists because of the reroute. Moving the
+  discharge port moves the **country of entry** (HAM → RTM is Germany → Netherlands), so a
+  different EORI and clearance agent apply and the bill of lading has to be reissued. It
+  **escalates rather than files**, which is the honest behaviour and matches how these
+  systems are supposed to treat a novel exception.
+
+**The connection point** is its own view in the sidebar under `System`, not just a Worker
+chip: connector name, `connected (demo)`, bookings synced, changes queued, the field
+mapping table, and every queued write-back with the change it describes. All of it from
+`src/tms.py`, which still imports nothing but `datetime`.
+
+**The topbar bell** carries the real pending-approval count and shows a dot only when
+something is actually waiting — a permanent badge would be decoration. Clicking it opens
+Approvals, and a test asserts the bell and the Approvals count agree.
 
 Drafts sit behind a **human-approval gate**: `awaiting_approval` → *Approve* →
 `approved`. Approval is a state change in the browser and nothing else — there is no
