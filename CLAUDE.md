@@ -672,10 +672,23 @@ four claims in it are load-bearing and tested for by string:
 - **any hard-coded model name is a scheduled outage**;
 - there are **no accuracy figures** anywhere, because none have been measured.
 
-Model guidance is by family and size class, never a pinned version — for exactly the
-reason the paper gives. Lyceum's published GPU rates are quoted with a re-verify caveat;
-their site is egress-blocked from this sandbox, so the figures came from secondary
-sources and should be checked before commercial use.
+Model guidance names **specific models from Lyceum's own catalogue with their per-token
+prices**, taken from their inference deck rather than from secondary sources, and dated
+July–August 2026 with their own subject-to-change caveat.
+
+Two things the deck settled that the earlier draft had wrong:
+
+- **It is per-token serverless, not GPU rental.** That fits this workload far better —
+  the system is idle until a disruption lands, then makes about fourteen calls. Costing
+  it needed no assumption about GPU seconds: the per-cycle token volume is measured from
+  the real prompts (~12.8k in, ~3.7k out) and priced against the catalogue. The
+  recommended per-task mix is **about ten times cheaper** than a frontier model
+  everywhere, which is the number worth quoting.
+- **EU residency is not the same as European model provenance.** The catalogue's strong
+  models are Chinese and American in origin, openly licensed and hosted in `eu-north1`
+  with zero retention. Teuken-7B, EuroLLM and Mistral are the answer if provenance must
+  be European too, at a cost in capability. The page keeps those two axes apart in a
+  table rather than blurring them, and `verify_paper.py` asserts both are named.
 
 ### Deployed on Vercel
 

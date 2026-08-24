@@ -114,7 +114,10 @@ a:focus-visible{outline:2px solid var(--blue); outline-offset:3px; border-radius
 .toc a:hover{color:var(--fg); border-left-color:var(--border-strong)}
 .toc a.on{color:var(--fg); font-weight:500; border-left-color:var(--fg)}
 
-.body{max-width:70ch}
+/* Prose keeps a reading measure; tables and the stage grid break out to the
+   full column, which is what they need and what gives the page its rhythm. */
+.body{max-width:none}
+.body p, .body ul, .body h2, .body h3{max-width:70ch}
 .body section{padding-bottom:52px}
 .body section + section{border-top:1px solid var(--border); padding-top:44px}
 .body h2{margin:0 0 10px; scroll-margin-top:84px}
@@ -129,7 +132,8 @@ code{font-family:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace; font-
      background:var(--gray-100); padding:1px 5px; border-radius:4px; color:var(--fg)}
 
 /* ---------- the loop ---------- */
-.stages{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin:26px 0 10px}
+.stages{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:26px 0 10px}
+@media(max-width:1100px){.stages{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:600px){.stages{grid-template-columns:1fr}}
 .stage{background:var(--card); border:1px solid var(--border); border-radius:var(--r-md);
        padding:16px 17px; box-shadow:var(--shadow-card)}
@@ -147,7 +151,7 @@ code{font-family:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace; font-
 /* ---------- tables ---------- */
 .scroller{overflow-x:auto; margin:24px 0; border:1px solid var(--border); border-radius:var(--r-md);
           background:var(--card); box-shadow:var(--shadow-card)}
-table{border-collapse:collapse; width:100%; min-width:620px; font-size:14px}
+table{border-collapse:collapse; width:100%; min-width:680px; font-size:14px}
 caption{caption-side:top; text-align:left; padding:15px 18px 0; font-size:13px; line-height:19px;
         color:var(--faint)}
 th,td{padding:11px 18px; text-align:left; vertical-align:top; border-bottom:1px solid var(--border)}
@@ -414,43 +418,72 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
 
       <div class="scroller">
         <table>
-          <caption>Model families and size classes, not pinned versions — see the note below.</caption>
-          <thead><tr><th>Task</th><th>Shape of the work</th><th>Class</th><th>Why this size</th></tr></thead>
+          <caption>
+            Prices are USD per million tokens from the Lyceum Inference Studio catalogue
+            (July 2026, subject to change). Cached input is billed lower again.
+          </caption>
+          <thead><tr><th>Task</th><th>Shape of the work</th><th>Model</th><th>In / Out</th><th>Why this one</th></tr></thead>
           <tbody>
             <tr>
               <td><b>Screening headlines</b></td>
               <td>High volume, short inputs, strict structured output. Batched eight at a time.</td>
-              <td class="k">3B – 9B<span class="sub">Ministral · Qwen3 small · Gemma · Llama 8B</span></td>
-              <td>Nearly all items are irrelevant. This is a filter, not a thinker — a large model here is pure waste, and a small one is fast enough to read every source on every run.</td>
+              <td class="k">Qwen3.5-9B<span class="sub">or Gemma-3-27B</span></td>
+              <td class="n">$0.15 / $0.20</td>
+              <td>Nearly every item is irrelevant. This is a filter, not a thinker — and it is the only stage whose call volume scales with the number of sources.</td>
+            </tr>
+            <tr>
+              <td><b>The routing decision</b></td>
+              <td>Real judgement over supplied facts, structured JSON plus prose. Three calls a cycle.</td>
+              <td class="k">Qwen3-235B-A22B<span class="sub">step up to DeepSeek-V4-Pro if the reasoning needs it</span></td>
+              <td class="n">$0.20 / $0.60</td>
+              <td>The one call worth spending on. It produces the output a customer will read and challenge, and it runs rarely enough that price barely matters.</td>
+            </tr>
+            <tr>
+              <td><b>Drafting the emails</b></td>
+              <td>Prose quality, two distinct voices, six calls a cycle — the output-heaviest stage.</td>
+              <td class="k">Llama-3.3-70B<span class="sub">or Qwen3-235B-A22B</span></td>
+              <td class="n">$0.13 / $0.40</td>
+              <td>Tone is the deliverable. This stage generates the most output tokens, so the output price is the one that actually moves the bill.</td>
             </tr>
             <tr>
               <td><b>Reading non-English sources</b></td>
               <td>Short multilingual text, one pass, must not distort meaning.</td>
-              <td class="k">7B – 22B<span class="sub">Teuken-7B · EuroLLM · Salamandra</span></td>
-              <td>Built for European languages rather than treating them as an afterthought. Also the most defensible choice for an EU-hosted deployment.</td>
-            </tr>
-            <tr>
-              <td><b>The routing decision</b></td>
-              <td>Real judgement over supplied facts, structured output plus prose reasoning. Low volume.</td>
-              <td class="k">27B – 70B<span class="sub">Qwen3 mid · Mistral Small · Llama 70B</span></td>
-              <td>The one call worth spending on. It runs a handful of times per cycle and produces the output a customer will actually read and challenge.</td>
-            </tr>
-            <tr>
-              <td><b>Drafting the emails</b></td>
-              <td>Prose quality, two distinct voices, tolerant of a second of latency.</td>
-              <td class="k">22B – 70B<span class="sub">Mistral Small · Qwen3 mid · EuroLLM 22B</span></td>
-              <td>Tone is the deliverable. A model that writes stiffly here undoes the credibility the decision just earned.</td>
+              <td class="k">Qwen3.5-9B<span class="sub">Teuken-7B / EuroLLM if model provenance must be European too</span></td>
+              <td class="n">$0.15 / $0.20</td>
+              <td>Handled inside the screening call rather than as a separate translation step — one pass is cheaper and loses less than translate-then-classify.</td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <div class="figs">
-        <div class="fig"><div class="v">9</div><div class="k">Model calls in a typical cycle — three decisions, six drafts</div></div>
-        <div class="fig"><div class="v">8</div><div class="k">Headlines screened per classifier call</div></div>
-        <div class="fig"><div class="v">~20</div><div class="k">Live sources read on every run</div></div>
-        <div class="fig"><div class="v">0</div><div class="k">Emails, filings or write-backs sent</div></div>
+      <h3>What that costs, measured rather than assumed</h3>
+      <p class="copy16">
+        A cycle under the Hamburg scenario makes fourteen calls — five to screen headlines,
+        three decisions, six drafts. Measuring the actual prompts and outputs gives roughly
+        <b>12,800 input tokens and 3,700 output tokens</b> per cycle, at the usual
+        four-characters-per-token approximation.
+      </p>
+
+      <div class="scroller">
+        <table>
+          <caption>One cycle, priced against the catalogue. The right-hand column is what a busy desk would spend in a year.</caption>
+          <thead><tr><th>Approach</th><th>Per cycle</th><th>10 cycles/day</th><th>50 cycles/day</th></tr></thead>
+          <tbody>
+            <tr><td><b>Per-task mix</b> <span class="sub">as recommended above</span></td>
+                <td class="n">$0.0034</td><td class="n">$12 / yr</td><td class="n">$62 / yr</td></tr>
+            <tr><td>Frontier model for every call <span class="sub">DeepSeek-V4-Pro throughout</span></td>
+                <td class="n">$0.0355</td><td class="n">$130 / yr</td><td class="n">$648 / yr</td></tr>
+          </tbody>
+        </table>
       </div>
+
+      <p class="copy16">
+        Sizing each stage separately is <b>about ten times cheaper</b> than reaching for a
+        frontier model everywhere, for output a desk would not be able to tell apart on the
+        two stages that do not need it. That ratio, not the absolute figure, is the point:
+        inference is not the cost centre here, but carelessness with it is the easiest
+        avoidable one.
+      </p>
 
       <div class="note caution">
         <p class="eyebrow lab">Why there are no version numbers</p>
@@ -476,62 +509,69 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
         architecture is designed so none of it has to leave the EU.
       </p>
       <p class="copy16">
-        Every model in the table above is open-weight, which means it can run on hardware you
-        choose rather than being reached through someone else's API. That is the entire
-        sovereignty argument — not a policy promise about where data is processed, but an
-        architecture in which the question does not arise.
+        Every model in the table above is open-weight, which means it can be served from
+        infrastructure you choose rather than reached through a vendor's own cloud. That is
+        the sovereignty argument in full — not a policy promise about where data is
+        processed, but an arrangement in which the question does not arise.
       </p>
       <p class="copy16">
-        <a href="https://lyceum.technology/" style="color:var(--blue)">Lyceum Technology</a>, a
-        Berlin company, sells GPU capacity from data centres in Spain, Paris and the Nordics,
-        with an OpenAI-compatible API. That compatibility matters more than it sounds: this
-        prototype's provider layer is a single file, so moving from a US API to EU-hosted
-        inference is a base-URL change rather than a rewrite.
+        <a href="https://lyceum.technology/" style="color:var(--blue)">Lyceum Inference
+        Studio</a>, run from Berlin, serves a catalogue of open-weight models from
+        <code>eu-north1</code> on a pay-per-token basis, with no commitment. Three properties
+        of it matter here more than the price does.
       </p>
 
       <div class="scroller">
         <table>
-          <caption>
-            Published list prices at the time of writing, for capacity billed by the second
-            with no minimum commitment. Verify current rates before quoting them.
-          </caption>
-          <thead><tr><th>Hardware</th><th>Rate</th><th>Best suited to</th></tr></thead>
+          <caption>What makes it usable for this workload specifically.</caption>
+          <thead><tr><th>Property</th><th>Why it matters to Lanewatch</th></tr></thead>
           <tbody>
-            <tr><td class="k">L40S 48 GB</td><td class="n">$1.19 / hr</td>
-              <td>Headline screening and multilingual reading — the high-volume, small-model half of the workload</td></tr>
-            <tr><td class="k">A100 80 GB</td><td class="n">$1.59 / hr</td>
-              <td>A single box serving decisions and drafts for a desk-sized deployment</td></tr>
-            <tr><td class="k">H100 80 GB</td><td class="n">$2.79 / hr</td>
-              <td>When decision latency matters more than unit cost, or several desks share one endpoint</td></tr>
-            <tr><td class="k">H100 dedicated inference</td><td class="n">$3.59 / hr</td>
-              <td>The realistic production shape: a managed endpoint that sleeps between runs and bills only while serving</td></tr>
+            <tr>
+              <td><b>EU data residency</b><span class="sub">default models run in eu-north1</span></td>
+              <td>Booking data, customer names and rates are processed in Europe. This is the claim the whole page rests on, and it is a deployment fact rather than an intention.</td>
+            </tr>
+            <tr>
+              <td><b>Zero data retention</b><span class="sub">prompts and outputs not stored or trained on</span></td>
+              <td>A forwarder's lane economics are in those prompts. "Not retained, not trained on" is the difference between a demo and something a commercial director will sign off.</td>
+            </tr>
+            <tr>
+              <td><b>Structured output and function calling</b></td>
+              <td>Not a nicety. Every decision this system makes comes back as JSON that gets validated and guard-railed; a provider without reliable structured output cannot run this pipeline at all.</td>
+            </tr>
+            <tr>
+              <td><b>Drop-in OpenAI-compatible API</b><span class="sub">one base URL</span></td>
+              <td>The provider layer here is a single file. Migration is a base-URL change and a model name, not a rewrite — which is the only reason the switch is realistic at prototype stage.</td>
+            </tr>
+            <tr>
+              <td><b>Pay per token, no commitment</b></td>
+              <td>Lanewatch is bursty by design: idle until a disruption is detected or someone asks, then a short burst of calls. Reserved GPU capacity would be mostly paying for silence.</td>
+            </tr>
           </tbody>
         </table>
       </div>
 
-      <h3>Why scale-to-zero suits this workload exactly</h3>
+      <h3>Why per-token beats renting a GPU here</h3>
       <p class="copy16">
-        Lanewatch is bursty by design. It is not a chat product with steady traffic; it does
-        nothing at all until a disruption is detected or an operator asks, then makes a short
-        burst of calls and goes quiet. Paying for an idle GPU around the clock would be the
-        single largest waste in the system. An endpoint that shuts down between runs and bills
-        per second matches the shape of the work.
-      </p>
-      <p class="copy16">
-        A worked illustration, with the assumption stated plainly: an L40S at
-        <code>$1.19/hr</code> is about <code>$0.00033</code> per second. If a nine-call cycle
-        occupies the GPU for twenty seconds, that cycle costs roughly <code>$0.007</code>. Ten
-        disruptions a day across a year lands near <code>$25</code> of inference.
+        It is worth being explicit, because the alternative looks cheaper on a spreadsheet.
+        A dedicated GPU is priced by the hour whether or not anything is running. This system
+        makes roughly fourteen calls when a disruption lands and then nothing for hours. At
+        ten cycles a day the recommended model mix costs about <b>twelve dollars a year</b>;
+        a single rented GPU left running would cost more than that before lunch on the first
+        day. Reserved capacity starts to make sense when the desk is large enough to keep the
+        endpoint genuinely busy, or when a fixed latency SLA is worth paying for — and
+        dedicated endpoints exist for that case.
       </p>
 
       <div class="note caution">
-        <p class="eyebrow lab">Where that number is soft</p>
+        <p class="eyebrow lab">Where these numbers are soft</p>
         <p>
-          The twenty seconds is an assumption, not a measurement — this prototype has not been
-          benchmarked on that hardware. Real GPU time depends on model size, quantisation,
-          batching and context length, and could plausibly be several times higher. The rate
-          card is verifiable; the throughput is not, and anyone building a business case should
-          measure it rather than trust the arithmetic above.
+          Token counts are measured from the real prompts this system builds, but converted
+          at the usual four-characters-per-token approximation rather than by the actual
+          tokeniser — expect a margin either way, and more on non-English text, which tokenises
+          less efficiently. Output length varies with how much the model chooses to write.
+          Catalogue prices are dated July 2026 and stated as subject to change. None of this
+          moves the conclusion, which is about the ratio between approaches rather than the
+          absolute figure.
         </p>
       </div>
     </section>
@@ -543,12 +583,49 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
         worth being exact about what it means here and what it does not.
       </p>
 
-      <h3>What it means concretely</h3>
+      <h3>Two different claims, often blurred together</h3>
+      <p class="copy16">
+        There are two separate axes here and the marketing usually collapses them.
+        <b>Residency</b> is where your data is processed. <b>Provenance</b> is where the model
+        weights came from. They are not the same thing, and only one of them is settled by
+        choosing an EU host.
+      </p>
+
+      <div class="scroller">
+        <table>
+          <thead><tr><th>Axis</th><th>What is true</th><th>Standing</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><b>Data residency</b></td>
+              <td>Processing in <code>eu-north1</code>, no retention, no training on your prompts. Booking data, customer names and rates stay in Europe.</td>
+              <td><span class="tag ok">Achievable now</span></td>
+            </tr>
+            <tr>
+              <td><b>Model provenance</b></td>
+              <td>The strongest open-weight models in the catalogue come from Chinese and American labs — Qwen, DeepSeek, Moonshot, Llama, Gemma. They are openly licensed, but they are not European in origin.</td>
+              <td><span class="tag warn">Partly</span></td>
+            </tr>
+            <tr>
+              <td><b>European provenance, if required</b></td>
+              <td>Teuken-7B came out of a German research consortium and covers all twenty-four official EU languages; EuroLLM is an EU-funded project with the same coverage; Mistral is French. All openly licensed — but smaller, and they would need confirming as available on whichever host you pick.</td>
+              <td><span class="tag warn">Trade-off</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="copy16">
+        For most forwarders the residency axis is the one that matters, because the risk they
+        are managing is commercial confidentiality rather than model lineage. If a procurement
+        process demands European weights as well, that is available — at some cost in
+        capability on the harder reasoning stage.
+      </p>
+
+      <h3>What is genuinely European here</h3>
       <ul>
-        <li><b>The problem is European.</b> The lanes, chokepoints and regulations modelled are the North Range ports, the Rhine, the Mediterranean corridors and EU customs entry — not a generic global abstraction with European labels applied.</li>
-        <li><b>The models can be European.</b> Teuken-7B came out of a German research consortium and covers all twenty-four official EU languages; EuroLLM is an EU-funded project with the same coverage; Mistral is French. All are openly licensed.</li>
-        <li><b>The compute can be European.</b> EU-domiciled GPU capacity in EU data centres, with no shared tenancy.</li>
-        <li><b>The data need never leave.</b> Because the models are open-weight, shipment data is processed on infrastructure the operator controls. That is a property of the architecture, not a clause in a contract.</li>
+        <li><b>The problem is.</b> The lanes, chokepoints and regulations modelled are the North Range ports, the Rhine, the Mediterranean corridors and EU customs entry — not a global abstraction with European labels applied.</li>
+        <li><b>The processing can be.</b> EU-hosted inference with zero retention, from a European provider.</li>
+        <li><b>The data need never leave.</b> Because the models are open-weight, they are served where you choose. That is a property of the architecture, not a clause in a contract.</li>
         <li><b>It suits the regulatory direction.</b> Recorded reasoning for every decision, and a human approval gate before anything leaves the building, are exactly the properties an EU AI Act conversation asks about.</li>
       </ul>
 
@@ -664,9 +741,9 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
       <div>
         <p class="eyebrow">On sourcing</p>
         <p class="copy14" style="margin-top:10px">
-          Infrastructure pricing and region information are published list figures from Lyceum
-          Technology at the time of writing, and should be re-verified before use in a
-          commercial document. Model capabilities are described by family and size class rather
+          Model prices and region information are taken from Lyceum's own inference deck
+          (July–August 2026), which states that they are subject to change; re-verify before
+          using them in a commercial document. Model capabilities are described by family and size class rather
           than by version, deliberately. Every figure describing Lanewatch itself — source
           counts, call counts, decision outcomes — is counted from the running system.
         </p>
@@ -674,7 +751,7 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
       <div>
         <p class="eyebrow">References</p>
         <ul>
-          <li><a href="https://lyceum.technology/">Lyceum Technology</a> — EU GPU infrastructure, Berlin</li>
+          <li><a href="https://lyceum.technology/">Lyceum Inference Studio</a> — EU-hosted serverless inference, Berlin; catalogue and prices from their inference deck, July–August 2026</li>
           <li><a href="https://huggingface.co/openGPT-X/Teuken-7B-instruct-commercial-v0.4">Teuken-7B</a> — OpenGPT-X, 24 EU languages</li>
           <li><a href="https://arxiv.org/pdf/2506.04079">EuroLLM-9B</a> — technical report</li>
           <li><a href="https://interoperable-europe.ec.europa.eu/collection/open-source-observatory-osor/news/eurollm-pioneering-european-open-source-ai">European Commission OSOR</a> on EuroLLM</li>

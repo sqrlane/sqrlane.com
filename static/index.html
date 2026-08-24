@@ -780,7 +780,11 @@ function toggleSide(){
   paintCollapse();
 }
 
+let collapseReady = false;
+
 function initCollapse(){
+  if (collapseReady) return;      // render() calls this; bind the listener once
+  collapseReady = true;
   try { sideCollapsed = localStorage.getItem("lanewatch:sidebar") === "1"; } catch (e) {}
   paintCollapse();
   requestAnimationFrame(() => document.body.classList.add("side-ready"));
@@ -1151,7 +1155,11 @@ function palToggle(open){
   if (open) { $("pal-q").value = ""; palSel = 0; palPaint(); $("pal-q").focus(); }
 }
 
+let paletteReady = false;
+
 function initPalette(){
+  if (paletteReady) return;       // same: one keydown listener, not one per render
+  paletteReady = true;
   $("sidesearch").onclick = () => palToggle(true);
   $("pal-scrim").onclick = () => palToggle(false);
   $("pal-q").oninput = () => { palSel = 0; palPaint(); };
