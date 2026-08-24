@@ -60,6 +60,10 @@
   --green:#107d32;  --green-100:#ecfdec; --green-400:#b9f5bc;
   --amber:#aa4d00;  --amber-100:#fff6de; --amber-400:#ffdc73;
   --red:#ea001d;    --red-100:#ffeeef;  --red-400:#ffd7d6;
+  /* One step darker than --red, same hue, and it exists for one reason:
+     --red on --red-100 measures 4.15:1, under the 4.5:1 a badge label
+     needs. This clears it at 4.84:1. Marks keep --red; only text moves. */
+  --red-ink:#d60019;
 
   --r-sm:6px; --r-md:12px; --r-lg:16px;
 
@@ -142,7 +146,7 @@ h1,h2,h3,h4,p{margin:0}
 .chip.live{background:var(--green-100); color:var(--green)}
 .chip.synth{background:var(--amber-100); color:var(--amber)}
 .chip.blue{background:var(--blue-100); color:var(--blue)}
-.chip.red{background:var(--red-100); color:var(--red)}
+.chip.red{background:var(--red-100); color:var(--red-ink)}
 .chip.plain{background:transparent; border:1px solid var(--border-strong); color:var(--faint)}
 
 .card{background:var(--card); border:1px solid var(--border); border-radius:var(--r-md);
@@ -247,6 +251,7 @@ h1,h2,h3,h4,p{margin:0}
 .st-green{background:var(--green-100); color:var(--green)}
 .st-blue{background:var(--blue-100); color:var(--blue)}
 .st-amber{background:var(--amber-100); color:var(--amber)}
+.st-red{background:var(--red-100); color:var(--red-ink)}
 
 /* ---------- source strip ---------- */
 /* The sources travel right to left as one continuous band. Three identical
@@ -344,10 +349,24 @@ h1,h2,h3,h4,p{margin:0}
 .feature{display:grid; grid-template-columns:1fr 1fr; gap:56px; align-items:center}
 .feature.flip .fig{order:-1}
 .feature .txt p{margin-top:16px}
-.feature .bullets{margin:22px 0 0; padding:0; list-style:none; display:flex;
-                  flex-direction:column; gap:12px}
-.feature .bullets li{display:flex; gap:11px; font-size:15px; line-height:22px; color:var(--muted)}
-.feature .bullets svg{flex:none; margin-top:4px; color:var(--fg)}
+/* Claim rows. These replaced a tick-mark bullet list, which was the one
+   piece of pure decoration on the page: a tick asserts "true" and carries
+   nothing else, and colour here is meant to be spent on state. The row
+   leads with a key naming what the claim is about instead - the same
+   key-then-sentence anatomy the page already uses for the non-goals
+   (.not) and the mail header fields (.mail .f), and the same hairline
+   rules the dashboard's own lists use. It reads as a spec sheet rather
+   than a marketing checklist, and the key is scannable in a way a tick
+   never is. */
+.feature .claims{margin:24px 0 0; padding:0; list-style:none;
+                 border-top:1px solid var(--border)}
+.feature .claims li{display:grid; grid-template-columns:104px 1fr; gap:16px;
+                    padding:13px 0; border-bottom:1px solid var(--border)}
+.feature .claims .k{font-family:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+                    font-size:11px; line-height:22px; letter-spacing:.06em;
+                    text-transform:uppercase; color:var(--faint); white-space:nowrap}
+.feature .claims .v{font-size:15px; line-height:22px; color:var(--muted)}
+.feature .claims .v b{color:var(--fg); font-weight:500}
 
 /* ---------- artifacts inside features ---------- */
 .art{background:var(--card); border:1px solid var(--border); border-radius:var(--r-md);
@@ -403,6 +422,46 @@ h1,h2,h3,h4,p{margin:0}
                     font-family:inherit}
 .mail-foot .approve:hover{background:#383838}
 .mail-foot .approve.ok{background:var(--green-100); color:var(--green)}
+
+/* ---------- live gauges ---------- */
+/* The only numbers on this page that are not authored. A reading against a
+   limit is a ratio against a limit, which is a meter - so that is what it is:
+   the fill is the level, the notch is where loading restrictions start, and
+   the track is a lighter step of the fill's own ramp so the state reads across
+   the whole bar. The state is spelled out in words beside it, because a colour
+   on its own is not a label. */
+.gauges{margin-top:32px; padding:20px 22px; border:1px solid var(--border);
+        border-radius:var(--r-md); background:var(--card); box-shadow:var(--shadow-card)}
+.gauges .g-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:20px}
+.gauges .g-head h3{font-size:14px; line-height:20px; font-weight:600; letter-spacing:-.28px}
+.gauges .g-when{margin-left:auto; font-size:11.5px; line-height:16px; color:var(--faint)}
+.gauges .g-row{display:grid; grid-template-columns:repeat(3,1fr); gap:24px}
+.gauges .g-name{font-size:10px; line-height:14px; font-weight:500; letter-spacing:.07em;
+                text-transform:uppercase; color:var(--faint)}
+/* A standalone display number takes the font's proportional figures. Tabular
+   is for columns that have to line up, and it reads loose at this size. */
+.gauges .g-val{margin-top:5px; font-size:28px; line-height:32px; font-weight:600;
+               letter-spacing:-1.1px; color:var(--fg)}
+.gauges .g-val u{text-decoration:none; font-size:14px; font-weight:500;
+                 letter-spacing:-.2px; color:var(--faint); margin-left:4px}
+.gauges .g-meter{position:relative; height:6px; border-radius:999px; margin-top:12px;
+                 background:var(--gray-200)}
+.gauges .g-fill{position:absolute; top:0; bottom:0; left:0; border-radius:999px;
+                background:var(--gray-600)}
+/* The notch is the threshold, so it has to stay legible on top of the fill as
+   well as on the empty track - hence a gap in the bar rather than a coloured
+   line on it. */
+.gauges .g-mark{position:absolute; top:-3px; bottom:-3px; width:2px; margin-left:-1px;
+                background:var(--card); box-shadow:0 0 0 1px var(--border-strong);
+                border-radius:1px}
+.gauges .g-green{background:var(--green-100)} .gauges .g-green .g-fill{background:var(--green)}
+.gauges .g-amber{background:var(--amber-100)} .gauges .g-amber .g-fill{background:var(--amber)}
+.gauges .g-red{background:var(--red-100)}     .gauges .g-red   .g-fill{background:var(--red)}
+.gauges .g-state{margin-top:12px}
+.gauges .g-sub{margin-top:8px; font-size:11.5px; line-height:16px; color:var(--faint)}
+.gauges .g.gone .g-val{color:var(--gray-600)}
+.gauges .g-note{margin-top:20px; padding-top:16px; border-top:1px solid var(--border);
+                font-size:12.5px; line-height:18px; color:var(--faint); max-width:92ch}
 
 /* ---------- worked example (the case study) ---------- */
 .case .cs-note{margin-top:18px; max-width:80ch; font-size:13px; line-height:19px;
@@ -629,7 +688,12 @@ h1,h2,h3,h4,p{margin:0}
   .h32{font-size:26px; line-height:32px; letter-spacing:-1px}
   .copy18{font-size:16px; line-height:25px}
   .g2,.g3,.g4{grid-template-columns:1fr}
+  /* Three gauges across a phone is three different baselines the moment one
+     name wraps to a second line. Full width each, and they line up again. */
+  .gauges .g-row{grid-template-columns:1fr; gap:22px}
   .step{grid-template-columns:1fr; gap:10px}
+  .feature .claims li{grid-template-columns:1fr; gap:3px}
+  .feature .claims .k{line-height:18px}
   .tbl .tr{grid-template-columns:1fr; gap:6px}
   .tbl .th{display:none}
   .honest .panel{padding:24px}
@@ -675,6 +739,7 @@ h1,h2,h3,h4,p{margin:0}
       <a href="#reasoning">Reasoning</a>
       <a href="#sources">Sources</a>
       <a href="#scope">Scope</a>
+      <a href="/whitepaper">Whitepaper</a>
     </nav>
     <div class="right">
       <a class="ghost" href="#honest">What's real</a>
@@ -1016,21 +1081,16 @@ h1,h2,h3,h4,p{margin:0}
           themselves — local outlets, regional broadcasters, trade press, government
           gauges — across every region its lanes pass through. Somewhere in the world one
           of them is publishing right now, whatever the hour here.</p>
-        <ul class="bullets">
-          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 12.5l5 5L20 6.5"/></svg>
-            <span>Local sources are read <b style="color:var(--fg);font-weight:500">directly</b>, not picked up second-hand from a wire</span></li>
-          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 12.5l5 5L20 6.5"/></svg>
-            <span>Sources spanning the North Range, the Low Countries, the Red Sea and Gulf,
-            and the Western Mediterranean — every corridor on the board</span></li>
-          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 12.5l5 5L20 6.5"/></svg>
-            <span>Every event shows the outlets that carried it and how far ahead of the
-            wires they were, so the claim is checkable rather than asserted</span></li>
+        <ul class="claims">
+          <li><span class="k">At source</span>
+            <span class="v">Local sources are read <b>directly</b>, not picked up
+            second-hand from a wire</span></li>
+          <li><span class="k">Coverage</span>
+            <span class="v">Sources spanning the North Range, the Low Countries, the Red Sea
+            and Gulf, and the Western Mediterranean — every corridor on the board</span></li>
+          <li><span class="k">Evidence</span>
+            <span class="v">Every event shows the outlets that carried it and how far ahead
+            of the wires they were, so the claim is checkable rather than asserted</span></li>
         </ul>
       </div>
 
@@ -1096,6 +1156,37 @@ h1,h2,h3,h4,p{margin:0}
         are written to show the shape of the call: no product metric, no outcome claimed.
       </p>
     </div>
+
+    <!-- The live half. Everything above the note below this panel is a real
+         reading; everything under it is authored. The boundary is physical so
+         nobody has to take it on trust. -->
+    <div class="gauges rv" data-gauges>
+      <div class="g-head">
+        <span class="chip" data-g-chip>Reading&hellip;</span>
+        <h3>The Rhine, right now</h3>
+        <span class="g-when" data-g-when>PEGELONLINE &middot; three gauges</span>
+      </div>
+      <div class="g-row" data-g-row>
+        <div class="g gone"><p class="g-name">Kaub</p><p class="g-val">&mdash;</p>
+          <div class="g-meter"></div><p class="g-sub">reading the gauge&hellip;</p></div>
+        <div class="g gone"><p class="g-name">Duisburg-Ruhrort</p><p class="g-val">&mdash;</p>
+          <div class="g-meter"></div><p class="g-sub">reading the gauge&hellip;</p></div>
+        <div class="g gone"><p class="g-name">Emmerich</p><p class="g-val">&mdash;</p>
+          <div class="g-meter"></div><p class="g-sub">reading the gauge&hellip;</p></div>
+      </div>
+      <p class="g-note" data-g-note>Read live from PEGELONLINE when this page loaded.
+        The notch on each bar is the level below which barges stop loading normally.</p>
+    </div>
+
+    <p class="cs-note rv">
+      <span class="chip synth">Synthetic scenario</span>
+      &nbsp;Everything below this line is authored, not read. The corridor, the gauges and
+      the two routes are the real ones Lanewatch watches &mdash; <code>R-RTM-RHINE</code>
+      against <code>R-RTM-RAIL</code>, and the 78&nbsp;cm loading threshold is the one in
+      <code>config.py</code> that the live panel above is measuring against. The readings,
+      the vessel counts and the dates in the write-up are written to show the shape of the
+      call. Nothing here is a product metric, and no outcome is being claimed.
+    </p>
 
     <div class="cs-facts rv">
       <div class="f">
@@ -1269,23 +1360,17 @@ h1,h2,h3,h4,p{margin:0}
           Rerouting via Rotterdam adds road transit and a cold-chain transfer — and every
           transfer is a GDP-compliance event. So the call is to hold, notify, and be
           explicit that the deadline is at risk.</p>
-        <ul class="bullets">
-          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 12.5l5 5L20 6.5"/></svg>
-            <span>Every decision keeps a <b style="color:var(--fg);font-weight:500">reasoning trail</b> —
-            including the guard rails that fired</span></li>
-          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 12.5l5 5L20 6.5"/></svg>
-            <span>If the provider is unreachable, the fallback is transparent rules and the card
-            is badged <span class="mono" style="font-size:13px">rule</span> — never a silent
-            downgrade</span></li>
-          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 12.5l5 5L20 6.5"/></svg>
-            <span>A strip on the board names the model in use and the model-versus-rules split,
-            so the central claim is checkable at a glance</span></li>
+        <ul class="claims">
+          <li><span class="k">Trail</span>
+            <span class="v">Every decision keeps a <b>reasoning trail</b> — including the
+            guard rails that fired</span></li>
+          <li><span class="k">Fallback</span>
+            <span class="v">If the provider is unreachable, the fallback is transparent rules
+            and the card is badged <span class="mono" style="font-size:13px">rule</span>
+            — never a silent downgrade</span></li>
+          <li><span class="k">Model split</span>
+            <span class="v">A strip on the board names the model in use and the
+            model-versus-rules split, so the central claim is checkable at a glance</span></li>
         </ul>
       </div>
 
@@ -1716,6 +1801,152 @@ firm revised ETA as soon as terminals restart.</p>
     });
   }, { rootMargin: "0px 0px -8% 0px", threshold: 0.05 });
   items.forEach(function (el) { io.observe(el); });
+})();
+
+/* The Rhine gauges - the one thing on this page that is actually read rather
+   than written. /api/gauges asks PEGELONLINE and returns whatever came back.
+
+   The panel always resolves to exactly one of three states: live, a stale last
+   reading, or unavailable. It never sits on "reading" forever, because a page
+   that still looks like it is loading reads as broken - so there is a timeout
+   on this side too, not only on the server's. And it never invents a number:
+   when the gauge is down it says the gauge is down, which is the whole reason
+   the live claim is worth making. */
+(function () {
+  var panel = document.querySelector("[data-gauges]");
+  if (!panel) return;
+
+  var row  = panel.querySelector("[data-g-row]");
+  var chip = panel.querySelector("[data-g-chip]");
+  var when = panel.querySelector("[data-g-when]");
+  var note = panel.querySelector("[data-g-note]");
+
+  /* Four bands, three colours. The label is what tells them apart - colour is
+     the second channel, never the only one. */
+  var STATES = {
+    normal:     { cls: "green", label: "Normal" },
+    watch:      { cls: "amber", label: "Watch" },
+    restricted: { cls: "red",   label: "Restricted" },
+    critical:   { cls: "red",   label: "Critical" }
+  };
+
+  function esc(text) {
+    var d = document.createElement("div");
+    d.textContent = text == null ? "" : String(text);
+    return d.innerHTML;
+  }
+
+  function clock(iso) {
+    var d = new Date(iso);
+    if (isNaN(d)) return "";
+    return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  }
+
+  function cell(g) {
+    if (!g.ok) {
+      return '<div class="g gone"><p class="g-name">' + esc(g.name) + "</p>" +
+             '<p class="g-val">&mdash;</p><div class="g-meter"></div>' +
+             '<p class="g-sub">' + esc(g.error || "no reading") + "</p></div>";
+    }
+    var s = STATES[g.state] || STATES.normal;
+    /* Full scale is three times the level at which restrictions start, which
+       is a property of the gauge and not of today's reading - so the bar means
+       the same thing on every visit and a falling river visibly retreats past
+       the notch. Deriving the top from the reading instead looks reasonable
+       and is not: it made 214 cm and 240 cm draw the identical bar. A reading
+       over full scale is clamped, and the number above it is always exact. */
+    var top  = g.warn_cm * 3;
+    var fill = Math.min(100, (g.level_cm / top) * 100);
+    var mark = Math.min(100, (g.high_cm  / top) * 100);
+
+    return '<div class="g">' +
+      '<p class="g-name">' + esc(g.name) + "</p>" +
+      '<p class="g-val">' + esc(g.level_cm) + "<u>cm</u></p>" +
+      '<div class="g-meter g-' + s.cls + '">' +
+        '<span class="g-fill" style="width:' + fill.toFixed(1) + '%"></span>' +
+        '<i class="g-mark" style="left:' + mark.toFixed(1) + '%"></i></div>' +
+      '<p class="g-state"><span class="st-badge st-' + s.cls + '"><i></i>' +
+        s.label + "</span></p>" +
+      '<p class="g-sub">Loading restricted below ' + esc(g.high_cm) + " cm</p></div>";
+  }
+
+  function unavailable(why) {
+    chip.className = "chip";
+    chip.textContent = "Unavailable";
+    when.textContent = "PEGELONLINE";
+    row.innerHTML = ["Kaub", "Duisburg-Ruhrort", "Emmerich"]
+      .map(function (n) { return cell({ name: n, ok: false, error: why }); }).join("");
+    note.textContent =
+      "The gauges are not answering right now. They are the one live reading on this " +
+      "page, so when the source is down it says so rather than showing a number that " +
+      "is not there.";
+  }
+
+  function render(data) {
+    var gauges = data.gauges || [];
+    /* No gauges at all means the request itself got nowhere. If gauges came
+       back and simply failed, render them anyway: each one carries the reason
+       it failed, and a fallback that does not say why is a dead end. */
+    if (!gauges.length) return unavailable("could not reach the gauge service");
+
+    row.innerHTML = gauges.map(cell).join("");
+    var first = gauges.filter(function (g) { return g.ok; })[0];
+    var at = first ? clock(first.measured_at) : "";
+
+    if (!data.ok) {
+      chip.className = "chip";
+      chip.textContent = "Unavailable";
+      when.textContent = "PEGELONLINE";
+      note.textContent = "The gauges are not answering right now, and each one above " +
+        "says what came back. They are the only live reading on this page, so when the " +
+        "source is down it says so rather than showing a number that is not there.";
+      return;
+    }
+
+    if (data.stale) {
+      chip.className = "chip synth";
+      chip.textContent = "Last good reading";
+      note.textContent = "PEGELONLINE did not answer just now, so this is the last " +
+        "reading that came back" + (at ? ", taken at " + at : "") +
+        ". Nothing here is estimated to fill the gap.";
+    } else {
+      chip.className = "chip live";
+      chip.textContent = "Live";
+      note.textContent = "Read from PEGELONLINE when this page loaded" +
+        (at ? ", gauged at " + at : "") + ". The gauges refresh about every fifteen " +
+        "minutes. Each bar is scaled to its own gauge's restriction levels, and the " +
+        "notch is where barges stop loading normally \u2014 left of it the river is " +
+        "working against the shipper. Everything under the line below is authored.";
+    }
+    when.textContent = "PEGELONLINE \u00b7 " + gauges.length + " gauges";
+  }
+
+  /* AbortController is what stops a hung request leaving the panel mid-read.
+     Where it is missing the fetch still resolves or rejects on its own; the
+     timer below just makes sure something is shown either way. */
+  var done = false;
+  var ctrl = window.AbortController ? new AbortController() : null;
+  var giveUp = setTimeout(function () {
+    if (done) return;
+    done = true;
+    if (ctrl) ctrl.abort();
+    unavailable("no answer in time");
+  }, 12000);
+
+  fetch("/api/gauges", { signal: ctrl && ctrl.signal })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (done) return;
+      done = true; clearTimeout(giveUp);
+      render(data);
+    })
+    .catch(function () {
+      if (done) return;
+      done = true; clearTimeout(giveUp);
+      /* Opening landing.html straight off disk lands here too, which is fine:
+         no server, no gauges, and the panel says exactly that. */
+      unavailable("could not reach the gauge service");
+    });
 })();
 
 /* The source band. One row is written in the HTML; two hidden copies are
