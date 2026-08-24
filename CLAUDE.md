@@ -639,8 +639,8 @@ days and ordering exactly as the screenplay authored them.
 uvicorn src.app:app --reload      # then open http://127.0.0.1:8000
 ```
 
-`/` is the landing page and `/app` is the dashboard; both are single self-contained
-files. `GET /api/initial` renders the calm five-green-cards board instantly; `POST /run`
+`/` is the landing page, `/whitepaper` is the technical whitepaper and `/app` is the
+dashboard; all three are single self-contained files. `GET /api/initial` renders the calm five-green-cards board instantly; `POST /run`
 is the button. `GET /api/health` reports what a running instance can actually see — the
 path it received, whether the dashboard and data files shipped, and whether a provider
 is configured. It is the first thing to check when a deploy misbehaves. The page is a single self-contained file — no CDN, no external font, no
@@ -655,6 +655,27 @@ python -m src.route_advisor --inject --shipment SHP-002
 python -m src.comms_agent  --inject
 python -m src.orchestrator --no-live      # the whole loop, no network
 ```
+
+### The whitepaper page
+
+`/whitepaper` is the technical paper, served from `static/whitepaper.html` and linked
+from the landing nav. It carries the same tokens, the same self-hosted Geist and the
+same nav as the other two pages — no CDN, no Google Fonts, nothing external, which
+`verify_paper.py` asserts by failing on any off-origin request.
+
+It is the one document that states the project's assumptions and failures in public, so
+four claims in it are load-bearing and tested for by string:
+
+- the prototype **calls a US inference provider** today, so "built in Europe" describes
+  an architecture and not the current deployment;
+- the per-cycle cost figure **is an assumption, not a measurement**;
+- **any hard-coded model name is a scheduled outage**;
+- there are **no accuracy figures** anywhere, because none have been measured.
+
+Model guidance is by family and size class, never a pinned version — for exactly the
+reason the paper gives. Lyceum's published GPU rates are quoted with a re-verify caveat;
+their site is egress-blocked from this sandbox, so the figures came from secondary
+sources and should be checked before commercial use.
 
 ### Deployed on Vercel
 
