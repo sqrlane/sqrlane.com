@@ -135,27 +135,32 @@ GDELT_MAX_RECORDS = 20
 GDELT_PAUSE_SECONDS = _env_int("GDELT_PAUSE_MS", 400 if SERVERLESS else 1500) / 1000
 
 GDELT_QUERIES = [
-    {
-        "label": "port disruption (English)",
-        "language": "en",
-        "query": '("port strike" OR "port closure" OR "port congestion" OR "terminal closed")',
-    },
-    {
-        "label": "Hafen / Streik (German)",
-        "language": "de",
-        "query": "(Hafenstreik OR Warnstreik OR Hafenarbeiter) sourcelang:german",
-    },
-    {
-        "label": "Red Sea / Suez routing",
-        "language": "en",
-        "query": '("Red Sea" OR "Suez Canal") (attack OR closure OR diverted OR delay)',
-    },
-    {
-        "label": "North Range ports",
-        "language": "en",
-        "query": "(Hamburg OR Rotterdam OR Antwerp) (strike OR congestion OR backlog)",
-    },
+    {"label": "port disruption (English)", "language": "en",
+     "query": '("port strike" OR "port closure" OR "port congestion" OR "terminal closed")'},
+    {"label": "Hafen / Streik (German)", "language": "de",
+     "query": "(Hafenstreik OR Warnstreik OR Hafenarbeiter OR Niedrigwasser) sourcelang:german"},
+    {"label": "الموانئ / إضراب (Arabic)", "language": "ar",
+     "query": "(ميناء OR إضراب OR البحر الأحمر) sourcelang:arabic"},
+    {"label": "port / grève (French)", "language": "fr",
+     "query": "(port OR grève OR blocage) sourcelang:french"},
+    {"label": "haven / staking (Dutch)", "language": "nl",
+     "query": "(haven OR staking OR Rotterdam) sourcelang:dutch"},
+    {"label": "Red Sea / Suez routing", "language": "en",
+     "query": '("Red Sea" OR "Suez Canal") (attack OR closure OR diverted OR delay)'},
+    {"label": "North Range ports", "language": "en",
+     "query": "(Hamburg OR Rotterdam OR Antwerp) (strike OR congestion OR backlog)"},
 ]
+
+# What each language code is called on screen, and which way its script runs.
+# Arabic has to render right-to-left or the original headline is mangled.
+LANGUAGES = {
+    "de": {"name": "German",  "dir": "ltr"},
+    "ar": {"name": "Arabic",  "dir": "rtl"},
+    "fr": {"name": "French",  "dir": "ltr"},
+    "nl": {"name": "Dutch",   "dir": "ltr"},
+    "es": {"name": "Spanish", "dir": "ltr"},
+    "en": {"name": "English", "dir": "ltr"},
+}
 
 # --- 2. RSS - where the multilingual earliness edge actually lives ----------
 # At least one German feed is required: the demo's whole differentiation is
@@ -165,15 +170,35 @@ GDELT_QUERIES = [
 # so it is deliberately not wired here - a dead feed is a live failure.
 
 RSS_FEEDS = [
+    # German - the North Range ports and the Rhine are German-language stories
+    # first. This is where the earliness edge is most often real.
     {"name": "NDR Hamburg", "language": "de", "url": "https://www.ndr.de/nachrichten/hamburg/index-rss.xml"},
     {"name": "tagesschau", "language": "de", "url": "https://www.tagesschau.de/index~rss2.xml"},
     {"name": "DW (Deutsch)", "language": "de", "url": "https://rss.dw.com/rdf/rss-de-all"},
+    # Arabic - Red Sea, Suez and Gulf incidents surface here before the wires.
+    {"name": "Al Jazeera Arabic", "language": "ar", "url": "https://www.aljazeera.net/xml/rss/all.xml"},
+    # French - Fos-sur-Mer, Le Havre, and the Rhone corridor.
+    {"name": "France Info", "language": "fr", "url": "https://www.francetvinfo.fr/titres.rss"},
+    {"name": "Le Monde", "language": "fr", "url": "https://www.lemonde.fr/rss/une.xml"},
+    # Dutch - Rotterdam and Antwerp are Dutch-language ports.
+    {"name": "NOS Nieuws", "language": "nl", "url": "https://feeds.nos.nl/nosnieuwsalgemeen"},
+    # Spanish - Algeciras, Valencia and the western Mediterranean.
+    {"name": "RTVE", "language": "es", "url": "https://api2.rtve.es/rss/temas_noticias.xml"},
+    # English - the wires, kept so the lag against them is measurable.
     {"name": "gCaptain (maritime)", "language": "en", "url": "https://gcaptain.com/feed/"},
     {"name": "Al Jazeera English", "language": "en", "url": "https://www.aljazeera.com/xml/rss/all.xml"},
-    {"name": "Al Jazeera Arabic", "language": "ar", "url": "https://www.aljazeera.net/xml/rss/all.xml"},
 ]
 
 RSS_MAX_ITEMS_PER_FEED = 25
+
+# A hard ceiling on any single source's response body. A feed that answers but
+# never stops sending would otherwise be read forever - see _get_capped.
+HTTP_MAX_BYTES = _env_int("HTTP_MAX_BYTES", 4_000_000)
+
+# Feeds are independent requests, so they are read at once rather than in turn.
+# Sequentially, ten feeds at the per-source timeout cannot fit in a serverless
+# budget and all but the first would be skipped.
+RSS_CONCURRENCY = _env_int("RSS_CONCURRENCY", 10)
 
 # --- 3. PEGELONLINE - Rhine water levels, the DACH domain-depth signal ------
 # Gauge readings are numbers, not prose, so they are classified by threshold

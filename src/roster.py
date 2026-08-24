@@ -22,7 +22,7 @@ from src import route_advisor
 ROSTER = [
     {"id": "rate", "name": "Rate Worker", "mode": "scripted",
      "role": "Quote and rate lookups across the carriers on a lane"},
-    {"id": "track", "name": "Track & Trace Worker", "mode": "scripted",
+    {"id": "milestones", "name": "Milestones Worker", "mode": "scripted",
      "role": "Milestones and position for a booking"},
     {"id": "docs", "name": "Docs Worker", "mode": "scripted",
      "role": "Field extraction from bills of lading and invoices"},
@@ -117,10 +117,10 @@ def rate_panel(shipment, decision, scenario_id):
     }
 
 
-# --- Track & Trace ---------------------------------------------------------
+# --- Milestones ------------------------------------------------------------
 
 
-def track_panel(shipment, decision, scenario_id):
+def milestones_panel(shipment, decision, scenario_id):
     routes = route_advisor.load_routes()
     milestones = [
         {"label": "Booking confirmed", "at": _shift(shipment["etd"], -9), "done": True},
@@ -212,7 +212,7 @@ def assistant_panel(shipment, decision, scenario_id, board, scenario):
     return {"headline": (scenario or {}).get("name", "No scenario active"), "qa": qa}
 
 
-PANELS = {"rate": rate_panel, "track": track_panel, "docs": docs_panel}
+PANELS = {"rate": rate_panel, "milestones": milestones_panel, "docs": docs_panel}
 
 
 def build(shipment, decision, scenario_id, board, scenario) -> dict:

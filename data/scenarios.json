@@ -27,12 +27,46 @@
           "source_language": "de",
           "url": "https://www.ndr.de/nachrichten/hamburg/",
           "published_offset_minutes": -35,
-          "expected_duration_hours": [48, 72],
-          "expected_delay_days": [3, 5],
+          "expected_duration_hours": [
+            48,
+            72
+          ],
+          "expected_delay_days": [
+            3,
+            5
+          ],
           "detected_first_from": "German-language RSS (NDR / tagesschau / ver.di press)",
-          "english_wire_lag_hours": 24,
           "confidence": 0.95,
-          "reasoning": "Union-called full-day walkout at all Hamburg container terminals; handling and gate operations stop, so any box discharging at HAM is exposed. Picked up from a German-language regional feed roughly a day before the English wires carried it."
+          "reasoning": "Union-called full-day walkout at all Hamburg container terminals; handling and gate operations stop, so any box discharging at HAM is exposed. Picked up from a German-language regional feed roughly a day before the English wires carried it.",
+          "language_trail": [
+            {
+              "language": "de",
+              "source": "NDR Hamburg",
+              "offset_minutes": 0,
+              "first": true
+            },
+            {
+              "language": "de",
+              "source": "ver.di press release",
+              "offset_minutes": 22
+            },
+            {
+              "language": "nl",
+              "source": "NOS Nieuws",
+              "offset_minutes": 260
+            },
+            {
+              "language": "en",
+              "source": "English maritime wires",
+              "offset_minutes": 1380,
+              "english_wire": true
+            }
+          ],
+          "languages": [
+            "de",
+            "en",
+            "nl"
+          ]
         }
       ]
     },
@@ -59,12 +93,46 @@
           "source_language": "ar",
           "url": "https://www.aljazeera.net/",
           "published_offset_minutes": -80,
-          "expected_duration_hours": [336, 720],
-          "expected_delay_days": [10, 14],
+          "expected_duration_hours": [
+            336,
+            720
+          ],
+          "expected_delay_days": [
+            10,
+            14
+          ],
           "detected_first_from": "Arabic-language RSS (Al Jazeera), ahead of the English maritime wires",
-          "english_wire_lag_hours": 12,
           "confidence": 0.92,
-          "reasoning": "Lines are suspending Bab-el-Mandeb transits outright rather than convoying, so anything routed through Suez is re-timed around Africa. This hits every Asia-Europe string on the board at once."
+          "reasoning": "Lines are suspending Bab-el-Mandeb transits outright rather than convoying, so anything routed through Suez is re-timed around Africa. This hits every Asia-Europe string on the board at once.",
+          "language_trail": [
+            {
+              "language": "ar",
+              "source": "Al Jazeera Arabic",
+              "offset_minutes": 0,
+              "first": true
+            },
+            {
+              "language": "ar",
+              "source": "Gulf shipping press",
+              "offset_minutes": 45
+            },
+            {
+              "language": "en",
+              "source": "gCaptain",
+              "offset_minutes": 660,
+              "english_wire": true
+            },
+            {
+              "language": "fr",
+              "source": "Le Monde",
+              "offset_minutes": 830
+            }
+          ],
+          "languages": [
+            "ar",
+            "en",
+            "fr"
+          ]
         },
         {
           "event_id": "EVT-SUEZ-KNOCKON",
@@ -80,12 +148,35 @@
           "source_language": "en",
           "url": "https://gcaptain.com/",
           "published_offset_minutes": -55,
-          "expected_duration_hours": [336, 720],
-          "expected_delay_days": [10, 14],
+          "expected_duration_hours": [
+            336,
+            720
+          ],
+          "expected_delay_days": [
+            10,
+            14
+          ],
           "detected_first_from": "gCaptain (en)",
-          "english_wire_lag_hours": null,
           "confidence": 0.85,
-          "reasoning": "Suez schedules are unreliable while the southern approach is being avoided, so a Suez routing cannot be relied on even where the canal itself is open."
+          "reasoning": "Suez schedules are unreliable while the southern approach is being avoided, so a Suez routing cannot be relied on even where the canal itself is open.",
+          "language_trail": [
+            {
+              "language": "en",
+              "source": "gCaptain",
+              "offset_minutes": 0,
+              "first": true,
+              "english_wire": true
+            },
+            {
+              "language": "ar",
+              "source": "Egyptian canal authority statement",
+              "offset_minutes": 95
+            }
+          ],
+          "languages": [
+            "ar",
+            "en"
+          ]
         }
       ]
     },
@@ -112,12 +203,46 @@
           "source_language": "de",
           "url": "https://www.tagesschau.de/",
           "published_offset_minutes": -140,
-          "expected_duration_hours": [168, 504],
-          "expected_delay_days": [4, 8],
+          "expected_duration_hours": [
+            168,
+            504
+          ],
+          "expected_delay_days": [
+            4,
+            8
+          ],
           "detected_first_from": "German-language RSS plus the Kaub water-level gauge",
-          "english_wire_lag_hours": 36,
           "confidence": 0.9,
-          "reasoning": "Kaub below the loading threshold means barges sail part-laden and slots requeue, so any Rhine barge leg is delayed even though the sea leg and the discharge port are working normally."
+          "reasoning": "Kaub below the loading threshold means barges sail part-laden and slots requeue, so any Rhine barge leg is delayed even though the sea leg and the discharge port are working normally.",
+          "language_trail": [
+            {
+              "language": "de",
+              "source": "tagesschau",
+              "offset_minutes": 0,
+              "first": true
+            },
+            {
+              "language": "de",
+              "source": "PEGELONLINE Kaub gauge",
+              "offset_minutes": 15
+            },
+            {
+              "language": "nl",
+              "source": "NOS Nieuws",
+              "offset_minutes": 540
+            },
+            {
+              "language": "en",
+              "source": "English trade press",
+              "offset_minutes": 2160,
+              "english_wire": true
+            }
+          ],
+          "languages": [
+            "de",
+            "en",
+            "nl"
+          ]
         }
       ]
     },
@@ -145,14 +270,49 @@
           "source_language": "fr",
           "url": "https://www.francebleu.fr/",
           "published_offset_minutes": -60,
-          "expected_duration_hours": [48, 120],
-          "expected_delay_days": [3, 6],
+          "expected_duration_hours": [
+            48,
+            120
+          ],
+          "expected_delay_days": [
+            3,
+            6
+          ],
           "detected_first_from": "French-language regional RSS",
-          "english_wire_lag_hours": 18,
           "confidence": 0.88,
-          "reasoning": "The discharge port is working normally; the exposure is the land corridor to Lyon, so the decision is about the inland leg rather than the port."
+          "reasoning": "The discharge port is working normally; the exposure is the land corridor to Lyon, so the decision is about the inland leg rather than the port.",
+          "language_trail": [
+            {
+              "language": "fr",
+              "source": "France Info",
+              "offset_minutes": 0,
+              "first": true
+            },
+            {
+              "language": "fr",
+              "source": "Le Monde",
+              "offset_minutes": 25
+            },
+            {
+              "language": "es",
+              "source": "RTVE",
+              "offset_minutes": 300
+            },
+            {
+              "language": "en",
+              "source": "English wires",
+              "offset_minutes": 1080,
+              "english_wire": true
+            }
+          ],
+          "languages": [
+            "en",
+            "es",
+            "fr"
+          ]
         }
       ]
     }
-  ]
+  ],
+  "_languages": "Each event carries a language_trail: which languages carried the story, in what order, and how far behind the English wires were. The lag is computed from the trail rather than asserted separately."
 }

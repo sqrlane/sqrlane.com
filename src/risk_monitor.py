@@ -23,8 +23,12 @@ import argparse
 import hashlib
 import json
 import re
+import socket
 import sys
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import TimeoutError as FuturesTimeout
 from datetime import datetime, timedelta, timezone
 
 import feedparser
@@ -130,14 +134,12 @@ def fetch_gdelt(report: SourceReport, budget: "Budget") -> list[dict]:
             report.skipped(label, "live-pull time budget spent")
             continue
         try:
-            response = requests.get(
+            response = _get_capped(
                 config.GDELT_ENDPOINT,
                 params={"query": spec["query"], "mode": "artlist", "format": "json",
                         "maxrecords": config.GDELT_MAX_RECORDS, "timespan": config.GDELT_TIMESPAN},
-                headers={"User-Agent": config.USER_AGENT},
                 timeout=budget.timeout(),
             )
-            response.raise_for_status()
             articles = response.json().get("articles", [])
         except requests.RequestException as exc:
             report.failed(label, _short_error(exc, "api.gdeltproject.org"))
@@ -180,45 +182,143 @@ def _parse_gdelt_date(seendate: str) -> str:
 # ---------------------------------------------------------------------------
 
 
+class SourceTooSlow(requests.RequestException):
+    """A source that is answering, but too slowly to be worth waiting for."""
+
+
+def _get_capped(url, *, timeout, params=None):
+    """A GET that is guaranteed to end.
+
+    requests' timeout is between-bytes, not total: a server that trickles one
+    byte per second never trips an eight-second timeout, so the call - and the
+    thread running it - lasts forever. Every source here is a third-party server
+    we do not control, so each read is capped by a total deadline and a size
+    limit as well. Without this a single slow feed hangs the whole demo, which
+    is the failure mode that actually shows up in front of an audience.
+    """
+    response = requests.get(url, params=params, headers={"User-Agent": config.USER_AGENT},
+                            timeout=timeout, stream=True)
+    # Checking a deadline between chunks is not enough: a read blocks until its
+    # chunk is full, so a trickling source never reaches the check. The socket
+    # has to be closed from outside, which makes the blocked read raise.
+    expired = []
+
+    def _give_up():
+        # Shutting the socket down is what actually unblocks a read that is
+        # already waiting; closing the response object alone does not.
+        expired.append(True)
+        sock = getattr(getattr(response.raw, "_connection", None), "sock", None)
+        for stop in (lambda: sock.shutdown(socket.SHUT_RDWR), lambda: sock.close(),
+                     response.raw.close):
+            try:
+                stop()
+            except Exception:                    # noqa: BLE001
+                pass
+
+    watchdog = threading.Timer(timeout, _give_up)
+    watchdog.daemon = True
+    watchdog.start()
+    try:
+        response.raise_for_status()
+        chunks, total = [], 0
+        for chunk in response.iter_content(8192):
+            chunks.append(chunk)
+            total += len(chunk)
+            if total > config.HTTP_MAX_BYTES or expired:
+                break
+        if expired:
+            raise SourceTooSlow(f"still sending after {timeout:.0f}s - gave up")
+        response._content = b"".join(chunks)     # so .json() and .content still work
+        return response
+    except (OSError, requests.RequestException) as exc:
+        if expired:
+            raise SourceTooSlow(f"still sending after {timeout:.0f}s - gave up") from exc
+        raise
+    finally:
+        watchdog.cancel()
+        response.close()
+
+
+def _fetch_one_feed(feed_spec: dict, timeout: float) -> tuple:
+    """One feed. Returns (label, status, items, detail) and never raises.
+
+    Kept separate so the feeds can be read concurrently: they are independent
+    requests, and reading ten of them one after another cannot fit inside a
+    serverless budget - at six seconds each that is a minute for RSS alone,
+    so all but the first would be skipped and the language count that the whole
+    differentiation rests on would collapse to one.
+    """
+    label = f"RSS: {feed_spec['name']} [{feed_spec['language']}]"
+    try:
+        response = _get_capped(feed_spec["url"], timeout=timeout)
+        parsed = feedparser.parse(response.content)
+    except requests.RequestException as exc:
+        return label, "failed", [], _short_error(exc, feed_spec["url"].split("/")[2])
+
+    if parsed.bozo and not parsed.entries:
+        return label, "failed", [], f"unparseable feed: {str(parsed.get('bozo_exception',''))[:80]}"
+
+    found = [
+        {
+            "title": _strip_html(entry.get("title", "")),
+            "summary": _strip_html(entry.get("summary", ""))[:400],
+            "url": entry.get("link", ""),
+            "source": feed_spec["name"],
+            "source_type": "rss",
+            "language": feed_spec["language"],
+            "published_at": _parse_rss_date(entry),
+        }
+        for entry in parsed.entries[: config.RSS_MAX_ITEMS_PER_FEED]
+        if entry.get("title")
+    ]
+    return label, "ok", found, ""
+
+
 def fetch_rss(report: SourceReport, budget: "Budget") -> list[dict]:
-    """One feed at a time; a dead feed is recorded and skipped, never fatal."""
+    """All feeds at once. One slow feed no longer delays the nine behind it."""
+    if budget.spent():
+        for feed_spec in config.RSS_FEEDS:
+            report.skipped(f"RSS: {feed_spec['name']} [{feed_spec['language']}]",
+                           "live-pull time budget spent")
+        return []
+
+    timeout = budget.timeout()
     items = []
-    for feed_spec in config.RSS_FEEDS:
-        label = f"RSS: {feed_spec['name']} [{feed_spec['language']}]"
-        if budget.spent():
-            report.skipped(label, "live-pull time budget spent")
-            continue
+    results = {}
+    # Not a `with` block: its exit joins every worker, so one wedged feed would
+    # block the run there instead. Whatever has not answered by the deadline is
+    # abandoned and reported as skipped - the capped read above means those
+    # threads still end on their own shortly after.
+    pool = ThreadPoolExecutor(max_workers=config.RSS_CONCURRENCY)
+    try:
+        futures = {pool.submit(_fetch_one_feed, spec, timeout): spec
+                   for spec in config.RSS_FEEDS}
         try:
-            response = requests.get(
-                feed_spec["url"],
-                headers={"User-Agent": config.USER_AGENT},
-                timeout=budget.timeout(),
-            )
-            response.raise_for_status()
-            parsed = feedparser.parse(response.content)
-        except requests.RequestException as exc:
-            report.failed(label, _short_error(exc, feed_spec["url"].split("/")[2]))
-            continue
+            for future in as_completed(futures, timeout=max(timeout + 2, budget.remaining())):
+                spec = futures[future]
+                try:
+                    results[spec["name"]] = future.result()
+                except Exception as exc:                   # noqa: BLE001
+                    results[spec["name"]] = (
+                        f"RSS: {spec['name']} [{spec['language']}]", "failed", [],
+                        _short_error(exc, spec["url"].split("/")[2]))
+        except FuturesTimeout:
+            pass          # the ordered report below marks the stragglers skipped
+    finally:
+        pool.shutdown(wait=False, cancel_futures=True)
 
-        if parsed.bozo and not parsed.entries:
-            report.failed(label, f"unparseable feed: {str(parsed.get('bozo_exception', ''))[:80]}")
-            continue
-
-        found = [
-            {
-                "title": _strip_html(entry.get("title", "")),
-                "summary": _strip_html(entry.get("summary", ""))[:400],
-                "url": entry.get("link", ""),
-                "source": feed_spec["name"],
-                "source_type": "rss",
-                "language": feed_spec["language"],
-                "published_at": _parse_rss_date(entry),
-            }
-            for entry in parsed.entries[: config.RSS_MAX_ITEMS_PER_FEED]
-            if entry.get("title")
-        ]
-        items.extend(found)
-        report.ok(label, len(found))
+    # Report in the configured order so the output is stable run to run.
+    for spec in config.RSS_FEEDS:
+        label, status, found, detail = results.get(
+            spec["name"], (f"RSS: {spec['name']} [{spec['language']}]",
+                           "skipped", [], "not reached inside the time budget"))
+        if status == "ok":
+            report.ok(label, len(found))
+            items.extend(found)
+        elif status == "failed":
+            report.failed(label, detail)
+        else:
+            report.skipped(label, detail)
     return items
 
 
@@ -248,12 +348,10 @@ def fetch_rhine_levels(report: SourceReport, budget: "Budget") -> list[dict]:
             report.skipped(label, "live-pull time budget spent")
             continue
         try:
-            response = requests.get(
+            response = _get_capped(
                 f"{config.PEGELONLINE_ENDPOINT}/{gauge['station']}/W/currentmeasurement.json",
-                headers={"User-Agent": config.USER_AGENT},
                 timeout=budget.timeout(),
             )
-            response.raise_for_status()
             measurement = response.json()
             level_cm = float(measurement.get("value"))
         except (requests.RequestException, ValueError, TypeError) as exc:
@@ -299,6 +397,9 @@ def _rhine_event(gauge, level_cm, timestamp):
         "expected_duration_hours": None,
         "expected_delay_days": delay,
         "scenario": None,
+        "languages": ["de"],
+        "language_trail": [{"language": "de", "source": f"PEGELONLINE {gauge['name']} gauge",
+                            "offset_minutes": 0, "first": True, "english_wire": False}],
         "detected_first_from": f"PEGELONLINE {gauge['name']} gauge (de)",
         "english_wire_lag_hours": None,
         "confidence": 0.9,
@@ -333,6 +434,25 @@ def find_scenario(scenario_id: str | None) -> dict | None:
     return None
 
 
+def wire_lag_hours(language_trail: list[dict]) -> int | None:
+    """How far ahead of the English wires the first source was, in whole hours.
+
+    Derived from the trail rather than stored beside it, so the headline number
+    and the timeline it is drawn from can never disagree. Returns None when the
+    English wires led (the Suez knock-on) or never appear - there is no lead to
+    claim, and a claimed lead that is not real is the one thing this demo cannot
+    afford.
+    """
+    if not language_trail:
+        return None
+    first = next((t for t in language_trail if t.get("first")), language_trail[0])
+    english = next((t for t in language_trail if t.get("english_wire")), None)
+    if english is None:
+        return None
+    minutes = english.get("offset_minutes", 0) - first.get("offset_minutes", 0)
+    return int(minutes // 60) if minutes > 0 else None
+
+
 def load_injected_events(scenario_id: str | None = None) -> list[dict]:
     """One scenario's events, stamped fresh so the feed reads as live."""
     scenario = find_scenario(scenario_id)
@@ -345,6 +465,8 @@ def load_injected_events(scenario_id: str | None = None) -> list[dict]:
         now = datetime.now(timezone.utc).replace(microsecond=0)
         event["published_at"] = (now + timedelta(minutes=offset)).isoformat()
         event["detected_at"] = now.isoformat()
+        # Derived, never read from the file: see wire_lag_hours.
+        event["english_wire_lag_hours"] = wire_lag_hours(event.get("language_trail", []))
         events.append(event)
     return events
 
@@ -504,6 +626,10 @@ def _event_from_verdict(item, verdict) -> dict:
         # Where we caught it. On a non-English source this is the earliness edge,
         # recorded as data rather than asserted in the demo script.
         "scenario": None,          # live news belongs to no scripted scenario
+        "languages": [item["language"]],
+        "language_trail": [{"language": item["language"], "source": item["source"],
+                            "offset_minutes": 0, "first": True,
+                            "english_wire": item["language"] == "en"}],
         "detected_first_from": f"{item['source']} ({item['language']})",
         # We cannot measure wire lag on a live pull, so we say so rather than guess.
         "english_wire_lag_hours": None,
@@ -586,8 +712,12 @@ def run(*, live=True, inject=False, use_llm=True, verbose=True, scenario=None) -
         report.ok(f"scenario: {scenario_meta['name'] if scenario_meta else 'unknown'} (scripted)",
                   len(injected), scenario_meta["kind"] if scenario_meta else "")
 
+    languages_read = sorted({s["name"].split("[")[-1].rstrip("]")
+                             for s in report.entries
+                             if s["status"] == "ok" and "[" in s["name"]})
     state = {
         "generated_at": _now_iso(),
+        "languages_read": languages_read,
         "provider": llm.describe() if stats["llm_used"] else "none (no LLM call made)",
         "sources": report.entries,
         "stats": stats,

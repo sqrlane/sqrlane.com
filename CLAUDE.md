@@ -28,8 +28,12 @@ they don't decide or act, and they're priced out of the mid-market.
 
 ### The two differentiators (the whole story — nothing else)
 
-1. **Earlier signal from non-English sources.** English-only tools miss a German `Warnstreik` until
-   it hits the wires. Reading regional/multilingual sources *first* is a real informational edge.
+1. **Earlier signal from non-English sources.** English-only tools miss a German `Warnstreik`
+   until it hits the wires. Reading regional/multilingual sources *first* is a real
+   informational edge — and it is one edge in **six languages** (de, ar, fr, nl, es, en), not
+   a German special case. Which language leads depends on where the disruption is: German for
+   the North Range ports and the Rhine, Arabic for the Red Sea and Suez, French for the Rhône
+   corridor. See [The language trail](#the-language-trail).
 2. **A closed risk → reroute → comms loop with recorded reasoning.** Risk incumbents stop at the
    alert; execution players don't touch risk. Welding them — and recording *why* each decision was
    made — is the whitespace.
@@ -119,7 +123,7 @@ the real pipeline.
 ### The product layer
 
 **Seven Workers, three of them real.** Risk, Routing and Comms genuinely run and are
-tagged `LIVE`. Rate, Track & Trace, Docs and Assistant replay authored data from
+tagged `LIVE`. Rate, Milestones, Docs and Assistant replay authored data from
 `src/roster.py` and are tagged `SCRIPTED`. **The tag is the honesty** — never present a
 scripted Worker as reasoning live. They are still *reactive*: each panel is built from
 the active scenario and the selected shipment, so switching either visibly changes it.
@@ -232,7 +236,7 @@ front of an audience.** Three keyless sources carry the whole story:
 | Source | Role | Key? |
 |---|---|---|
 | **GDELT DOC 2.0** | Global news backbone, ~15 min refresh, filter by keyword/language/country | No |
-| **RSS via `feedparser`** | Reuters, DW, Al Jazeera (EN + AR), gCaptain, **plus German: tagesschau / NDR / ver.di** — this is where the earliness edge lives | No |
+| **RSS via `feedparser`** | Ten feeds in six languages — German (NDR / tagesschau / DW), Arabic (Al Jazeera), French (France Info / Le Monde), Dutch (NOS), Spanish (RTVE), English (gCaptain / Al Jazeera). This is where the earliness edge lives; the English feeds are kept so the lag *against* them is measurable | No |
 | **PEGELONLINE** | Rhine water levels → RHINE chokepoint. DACH-specific domain-depth signal | No |
 
 **Runtime LLM (pick one, key in `.env`):** Groq (recommended default) / Google Gemini / Ollama local.
@@ -274,14 +278,71 @@ has to happen on screen, on command.
 
 **After every phase:** commit with a clear message describing what was built, and push.
 
+### The language trail
+
+The multilingual claim is only worth making if it is **checkable**, so every event carries a
+`language_trail` — the ordered list of which language carried the story, from which source,
+how many minutes apart. The dashboard renders it, marks which entry was first and which was
+the English wire, and shows the original headline in its own script (Arabic renders
+`dir="rtl"`, or the headline is mangled).
+
+The headline number — "seen in German 23h before the English wires" — is **derived from that
+trail** by `wire_lag_hours()`, never stored beside it, so the claim and the timeline it rests
+on cannot drift apart. It returns `None` when the English wires actually led, which is the
+case for the Suez knock-on: no lead is claimed where none exists. **A claimed lead that is not
+real is the one thing this demo cannot afford** — it would turn the honest differentiator into
+the invented metric the whole project refuses to produce.
+
+Each scenario deliberately leads in a different language, so the edge reads as general rather
+than as one rehearsed German trick:
+
+| Scenario | Trail | Lead over the English wires |
+|---|---|---|
+| `hamburg` | DE\* → DE → NL → EN | 23h |
+| `redsea` | AR\* → AR → EN → FR | 11h |
+| `redsea` (Suez knock-on) | EN\* → AR | none — English led, and it says so |
+| `rhine` | DE\* → DE → NL → EN | 36h |
+| `france` | FR\* → FR → ES → EN | 18h |
+
+Live events carry the same two fields with a single-entry trail, so live and scripted events
+stay the same shape. **Schema parity between live and injected events has broken three times**
+— each time by adding a field to injected events only. Add it to both.
+
 ### Surviving a live audience
 
 The failure mode that actually threatens a demo is not a *dead* source — that fails fast —
-but a *slow* one, because sources are read in sequence. So the whole live pull has a hard
-**25-second budget** (`LIVE_PULL_BUDGET_SECONDS`) and each request an 8-second timeout.
-Whatever is not read by then is marked `skipped` and the cycle moves on. Tested against a
-server that accepts connections and never replies: the run ends at 25s with the scenario
-intact. Without the budget the same test would take over four minutes.
+but a *slow* one. The whole live pull has a hard **25-second budget**
+(`LIVE_PULL_BUDGET_SECONDS`) and each request an 8-second timeout. Whatever is not read by
+then is marked `skipped` and the cycle moves on.
+
+There are **two** ways a source can be slow, and only the first is obvious:
+
+1. **It hangs** — accepts the connection and never replies. The per-request timeout catches
+   this. Tested against such a server: the run ends at 25s with the scenario intact; without
+   the budget the same test took over four minutes.
+2. **It trickles** — replies forever, one byte at a time. This one is nastier, because
+   `requests`' timeout is measured *between bytes*, not in total: a source sending one byte a
+   second never trips an eight-second timeout, so the call never returns and the thread
+   running it never ends. A single such feed hung the whole run indefinitely.
+
+So every news fetch goes through `_get_capped()` in `risk_monitor.py`, which adds a total
+deadline and a size cap (`HTTP_MAX_BYTES`) on top of the timeout. Two details are load-bearing
+and easy to undo by accident:
+
+- Checking a deadline *between chunks* does not work — the read blocks until its chunk is
+  full, so a trickle never reaches the check. A watchdog has to **shut the socket down** from
+  outside, which is what makes the blocked read raise.
+- `response.close()` alone does not unblock a read already in flight;
+  `raw._connection.sock.shutdown()` does.
+
+Both cases are held by `verify_slowsources.py`: the hang ends at 25s, the trickle at 8s, and
+the scenario survives both.
+
+RSS feeds are read **concurrently** (`RSS_CONCURRENCY`). Sequentially, ten feeds at the
+per-source timeout cannot fit a serverless budget — only the first would be read and the
+language count the whole differentiation rests on would collapse to one. The pool is
+deliberately not a `with` block: its exit joins every worker, so one wedged feed would simply
+block there instead.
 
 Alongside that: a failed run returns a readable sentence rather than a stack trace; a
 missing provider falls back to deterministic logic and every affected card is badged
