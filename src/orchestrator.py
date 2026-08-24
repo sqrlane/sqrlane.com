@@ -152,8 +152,12 @@ def run_cycle(*, live=True, inject=True, use_llm=True, verbose=False,
             f"{total_events} event{'' if total_events == 1 else 's'}",
         ] if d])
 
-    failed = [s for s in risk["sources"] if s["status"] == "failed"]
-    attempted = [s for s in risk["sources"] if s["status"] != "skipped"]
+    # Live sources only, for the same reason the counts above exclude the
+    # scripted scenario: it always succeeds, so counting it here would make
+    # "N of M were unreachable" disagree with the number on the board.
+    live_entries = [s for s in risk["sources"] if not s["name"].startswith("scenario:")]
+    failed = [s for s in live_entries if s["status"] == "failed"]
+    attempted = [s for s in live_entries if s["status"] != "skipped"]
     if failed and len(failed) == len(attempted) and attempted:
         notes.append(f"All {len(failed)} live sources were unreachable - "
                      "running on the injected scenario only.")

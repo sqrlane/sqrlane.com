@@ -158,6 +158,42 @@ is counted from that run; nothing is illustrative.
 A **decision-engine strip** names the model in use and the model-vs-rules split, so the
 central claim is checkable at a glance rather than asserted.
 
+### The dashboard follows limns-admin
+
+The shell is modelled on [`Franvy/limns-admin`](https://github.com/Franvy/limns-admin),
+whose `design.md` is Vercel's **Geist** system. The colour, type, spacing, radius and
+shadow tokens in `static/index.html` are that spec's values, so read `design.md` before
+inventing a token — it almost certainly already exists.
+
+What was taken from the reference's layout:
+
+- **Sidebar**, 264px: grouped nav with uppercase group titles, an active item on a
+  `--surface` fill, blue count pills, and — in the slot where limns lists projects — the
+  **board itself**: one row per shipment, a state dot and a monospace id. The dots are real
+  state, so the sidebar is the board in miniature and doubles as the shipment picker.
+- **Collapse**, persisted to `localStorage` and bound to ⌘B/Ctrl-B. Restored before
+  transitions are enabled, so a collapsed sidebar does not slide in on load.
+- **Cards** at the 12px radius (`--r-md`) with `0 2px 2px rgba(0,0,0,.04)`. Controls stay
+  at 6px (`--r`) — the spec's two radii, not one.
+- **Stat cards**: label and pill on the top row, a large tabular value, a caption under it.
+- **A distribution ring** with the total in the middle and a legend carrying count and
+  share, in place of the reference's Plan Distribution.
+
+**Two things were deliberately not copied, and should not be added back:**
+
+- The reference's stat cards carry a **sparkline and a "+12% vs. previous 30 days" delta**.
+  Lanewatch has no history to compare a run against, so both would be invented — and an
+  invented metric is the one thing this project refuses to produce. The card keeps the
+  same anatomy and puts a fact from the run in the pill instead. `verify_shell.py` fails if
+  "vs. previous" ever appears on the page.
+- The bottom-of-sidebar **user card** is replaced by the decision-engine strip, which names
+  the model actually in use. On a demo whose whole claim is "the model decided this", that
+  slot is worth more than a fake profile.
+
+The ring shows **board outcome** — reroute / hold / on plan — because that is a real
+part-to-whole from the run. Every number in it is counted, and the shares are asserted to
+add to 100.
+
 ### The workflow layer — inbound comms, RFQs and the TMS link
 
 The Comms Agent covers *outbound*. Three scripted Workers cover the rest of the
