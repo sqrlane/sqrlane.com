@@ -35,7 +35,8 @@
   --green:#0f7b3f; --green-bg:#e7f5ec;
   --amber:#96580a; --amber-bg:#fdf3e3;
   --red:#ea001d;  --red-bg:#feecec;
-  --r:6px;
+  --r:6px;            /* controls and everyday surfaces */
+  --r-md:12px;        /* cards - limns-admin's Card is rounded-[12px] */
   --shadow:0 2px 2px rgba(0,0,0,.04);
   --shadow-pop:0 1px 1px rgba(0,0,0,.02),0 4px 8px -4px rgba(0,0,0,.04),0 16px 24px -8px rgba(0,0,0,.06);
 }
@@ -57,26 +58,50 @@ body{margin:0;background:var(--bg);color:var(--fg);
 button{font:inherit; color:inherit}
 .shell{display:flex; height:100dvh; overflow:hidden}
 
+/* ---------- sidebar collapse ---------- */
+body.side-ready .side{transition:width .3s cubic-bezier(.175,.885,.32,1.1)}
+body.side-collapsed .side{width:0; border-right-color:transparent}
+body.side-collapsed .side > *{opacity:0; pointer-events:none}
+
 /* ---------- sidebar ---------- */
-.side{width:248px; flex:none; background:var(--sidebar); border-right:1px solid var(--border);
-      display:flex; flex-direction:column}
+.side{width:264px; flex:none; background:var(--sidebar); border-right:1px solid var(--border);
+      display:flex; flex-direction:column; overflow:hidden}
 .side-h{height:60px; display:flex; align-items:center; gap:10px; padding:0 16px}
 .mark{width:26px;height:26px;border-radius:var(--r);background:var(--fg);flex:none;
       display:flex;align-items:center;justify-content:center}
 .wordmark{font-size:15px;font-weight:600;letter-spacing:-.01em}
 .tagline{font-size:11px;color:var(--faint);margin-top:-1px}
-.nav{flex:1; overflow-y:auto; padding:6px 10px}
-.nav-t{padding:12px 8px 5px; font-size:11px; font-weight:500; letter-spacing:.06em;
-       text-transform:uppercase; color:var(--faint)}
-.nav-i{display:flex; align-items:center; gap:9px; width:100%; text-align:left;
-       padding:7px 8px; border:0; background:none; color:var(--muted);
-       border-radius:var(--r); cursor:pointer; font-size:13.5px}
+.nav{flex:1; overflow-y:auto; padding:6px 12px}
+.nav-g{margin-bottom:16px}
+.nav-t{display:flex; align-items:center; padding:0 10px 6px; font-size:12px; font-weight:500;
+       letter-spacing:.05em; text-transform:uppercase; color:var(--faint)}
+.nav-n{margin-left:auto; text-transform:none; letter-spacing:0; font-size:11px}
+.nav-i{display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+       padding:8px 10px; border:0; background:none; color:var(--muted);
+       border-radius:var(--r); cursor:pointer; font-size:14px}
+.nav-i + .nav-i{margin-top:2px}
 .nav-i:hover{background:var(--surface); color:var(--fg)}
 .nav-i.on{background:var(--surface); color:var(--fg); font-weight:500}
 .nav-i svg{flex:none; opacity:.75}
-.nav-i .pill{margin-left:auto; font-size:11px; font-variant-numeric:tabular-nums;
-             background:var(--fg); color:var(--card); border-radius:20px; padding:0 6px; font-weight:600}
-.nav-i .pill.quiet{background:var(--surface-2); color:var(--muted)}
+.nav-i.on svg{opacity:1}
+.nav-i .pill{margin-left:auto; font-size:12px; font-variant-numeric:tabular-nums;
+             border:1px solid rgba(0,107,255,.35); background:rgba(0,107,255,.1); color:var(--blue);
+             border-radius:999px; padding:0 7px; font-weight:500}
+.nav-i .pill.quiet{border-color:transparent; background:var(--surface); color:var(--muted)}
+
+/* The board, listed the way the reference lists projects: a state dot and a
+   monospace id. The dot is the shipment's real state, so this is the board in
+   miniature rather than decoration. */
+.nav-s{display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+       padding:6px 10px; border:0; background:none; color:var(--muted);
+       border-radius:var(--r); cursor:pointer; font-size:13px}
+.nav-s:hover{background:var(--surface); color:var(--fg)}
+.nav-s.on{background:var(--surface); color:var(--fg)}
+.sdot{width:6px; height:6px; border-radius:999px; flex:none; background:var(--green)}
+.sdot.rerouted{background:var(--blue)}
+.sdot.hold{background:var(--amber)}
+.sid{font-family:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;flex:none}
+.scargo{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--faint); font-size:12px}
 .side-f{border-top:1px solid var(--border); padding:11px 14px}
 .side-f .lab{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint)}
 .side-f code{display:block; margin-top:3px; font-family:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
@@ -107,7 +132,7 @@ button{font:inherit; color:inherit}
 .wrap{max-width:1180px; margin:0 auto}
 
 /* ---------- primitives ---------- */
-.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);
       box-shadow:var(--shadow)}
 .card-h{padding:12px 15px;border-bottom:1px solid var(--border);display:flex;
         align-items:center;gap:9px}
@@ -125,12 +150,74 @@ button{font:inherit; color:inherit}
 /* stat row */
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
 @media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr)}}
-.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--r);
-      padding:14px 15px;box-shadow:var(--shadow)}
-.stat .lab{font-size:12px;color:var(--faint)}
-.stat .val{font-size:26px;font-weight:600;letter-spacing:-.02em;margin-top:5px;
-           font-variant-numeric:tabular-nums;line-height:1.1}
-.stat .sub{font-size:11.5px;color:var(--muted);margin-top:4px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);
+      padding:20px;box-shadow:var(--shadow)}
+/* Chart series colours. Both pairs were run through the palette validator
+   against their own surface - the dark steps are chosen for the dark card, not
+   flipped from the light ones. */
+/* Series colours are their own tokens, not the UI's --blue/--amber/--green:
+   those are tuned for text contrast, and reusing them put "Held" and "On plan"
+   at deltaE 5.6 under deuteranopia - indistinguishable. Each set below was run
+   through the palette validator against its own surface (lightness band, chroma
+   floor, all-pairs CVD separation, normal-vision floor, contrast). The dark
+   steps are chosen for the dark card, never flipped from the light ones. */
+:root{
+  --s-slack:#006bff;  --s-delay:#96580a;
+  --s-reroute:#006bff; --s-hold:#96580a; --s-plan:#28a948;
+}
+html[data-theme="dark"]{
+  --s-slack:#3d95f5;  --s-delay:#c8811a;
+  --s-reroute:#3d95f5; --s-hold:#c8811a; --s-plan:#2ba455;
+}
+
+.grid-chart{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:20px;align-items:start}
+@media(max-width:1000px){.grid-chart{grid-template-columns:1fr}}
+.chart-card{padding:20px}
+.chart-h{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.chart-h h2{font-size:16px;font-weight:600;letter-spacing:-.02em;margin:0}
+.chart-h p{font-size:14px;color:var(--muted);margin:4px 0 0}
+.chart-lg{display:flex;gap:14px;flex:none;padding-top:2px}
+.chart-lg span{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.chart-lg i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.chart-lg i.slack{background:var(--s-slack)}
+.chart-lg i.delay{background:var(--s-delay)}
+.chart{width:100%;height:auto;display:block;margin-top:14px;overflow:visible}
+.chart .gl{stroke:var(--border);stroke-width:1}
+.chart .axis{stroke:var(--border-strong);stroke-width:1}
+.chart .ytick,.chart .xtick{fill:var(--faint);font-size:11px;font-variant-numeric:tabular-nums}
+.chart .ytick{text-anchor:end}
+.chart .xtick{text-anchor:middle;font-family:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+.chart .b.slack{fill:var(--s-slack)}
+.chart .b.delay{fill:var(--s-delay)}
+.chart .blab{text-anchor:middle;font-size:11px;font-weight:600;fill:var(--s-delay)}
+.chart .grp:hover .b{opacity:.82}
+.chart-f{font-size:12.5px;color:var(--faint);margin:12px 0 0}
+.ring-card{padding:20px}
+.ring-h h2{font-size:16px;font-weight:600;letter-spacing:-.02em;margin:0}
+.ring-h p{font-size:14px;color:var(--muted);margin:4px 0 0}
+.ring-b{position:relative;display:flex;justify-content:center;margin:18px 0 4px}
+.ring-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+        justify-content:center;pointer-events:none}
+.ring-c .rv{font-size:28px;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.ring-c .rl{font-size:12px;color:var(--faint);margin-top:2px}
+.ring-l{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.ring-l li{display:flex;align-items:center;justify-content:space-between;font-size:13px}
+.ring-l .k{display:flex;align-items:center;gap:8px;color:var(--muted)}
+.ring-l .k i{width:10px;height:10px;border-radius:3px;display:inline-block;flex:none}
+.ring-l .v{font-weight:500;font-variant-numeric:tabular-nums}
+.ring-l .pc{color:var(--faint);margin-left:8px;font-weight:400}
+.stat-h{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.stat .lab{font-size:13px;font-weight:500;color:var(--muted)}
+.spill{font-size:12px;font-weight:500;border-radius:999px;padding:1px 8px;white-space:nowrap;
+       background:var(--surface);color:var(--muted);border:1px solid transparent}
+.spill.blue{background:rgba(0,107,255,.1);color:var(--blue);border-color:rgba(0,107,255,.3)}
+.spill.green{background:var(--green-bg);color:var(--green);border-color:rgba(15,123,63,.25)}
+.spill.amber{background:var(--amber-bg);color:var(--amber);border-color:rgba(150,88,10,.25)}
+.spill.red{background:var(--red-bg);color:var(--red);border-color:rgba(234,0,29,.25)}
+/* heading-24 from the spec: 24px/600, -0.96px tracking, tabular figures. */
+.stat .val{font-size:24px;font-weight:600;letter-spacing:-.04em;margin-top:12px;
+           font-variant-numeric:tabular-nums;line-height:32px}
+.stat .sub{font-size:12px;color:var(--faint);margin-top:8px}
 .stat.act .val{color:var(--amber)}
 
 .grid2{display:grid;grid-template-columns:1fr 336px;gap:20px;align-items:start}
@@ -138,7 +225,7 @@ button{font:inherit; color:inherit}
 
 /* ---------- shipment rows ---------- */
 .rows{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
-.row{background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+.row{background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);
      box-shadow:var(--shadow);display:flex;align-items:center;gap:14px;padding:13px 15px;
      cursor:pointer;text-align:left;width:100%;border-left:2px solid var(--border-strong);
      transition:border-color .35s}
@@ -178,8 +265,8 @@ button{font:inherit; color:inherit}
 .scen-note b{color:var(--fg)}
 
 /* ---------- worker roster strip ---------- */
-.roster{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:8px;margin-bottom:20px}
-.wchip{border:1px solid var(--border);background:var(--card);border-radius:var(--r);
+.roster{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:20px}
+.wchip{border:1px solid var(--border);background:var(--card);border-radius:var(--r-md);
        padding:10px 12px;cursor:pointer;text-align:left;box-shadow:var(--shadow);
        display:flex;flex-direction:column;gap:5px}
 .wchip:hover{border-color:var(--border-strong)}
@@ -191,10 +278,12 @@ button{font:inherit; color:inherit}
       padding:1.5px 5px;border-radius:3px}
 .wtag.live{background:var(--green-bg);color:var(--green)}
 .wtag.scripted{background:var(--amber-bg);color:var(--amber)}
-.wchip .st{font-size:11px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wchip .bot{display:flex;align-items:center;gap:6px;min-width:0}
+.wchip .st{font-size:11px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;
+           white-space:nowrap;flex:1;min-width:0}
 
 /* ---------- worker panel band ---------- */
-.wpanel{border:1px solid var(--border);background:var(--card);border-radius:var(--r);
+.wpanel{border:1px solid var(--border);background:var(--card);border-radius:var(--r-md);
         box-shadow:var(--shadow);margin-bottom:20px}
 .wpanel-h{padding:12px 15px;border-bottom:1px solid var(--border);display:flex;
           align-items:center;gap:9px;flex-wrap:wrap}
@@ -292,7 +381,7 @@ table.q tr.pick td{background:var(--surface)}
 .rejected li{font-size:12.5px;color:var(--muted);padding:4px 0 4px 15px;position:relative}
 .rejected li:before{content:"×";position:absolute;left:0;color:var(--faint)}
 .rejected b{font-family:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--fg)}
-.record{border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.record{border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden}
 .record-h{background:var(--card-muted);padding:9px 13px;border-bottom:1px solid var(--border);
           font-size:11.5px;color:var(--faint);display:flex;gap:10px;flex-wrap:wrap}
 .trail{margin:0;padding:12px 13px 13px 28px;list-style:none}
@@ -318,6 +407,17 @@ table.q tr.pick td{background:var(--surface)}
         padding:3px 8px;border-radius:4px}
 .gate-s.awaiting{background:var(--amber-bg);color:var(--amber)}
 .gate-s.approved{background:var(--green-bg);color:var(--green)}
+.pnote{font-size:12px;color:var(--faint);margin:0 0 12px;line-height:1.5}
+.inb{border:1px solid var(--border);border-radius:var(--r-md);padding:12px 13px;margin-bottom:10px}
+.inb-h{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:6px}
+.inb-h .who{font-size:12.5px;font-weight:500;color:var(--fg)}
+.inb-h .ago{margin-left:auto;font-size:11px;color:var(--faint)}
+.inb-s{font-size:13px;font-weight:500;margin-bottom:5px}
+.inb-b{font-size:12.5px;color:var(--muted);line-height:1.55}
+.inb-r{margin-top:10px;padding:10px 11px;background:var(--card-muted);border-radius:var(--r);
+  font-size:12.5px;line-height:1.55;color:var(--fg)}
+.inb-rl{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);
+  margin-bottom:5px}
 .approve{background:var(--fg);color:var(--card);border:0;border-radius:var(--r);
          padding:6px 13px;font-size:12.5px;font-weight:500;cursor:pointer}
 .approve:hover{opacity:.88}
@@ -359,6 +459,8 @@ table.q tr.pick td{background:var(--surface)}
 
   <div class="main">
     <div class="top">
+      <button class="icon-btn" id="collapse" title="Toggle sidebar  ⌘B"
+              aria-label="Toggle sidebar"></button>
       <div class="crumb"><span>Lanewatch</span> / <span id="crumb">Overview</span></div>
       <div class="right">
         <button class="icon-btn" id="theme" title="Toggle theme" aria-label="Toggle theme"></button>
@@ -392,6 +494,8 @@ const ICON = {
   approvals:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 5h16v11H4z"/><path d="M4 6l8 6 8-6"/></svg>',
   sun:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
   moon:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 14A8 8 0 1 1 10 4a6.5 6.5 0 0 0 10 10z"/></svg>',
+  panelClose:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M10 4v16M17 9l-3 3 3 3"/></svg>',
+  panelOpen:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M10 4v16M14 9l3 3-3 3"/></svg>',
   close:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
 };
 
@@ -414,19 +518,78 @@ function pending(){ return board.flatMap(s=>s.drafts||[]).filter(d=>!approved.ha
 function key(d){ return `${d.shipment_id}|${d.audience}`; }
 function attention(){ return board.filter(s=>s.state!=="green" && s.decision).length; }
 
+/* Grouped nav, then the board itself as a list - the same shape the reference
+   admin uses for its project list: a status dot and a monospace identifier. Here
+   the dots are real state, so the sidebar doubles as the board at a glance. */
+const NAV_GROUPS = [
+  {title:"Overview", items:[{id:"overview", label:"Overview"}]},
+  {title:"Operations", items:[
+    {id:"shipments", label:"Shipments", count:() => board.length, quiet:true},
+    {id:"risk",      label:"Risk feed", count:() => (risk.events||[]).length, quiet:true},
+    {id:"approvals", label:"Approvals", count:() => pending()},
+  ]},
+];
+
+/* Sidebar collapse, as the reference does it: persisted, restored before
+   transitions are enabled so a collapsed sidebar does not slide in on load, and
+   toggled with the same keyboard shortcut. */
+let sideCollapsed = false;
+
+function paintCollapse(){
+  document.body.classList.toggle("side-collapsed", sideCollapsed);
+  $("collapse").innerHTML = sideCollapsed ? ICON.panelOpen : ICON.panelClose;
+}
+
+function toggleSide(){
+  sideCollapsed = !sideCollapsed;
+  try { localStorage.setItem("lanewatch:sidebar", sideCollapsed ? "1" : "0"); } catch (e) {}
+  paintCollapse();
+}
+
+function initCollapse(){
+  try { sideCollapsed = localStorage.getItem("lanewatch:sidebar") === "1"; } catch (e) {}
+  paintCollapse();
+  requestAnimationFrame(() => document.body.classList.add("side-ready"));
+  $("collapse").onclick = toggleSide;
+  addEventListener("keydown", e => {
+    if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === "b") {
+      e.preventDefault(); toggleSide();
+    }
+  });
+}
+
 function renderNav(){
-  const items = [
-    {id:"overview",  label:"Overview",  n:null},
-    {id:"shipments", label:"Shipments", n:board.length, quiet:true},
-    {id:"risk",      label:"Risk feed", n:(risk.events||[]).length, quiet:true},
-    {id:"approvals", label:"Approvals", n:pending()},
-  ];
-  $("nav").innerHTML = `<div class="nav-t">Operations</div>` + items.map(i => `
-    <button class="nav-i ${view===i.id?"on":""}" data-view="${i.id}">
-      ${ICON[i.id]}<span>${i.label}</span>
-      ${i.n ? `<span class="pill ${i.quiet?"quiet":""}">${i.n}</span>` : ""}
-    </button>`).join("");
+  const groups = NAV_GROUPS.map(g => `
+    <div class="nav-g">
+      <div class="nav-t">${esc(g.title)}</div>
+      ${g.items.map(i => {
+        const n = i.count ? i.count() : 0;
+        return `<button class="nav-i ${view===i.id?"on":""}" data-view="${esc(i.id)}">
+          ${ICON[i.id]}<span>${esc(i.label)}</span>
+          ${n ? `<span class="pill ${i.quiet?"quiet":""}">${n}</span>` : ""}
+        </button>`;
+      }).join("")}
+    </div>`).join("");
+
+  const list = board.length ? `
+    <div class="nav-g">
+      <div class="nav-t">Board${hasRun?` <span class="nav-n">${attention()} actioned</span>`:""}</div>
+      ${board.map(sh => `
+        <button class="nav-s ${selected===sh.id?"on":""}" data-pick="${esc(sh.id)}"
+                title="${esc(sh.cargo)} - ${esc(sh.origin)} to ${esc(sh.final_destination)}">
+          <span class="sdot ${esc(sh.state)}"></span>
+          <span class="sid">${esc(sh.id)}</span>
+          <span class="scargo">${esc(sh.cargo)}</span>
+        </button>`).join("")}
+    </div>` : "";
+
+  $("nav").innerHTML = groups + list;
   document.querySelectorAll("[data-view]").forEach(b => b.onclick = () => go(b.dataset.view));
+  document.querySelectorAll("[data-pick]").forEach(b => b.onclick = () => {
+    selected = b.dataset.pick;                 // same selection the Workers react to
+    if (view !== "shipments") go("shipments");
+    else render();
+  });
 }
 function go(id){
   view = id;
@@ -438,19 +601,160 @@ function go(id){
 }
 
 /* ---------- pieces ---------- */
+/* Stat cards follow the reference's anatomy - label and a pill on the top row,
+   a large tabular value, a caption underneath - but the pill carries a fact from
+   this run rather than a trend. There is no history here to compare against, so
+   a "+12% vs. previous 30 days" would be invented, and an invented number is the
+   one thing this board cannot show. Same shape, honest contents. */
+/* Schedule pressure - the decision rule, drawn. Every shipment carries slack;
+   the disruption imposes a delay. Where the delay bar clears the slack bar there
+   is no clean answer, and that is precisely the shipment worth reading. Both
+   numbers come from the run, so this is the advisor's own arithmetic on screen.
+
+   Series colours were validated for both themes (OKLCH lightness band, chroma
+   floor, CVD separation and contrast against the card) rather than picked by
+   eye - blue against purple, the obvious pairing, is near-identical under
+   protanopia. */
+function schedulePressure(){
+  if (!hasRun) return "";
+  const rows = board.map(s => ({
+    id: s.id,
+    slack: ((s.decision||{}).slack_days) || 0,
+    delay: ((s.decision||{}).delay_days) || 0,
+  }));
+  if (!rows.length) return "";
+
+  const W = 640, H = 252, L = 30, R = 10, T = 14, B = 42;
+  const plotW = W - L - R, plotH = H - T - B;
+  const peak = Math.max(2, ...rows.map(r => Math.max(r.slack, r.delay)));
+  const top  = Math.ceil(peak / 2) * 2;               // even, so ticks are whole days
+  const yOf  = v => T + plotH - (v / top) * plotH;
+  const groupW = plotW / rows.length;
+  const BW = Math.min(22, Math.max(8, (groupW - 14) / 2 - 1));   // <=24px, air either side
+  const base = T + plotH;
+
+  let ticks = [];
+  for (let v = 0; v <= top; v += 2) ticks.push(v);
+  // Hairline, solid, one step off the surface - a dashed grid reads as a
+  // threshold when it is only a grid.
+  const grid = ticks.map(v => `
+    <line class="gl" x1="${L}" x2="${W-R}" y1="${yOf(v)}" y2="${yOf(v)}"/>
+    <text class="ytick" x="${L-8}" y="${yOf(v)+4}">${v}</text>`).join("");
+
+  // 4px rounded data-end, square where it meets the baseline.
+  const barPath = (x, v, w) => {
+    const h = (v / top) * plotH, yT = base - h, r = Math.min(4, h, w / 2);
+    return `M${x},${base} L${x},${yT+r} Q${x},${yT} ${x+r},${yT}
+            L${x+w-r},${yT} Q${x+w},${yT} ${x+w},${yT+r} L${x+w},${base} Z`;
+  };
+
+  const groups = rows.map((r, i) => {
+    const cx = L + groupW * i + groupW / 2;
+    const xS = cx - BW - 1, xD = cx + 1;          // the 2px surface gap between them
+    const tight = r.delay > r.slack;              // the one that forces a decision
+    return `
+      <g class="grp">
+        ${r.slack > 0 ? `<path class="b slack" d="${barPath(xS, r.slack, BW)}">
+          <title>${esc(r.id)} - ${r.slack} days of slack</title></path>` : ""}
+        ${r.delay > 0 ? `<path class="b delay ${tight?"tight":""}" d="${barPath(xD, r.delay, BW)}">
+          <title>${esc(r.id)} - ${r.delay} days of delay</title></path>` : ""}
+        ${tight ? `<text class="blab" x="${xD + BW/2}" y="${yOf(r.delay) - 7}">${r.delay}d</text>` : ""}
+        <text class="xtick" x="${cx}" y="${base + 18}">${esc(r.id.replace("SHP-",""))}</text>
+      </g>`;
+  }).join("");
+
+  const over = rows.filter(r => r.delay > r.slack).length;
+  return `<div class="card chart-card">
+    <div class="chart-h">
+      <div><h2>Schedule pressure</h2>
+        <p>Slack in hand against the delay this disruption imposes, in days</p></div>
+      <div class="chart-lg">
+        <span><i class="slack"></i>Slack</span><span><i class="delay"></i>Delay</span>
+      </div>
+    </div>
+    <svg viewBox="0 0 ${W} ${H}" class="chart" preserveAspectRatio="xMidYMid meet" role="img"
+         aria-label="Slack against imposed delay for each shipment, in days.${
+           over ? ` ${over} shipment${over===1?"":"s"} face more delay than slack.` : ""}">
+      ${grid}
+      <line class="axis" x1="${L}" x2="${W-R}" y1="${base}" y2="${base}"/>
+      ${groups}
+    </svg>
+    <p class="chart-f">${over
+      ? `Where the delay bar clears the slack bar there is no clean answer — ${over} here.`
+      : `Every delay fits inside the slack it had.`}</p>
+  </div>`;
+}
+
+/* Board outcome, as the reference draws a distribution: a ring with the total in
+   the middle and a legend carrying count and share. Every number is counted from
+   the run - three outcomes over one pool is exactly what the ring is for. */
+function outcomeRing(){
+  if (!hasRun) return "";
+  const parts = [
+    {name:"Rerouted", n:(summary||{})["reroute"]||0, color:"var(--s-reroute)"},
+    {name:"Held",     n:(summary||{})["hold"]||0,    color:"var(--s-hold)"},
+    {name:"On plan",  n:(summary||{})["no-action"]||0, color:"var(--s-plan)"},
+  ].filter(p => p.n > 0);
+  const total = parts.reduce((a,b) => a + b.n, 0);
+  if (!total) return "";
+
+  const R = 68, C = 2 * Math.PI * R, GAP = parts.length > 1 ? 3 : 0;
+  let at = 0;
+  const arcs = parts.map(p => {
+    const len = Math.max((p.n / total) * C - GAP, 1);
+    const seg = `<circle cx="88" cy="88" r="${R}" fill="none" stroke="${p.color}"
+       stroke-width="18" stroke-linecap="butt"
+       stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-at}"
+       transform="rotate(-90 88 88)"></circle>`;
+    at += (p.n / total) * C;
+    return seg;
+  }).join("");
+
+  return `<div class="card ring-card">
+    <div class="ring-h"><h2>Board outcome</h2>
+      <p>What the run decided across all ${total} shipments</p></div>
+    <div class="ring-b">
+      <svg viewBox="0 0 176 176" width="176" height="176" role="img"
+           aria-label="Board outcome by decision">
+        <circle cx="88" cy="88" r="${R}" fill="none" stroke="var(--surface)" stroke-width="18"></circle>
+        ${arcs}
+      </svg>
+      <div class="ring-c"><div class="rv">${total}</div><div class="rl">Shipments</div></div>
+    </div>
+    <ul class="ring-l">${parts.map(p => `
+      <li><span class="k"><i style="background:${p.color}"></i>${esc(p.name)}</span>
+        <span class="v">${p.n}<span class="pc">${Math.round(p.n / total * 100)}%</span></span></li>`).join("")}
+    </ul>
+  </div>`;
+}
+
+function statCard({label, value, pill, tone, sub}){
+  return `<div class="stat">
+    <div class="stat-h"><span class="lab">${esc(label)}</span>
+      ${pill ? `<span class="spill ${tone||""}">${esc(pill)}</span>` : ""}</div>
+    <div class="val">${esc(value)}</div>
+    <div class="sub">${esc(sub)}</div></div>`;
+}
+
 function statRow(){
   if (!hasRun) return "";
   const s = summary || {};
   const late = board.filter(b => b.decision && b.decision.deadline_breached).length;
+  const onPlan = s["no-action"] || 0;
+  const read = risk.live_sources_read || 0, total = risk.live_sources_total || 0;
   return `<div class="stats">
-    <div class="stat"><div class="lab">Shipments tracked</div><div class="val">${board.length}</div>
-      <div class="sub">${s["no-action"]||0} on plan, ${attention()} actioned</div></div>
-    <div class="stat"><div class="lab">Risk events</div><div class="val">${(risk.events||[]).length}</div>
-      <div class="sub">${(risk.sources||[]).filter(x=>x.status==="ok").length} of ${(risk.sources||[]).length} sources read</div></div>
-    <div class="stat ${late?"act":""}"><div class="lab">Deadlines at risk</div><div class="val">${late}</div>
-      <div class="sub">${late?"customer date missed":"all within required-by"}</div></div>
-    <div class="stat ${pending()?"act":""}"><div class="lab">Awaiting your approval</div><div class="val">${pending()}</div>
-      <div class="sub">${pending()?"drafts need a human":"all drafts approved"}</div></div>
+    ${statCard({label:"Shipments tracked", value:board.length,
+                pill:`${attention()} actioned`, tone:attention()?"blue":"",
+                sub:`${onPlan} on plan, ${attention()} actioned`})}
+    ${statCard({label:"Risk events", value:(risk.events||[]).length,
+                pill:read?"live":"no live source", tone:read?"green":"amber",
+                sub:`${read} of ${total} sources read`})}
+    ${statCard({label:"Deadlines at risk", value:late,
+                pill:late?"breach":"clear", tone:late?"red":"green",
+                sub:late?"customer date missed":"all within required-by"})}
+    ${statCard({label:"Awaiting your approval", value:pending(),
+                pill:pending()?"held":"clear", tone:pending()?"amber":"green",
+                sub:pending()?"drafts need a human":"all drafts approved"})}
   </div>`;
 }
 
@@ -500,11 +804,14 @@ function rosterStrip(){
   if (!workers.length) return "";
   return `<p class="sec-t">Workers</p><div class="roster">${workers.map(w=>{
     const mode = w.mode==="live" ? "live" : "scripted";
+    /* The tag sits under the name, not beside it. On a roster this size the two
+       compete for one line and the name is what loses - "Milestones Worker"
+       became "Mile…", which is not a Worker anyone can identify. */
     return `<button class="wchip ${openWorker===w.id?"on":""}" data-worker="${esc(w.id)}">
       <span class="top"><span class="wdot" style="margin:0"></span>
-        <span class="nm">${esc(w.name)}</span>
-        <span class="wtag ${mode}">${mode}</span></span>
-      <span class="st">${esc(w.summary || w.role)}</span></button>`;}).join("")}</div>`;
+        <span class="nm">${esc(w.name)}</span></span>
+      <span class="bot"><span class="wtag ${mode}">${mode}</span>
+        <span class="st">${esc(w.summary || w.role)}</span></span></button>`;}).join("")}</div>`;
 }
 
 function workerPanel(){
@@ -561,6 +868,62 @@ function scriptedPanelBody(w, ship){
       <div class="fields">${p.fields.map(f=>
         `<span class="f">${esc(f.field)}</span><span>${esc(f.value)}</span>`).join("")}</div>
       ${p.flag?`<div class="warn">${esc(p.flag)}</div>`:""}`;
+  if (w.id === "inbox")
+    return `<p class="sec-t">${esc(p.headline)}</p>
+      <p class="pnote">${esc(p.note)}</p>
+      ${p.items.map(m=>`<div class="inb">
+        <div class="inb-h">
+          <span class="who">${esc(m.from)}</span>
+          <span class="qtag">${esc(m.intent)}</span>
+          <span class="qtag">${esc(m.linked_booking)}</span>
+          <span class="ago">${esc(m.received)}</span>
+        </div>
+        <div class="inb-s">${esc(m.subject)}</div>
+        <div class="inb-b">${esc(m.body)}</div>
+        ${m.suggested_reply?`<div class="inb-r">
+          <div class="inb-rl">Drafted reply</div>${esc(m.suggested_reply)}</div>`:""}
+        <span class="gate-s ${m.approval_status==="closed"?"approved":"awaiting"}">${
+          esc(m.status)}</span>
+      </div>`).join("")}`;
+
+  if (w.id === "rfq")
+    return `<p class="sec-t">${esc(p.headline)}</p>
+      <p class="pnote">${esc(p.note)}</p>
+      <div class="inb">
+        <div class="inb-h"><span class="who">${esc(p.request.from)}</span>
+          <span class="qtag">rate request</span>
+          <span class="ago">${esc(p.request.received)}</span></div>
+        <div class="inb-b">${esc(p.request.raw)}</div>
+        <div class="inb-rl" style="margin-top:10px">Read into fields</div>
+        <div class="fields">${Object.entries(p.parsed||p.request.parsed).map(([k,v])=>
+          `<span class="f">${esc(k.replace(/_/g," "))}</span><span>${esc(v)}</span>`).join("")}</div>
+      </div>
+      <table class="q"><thead><tr><th>Carrier</th><th>Via</th><th>Transit</th>
+        <th>Cost index</th></tr></thead><tbody>
+        ${p.options.map(o=>`<tr class="${o===p.options[0]?"pick":""}">
+          <td>${esc(o.carrier)}</td><td>${esc(o.discharge_port)}</td>
+          <td>${esc(o.transit_days)}d</td>
+          <td>${esc(o.cost_index)}${o.surcharge?`<span class="qtag">${esc(o.surcharge)}</span>`:""}</td>
+        </tr>`).join("")}
+      </tbody></table>
+      ${p.draft_reply?`<div class="inb-r"><div class="inb-rl">Drafted quote</div>${
+        esc(p.draft_reply)}</div>`:""}
+      <span class="gate-s awaiting">${esc(p.status)}</span>`;
+
+  if (w.id === "tms")
+    return `<p class="sec-t">${esc(p.headline)}</p>
+      <p class="pnote">${esc(p.note)}</p>
+      <div class="fields">${p.field_map.map(f=>
+        `<span class="f">${esc(f.tms_field)}</span>
+         <span>${esc(f.lanewatch_field)} <span class="qtag">${esc(f.direction)}</span></span>`
+        ).join("")}</div>
+      ${p.writeback?`<div class="inb">
+        <div class="inb-rl">Write-back this decision implies</div>
+        <div class="fields">${p.writeback.changes.map(c=>
+          `<span class="f">${esc(c.field)}</span><span>→ ${esc(c.to)}</span>`).join("")}</div>
+        <span class="gate-s awaiting">${esc(p.writeback.status)}</span>
+      </div>`:`<div class="pnote">On plan — this booking needs no write-back.</div>`}`;
+
   return `<p class="sec-t">${esc(p.headline)}</p><ul class="qa">${p.qa.map(x=>
     `<li><div class="q">${esc(x.q)}</div><div class="a">${esc(x.a)}</div></li>`).join("")}</ul>`;
 }
@@ -578,8 +941,13 @@ function workersCard(){
 }
 
 function riskCard(compact){
-  const ev = risk.events||[], srcs = risk.sources||[];
-  const ok = srcs.filter(s=>s.status==="ok").length;
+  const ev = risk.events||[];
+  /* live_sources_* are counted in risk_monitor, which is the one place that
+     knows the scripted scenario reports itself as a source. Counting it here
+     would inflate both halves of the number an audience uses to check that the
+     news pull is real. The failed list is filtered the same way. */
+  const srcs = (risk.sources||[]).filter(s=>!/^scenario:/.test(s.name||""));
+  const ok = risk.live_sources_read||0, total = risk.live_sources_total||srcs.length;
   const bad = srcs.filter(s=>s.status==="failed");
   return `<div class="card">
     <div class="card-h"><h2>Risk feed</h2><span class="chip live">live</span><span class="n">${ev.length}</span></div>
@@ -588,23 +956,35 @@ function riskCard(compact){
         <span class="tag ${e.origin==="injected"?"inj":"livesrc"}">${e.origin==="injected"?"scripted":"live"}</span>
         <span class="tag ${esc(e.severity)}">${esc(e.severity)}</span>
         <span class="tag">${esc(e.chokepoint)} ${esc(e.type)}</span>
-        <span class="tag lang">${esc((e.source_language||"").toUpperCase())}</span>
+        <span class="tag lang">${esc(regionOf(e))}</span>
       </div>
       <div class="ev-title">${esc(e.title)}</div>
       ${e.title_original?`<div class="orig" dir="${RTL.has(e.source_language)?"rtl":"ltr"}"
-        lang="${esc(e.source_language)}">${esc(e.title_original)}</div>`:""}
+        lang="${esc(e.source_language)}" title="As first published">${esc(e.title_original)}</div>`:""}
       <div class="ev-src">${esc(e.detected_first_from||e.source)}</div>
       ${!compact && e.reasoning?`<div class="ev-why">${esc(e.reasoning)}</div>`:""}
-      ${languageTrail(e, compact)}
+      ${detectionTrail(e, compact)}
     </div>`).join("") : `<div class="empty">No active events.<br>Press <b>Inject Hamburg strike</b> to start.</div>`}
     ${srcs.length?`<div class="srcline">
-      <div class="r">✓ ${ok} of ${srcs.length} sources read</div>
-      ${bad.length?`<div class="r">! unavailable: ${esc(bad.slice(0,4).map(s=>s.name.replace(/^(RSS|GDELT|PEGELONLINE): /,"")).join(", "))}${bad.length>4?` +${bad.length-4} more`:""}</div>`:""}
+      <div class="r">✓ ${ok} of ${total} sources read</div>
+      ${bad.length?`<div class="r">! unavailable: ${esc(bad.slice(0,4).map(s=>s.name.replace(/^(RSS|GDELT|PEGELONLINE): /,"").replace(/\s*\[\w{2}\]$/,"")).join(", "))}${bad.length>4?` +${bad.length-4} more`:""}</div>`:""}
     </div>`:""}</div>`;
 }
 
+/* Scripts that run right-to-left. This is a rendering fact, not a claim about
+   the source - an Arabic headline set left-to-right is simply mangled. */
 const RTL = new Set(["ar","he","fa","ur"]);
-const LANGNAME = {de:"German", ar:"Arabic", fr:"French", nl:"Dutch", es:"Spanish", en:"English"};
+
+/* Where a source sits, not what language it publishes in. The edge is proximity:
+   a local outlet carries a disruption while the international wires are still
+   downstream of it. Which language that happens to be in is incidental, so the
+   dashboard never names one. */
+const REGION = {de:"Regional", ar:"Regional", fr:"Regional",
+                nl:"Regional", es:"Regional", en:"International"};
+
+function regionOf(e){
+  return REGION[e.source_language] || "Regional";
+}
 
 function offsetLabel(mins){
   if (!mins) return "first";
@@ -613,27 +993,28 @@ function offsetLabel(mins){
   return h < 48 ? `+${h}h` : `+${Math.round(h/24)}d`;
 }
 
-/* The earliness claim, shown rather than asserted: which languages carried the
-   story, in what order, and how far behind the English wires were. */
-function languageTrail(e, compact){
+/* The earliness claim, shown rather than asserted: which sources carried the
+   story, in what order, and how far behind the international wires were.
+   Named by outlet, never by language - the lead comes from reading sources
+   close to the event, and that holds wherever in the world it happens. */
+function detectionTrail(e, compact){
   const trail = e.language_trail || [];
   if (trail.length < 2) return "";
   const first = trail.find(t=>t.first) || trail[0];
   const wire  = trail.find(t=>t.english_wire);
   const lead  = wire && !wire.first
-    ? `Seen in ${LANGNAME[first.language]||first.language} ${offsetLabel(wire.offset_minutes).replace("+","")} before the English wires`
+    ? `Seen ${offsetLabel(wire.offset_minutes).replace("+","")} before the international wires`
     : null;
+  const outlets = trail.length;
   if (compact) {
-    return `<div class="ltrail"><div class="ltrail-h">Carried in ${
-      (e.languages||[]).length} languages</div>
-      <div class="lt first"><span class="lg">${esc(first.language.toUpperCase())}</span>
+    return `<div class="ltrail"><div class="ltrail-h">Carried by ${outlets} sources</div>
+      <div class="lt first"><span class="lg">${esc(regionOf(first))}</span>
         <span class="src">${esc(first.source)}</span><span class="off">first</span></div>
       ${lead?`<div class="lead">${esc(lead)}</div>`:""}</div>`;
   }
-  return `<div class="ltrail"><div class="ltrail-h">Detection trail — ${
-    (e.languages||[]).length} languages</div>
+  return `<div class="ltrail"><div class="ltrail-h">Detection trail — ${outlets} sources</div>
     ${trail.map(t=>`<div class="lt ${t.first?"first":""} ${t.english_wire&&!t.first?"wire":""}">
-      <span class="lg">${esc(t.language.toUpperCase())}</span>
+      <span class="lg">${esc(regionOf(t))}</span>
       <span class="src">${esc(t.source)}</span>
       <span class="off">${esc(offsetLabel(t.offset_minutes))}</span></div>`).join("")}
     ${lead?`<div class="lead">${esc(lead)}</div>`:""}</div>`;
@@ -642,7 +1023,7 @@ function languageTrail(e, compact){
 function legendCard(){
   return `<div class="card" style="padding:14px 16px;margin-bottom:20px">
     <div class="keys">
-      <span class="key"><i class="sw live"></i><span><b>Live</b> — the risk feed. Real news, pulled now, in several languages.</span></span>
+      <span class="key"><i class="sw live"></i><span><b>Live</b> — the risk feed. Real news from sources worldwide, pulled now.</span></span>
       <span class="key"><i class="sw synth"></i><span><b>Synthetic</b> — the five shipments and the injected strike.</span></span>
       <span class="key"><i class="sw draft"></i><span><b>Drafted, never sent</b> — approval changes state only.</span></span>
     </div>
@@ -659,7 +1040,9 @@ function render(){
     if (v !== view) $("v-"+v).innerHTML = "";
   });
 
-  if (view === "overview") $("v-overview").innerHTML = legendCard() + statRow() +
+  if (view === "overview") $("v-overview").innerHTML = statRow() +
+    (hasRun ? `<div class="grid-chart">${schedulePressure()}${outcomeRing()}</div>` : "") +
+    legendCard() +
     (hasRun?"":`<div class="hint" style="margin-bottom:20px">
       <b>Nothing has happened yet.</b> Press <b>Inject Hamburg strike</b> above — the Workers read live news,
       triage all ${board.length} shipments, and draft the emails each one needs. Everything then
@@ -685,6 +1068,7 @@ function render(){
     render();
   });
   bindApprove();
+  initCollapse();
   renderNav();
 }
 

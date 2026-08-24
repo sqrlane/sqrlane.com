@@ -35,9 +35,9 @@
             3,
             5
           ],
-          "detected_first_from": "German-language RSS (NDR / tagesschau / ver.di press)",
+          "detected_first_from": "Regional RSS (NDR / tagesschau / ver.di press), ahead of the international wires",
           "confidence": 0.95,
-          "reasoning": "Union-called full-day walkout at all Hamburg container terminals; handling and gate operations stop, so any box discharging at HAM is exposed. Picked up from a German-language regional feed roughly a day before the English wires carried it.",
+          "reasoning": "Union-called full-day walkout at all Hamburg container terminals; handling and gate operations stop, so any box discharging at HAM is exposed. Picked up from a regional feed close to the port roughly a day before the international wires carried it.",
           "language_trail": [
             {
               "language": "de",
@@ -57,7 +57,7 @@
             },
             {
               "language": "en",
-              "source": "English maritime wires",
+              "source": "International maritime wires",
               "offset_minutes": 1380,
               "english_wire": true
             }
@@ -101,7 +101,7 @@
             10,
             14
           ],
-          "detected_first_from": "Arabic-language RSS (Al Jazeera), ahead of the English maritime wires",
+          "detected_first_from": "Regional RSS (Al Jazeera), ahead of the international maritime wires",
           "confidence": 0.92,
           "reasoning": "Lines are suspending Bab-el-Mandeb transits outright rather than convoying, so anything routed through Suez is re-timed around Africa. This hits every Asia-Europe string on the board at once.",
           "language_trail": [
@@ -156,7 +156,7 @@
             10,
             14
           ],
-          "detected_first_from": "gCaptain (en)",
+          "detected_first_from": "gCaptain (international maritime wire)",
           "confidence": 0.85,
           "reasoning": "Suez schedules are unreliable while the southern approach is being avoided, so a Suez routing cannot be relied on even where the canal itself is open.",
           "language_trail": [
@@ -211,7 +211,7 @@
             4,
             8
           ],
-          "detected_first_from": "German-language RSS plus the Kaub water-level gauge",
+          "detected_first_from": "Regional RSS plus the Kaub water-level gauge",
           "confidence": 0.9,
           "reasoning": "Kaub below the loading threshold means barges sail part-laden and slots requeue, so any Rhine barge leg is delayed even though the sea leg and the discharge port are working normally.",
           "language_trail": [
@@ -233,7 +233,7 @@
             },
             {
               "language": "en",
-              "source": "English trade press",
+              "source": "International trade press",
               "offset_minutes": 2160,
               "english_wire": true
             }
@@ -278,7 +278,7 @@
             3,
             6
           ],
-          "detected_first_from": "French-language regional RSS",
+          "detected_first_from": "Regional RSS, ahead of the international wires",
           "confidence": 0.88,
           "reasoning": "The discharge port is working normally; the exposure is the land corridor to Lyon, so the decision is about the inland leg rather than the port.",
           "language_trail": [
@@ -300,7 +300,7 @@
             },
             {
               "language": "en",
-              "source": "English wires",
+              "source": "International wires",
               "offset_minutes": 1080,
               "english_wire": true
             }

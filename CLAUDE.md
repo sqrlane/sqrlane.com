@@ -28,12 +28,19 @@ they don't decide or act, and they're priced out of the mid-market.
 
 ### The two differentiators (the whole story — nothing else)
 
-1. **Earlier signal from non-English sources.** English-only tools miss a German `Warnstreik`
-   until it hits the wires. Reading regional/multilingual sources *first* is a real
-   informational edge — and it is one edge in **six languages** (de, ar, fr, nl, es, en), not
-   a German special case. Which language leads depends on where the disruption is: German for
-   the North Range ports and the Rhine, Arabic for the Red Sea and Suez, French for the Rhône
-   corridor. See [The language trail](#the-language-trail).
+1. **Earlier signal, because the sources are closer to the event.** A disruption is known
+   locally long before it is news globally: the union announces it, the regional broadcaster
+   carries it, and only then does an international wire pick it up. A monitor watching the
+   wires is structurally late because it is reading *downstream*. Lanewatch reads ~20 sources
+   across every corridor on the board, so somewhere one of them is publishing whatever the
+   hour is here.
+
+   **The website never names a language.** Multilingual reading is the *mechanism*, not the
+   pitch — the edge is source proximity, and it holds wherever in the world the event
+   happens. Naming a language makes a general capability look like one rehearsed trick, so
+   the UI says "regional" and "international wires" throughout. Real outlet names
+   (Al Jazeera Arabic, DW Deutsch) are fine: those identify a source, they do not claim an
+   edge. `verify_neutral.py` holds this. See [The detection trail](#the-detection-trail).
 2. **A closed risk → reroute → comms loop with recorded reasoning.** Risk incumbents stop at the
    alert; execution players don't touch risk. Welding them — and recording *why* each decision was
    made — is the whitespace.
@@ -122,9 +129,9 @@ the real pipeline.
 
 ### The product layer
 
-**Seven Workers, three of them real.** Risk, Routing and Comms genuinely run and are
-tagged `LIVE`. Rate, Milestones, Docs and Assistant replay authored data from
-`src/roster.py` and are tagged `SCRIPTED`. **The tag is the honesty** — never present a
+**Ten Workers, three of them real.** Risk, Routing and Comms genuinely run and are
+tagged `LIVE`. Rate, Milestones, Docs, Inbox, RFQ, TMS Link and Assistant replay
+authored data from `src/roster.py` and are tagged `SCRIPTED`. **The tag is the honesty** — never present a
 scripted Worker as reasoning live. They are still *reactive*: each panel is built from
 the active scenario and the selected shipment, so switching either visibly changes it.
 What is authored is the content, not the shape.
@@ -150,6 +157,99 @@ is counted from that run; nothing is illustrative.
 
 A **decision-engine strip** names the model in use and the model-vs-rules split, so the
 central claim is checkable at a glance rather than asserted.
+
+### The dashboard follows limns-admin
+
+The shell is modelled on [`Franvy/limns-admin`](https://github.com/Franvy/limns-admin),
+whose `design.md` is Vercel's **Geist** system. The colour, type, spacing, radius and
+shadow tokens in `static/index.html` are that spec's values, so read `design.md` before
+inventing a token — it almost certainly already exists.
+
+What was taken from the reference's layout:
+
+- **Sidebar**, 264px: grouped nav with uppercase group titles, an active item on a
+  `--surface` fill, blue count pills, and — in the slot where limns lists projects — the
+  **board itself**: one row per shipment, a state dot and a monospace id. The dots are real
+  state, so the sidebar is the board in miniature and doubles as the shipment picker.
+- **Collapse**, persisted to `localStorage` and bound to ⌘B/Ctrl-B. Restored before
+  transitions are enabled, so a collapsed sidebar does not slide in on load.
+- **Cards** at the 12px radius (`--r-md`) with `0 2px 2px rgba(0,0,0,.04)`. Controls stay
+  at 6px (`--r`) — the spec's two radii, not one.
+- **Stat cards**: label and pill on the top row, a large tabular value, a caption under it.
+- **A distribution ring** with the total in the middle and a legend carrying count and
+  share, in place of the reference's Plan Distribution.
+
+**Two things were deliberately not copied, and should not be added back:**
+
+- The reference's stat cards carry a **sparkline and a "+12% vs. previous 30 days" delta**.
+  Lanewatch has no history to compare a run against, so both would be invented — and an
+  invented metric is the one thing this project refuses to produce. The card keeps the
+  same anatomy and puts a fact from the run in the pill instead. `verify_shell.py` fails if
+  "vs. previous" ever appears on the page.
+- The bottom-of-sidebar **user card** is replaced by the decision-engine strip, which names
+  the model actually in use. On a demo whose whole claim is "the model decided this", that
+  slot is worth more than a fake profile.
+
+The ring shows **board outcome** — reroute / hold / on plan — because that is a real
+part-to-whole from the run. Every number in it is counted, and the shares are asserted to
+add to 100. Beside it, in the slot where the reference puts its revenue chart, is
+**schedule pressure**: each shipment's slack against the delay the disruption imposes.
+That is the advisor's own arithmetic drawn — where the delay bar clears the slack bar
+there is no clean answer, which is exactly SHP-002.
+
+### Chart colour is computed, not chosen
+
+Series colours live in their own tokens (`--s-slack`, `--s-delay`, `--s-reroute`,
+`--s-hold`, `--s-plan`), **not** the UI's `--blue` / `--amber` / `--green`. Those are
+tuned for text contrast, and reusing them put "Held" and "On plan" at **ΔE 5.6 under
+deuteranopia** — a deuteranope could not tell the two slices apart. That shipped
+undetected until the palette was actually run through a validator.
+
+Every set is checked against its own surface for lightness band, chroma floor,
+all-pairs CVD separation, normal-vision floor, and contrast. Two findings worth
+keeping:
+
+- **Dark steps are chosen, never flipped.** The light values all sit outside the dark
+  lightness band (0.48–0.67), so dark mode has its own validated triple.
+- **The obvious pairings are the broken ones.** Blue against purple is ΔE 1.3 under
+  deuteranopia; amber against a dark green is ΔE 3.9. Greying the "on plan" bucket
+  fails too — gray against amber is ΔE 13.4 to *normal* vision, below the floor that
+  secondary encoding cannot excuse. The fix each time was a different step, not a
+  different idea.
+
+Gridlines are **solid hairlines**. The reference draws them dashed; dashing reads as a
+threshold when it is only a grid, so that one detail is deliberately not copied.
+Direct labels are selective — only the shipment whose delay exceeds its slack — because
+a number on every bar goes unread.
+
+### The workflow layer — inbound comms, RFQs and the TMS link
+
+The Comms Agent covers *outbound*. Three scripted Workers cover the rest of the
+desk a disruption actually lands on:
+
+- **Inbox Worker** — inbound carrier and customer mail, triaged: intent classified,
+  linked to the booking, and a reply drafted. Which mail arrives is derived from the
+  decision the Route Advisor made, so a reroute produces an omit-notice and a status
+  chase, a hold produces berth options, and an on-plan booking produces a routine
+  milestone with **no reply drafted at all**. Answering everything would be showing
+  volume rather than judgement.
+- **RFQ Worker** — an inbound rate request read into structured fields, priced against
+  the lane with the active scenario's surcharge, and answered with a drafted quote.
+- **TMS Link** (`src/tms.py`) — a **demo connector**. It models the field mapping and
+  turns each actioned decision into the booking change it implies (discharge port,
+  routing code, ETA, or a hold status). A shipment left on plan produces no write-back,
+  which is a real answer rather than an omission.
+
+**None of it sends, and none of it writes.** A drafted reply, a drafted quote and a
+queued write-back are all outbound actions, so all three sit behind the same approval
+gate as an email — `DRAFT - not sent` and `QUEUED - not written`, both
+`awaiting_approval`. `tests/test_comms_agent_sends_nothing.py` now checks all of them:
+the original checks only ever looked at `card["drafts"]`, which none of these appear in.
+
+`src/tms.py` imports nothing but `datetime`. There is no client, no credential and no
+endpoint — a write-back is a dict describing a change, and it stays a dict. Never
+present the connector as a live TMS link; it says `connected (demo)` everywhere it is
+surfaced, and a test asserts that.
 
 Drafts sit behind a **human-approval gate**: `awaiting_approval` → *Approve* →
 `approved`. Approval is a state change in the browser and nothing else — there is no
@@ -186,7 +286,8 @@ transport anywhere in `src/` for it to trigger, and a test asserts that.
 │   ├── risk_monitor.py       # component 1
 │   ├── route_advisor.py      # component 2
 │   ├── comms_agent.py        # component 3
-│   ├── roster.py             # the four SCRIPTED Workers - authored, never live
+│   ├── roster.py             # the seven SCRIPTED Workers - authored, never live
+│   ├── tms.py                # the demo TMS connector - describes changes, writes none
 │   ├── orchestrator.py       # component 4 (the loop)
 │   └── app.py                # FastAPI: serves the page + /run
 ├── static/
@@ -278,17 +379,22 @@ has to happen on screen, on command.
 
 **After every phase:** commit with a clear message describing what was built, and push.
 
-### The language trail
+### The detection trail
 
-The multilingual claim is only worth making if it is **checkable**, so every event carries a
-`language_trail` — the ordered list of which language carried the story, from which source,
-how many minutes apart. The dashboard renders it, marks which entry was first and which was
-the English wire, and shows the original headline in its own script (Arabic renders
-`dir="rtl"`, or the headline is mangled).
+The earliness claim is only worth making if it is **checkable**, so every event carries a
+`language_trail` — the ordered list of which source carried the story and how many minutes
+apart. The dashboard renders it **by outlet**, marks which entry was first and which was the
+international wire, and shows the original headline in its own script (Arabic renders
+`dir="rtl"`, or the headline is mangled — a rendering fact, not a claim).
 
-The headline number — "seen in German 23h before the English wires" — is **derived from that
+The headline number — "seen 23h before the international wires" — is **derived from that
 trail** by `wire_lag_hours()`, never stored beside it, so the claim and the timeline it rests
-on cannot drift apart. It returns `None` when the English wires actually led, which is the
+on cannot drift apart.
+
+> **Naming note.** The data keys still say `language_trail` / `english_wire` because that is
+> factually what they mark — the benchmark really is the English-language wires. The UI never
+> uses those words. If you touch either side, keep them in step: the code may name the
+> mechanism, the screen may not. It returns `None` when the English wires actually led, which is the
 case for the Suez knock-on: no lead is claimed where none exists. **A claimed lead that is not
 real is the one thing this demo cannot afford** — it would turn the honest differentiator into
 the invented metric the whole project refuses to produce.
@@ -296,7 +402,7 @@ the invented metric the whole project refuses to produce.
 Each scenario deliberately leads in a different language, so the edge reads as general rather
 than as one rehearsed German trick:
 
-| Scenario | Trail | Lead over the English wires |
+| Scenario | Trail | Lead over the international wires |
 |---|---|---|
 | `hamburg` | DE\* → DE → NL → EN | 23h |
 | `redsea` | AR\* → AR → EN → FR | 11h |
@@ -305,7 +411,11 @@ than as one rehearsed German trick:
 | `france` | FR\* → FR → ES → EN | 18h |
 
 Live events carry the same two fields with a single-entry trail, so live and scripted events
-stay the same shape. **Schema parity between live and injected events has broken three times**
+stay the same shape.
+
+The dashboard's source line — "N of 20 sources read" — **excludes the scripted scenario**,
+which reports itself as a source so the CLI can show where each event came from. Counting it
+would inflate both halves of the exact number an audience uses to check the live-news claim. **Schema parity between live and injected events has broken three times**
 — each time by adding a field to injected events only. Add it to both.
 
 ### Surviving a live audience
@@ -488,7 +598,10 @@ Scope creep is the failure mode here. None of these are in this build:
 - **No real route optimisation.** Routes are pre-authored candidates; the agent *chooses among them
   and justifies the choice*. It does not compute routes.
 - **No sending of anything.** Emails are drafted and displayed only.
-- **No real shipment/TMS integration.** Shipments are synthetic.
+- **No real shipment/TMS integration.** Shipments are synthetic. The TMS Link is a *demo
+  connector*: it models the field mapping and describes the write-back a decision implies,
+  and contacts nothing. Wiring a real TMS is on the far side of the integration/trust wall,
+  not in this build.
 - **No scheduler / always-on.** Button-triggered.
 - **No database.** In-memory + JSON files.
 - **No paid data.** Free sources only.

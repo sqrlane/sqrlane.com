@@ -25,7 +25,7 @@ import sys
 import time
 from datetime import datetime, timezone
 
-from src import comms_agent, config, llm, risk_monitor, roster, route_advisor
+from src import comms_agent, config, llm, risk_monitor, roster, route_advisor, tms
 
 # What the dashboard colours a card by.
 STATE_FOR_DECISION = {"reroute": "rerouted", "hold": "hold", "no-action": "green"}
@@ -123,28 +123,41 @@ def run_cycle(*, live=True, inject=True, use_llm=True, verbose=False,
                             scenario=scenario)
     read = [s for s in risk["sources"] if s["status"] == "ok"]
     live_events = [e for e in risk["events"] if e.get("origin") == "live"]
-    languages = sorted({e.get("source_language", "?") for e in risk["events"]})
-    # How many events a non-English source carried first. This is the whole
-    # earliness claim, counted from the run rather than asserted in the script.
-    led_by_non_english = 0
+    # How many events a regional source carried before the international wires.
+    # That lead is the earliness claim, and it is counted from the run rather
+    # than asserted in the script. It is reported as source proximity, never as
+    # a language: the edge is reading close to the event, and that holds
+    # wherever in the world the event happens.
+    led_by_regional = 0
     for event in risk["events"]:
         first = next((t for t in event.get("language_trail", []) if t.get("first")), None)
         if first and first["language"] != "en":
-            led_by_non_english += 1
+            led_by_regional += 1
 
     total_events = len(risk["events"])
     workers["risk"].update(
         status="done", seconds=round(time.monotonic() - stage_started, 1),
-        summary=(f"{len(read)} of {len(risk['sources'])} sources read · "
+        summary=(f"{risk['live_sources_read']} of {risk['live_sources_total']} "
+                 f"sources read · "
                  f"{total_events} event{'' if total_events == 1 else 's'}"),
-        detail=[f"{len(live_events)} from live sources, "
-                f"{total_events - len(live_events)} scripted",
-                f"{len(languages)} language{'' if len(languages) == 1 else 's'} in the events: "
-                + (", ".join(languages) if languages else "none"),
-                f"non-English first on {led_by_non_english} of {total_events} events"])
+        detail=[d for d in [
+            f"{len(live_events)} from live sources, "
+            f"{total_events - len(live_events)} scripted",
+            # Only worth saying when a live pull actually happened: offline runs
+            # report a single placeholder source, and "drawn from 1 source
+            # worldwide" would read as a claim rather than a debug mode.
+            (f"drawn from {risk['live_sources_total']} sources worldwide"
+             if risk["live_sources_total"] > 1 else None),
+            f"a regional source was first on {led_by_regional} of "
+            f"{total_events} event{'' if total_events == 1 else 's'}",
+        ] if d])
 
-    failed = [s for s in risk["sources"] if s["status"] == "failed"]
-    attempted = [s for s in risk["sources"] if s["status"] != "skipped"]
+    # Live sources only, for the same reason the counts above exclude the
+    # scripted scenario: it always succeeds, so counting it here would make
+    # "N of M were unreachable" disagree with the number on the board.
+    live_entries = [s for s in risk["sources"] if not s["name"].startswith("scenario:")]
+    failed = [s for s in live_entries if s["status"] == "failed"]
+    attempted = [s for s in live_entries if s["status"] != "skipped"]
     if failed and len(failed) == len(attempted) and attempted:
         notes.append(f"All {len(failed)} live sources were unreachable - "
                      "running on the injected scenario only.")
@@ -239,6 +252,9 @@ def run_cycle(*, live=True, inject=True, use_llm=True, verbose=False,
         },
         "risk": risk,
         "shipments": cards,
+        # The demo TMS connection, board-wide: what synced, and the booking
+        # changes each decision implies. Every one stays queued - see tms.py.
+        "tms": tms.connection(cards),
         "summary": dict(tally, drafts=len(drafts)),
         "notes": notes,
     }

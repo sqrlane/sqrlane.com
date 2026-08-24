@@ -400,7 +400,7 @@ def _rhine_event(gauge, level_cm, timestamp):
         "languages": ["de"],
         "language_trail": [{"language": "de", "source": f"PEGELONLINE {gauge['name']} gauge",
                             "offset_minutes": 0, "first": True, "english_wire": False}],
-        "detected_first_from": f"PEGELONLINE {gauge['name']} gauge (de)",
+        "detected_first_from": f"PEGELONLINE {gauge['name']} gauge (regional)",
         "english_wire_lag_hours": None,
         "confidence": 0.9,
         "reasoning": (f"Water level {level_cm:.0f} cm is at or below the "
@@ -630,7 +630,11 @@ def _event_from_verdict(item, verdict) -> dict:
         "language_trail": [{"language": item["language"], "source": item["source"],
                             "offset_minutes": 0, "first": True,
                             "english_wire": item["language"] == "en"}],
-        "detected_first_from": f"{item['source']} ({item['language']})",
+        # Where the source sits, not what language it publishes in. The edge is
+        # proximity to the event; the language it happens to be in is incidental
+        # and naming it makes the claim look narrower than it is.
+        "detected_first_from": (f"{item['source']} "
+                                f"({'international' if item['language'] == 'en' else 'regional'})"),
         # We cannot measure wire lag on a live pull, so we say so rather than guess.
         "english_wire_lag_hours": None,
         "confidence": verdict.get("confidence", 0.5),
@@ -715,9 +719,16 @@ def run(*, live=True, inject=False, use_llm=True, verbose=True, scenario=None) -
     languages_read = sorted({s["name"].split("[")[-1].rstrip("]")
                              for s in report.entries
                              if s["status"] == "ok" and "[" in s["name"]})
+    # The scripted scenario reports itself as a source so the CLI can show where
+    # each event came from. It is not a live source, and "N of M sources read" is
+    # the claim an audience uses to check that the news pull is real - so the
+    # count is taken here, once, rather than filtered differently on each screen.
+    live_sources = [e for e in report.entries if not e["name"].startswith("scenario:")]
     state = {
         "generated_at": _now_iso(),
         "languages_read": languages_read,
+        "live_sources_total": len(live_sources),
+        "live_sources_read": sum(1 for e in live_sources if e["status"] == "ok"),
         "provider": llm.describe() if stats["llm_used"] else "none (no LLM call made)",
         "sources": report.entries,
         "stats": stats,

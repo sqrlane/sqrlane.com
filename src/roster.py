@@ -17,7 +17,7 @@ that tag from this data rather than hard-coding it.
 
 from datetime import date, timedelta
 
-from src import route_advisor
+from src import route_advisor, tms
 
 ROSTER = [
     {"id": "rate", "name": "Rate Worker", "mode": "scripted",
@@ -26,6 +26,12 @@ ROSTER = [
      "role": "Milestones and position for a booking"},
     {"id": "docs", "name": "Docs Worker", "mode": "scripted",
      "role": "Field extraction from bills of lading and invoices"},
+    {"id": "inbox", "name": "Inbox Worker", "mode": "scripted",
+     "role": "Triages inbound carrier and customer mail, and drafts the reply"},
+    {"id": "rfq", "name": "RFQ Worker", "mode": "scripted",
+     "role": "Reads an inbound rate request and drafts the quote back"},
+    {"id": "tms", "name": "TMS Link", "mode": "scripted",
+     "role": "Booking sync, and the write-back a decision implies"},
     {"id": "assistant", "name": "Assistant", "mode": "scripted",
      "role": "Answers questions about what is on the board"},
 ]
@@ -212,7 +218,188 @@ def assistant_panel(shipment, decision, scenario_id, board, scenario):
     return {"headline": (scenario or {}).get("name", "No scenario active"), "qa": qa}
 
 
-PANELS = {"rate": rate_panel, "milestones": milestones_panel, "docs": docs_panel}
+# --- Inbox: taking over inbound comms --------------------------------------
+#
+# A forwarder's day is mail. A disruption multiplies it: the carrier sends a
+# notice, the customer asks where their box is, the terminal issues an advisory.
+# The workflow being modelled is triage - read it, work out what it is about,
+# link it to the booking, and put a reply in front of a person.
+#
+# The messages are authored, but which ones appear is derived from the decision
+# the Route Advisor actually made, so this reacts to the run. Every reply is a
+# draft and stays one; nothing here can send.
+
+
+def _inbound_for(shipment, decision, scenario_id):
+    """The mail one decision would generate, as (from, role, subject, intent, body)."""
+    action = (decision or {}).get("decision")
+    port = (decision or {}).get("recommended_discharge_port") or "the discharge port"
+    cargo = shipment["cargo"].lower()
+
+    if action == "reroute":
+        return [
+            ("Carrier operations", "carrier",
+             f"Booking {shipment['id']} - vessel to omit original discharge port",
+             "booking change",
+             "Advising that the nominated vessel will omit the original discharge port on "
+             "this rotation. Please confirm whether the box is to be discharged at the "
+             "alternate port or held on board."),
+            (shipment.get("customer", "Customer"), "customer",
+             f"Any update on our {cargo}?",
+             "status request",
+             "We were expecting this in a few days and have seen the port news. Do we still "
+             "have a date we can plan the line around?"),
+        ]
+    if action == "hold":
+        return [
+            ("Carrier operations", "carrier",
+             f"Booking {shipment['id']} - berth window options",
+             "berth options",
+             "Terminal is releasing revised berth windows as the backlog clears. Confirm "
+             "whether you want the current booking held for the next available window."),
+            (shipment.get("customer", "Customer"), "customer",
+             f"Is our {cargo} still on schedule?",
+             "status request",
+             "Checking whether we need to warn our own downstream on this one, and whether "
+             "the cargo condition is affected while it waits."),
+        ]
+    return [
+        ("Terminal operations", "terminal",
+         f"Booking {shipment['id']} - gate-in confirmed",
+         "milestone",
+         "Routine milestone notice. No exception recorded against this booking."),
+    ]
+
+
+def inbox_panel(shipment, decision, scenario_id):
+    action = (decision or {}).get("decision")
+    revised = (decision or {}).get("revised_eta")
+    port = (decision or {}).get("recommended_discharge_port")
+    items = []
+    for i, (sender, role, subject, intent, body) in enumerate(
+            _inbound_for(shipment, decision, scenario_id)):
+        # A reply is only drafted where one is actually owed. A routine milestone
+        # gets read, linked and closed - answering it would be noise, and a demo
+        # that replies to everything is showing volume rather than judgement.
+        needs_reply = intent != "milestone"
+        if intent == "booking change":
+            reply = (f"Confirming discharge at {port} for {shipment['id']}. "
+                     f"Please re-nominate the booking to the alternate routing and confirm "
+                     f"the revised ETA of {revised}.")
+        elif intent == "berth options":
+            reply = (f"Please hold {shipment['id']} for the next available window. "
+                     f"We are planning against a revised ETA of {revised} and will not "
+                     f"re-nominate the discharge port.")
+        elif intent == "status request":
+            reply = (f"Yes - we have re-planned this one. Revised ETA is {revised}. "
+                     f"The reasoning behind the change is on the booking, and we will flag "
+                     f"any further movement before it affects your line.")
+        else:
+            reply = None
+        items.append({
+            "from": sender, "role": role, "subject": subject,
+            "received": f"{(i + 1) * 17}m ago",
+            "intent": intent,
+            "linked_booking": shipment["id"],
+            "body": body,
+            "suggested_reply": reply,
+            "status": "DRAFT - not sent" if needs_reply else "No reply needed",
+            "approval_status": "awaiting_approval" if needs_reply else "closed",
+        })
+    awaiting = sum(1 for i in items if i["approval_status"] == "awaiting_approval")
+    return {
+        "headline": (f"{len(items)} inbound on {shipment['id']} · "
+                     f"{awaiting} repl{'y' if awaiting == 1 else 'ies'} drafted"),
+        "note": ("Triaged and linked automatically. Replies are drafted and held - "
+                 "this app has no way to send one."),
+        "items": items,
+    }
+
+
+# --- RFQ: taking over the quote round --------------------------------------
+#
+# The other half of a forwarder's inbound. A rate request arrives as prose, has
+# to be read into structured fields, priced against the lane, and answered. The
+# disruption matters here too: a quote written during a closure that ignores the
+# surcharge is a quote the forwarder loses money on.
+
+
+def rfq_panel(shipment, decision, scenario_id):
+    routes = route_advisor.load_routes()
+    label, pct, why = _SURCHARGE.get(scenario_id, (None, 0, ""))
+    considered = [shipment["primary_route"]] + list(shipment.get("alternates", []))
+
+    options = []
+    for route_id in considered:
+        route = routes.get(route_id)
+        if not route:
+            continue
+        carrier, base = _CARRIERS.get(route_id, [("Market rate", route["cost_index"])])[0]
+        exposed = bool(decision) and route_id == shipment["primary_route"] and pct
+        options.append({
+            "carrier": carrier, "route_id": route_id,
+            "discharge_port": route["discharge_port"],
+            "transit_days": route["transit_days"],
+            "cost_index": base + (pct if exposed else 0),
+            "surcharge": label if exposed else None,
+        })
+    options.sort(key=lambda o: o["cost_index"])
+    best = options[0] if options else None
+
+    request = {
+        "from": shipment.get("customer", "Customer"),
+        "received": "24m ago",
+        "raw": (f"Need pricing {shipment['origin']} to {shipment['final_destination']}, "
+                f"2 x 40ft, similar spec to our {shipment['cargo'].lower()} moves, "
+                f"ready in about three weeks. What can you do?"),
+        "parsed": {
+            "lane": f"{shipment['origin']} → {shipment['final_destination']}",
+            "equipment": "2 x 40ft" + (" reefer" if shipment.get("cold_chain") else ""),
+            "commodity": shipment["cargo"],
+            "ready": "≈ 3 weeks",
+            "incoterm": "FCA origin (assumed - not stated in the request)",
+        },
+    }
+    draft = None
+    if best:
+        surcharge_line = (f" A {label.lower()} of {pct} index points currently applies on the "
+                          f"direct routing, {why}; the quote above reflects it."
+                          if label and decision else "")
+        draft = (f"Thanks for the enquiry. On {request['parsed']['lane']} we would route via "
+                 f"{best['discharge_port']} with {best['carrier']}, around "
+                 f"{best['transit_days']} days port to port.{surcharge_line} "
+                 f"Happy to firm this up against your ready date.")
+    return {
+        "headline": f"1 rate request on {shipment['origin']} → {shipment['final_destination']}",
+        "note": ("Read into fields, priced against the lane, answer drafted. "
+                 "Nothing is quoted to anyone until a person approves it."),
+        "request": request,
+        "options": options,
+        "recommended": best,
+        "draft_reply": draft,
+        "status": "DRAFT - not sent",
+        "approval_status": "awaiting_approval",
+    }
+
+
+# --- TMS link ---------------------------------------------------------------
+
+
+def tms_panel(shipment, decision, scenario_id):
+    """One booking's view of the connection. The board-wide view lives in tms.py."""
+    writeback = tms._writeback_for({"id": shipment["id"], "decision": decision})
+    return {
+        "headline": f"Booking {shipment['id']} synced from {tms.CONNECTOR_NAME}",
+        "connector": tms.CONNECTOR_NAME,
+        "status": "connected (demo)",
+        "field_map": tms.FIELD_MAP,
+        "writeback": writeback,
+        "note": (tms.connection([])["honesty"]),
+    }
+
+
+PANELS = {"rate": rate_panel, "milestones": milestones_panel, "docs": docs_panel,
+          "inbox": inbox_panel, "rfq": rfq_panel, "tms": tms_panel}
 
 
 def build(shipment, decision, scenario_id, board, scenario) -> dict:
