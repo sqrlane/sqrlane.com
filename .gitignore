@@ -19,3 +19,7 @@ data/cache/
 .DS_Store
 .idea/
 .vscode/
+
+# Natural Earth source data for tools/build_rhine_map.py - fetched on demand,
+# never committed (5.5 MB, and the map it produces is already inlined).
+tools/.ne-cache/
