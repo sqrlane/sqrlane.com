@@ -198,6 +198,13 @@ DISRUPTION_KEYWORDS = [
 EVENT_TYPES = ["strike", "weather", "congestion", "geopolitical", "customs", "other"]
 SEVERITIES = ["low", "medium", "high"]
 
+# Reasoning models (gpt-oss, the r1 family) emit analysis tokens before the
+# answer, and those count against the completion budget. The customer email is
+# the longest single output this project asks for, so a tight cap truncates it
+# mid-JSON and the draft silently falls back to a template.
+DRAFT_MAX_TOKENS = _env_int("DRAFT_MAX_TOKENS", 2500)
+DECISION_MAX_TOKENS = _env_int("DECISION_MAX_TOKENS", 2000)
+
 CLASSIFY_BATCH_SIZE = 8      # items per LLM call - keeps free-tier usage sane
 MAX_ITEMS_TO_CLASSIFY = _env_int("MAX_ITEMS_TO_CLASSIFY", 16 if SERVERLESS else 40)
 

@@ -336,11 +336,13 @@ def draft_one(audience: str, decision: dict, shipment: dict, routes: dict,
     """One email. Never sent - returned as text for a human to read."""
     build_prompt = _carrier_prompt if audience == "carrier" else _customer_prompt
     system = CARRIER_SYSTEM if audience == "carrier" else CUSTOMER_SYSTEM
+    fallback_reason = ""
 
     if use_llm and llm.is_configured():
         try:
             result = llm.complete_json(build_prompt(decision, shipment, routes),
-                                       system=system, max_tokens=900)
+                                       system=system,
+                                       max_tokens=config.DRAFT_MAX_TOKENS)
             if isinstance(result, list) and result:
                 result = result[0]
             subject = (result.get("subject") or "").strip()
@@ -352,10 +354,12 @@ def draft_one(audience: str, decision: dict, shipment: dict, routes: dict,
             result = _template_draft(audience, decision, shipment, routes)
             subject, body = result["subject"], result["body"]
             drafted_by = f"template (LLM unavailable: {exc})"
+            fallback_reason = str(exc)[:160]
     else:
         result = _template_draft(audience, decision, shipment, routes)
         subject, body = result["subject"], result["body"]
         drafted_by = "template (--no-llm)" if use_llm is False else "template (no provider)"
+        fallback_reason = "no AI provider configured" if use_llm else "requested without the model"
 
     return {
         "shipment_id": shipment["id"],
@@ -369,6 +373,9 @@ def draft_one(audience: str, decision: dict, shipment: dict, routes: dict,
         # True when the model was meant to write this and could not, so the
         # dashboard can say so rather than passing a template off as authored.
         "fallback": drafted_by.startswith("template"),
+        # Why the model did not write this one. Without it, a fallback is a
+        # dead end on screen instead of something you can act on.
+        "fallback_reason": fallback_reason,
         "drafted_by": drafted_by,
         "drafted_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
     }

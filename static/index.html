@@ -335,7 +335,9 @@ function bodyHTML(s, d){
         <div class="mail">
           <div class="mail-h">
             <div class="to">To the ${esc(m.audience)}: ${esc(m.to)}${
-              m.fallback ? `<span class="fb" title="The AI provider did not write this one - it came from the deterministic template">template</span>` : ""}</div>
+              m.fallback ? `<span class="fb" title="${esc(m.fallback_reason || "the model did not write this one")}">template</span>` : ""}</div>
+            ${m.fallback && m.fallback_reason
+              ? `<div class="subj" style="color:var(--amber)">model unavailable: ${esc(m.fallback_reason)}</div>` : ""}
             <div class="subj">${esc(m.subject)}</div>
           </div>
           <div class="mail-b">${esc(m.body)}</div>
