@@ -211,6 +211,26 @@ business is the integration, trust and liability wall, which is real work for la
 
 ---
 
+## Tests
+
+```bash
+python -m unittest discover -s tests
+```
+
+Standard library — nothing to install. One file,
+`tests/test_comms_agent_sends_nothing.py`, holds up the claim the demo makes out loud:
+**the Comms Agent drafts emails and never sends them.**
+
+It parses every file in `src/` and fails, naming the file and line, if a transport
+library is ever imported — including through `__import__` or `importlib`. Then it runs a
+full offline cycle and checks that every draft it produced carries `DRAFT - not sent` and
+starts behind the approval gate.
+
+It is deliberately *not* a "no networking" rule. The app makes real HTTP calls on purpose
+— GDELT, PEGELONLINE, six RSS feeds and the LLM provider — and the live news pull is the
+credibility anchor. What must not exist is a way to send a *message*. So `requests` is
+fine and `smtplib` is not.
+
 ## Where things are
 
 ```
@@ -218,6 +238,7 @@ data/     the screenplay - chokepoints, routes, 5 shipments, the injected strike
 src/      the four components + llm.py (the only door to the AI provider) + config.py
 static/   landing.html - the front page  ·  index.html - the dashboard
           fonts/ - Geist Sans + Mono, self-hosted (no CDN, ever)
+tests/    the guard on the claim that nothing is ever sent
 *.md      the planning docs; CLAUDE.md is the working summary
 ```
 

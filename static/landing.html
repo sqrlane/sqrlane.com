@@ -940,9 +940,10 @@ firm revised ETA as soon as terminals restart.</p>
       <div>
         <p class="h16">Human-in-the-loop is the design, not a missing feature.</p>
         <p class="copy14" style="margin-top:5px">There is no SMTP, no email library and no
-          transport of any kind imported anywhere in the codebase — nothing in
-          <span class="mono" style="font-size:13px">src/</span> can reach an outbox.
-          Approval flips a state in the browser; there is nothing for it to trigger.</p>
+          transport of any kind imported anywhere in the codebase, and a test parses
+          every file in <span class="mono" style="font-size:13px">src/</span> on each run
+          to keep it that way. Approval flips a state in the browser; there is nothing for
+          it to trigger.</p>
       </div>
     </div>
   </div>
@@ -1021,7 +1022,7 @@ firm revised ETA as soon as terminals restart.</p>
           <path d="M5.6 5.6l12.8 12.8"/></svg>
         <div><p class="k">No sending</p>
           <p class="v">Emails are drafted and displayed. No transport of any kind is
-            imported anywhere in the codebase.</p></div>
+            imported anywhere in the codebase, and a test enforces it.</p></div>
       </div>
       <div class="not">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
