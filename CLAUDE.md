@@ -211,8 +211,8 @@ Full copy-paste prompts live in `BUILD-GUIDE.md`.
 | **1** | `data/` JSON + `llm.py`, `config.py`, `risk_monitor.py` | Run the Risk Monitor alone from the terminal; see real current news classified; confirm ≥1 non-English source is actually read; injected event loadable | ✅ (live pull unverified — see below) |
 | **2** | `route_advisor.py` | Run against the 5 shipments with the strike active; the three expected outcomes appear with reasoning that reads *well* | ✅ (LLM wording unverified — see below) |
 | **3** | `comms_agent.py` | Drafts for SHP-001 (reroute) and SHP-002 (hold) read like something a person would actually send | ✅ (LLM wording unverified — see below) |
-| **4** | `orchestrator.py`, `app.py`, `static/index.html` | Open the URL, click the button, the whole narrative plays on screen. **This is the demo.** | ⬜ **next** |
-| **5** | Polish: AI-Worker framing · graceful degradation if a source is down · live-vs-synthetic legend · README | Runs cold, survives flaky wifi, the honest framing is visible | ⬜ |
+| **4** | `orchestrator.py`, `app.py`, `static/index.html` | Open the URL, click the button, the whole narrative plays on screen. **This is the demo.** | ✅ (driven in a real browser) |
+| **5** | Polish: AI-Worker framing · graceful degradation if a source is down · live-vs-synthetic legend · README | Runs cold, survives flaky wifi, the honest framing is visible | ⬜ **next** (degradation + honest line already in) |
 
 **No scheduler, nothing always-running.** For a demo, a button beats a background job — the magic
 has to happen on screen, on command.
@@ -235,6 +235,25 @@ two claims are **written and tested but not yet witnessed against the real thing
    `python -m src.comms_agent --inject` with a key, read SHP-002's reasoning and its
    two drafts aloud. If they don't sound like a person, tune `ADVISOR_SYSTEM` in
    `route_advisor.py` and `CARRIER_SYSTEM` / `CUSTOMER_SYSTEM` in `comms_agent.py`.
+
+### Running the demo
+
+```bash
+uvicorn src.app:app --reload      # then open http://127.0.0.1:8000
+```
+
+`GET /api/initial` renders the calm five-green-cards board instantly; `POST /run` is
+the button. The page is a single self-contained file — no CDN, no external font, no
+network call beyond its own API — so flaky wifi cannot blank it.
+
+Each component still runs alone, which is how you debug one without the others:
+
+```bash
+python -m src.risk_monitor --inject
+python -m src.route_advisor --inject --shipment SHP-002
+python -m src.comms_agent  --inject
+python -m src.orchestrator --no-live      # the whole loop, no network
+```
 
 ### How the decision layer splits the work
 
