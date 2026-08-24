@@ -16,7 +16,7 @@ every message held for human approval.
 | **Routing Worker** | Weighs schedule slack against added transit and expected delay, then decides | `LIVE` |
 | **Comms Worker** | Drafts the carrier and customer emails. Sends nothing | `LIVE` |
 | **Rate Worker** | Quote and rate lookups across the carriers on a lane | `SCRIPTED` |
-| **Track & Trace** | Milestones and position for a booking | `SCRIPTED` |
+| **Milestones Worker** | Milestones and position for a booking | `SCRIPTED` |
 | **Docs Worker** | Field extraction from bills of lading | `SCRIPTED` |
 | **Assistant** | Answers questions about what is on the board | `SCRIPTED` |
 

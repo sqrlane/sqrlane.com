@@ -253,6 +253,18 @@ table.q tr.pick td{background:var(--surface)}
 .tag.high{background:var(--red-bg);color:var(--red)}
 .tag.lang{background:var(--blue-bg);color:var(--blue)}
 .ev-title{font-size:13.5px;font-weight:500;line-height:1.45}
+.ltrail{margin-top:9px;border-top:1px solid var(--border);padding-top:9px}
+.ltrail-h{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);
+          margin-bottom:6px}
+.lt{display:flex;align-items:center;gap:8px;padding:2.5px 0;font-size:11.5px;color:var(--muted)}
+.lt .lg{font-size:9.5px;font-weight:700;letter-spacing:.04em;padding:1.5px 5px;border-radius:3px;
+        background:var(--surface);color:var(--muted);min-width:26px;text-align:center}
+.lt.first .lg{background:var(--blue-bg);color:var(--blue)}
+.lt.wire .lg{background:var(--surface-2);color:var(--faint)}
+.lt .off{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--faint);font-size:11px}
+.lt .src{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lead{margin-top:7px;font-size:11.5px;color:var(--blue);font-weight:500}
+.orig[dir="rtl"]{direction:rtl;text-align:right}
 .orig{margin-top:6px;padding:7px 9px;background:var(--surface);border-radius:4px;
       font-size:12.5px;color:var(--muted);font-style:italic}
 .ev-src{margin-top:7px;font-size:11.5px;color:var(--faint)}
@@ -540,7 +552,7 @@ function scriptedPanelBody(w, ship){
           <td>${esc(q.cost_index)}${q.cheapest?`<span class="qtag cheap">cheapest</span>`:""}${
             q.chosen?`<span class="qtag">booked</span>`:""}</td></tr>`).join("")}
       </tbody></table>`;
-  if (w.id === "track")
+  if (w.id === "milestones")
     return `<p class="sec-t">${esc(p.headline)}</p><ul class="ms">${p.milestones.map(m=>
       `<li class="${m.done?"done":""} ${m.disruption?"dis":""}">${esc(m.label)}
         <span class="at">${esc(m.at)}</span></li>`).join("")}</ul>`;
@@ -579,15 +591,52 @@ function riskCard(compact){
         <span class="tag lang">${esc((e.source_language||"").toUpperCase())}</span>
       </div>
       <div class="ev-title">${esc(e.title)}</div>
-      ${e.title_original?`<div class="orig">${esc(e.title_original)}</div>`:""}
-      <div class="ev-src">${esc(e.detected_first_from||e.source)}${
-        e.english_wire_lag_hours?` · English wires ~${e.english_wire_lag_hours}h later`:""}</div>
+      ${e.title_original?`<div class="orig" dir="${RTL.has(e.source_language)?"rtl":"ltr"}"
+        lang="${esc(e.source_language)}">${esc(e.title_original)}</div>`:""}
+      <div class="ev-src">${esc(e.detected_first_from||e.source)}</div>
       ${!compact && e.reasoning?`<div class="ev-why">${esc(e.reasoning)}</div>`:""}
+      ${languageTrail(e, compact)}
     </div>`).join("") : `<div class="empty">No active events.<br>Press <b>Inject Hamburg strike</b> to start.</div>`}
     ${srcs.length?`<div class="srcline">
       <div class="r">✓ ${ok} of ${srcs.length} sources read</div>
       ${bad.length?`<div class="r">! unavailable: ${esc(bad.slice(0,4).map(s=>s.name.replace(/^(RSS|GDELT|PEGELONLINE): /,"")).join(", "))}${bad.length>4?` +${bad.length-4} more`:""}</div>`:""}
     </div>`:""}</div>`;
+}
+
+const RTL = new Set(["ar","he","fa","ur"]);
+const LANGNAME = {de:"German", ar:"Arabic", fr:"French", nl:"Dutch", es:"Spanish", en:"English"};
+
+function offsetLabel(mins){
+  if (!mins) return "first";
+  if (mins < 90) return `+${mins}m`;
+  const h = Math.round(mins/60);
+  return h < 48 ? `+${h}h` : `+${Math.round(h/24)}d`;
+}
+
+/* The earliness claim, shown rather than asserted: which languages carried the
+   story, in what order, and how far behind the English wires were. */
+function languageTrail(e, compact){
+  const trail = e.language_trail || [];
+  if (trail.length < 2) return "";
+  const first = trail.find(t=>t.first) || trail[0];
+  const wire  = trail.find(t=>t.english_wire);
+  const lead  = wire && !wire.first
+    ? `Seen in ${LANGNAME[first.language]||first.language} ${offsetLabel(wire.offset_minutes).replace("+","")} before the English wires`
+    : null;
+  if (compact) {
+    return `<div class="ltrail"><div class="ltrail-h">Carried in ${
+      (e.languages||[]).length} languages</div>
+      <div class="lt first"><span class="lg">${esc(first.language.toUpperCase())}</span>
+        <span class="src">${esc(first.source)}</span><span class="off">first</span></div>
+      ${lead?`<div class="lead">${esc(lead)}</div>`:""}</div>`;
+  }
+  return `<div class="ltrail"><div class="ltrail-h">Detection trail — ${
+    (e.languages||[]).length} languages</div>
+    ${trail.map(t=>`<div class="lt ${t.first?"first":""} ${t.english_wire&&!t.first?"wire":""}">
+      <span class="lg">${esc(t.language.toUpperCase())}</span>
+      <span class="src">${esc(t.source)}</span>
+      <span class="off">${esc(offsetLabel(t.offset_minutes))}</span></div>`).join("")}
+    ${lead?`<div class="lead">${esc(lead)}</div>`:""}</div>`;
 }
 
 function legendCard(){

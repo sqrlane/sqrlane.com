@@ -124,13 +124,24 @@ def run_cycle(*, live=True, inject=True, use_llm=True, verbose=False,
     read = [s for s in risk["sources"] if s["status"] == "ok"]
     live_events = [e for e in risk["events"] if e.get("origin") == "live"]
     languages = sorted({e.get("source_language", "?") for e in risk["events"]})
+    # How many events a non-English source carried first. This is the whole
+    # earliness claim, counted from the run rather than asserted in the script.
+    led_by_non_english = 0
+    for event in risk["events"]:
+        first = next((t for t in event.get("language_trail", []) if t.get("first")), None)
+        if first and first["language"] != "en":
+            led_by_non_english += 1
+
+    total_events = len(risk["events"])
     workers["risk"].update(
         status="done", seconds=round(time.monotonic() - stage_started, 1),
         summary=(f"{len(read)} of {len(risk['sources'])} sources read · "
-                 f"{len(risk['events'])} event{'' if len(risk['events']) == 1 else 's'}"),
+                 f"{total_events} event{'' if total_events == 1 else 's'}"),
         detail=[f"{len(live_events)} from live sources, "
-                f"{len(risk['events']) - len(live_events)} scripted",
-                "languages: " + (", ".join(languages) if languages else "none")])
+                f"{total_events - len(live_events)} scripted",
+                f"{len(languages)} language{'' if len(languages) == 1 else 's'} in the events: "
+                + (", ".join(languages) if languages else "none"),
+                f"non-English first on {led_by_non_english} of {total_events} events"])
 
     failed = [s for s in risk["sources"] if s["status"] == "failed"]
     attempted = [s for s in risk["sources"] if s["status"] != "skipped"]
