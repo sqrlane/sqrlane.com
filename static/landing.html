@@ -338,10 +338,24 @@ h1,h2,h3,h4,p{margin:0}
 .feature{display:grid; grid-template-columns:1fr 1fr; gap:56px; align-items:center}
 .feature.flip .fig{order:-1}
 .feature .txt p{margin-top:16px}
-.feature .bullets{margin:22px 0 0; padding:0; list-style:none; display:flex;
-                  flex-direction:column; gap:12px}
-.feature .bullets li{display:flex; gap:11px; font-size:15px; line-height:22px; color:var(--muted)}
-.feature .bullets svg{flex:none; margin-top:4px; color:var(--fg)}
+/* Claim rows. These replaced a tick-mark bullet list, which was the one
+   piece of pure decoration on the page: a tick asserts "true" and carries
+   nothing else, and colour here is meant to be spent on state. The row
+   leads with a key naming what the claim is about instead - the same
+   key-then-sentence anatomy the page already uses for the non-goals
+   (.not) and the mail header fields (.mail .f), and the same hairline
+   rules the dashboard's own lists use. It reads as a spec sheet rather
+   than a marketing checklist, and the key is scannable in a way a tick
+   never is. */
+.feature .claims{margin:24px 0 0; padding:0; list-style:none;
+                 border-top:1px solid var(--border)}
+.feature .claims li{display:grid; grid-template-columns:104px 1fr; gap:16px;
+                    padding:13px 0; border-bottom:1px solid var(--border)}
+.feature .claims .k{font-family:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+                    font-size:11px; line-height:22px; letter-spacing:.06em;
+                    text-transform:uppercase; color:var(--faint); white-space:nowrap}
+.feature .claims .v{font-size:15px; line-height:22px; color:var(--muted)}
+.feature .claims .v b{color:var(--fg); font-weight:500}
 
 /* ---------- artifacts inside features ---------- */
 .art{background:var(--card); border:1px solid var(--border); border-radius:var(--r-md);
@@ -618,6 +632,8 @@ h1,h2,h3,h4,p{margin:0}
   .copy18{font-size:16px; line-height:25px}
   .g2,.g3,.g4{grid-template-columns:1fr}
   .step{grid-template-columns:1fr; gap:10px}
+  .feature .claims li{grid-template-columns:1fr; gap:3px}
+  .feature .claims .k{line-height:18px}
   .tbl .tr{grid-template-columns:1fr; gap:6px}
   .tbl .th{display:none}
   .honest .panel{padding:26px}
@@ -995,21 +1011,16 @@ h1,h2,h3,h4,p{margin:0}
           themselves — local outlets, regional broadcasters, trade press, government
           gauges — across every region its lanes pass through. Somewhere in the world one
           of them is publishing right now, whatever the hour here.</p>
-        <ul class="bullets">
-          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 12.5l5 5L20 6.5"/></svg>
-            <span>Local sources are read <b style="color:var(--fg);font-weight:500">directly</b>, not picked up second-hand from a wire</span></li>
-          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 12.5l5 5L20 6.5"/></svg>
-            <span>Sources spanning the North Range, the Low Countries, the Red Sea and Gulf,
-            and the Western Mediterranean — every corridor on the board</span></li>
-          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 12.5l5 5L20 6.5"/></svg>
-            <span>Every event shows the outlets that carried it and how far ahead of the
-            wires they were, so the claim is checkable rather than asserted</span></li>
+        <ul class="claims">
+          <li><span class="k">At source</span>
+            <span class="v">Local sources are read <b>directly</b>, not picked up
+            second-hand from a wire</span></li>
+          <li><span class="k">Coverage</span>
+            <span class="v">Sources spanning the North Range, the Low Countries, the Red Sea
+            and Gulf, and the Western Mediterranean — every corridor on the board</span></li>
+          <li><span class="k">Evidence</span>
+            <span class="v">Every event shows the outlets that carried it and how far ahead
+            of the wires they were, so the claim is checkable rather than asserted</span></li>
         </ul>
       </div>
 
@@ -1251,23 +1262,17 @@ h1,h2,h3,h4,p{margin:0}
           Rerouting via Rotterdam adds road transit and a cold-chain transfer — and every
           transfer is a GDP-compliance event. So the call is to hold, notify, and be
           explicit that the deadline is at risk.</p>
-        <ul class="bullets">
-          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 12.5l5 5L20 6.5"/></svg>
-            <span>Every decision keeps a <b style="color:var(--fg);font-weight:500">reasoning trail</b> —
-            including the guard rails that fired</span></li>
-          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 12.5l5 5L20 6.5"/></svg>
-            <span>If the provider is unreachable, the fallback is transparent rules and the card
-            is badged <span class="mono" style="font-size:13px">rule</span> — never a silent
-            downgrade</span></li>
-          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 12.5l5 5L20 6.5"/></svg>
-            <span>A strip on the board names the model in use and the model-versus-rules split,
-            so the central claim is checkable at a glance</span></li>
+        <ul class="claims">
+          <li><span class="k">Trail</span>
+            <span class="v">Every decision keeps a <b>reasoning trail</b> — including the
+            guard rails that fired</span></li>
+          <li><span class="k">Fallback</span>
+            <span class="v">If the provider is unreachable, the fallback is transparent rules
+            and the card is badged <span class="mono" style="font-size:13px">rule</span>
+            — never a silent downgrade</span></li>
+          <li><span class="k">Model split</span>
+            <span class="v">A strip on the board names the model in use and the
+            model-versus-rules split, so the central claim is checkable at a glance</span></li>
         </ul>
       </div>
 
