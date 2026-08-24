@@ -86,9 +86,17 @@ a:focus-visible{outline:2px solid var(--blue); outline-offset:3px; border-radius
 .nav-links a.on{color:var(--fg); font-weight:500}
 .nav .right{margin-left:auto; display:flex; align-items:center; gap:12px}
 @media(max-width:860px){.nav-links{display:none}}
+/* Below this the two buttons plus the brand no longer fit on one 60px row.
+   "Open the demo" is the one worth keeping; the masthead links back anyway. */
+@media(max-width:560px){.nav .right .btn-secondary{display:none}}
 .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px;
      height:40px; padding:0 16px; border-radius:var(--r-sm); border:1px solid transparent;
      font-size:14px; line-height:20px; font-weight:500; cursor:pointer; text-decoration:none;
+     /* The landing page's .btn has this and this copy of it did not, which is
+        the whole bug: a label free to wrap inside a fixed 40px button in a
+        fixed 60px bar had nowhere to put the second line, so both nav buttons
+        clipped on a phone. */
+     white-space:nowrap;
      transition:background .15s var(--ease), border-color .15s var(--ease), transform .15s var(--ease)}
 .btn-primary{background:var(--fg); color:#fff}
 .btn-primary:hover{background:#383838; transform:translateY(-1px)}
@@ -105,7 +113,13 @@ a:focus-visible{outline:2px solid var(--blue); outline-offset:3px; border-radius
 
 /* ---------- document layout: sticky contents + reading column ---------- */
 .doc{display:grid; grid-template-columns:216px minmax(0,1fr); gap:56px; padding:52px 0 96px}
-@media(max-width:980px){.doc{grid-template-columns:1fr; gap:0}}
+/* minmax(0,...) on the collapsed track too, not just the wide one. A plain 1fr
+   track takes its automatic minimum from its content, and .body's min-content
+   is the 680px min-width table inside .scroller - so on a phone the whole
+   document was 682px wide inside a 390px viewport and the page scrolled
+   sideways. The zero floor lets the track shrink and the table scroll inside
+   its own .scroller, which is what that wrapper is for. */
+@media(max-width:980px){.doc{grid-template-columns:minmax(0,1fr); gap:0}}
 .toc{position:sticky; top:88px; align-self:start; font-size:13.5px}
 @media(max-width:980px){.toc{display:none}}
 .toc .eyebrow{margin-bottom:12px}
@@ -143,8 +157,10 @@ code{font-family:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace; font-
 .stage .d{font-size:13px; line-height:19px; color:var(--faint)}
 .chip{display:inline-block; margin-top:11px; font-size:10.5px; font-weight:600; letter-spacing:.07em;
       text-transform:uppercase; padding:2px 8px; border-radius:999px}
-.chip.live{background:var(--green-100); color:var(--green); border:1px solid var(--green-400)}
-.chip.script{background:var(--amber-100); color:var(--amber); border:1px solid var(--amber-400)}
+/* Tint only, no outline - the landing page's chips are built this way, and a
+   pill that is outlined on one page and not the other reads as two products. */
+.chip.live{background:var(--green-100); color:var(--green)}
+.chip.script{background:var(--amber-100); color:var(--amber)}
 .loopnote{border-top:1px dashed var(--border-strong); padding-top:12px; margin-top:6px;
           font-size:12.5px; color:var(--faint); text-align:center}
 
@@ -165,16 +181,26 @@ td.n{font-family:"Geist Mono",ui-monospace,monospace; font-variant-numeric:tabul
 .sub{display:block; font-size:12.5px; line-height:18px; color:var(--faint); margin-top:3px}
 .tag{display:inline-block; font-size:10.5px; font-weight:600; letter-spacing:.07em;
      text-transform:uppercase; padding:2px 8px; border-radius:999px; white-space:nowrap}
-.tag.ok{background:var(--green-100); color:var(--green); border:1px solid var(--green-400)}
-.tag.warn{background:var(--amber-100); color:var(--amber); border:1px solid var(--amber-400)}
-.tag.bad{background:var(--red-100); color:var(--red); border:1px solid var(--red-400)}
+.tag.ok{background:var(--green-100); color:var(--green)}
+.tag.warn{background:var(--amber-100); color:var(--amber)}
+.tag.bad{background:var(--red-100); color:var(--red)}
 
-/* ---------- callouts ---------- */
-.note{border:1px solid var(--border); border-left:3px solid var(--blue); background:var(--card);
-      border-radius:0 var(--r-md) var(--r-md) 0; padding:16px 20px; margin:24px 0}
-.note.caution{border-left-color:var(--amber)}
-.note.hard{border-left-color:var(--red)}
-.note .lab{margin-bottom:8px}
+/* ---------- callouts ----------
+   The same card rule as the rest of this page and the landing page: hairline
+   border all the way round, the 12px radius, --shadow-card. These used to be a
+   3px coloured rule with the left corners squared off, which made the four
+   quietest, most careful paragraphs in the document the loudest objects on it.
+
+   The three levels are still distinguishable, because the colour moved to the
+   label rather than being dropped: --blue / --amber / --red are the palette's
+   text-contrast steps, so they separate far better at 11px than the 400-steps
+   would as a 1px border. And the label already names the level in words, so
+   colour was never carrying it alone. */
+.note{border:1px solid var(--border); background:var(--card); box-shadow:var(--shadow-card);
+      border-radius:var(--r-md); padding:16px 20px; margin:24px 0}
+.note .lab{margin-bottom:8px; color:var(--blue)}
+.note.caution .lab{color:var(--amber)}
+.note.hard .lab{color:var(--red)}
 .note p{margin:0 0 10px; font-size:15px; line-height:23px; color:var(--muted)}
 .note p:last-child{margin:0}
 .note b,.note strong{color:var(--fg); font-weight:500}
