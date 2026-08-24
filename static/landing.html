@@ -595,6 +595,116 @@ h1,h2,h3,h4,p{margin:0}
 .tbl .ds{font-size:13px; line-height:19px; color:var(--muted)}
 .tbl .kx{justify-self:start}
 
+/* ---------- worker work views ----------
+   The three desk Workers used to be three paragraphs of prose. A paragraph
+   is the wrong instrument for describing a sequence of screens, so each one
+   is now a miniature of its own panel from the board, playing the clicks the
+   job actually takes: pick the booking, the Worker does the work, stop at
+   the approval gate.
+
+   There is no video file and no player. The recording is markup revealed
+   step by step under a drawn cursor, which means it costs no request, cannot
+   buffer, cannot fail on the venue wifi, and stays legible at any zoom - all
+   four of which a screen capture would put at risk in front of a room.
+
+   Every string in them is what the real panel produces for SHP-001 under the
+   Hamburg scenario (src/roster.py, src/tms.py). The cards keep their
+   SCRIPTED tag: these Workers replay authored content, and a prettier
+   rendering of that must not start implying otherwise.
+
+   prefers-reduced-motion skips the timeline and shows the finished panel.
+   The end state is the information; the motion is only the explanation. */
+.wv{position:relative; border:1px solid var(--border); border-radius:var(--r-sm);
+    background:var(--card); overflow:hidden}
+.wv-bar{height:27px; display:flex; align-items:center; gap:5px; padding:0 9px;
+        border-bottom:1px solid var(--border); background:var(--card-muted)}
+.wv-bar i{width:6px; height:6px; border-radius:50%; background:var(--gray-400); flex:none}
+.wv-bar .url{margin-left:7px; font-size:10px; color:var(--faint)}
+.wv-bar .stamp{margin-left:auto; font-size:9.5px; letter-spacing:.04em; color:var(--faint);
+               transition:color .2s linear}
+
+/* The booking picker, standing in for the sidebar the real board carries. */
+.wv-rail{display:flex; gap:5px; padding:8px 9px 0}
+.wv-chip{font-family:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+         font-size:9.5px; padding:2px 6px; border-radius:4px; color:var(--faint);
+         border:1px solid var(--border); background:var(--card);
+         transition:background .18s var(--ease), color .18s var(--ease),
+                    border-color .18s var(--ease)}
+.wv-chip.tapped{background:var(--fg); border-color:var(--fg); color:#fff}
+
+/* The three cards are stretched to the tallest by the grid, so the window
+   is stretched to the card and all three line up - no magic height, and it
+   still holds when the copy rewraps at a narrower width. */
+.wv-card .art-b{display:flex; flex-direction:column}
+.wv-card .wv{display:flex; flex-direction:column; flex:1}
+.wv-b{flex:1; padding:9px; min-height:196px; font-size:11px; line-height:15px}
+.wv-s{opacity:0; transform:translateY(4px);
+      transition:opacity .3s var(--ease), transform .3s var(--ease)}
+.wv-s.on{opacity:1; transform:none}
+.wv .off{display:none}
+.wv-s.swap{display:none}
+.wv-s.swap.on{display:inline-flex}
+
+/* Block, not flex: a flex gap lands between the text runs either side of an
+   inline chip as well as around it, which double-spaces the punctuation. */
+.wv-t{font-size:11px; font-weight:500; letter-spacing:-.1px; margin-bottom:7px}
+.wv-t .chip{margin-left:4px; vertical-align:1px}
+.wv .chip{font-size:9px; padding:1px 5px; letter-spacing:.04em}
+.wv .mono{font-size:10.5px}
+
+/* One inbound item, at the anatomy the board's own .inb card uses. */
+.wv-m{border:1px solid var(--border); border-radius:5px; padding:7px 8px}
+.wv-mh{display:flex; align-items:center; gap:5px; flex-wrap:wrap; margin-bottom:4px}
+.wv-mh .who{font-weight:500; font-size:10.5px}
+.wv-mh .ago{margin-left:auto; font-size:9.5px; color:var(--faint)}
+.wv-sub{font-weight:500; font-size:10.5px; margin-bottom:3px}
+.wv-body{color:var(--muted); font-size:10.5px; line-height:14px}
+.wv-r{margin-top:7px; padding:7px 8px; border-radius:5px; background:var(--card-muted);
+      border:1px solid var(--border); color:var(--fg); font-size:10.5px; line-height:14px}
+.wv-rl{font-size:9px; letter-spacing:.06em; text-transform:uppercase; color:var(--faint);
+       margin-bottom:3px}
+
+/* Key/value rows: the parsed RFQ fields, and the TMS field map. */
+.wv-f{display:grid; grid-template-columns:auto 1fr; gap:3px 10px; margin-top:7px}
+.wv-f .k{color:var(--faint); font-size:10px}
+.wv-f .v{color:var(--fg); font-size:10px; text-align:right}
+.wv-f .v .ar{color:var(--faint); margin:0 3px}
+.wv-f.map .v{text-align:left}
+.wv-note{margin-top:8px; font-size:9.5px; line-height:13px; color:var(--faint)}
+
+.wv-q{width:100%; border-collapse:collapse; margin-top:7px}
+.wv-q th{text-align:left; font-weight:500; font-size:9px; letter-spacing:.05em;
+         text-transform:uppercase; color:var(--faint); padding:0 0 4px}
+.wv-q td{padding:4px 0; border-top:1px solid var(--border); color:var(--muted);
+         font-size:10px}
+.wv-q td:last-child,.wv-q th:last-child{text-align:right}
+.wv-q tr.pick td{color:var(--fg); font-weight:500}
+
+/* The gate. Amber while it waits, green once approved - the same two states,
+   and the same two colours, the board itself uses. Approval changes a badge
+   and nothing else, here as there. */
+.wv-gate{display:flex; align-items:center; gap:7px; margin-top:9px; flex-wrap:wrap}
+.wv-g{display:inline-flex; font-size:9px; font-weight:600; letter-spacing:.04em; text-transform:uppercase;
+      padding:3px 7px; border-radius:4px; align-items:center}
+.wv-g.await{background:var(--amber-100); color:var(--amber)}
+.wv-g.done{background:var(--green-100); color:var(--green)}
+.wv-ap{height:22px; pointer-events:none; padding:0 10px; border-radius:4px; border:0; background:var(--fg);
+       color:#fff; font-family:inherit; font-size:10px; font-weight:500;
+       display:inline-flex; align-items:center; transition:background .18s var(--ease),
+       color .18s var(--ease)}
+.wv-ap.tapped{background:var(--gray-200); color:var(--faint)}
+
+/* The drawn cursor. It is decoration in the strict sense, so it is achromatic
+   and only the tap ring is allowed any colour. */
+.wv-cur{position:absolute; left:0; top:0; width:13px; height:17px; z-index:4;
+        pointer-events:none; opacity:0;
+        transition:transform .62s var(--ease), opacity .25s linear}
+.wv.play .wv-cur{opacity:1}
+.wv-cur::after{content:""; position:absolute; left:-8px; top:-8px; width:26px; height:26px;
+               border-radius:50%; border:1.5px solid var(--blue); opacity:0}
+.wv-cur.tap::after{animation:wvtap .5s var(--ease)}
+@keyframes wvtap{from{opacity:.6; transform:scale(.3)} to{opacity:0; transform:scale(1)}}
+
 /* ---------- non-goals ---------- */
 .nots{margin-top:36px}
 .not{display:flex; gap:12px; padding:16px 18px; border:1px solid var(--border);
@@ -1508,45 +1618,198 @@ firm revised ETA as soon as terminals restart.</p>
       <span class="eyebrow">The rest of the desk</span>
       <h2 class="d2">A disruption is not one email. It is a day of them.</h2>
       <p class="copy18">The carrier sends a notice. The customer asks where their box is.
-        A rate request lands on the same lane you are busy re-planning. And the booking in
-        the TMS still says the old discharge port. Deciding is the interesting half; this
-        is the half that actually eats the day.</p>
+        A rate request lands on the same lane you are busy re-planning. Deciding is the
+        interesting half; this is the half that actually eats the day.</p>
+      <p class="copy14" style="margin-top:14px">Each panel below is the Worker's own view
+        from the board, playing the clicks the job takes — booking picked, work done, and
+        the approval gate it stops at.</p>
     </div>
 
     <div class="grid g3 rv" style="margin-top:40px">
-      <div class="art">
+      <div class="art wv-card">
         <div class="art-h"><span class="ttl">Inbox Worker</span>
           <span class="r chip synth">SCRIPTED</span></div>
         <div class="art-b">
-          <p class="copy16">Inbound mail read, classified by intent, linked to its booking
-            and answered with a draft. What arrives follows the decision: a rerouted box
-            draws an omit-notice and a status chase, a held one draws berth options.</p>
-          <p class="src" style="margin-top:12px">A booking left on plan gets a routine
-            milestone and <b style="color:var(--fg);font-weight:500">no drafted reply</b> —
-            answering everything is volume, not judgement.</p>
+          <div class="wv">
+            <div class="wv-bar"><i></i><i></i><i></i>
+              <span class="url mono">inbox</span><span class="stamp mono">ready</span></div>
+            <div class="wv-rail">
+              <span class="wv-chip" data-pick>SHP-001</span>
+              <span class="wv-chip">SHP-002</span>
+              <span class="wv-chip">SHP-003</span>
+            </div>
+            <div class="wv-b">
+              <div class="wv-s" data-at="[data-pick]" data-do="booking picked">
+                <p class="wv-t">2 inbound on <span class="mono">SHP-001</span> ·
+                  2 replies drafted</p>
+              </div>
+              <div class="wv-s" data-do="triaged and linked">
+                <div class="wv-m">
+                  <div class="wv-mh"><span class="who">Carrier operations</span>
+                    <span class="chip">booking change</span>
+                    <span class="ago">17m ago</span></div>
+                  <p class="wv-sub">Vessel to omit original discharge port</p>
+                  <p class="wv-body">Please confirm whether the box is discharged at the
+                    alternate port or held on board.</p>
+                </div>
+              </div>
+              <div class="wv-s" data-do="reply drafted">
+                <div class="wv-r"><div class="wv-rl">Drafted reply · carrier</div>
+                  Confirming discharge at RTM for SHP-001. Please re-nominate the booking
+                  to the alternate routing…</div>
+              </div>
+              <div class="wv-s" data-do="second inbound triaged">
+                <div class="wv-m" style="margin-top:7px">
+                  <div class="wv-mh"><span class="who">Bavaria Drivetrain GmbH</span>
+                    <span class="chip">status request</span>
+                    <span class="ago">34m ago</span></div>
+                  <p class="wv-sub">Any update on our automotive parts?</p>
+                  <p class="wv-body">We were expecting this in a few days and have seen the
+                    port news.</p>
+                </div>
+              </div>
+              <div class="wv-s" data-do="held at the gate" data-hold="1500">
+                <div class="wv-gate">
+                  <span class="wv-g await">DRAFT - not sent</span>
+                  <span class="wv-s swap wv-g done" data-at=".wv-ap" data-hide=".wv-g.await"
+                        data-do="approved · nothing sent">Approved — ready to send</span>
+                  <span class="wv-ap">Approve</span>
+                </div>
+              </div>
+              <span class="wv-cur"><svg width="13" height="17" viewBox="0 0 13 17" fill="none" aria-hidden="true">
+                <path d="M1.2 1.1l9.4 7.2-4.2.5 2.3 4.7-2 .9-2.3-4.8-3.2 2.7z"
+                      fill="#171717" stroke="#fff" stroke-width="1.1"
+                      stroke-linejoin="round"/></svg></span>
+            </div>
+          </div>
+          <p class="src" style="margin-top:12px">What arrives depends on the decision. A
+            booking left on plan draws a routine milestone and
+            <b style="color:var(--fg);font-weight:500">no drafted reply at all</b>.</p>
         </div>
       </div>
 
-      <div class="art">
+      <div class="art wv-card">
         <div class="art-h"><span class="ttl">RFQ Worker</span>
           <span class="r chip synth">SCRIPTED</span></div>
         <div class="art-b">
-          <p class="copy16">A rate request arrives as prose, is read into fields — lane,
-            equipment, commodity, ready date — priced against the carriers on that lane, and
-            answered with a drafted quote.</p>
+          <div class="wv">
+            <div class="wv-bar"><i></i><i></i><i></i>
+              <span class="url mono">rfq</span><span class="stamp mono">ready</span></div>
+            <div class="wv-rail">
+              <span class="wv-chip" data-pick>SHP-001</span>
+              <span class="wv-chip">SHP-002</span>
+              <span class="wv-chip">SHP-003</span>
+            </div>
+            <div class="wv-b">
+              <div class="wv-s" data-at="[data-pick]" data-do="booking picked">
+                <p class="wv-t">1 rate request on Shanghai → Munich</p>
+              </div>
+              <div class="wv-s" data-do="read">
+                <div class="wv-m">
+                  <div class="wv-mh"><span class="who">Bavaria Drivetrain GmbH</span>
+                    <span class="chip">rate request</span>
+                    <span class="ago">24m ago</span></div>
+                  <p class="wv-body">Need pricing Shanghai to Munich, 2 x 40ft, ready in
+                    about three weeks. What can you do?</p>
+                </div>
+              </div>
+              <div class="wv-s" data-do="read into fields">
+                <div class="wv-f">
+                  <span class="k">lane</span><span class="v">Shanghai → Munich</span>
+                  <span class="k">equipment</span><span class="v">2 x 40ft</span>
+                  <span class="k">commodity</span><span class="v">Automotive parts</span>
+                  <span class="k">ready</span><span class="v">≈ 3 weeks</span>
+                </div>
+              </div>
+              <div class="wv-s" data-do="priced against the lane">
+                <table class="wv-q"><thead><tr><th>Carrier</th><th>Via</th><th>Transit</th>
+                  <th>Index</th></tr></thead>
+                  <tbody>
+                    <tr class="pick"><td>Hapag-Lloyd</td><td>HAM</td><td>32d</td>
+                      <td>106 <span class="chip">+ surcharge</span></td></tr>
+                    <tr><td>Maersk</td><td>RTM</td><td>34d</td><td>108</td></tr>
+                    <tr><td>Hapag-Lloyd</td><td>HAM</td><td>42d</td><td>130</td></tr>
+                  </tbody></table>
+              </div>
+              <div class="wv-s" data-do="held at the gate" data-hold="1500">
+                <div class="wv-gate">
+                  <span class="wv-g await">DRAFT - not sent</span>
+                  <span class="wv-s swap wv-g done" data-at=".wv-ap" data-hide=".wv-g.await"
+                        data-do="approved · nothing sent">Approved — ready to send</span>
+                  <span class="wv-ap">Approve</span>
+                </div>
+              </div>
+              <span class="wv-cur"><svg width="13" height="17" viewBox="0 0 13 17" fill="none" aria-hidden="true">
+                <path d="M1.2 1.1l9.4 7.2-4.2.5 2.3 4.7-2 .9-2.3-4.8-3.2 2.7z"
+                      fill="#171717" stroke="#fff" stroke-width="1.1"
+                      stroke-linejoin="round"/></svg></span>
+            </div>
+          </div>
           <p class="src" style="margin-top:12px">The active disruption is priced in. A quote
             written during a closure that ignores the surcharge is a quote that loses
             money.</p>
         </div>
       </div>
 
-      <div class="art">
+      <div class="art wv-card">
         <div class="art-h"><span class="ttl">TMS Link</span>
           <span class="r chip synth">DEMO CONNECTOR</span></div>
         <div class="art-b">
-          <p class="copy16">Bookings read in; the decision written back out — discharge port,
-            routing code, revised ETA. A shipment left on plan produces no write-back at
-            all.</p>
+          <div class="wv">
+            <div class="wv-bar"><i></i><i></i><i></i>
+              <span class="url mono">tms</span><span class="stamp mono">ready</span></div>
+            <div class="wv-rail">
+              <span class="wv-chip" data-pick>SHP-001</span>
+              <span class="wv-chip">SHP-002</span>
+              <span class="wv-chip">SHP-003</span>
+            </div>
+            <div class="wv-b">
+              <div class="wv-s" data-at="[data-pick]" data-do="booking picked">
+                <p class="wv-t">TMS (demo connector)
+                  <span class="chip">connected (demo)</span></p>
+              </div>
+              <div class="wv-s" data-do="field map">
+                <div class="wv-f map">
+                  <span class="k">booking_ref</span><span class="v"><span class="ar">→</span> id
+                    <span class="chip">in</span></span>
+                  <span class="k">port_of_discharge</span><span class="v"><span class="ar">→</span> discharge_port
+                    <span class="chip">both</span></span>
+                  <span class="k">routing_code</span><span class="v"><span class="ar">→</span> primary_route
+                    <span class="chip">both</span></span>
+                  <span class="k">eta</span><span class="v"><span class="ar">→</span> eta
+                    <span class="chip">both</span></span>
+                  <span class="k">commodity</span><span class="v"><span class="ar">→</span> cargo
+                    <span class="chip">in</span></span>
+                  <span class="k">required_by</span><span class="v"><span class="ar">→</span>
+                    required_by <span class="chip">in</span></span>
+                </div>
+                <p class="wv-note">Bookings read in; routing, discharge port and ETA
+                  written back once a person approves.</p>
+              </div>
+              <div class="wv-s" data-do="write-back derived">
+                <div class="wv-r"><div class="wv-rl">Write-back · SHP-001</div>
+                  <div class="wv-f" style="margin-top:0">
+                    <span class="k">port_of_discharge</span>
+                    <span class="v">HAM <span class="ar">→</span> RTM</span>
+                    <span class="k">routing_code</span>
+                    <span class="v">R-HAM-STD <span class="ar">→</span> R-RTM-ALT</span>
+                  </div>
+                </div>
+              </div>
+              <div class="wv-s" data-do="held at the gate" data-hold="1500">
+                <div class="wv-gate">
+                  <span class="wv-g await">QUEUED - not written</span>
+                  <span class="wv-s swap wv-g done" data-at=".wv-ap" data-hide=".wv-g.await"
+                        data-do="approved · nothing written">Approved — ready to write</span>
+                  <span class="wv-ap">Approve</span>
+                </div>
+              </div>
+              <span class="wv-cur"><svg width="13" height="17" viewBox="0 0 13 17" fill="none" aria-hidden="true">
+                <path d="M1.2 1.1l9.4 7.2-4.2.5 2.3 4.7-2 .9-2.3-4.8-3.2 2.7z"
+                      fill="#171717" stroke="#fff" stroke-width="1.1"
+                      stroke-linejoin="round"/></svg></span>
+            </div>
+          </div>
           <p class="src" style="margin-top:12px">No TMS is contacted. There is no client, no
             credential and no endpoint — a write-back is a described change, and it stays
             one.</p>
@@ -1999,6 +2262,123 @@ document.querySelectorAll("[data-approve]").forEach(function (btn) {
     if (badge) { badge.className = "r chip live"; badge.textContent = "Approved"; }
   });
 });
+
+/* Worker work views. Each of the three desk Workers plays its own panel:
+   booking picked, work done, approval gate. There is no video file and no
+   player - the recording is markup revealed step by step under a drawn
+   cursor, so it costs no request, cannot buffer, and cannot fail on the
+   venue wifi.
+
+   Every step is in the DOM from the start and only its opacity changes, so
+   nothing reflows mid-play and a screen reader gets the whole panel. Under
+   reduced motion, or with no IntersectionObserver, the finished panel is
+   shown outright: the end state is the information, the motion is only the
+   explanation. */
+(function () {
+  var views = [].slice.call(document.querySelectorAll(".wv"));
+  if (!views.length) return;
+  var still = !("IntersectionObserver" in window) ||
+              (window.matchMedia &&
+               window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+  views.forEach(function (wv, vi) {
+    var steps = [].slice.call(wv.querySelectorAll(".wv-s"));
+    var cur   = wv.querySelector(".wv-cur");
+    var stamp = wv.querySelector(".wv-bar .stamp");
+    var timers = [];
+
+    function each(sel, fn) {
+      if (sel) [].slice.call(wv.querySelectorAll(sel)).forEach(fn);
+    }
+    function reveal(s) {
+      s.classList.add("on");
+      each(s.getAttribute("data-hide"), function (el) { el.classList.add("off"); });
+      var label = s.getAttribute("data-do");
+      if (stamp && label) stamp.textContent = label;
+    }
+
+    if (still || !cur) {
+      /* The resting state is the gate, not the approval. Someone who never
+         sees the timeline should be left looking at the draft being held,
+         which is the point of the section - not at a green badge that could
+         be read as something having gone out. */
+      steps.forEach(function (s) {
+        if (s.classList.contains("swap")) return;
+        reveal(s);
+        each(s.getAttribute("data-at"), function (el) { el.classList.add("tapped"); });
+      });
+      return;
+    }
+
+    var i = 0, live = false;
+    function at(ms, fn) { timers.push(setTimeout(fn, ms)); }
+    function reset() {
+      timers.forEach(clearTimeout);
+      timers = [];
+      steps.forEach(function (s) { s.classList.remove("on"); });
+      each(".off", function (el) { el.classList.remove("off"); });
+      each(".tapped", function (el) { el.classList.remove("tapped"); });
+      cur.classList.remove("tap");
+      cur.style.transform = "translate(14px,11px)";
+      wv.classList.remove("play");
+      if (stamp) stamp.textContent = "ready";
+      i = 0;
+    }
+    /* Measured against .wv, which is the cursor's containing block. Both
+       rects move together, so a reveal-on-scroll transform on an ancestor
+       cancels out of the subtraction instead of throwing the aim off. */
+    function point(el) {
+      var a = el.getBoundingClientRect(), b = wv.getBoundingClientRect();
+      return { x: a.left - b.left + a.width / 2,
+               y: a.top  - b.top  + Math.min(a.height / 2, 12) };
+    }
+    function frame() {
+      if (!live) return;
+      if (i >= steps.length) {
+        /* Hold the finished panel long enough to read, then rewind. The gap
+           is kept short because the window is empty across it, and an empty
+           window is the one frame that looks like a bug rather than a step. */
+        at(2600, function () { reset(); at(350, frame); });
+        return;
+      }
+      var s    = steps[i++];
+      var hold = parseInt(s.getAttribute("data-hold"), 10) || 1150;
+      var sel  = s.getAttribute("data-at");
+      var tgt  = sel ? wv.querySelector(sel) : null;
+      /* No target means the Worker did this step on its own. The cursor
+         leaves rather than hovering over work no person is doing. */
+      if (!tgt) { wv.classList.remove("play"); reveal(s); at(hold, frame); return; }
+      wv.classList.add("play");
+      var p = point(tgt);
+      cur.style.transform = "translate(" + p.x + "px," + p.y + "px)";
+      at(620, function () {                       /* arrive, then click */
+        cur.classList.add("tap");
+        tgt.classList.add("tapped");
+        at(200, function () { reveal(s); at(hold, frame); });
+        at(520, function () { cur.classList.remove("tap"); });
+      });
+    }
+
+    /* Only plays while on screen - three panels looping behind the fold is
+       work nobody is watching. Leaving the screen PAUSES rather than resets:
+       wiping it meant that on a phone, where the cards stack and each one
+       is half-scrolled for a while, a card you were part-way through went
+       back to an empty window and read as broken. A view that already
+       finished starts over on the way back; one caught mid-play picks up
+       where it stopped. */
+    new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting === live) return;
+        live = e.isIntersecting;
+        if (!live) { timers.forEach(clearTimeout); timers = []; return; }
+        if (i === 0 || i >= steps.length) { reset(); at(500 + vi * 420, frame); }
+        else { at(400, frame); }
+      });
+    }, { threshold: 0.2 }).observe(wv);
+
+    reset();
+  });
+})();
 </script>
 </body>
 </html>
