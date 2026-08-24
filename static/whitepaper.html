@@ -31,6 +31,7 @@
   --fg:#171717; --muted:#4d4d4d; --faint:#8f8f8f;
   --border:#00000014; --border-strong:#00000024;
   --gray-100:#f2f2f2; --gray-200:#ebebeb;
+  --gray-400:#dbdbdb; --gray-600:#a8a8a8;
 
   --blue:#006bff;   --blue-100:#f0f7ff; --blue-400:#cae7ff;
   --green:#107d32;  --green-100:#ecfdec; --green-400:#b9f5bc;
@@ -203,6 +204,50 @@ td.n{font-family:"Geist Mono",ui-monospace,monospace; font-variant-numeric:tabul
    text-contrast steps, so they separate far better at 11px than the 400-steps
    would as a 1px border. And the label already names the level in words, so
    colour was never carrying it alone. */
+/* ---- the corridor plate ----
+   The paper's first figure. Map beside caption at full width, stacked once the
+   column narrows; the map keeps its own width rather than stretching, because
+   a corridor 550 km tall and 300 wide has a shape and scaling it to the column
+   would be drawing a different place.
+
+   Geometry is Natural Earth, projected by tools/build_rhine_map.py and inlined
+   - the paper fetches nothing from another host, and this must not be the
+   thing that breaks that.
+
+   Built with --plain: no gauge readings. Those are the authored scenario's
+   numbers, and this figure is evidence about geography, not water levels. */
+.plate{margin:26px 0; padding:18px 20px; border:1px solid var(--border);
+       background:var(--card); box-shadow:var(--shadow-card);
+       border-radius:var(--r-md); display:grid; gap:20px;
+       grid-template-columns:300px minmax(0,1fr); align-items:center}
+.plate figcaption{font-size:13px; line-height:19px; color:var(--muted)}
+.plate figcaption b{color:var(--fg); font-weight:500}
+.plate .legend{margin-top:12px; display:flex; flex-direction:column; gap:7px}
+.plate .legend span{display:inline-flex; align-items:center; gap:8px; font-size:12.5px;
+                    line-height:17px; color:var(--muted)}
+.plate .legend i{width:16px; height:0; border-top:2px solid var(--blue); flex:none}
+.plate .legend i.ok{border-top-color:var(--gray-600)}
+.plate .legend i.sus{border-top-style:dashed; border-top-color:var(--red)}
+@media(max-width:760px){.plate{grid-template-columns:minmax(0,1fr)}}
+
+.plate .corridor{width:100%; height:auto; display:block; border-radius:var(--r-sm);
+                 background:var(--card-muted)}
+.plate .corridor text{font-family:"Geist Mono",ui-monospace,monospace; font-size:9px;
+                      letter-spacing:.05em; fill:var(--faint);
+                      paint-order:stroke fill; stroke:var(--card-muted);
+                      stroke-width:3px; stroke-linejoin:round}
+.plate .corridor text.on{fill:var(--fg)}
+.plate .corridor text.rd{fill:var(--red)}
+.plate .corridor text.bl{fill:var(--blue)}
+.plate .corridor .land{fill:var(--gray-100); stroke:var(--border-strong); stroke-width:.6}
+.plate .corridor .water{fill:none; stroke:var(--gray-400); stroke-width:.8}
+.plate .corridor .leg-ok{stroke:var(--gray-600); stroke-width:2.2; fill:none}
+.plate .corridor .leg-sus{stroke:var(--red); stroke-width:2; fill:none; stroke-dasharray:5 4}
+.plate .corridor .leg-alt{stroke:var(--blue); stroke-width:2; fill:none}
+.plate .corridor .node{fill:var(--fg)}
+.plate .corridor .gauge{fill:var(--card); stroke:var(--gray-600); stroke-width:1.5}
+.plate .corridor .gauge.bind{stroke:var(--red); stroke-width:2}
+
 .note{border:1px solid var(--border); background:var(--card); box-shadow:var(--shadow-card);
       border-radius:var(--r-md); padding:16px 20px; margin:24px 0}
 .note .lab{margin-bottom:8px; color:var(--blue)}
@@ -661,6 +706,41 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
         <li><b>The data need never leave.</b> Because the models are open-weight, they are served where you choose. That is a property of the architecture, not a clause in a contract.</li>
         <li><b>It suits the regulatory direction.</b> Recorded reasoning for every decision, and a human approval gate before anything leaves the building, are exactly the properties an EU AI Act conversation asks about.</li>
       </ul>
+
+      <figure class="plate">
+        <svg class="corridor" viewBox="0 0 300 382.9" role="img" aria-label="The Rhine corridor from Rotterdam up to Basel, drawn on the map. The barge route follows the river and is navigable as far as Duisburg-Ruhrort; from there up to Basel it is payload-limited, binding at Kaub. A rail and road alternate runs the same corridor overland from Rotterdam to Basel for one extra day.">
+          <path class="land" d="M258.6,339.6L262.5,343.0L261.9,347.5L258.8,354.7L257.1,360.6L257.2,367.2L262.3,367.5L267.1,368.7L271.0,370.5L272.2,374.7L276.8,377.8L282.1,379.8L283.8,379.2L290.4,371.8L292.9,373.1L294.4,377.0L293.4,382.9L139.3,382.9L139.9,375.4L140.6,374.0L148.7,369.3L149.5,367.4L159.7,354.9L161.6,351.6L161.6,350.6L160.9,349.8L158.5,349.3L157.7,347.3L160.3,343.8L163.6,341.7L166.8,341.6L168.0,342.6L168.0,343.8L169.4,345.0L171.8,345.5L174.7,345.0L177.7,343.7L180.6,338.2L185.2,335.5L188.4,336.8L197.2,337.2L203.6,336.5L207.6,334.6L212.6,334.6L216.0,335.7L217.5,335.3L218.4,334.3L221.5,333.6L221.8,331.9L221.2,331.5L217.4,331.9L215.9,331.3L215.5,329.8L216.8,327.2L219.6,325.1L222.0,324.5L223.8,325.1L228.0,329.1L229.0,329.2L230.5,328.1L232.0,328.8L233.9,331.7L245.5,330.8L258.6,339.6ZM122.8,146.6L113.3,146.0L111.3,145.1L109.2,141.0L109.5,139.6L113.5,134.6L113.1,134.0L113.5,132.3L116.1,126.5L116.4,124.1L115.2,122.5L108.0,119.7L105.4,117.3L104.2,115.2L103.0,114.6L96.6,116.1L92.9,114.9L88.5,110.9L86.9,104.5L85.8,103.6L82.5,107.2L78.8,107.5L77.7,107.0L77.3,104.5L75.2,102.2L70.5,106.4L68.8,106.4L66.6,104.8L65.5,103.2L63.1,104.1L61.0,106.0L61.7,109.7L60.5,110.3L57.9,110.0L46.4,105.1L39.3,107.1L34.4,104.7L30.3,104.5L27.7,102.5L25.0,99.3L26.9,97.1L28.8,96.4L36.3,96.0L41.8,97.3L51.6,104.4L54.1,104.3L56.7,103.4L55.4,101.5L49.2,98.6L46.3,96.0L53.2,95.1L51.3,91.4L44.1,83.1L49.4,72.1L54.2,68.3L60.6,60.0L64.7,53.3L67.8,45.3L72.2,23.3L75.7,15.5L78.4,16.3L80.3,17.4L87.0,14.3L98.4,6.2L101.4,0.0L168.8,0.0L168.8,12.0L168.4,14.0L166.0,18.7L163.5,27.2L162.8,32.8L162.0,33.9L151.9,33.9L150.4,34.8L150.7,37.5L149.7,40.1L150.1,41.9L151.9,44.0L155.1,45.3L160.3,45.2L162.9,49.0L162.3,55.9L160.7,59.5L156.0,63.7L151.9,65.9L150.9,67.0L150.6,69.6L153.9,73.0L152.9,75.5L151.6,77.1L143.0,80.5L139.4,80.3L136.8,82.3L134.5,80.7L129.5,78.9L123.4,81.7L121.1,83.6L121.1,86.0L125.1,92.2L126.5,93.5L126.6,95.8L130.5,102.4L130.7,104.7L129.5,110.4L126.0,118.2L126.2,120.9L128.3,121.8L128.1,122.8L120.7,129.2L118.0,128.9L117.6,129.8L119.0,132.6L121.3,133.2L123.3,134.6L124.9,137.3L122.8,146.6ZM54.9,108.5L54.3,110.8L52.8,113.2L47.7,116.8L42.4,119.2L39.6,118.9L36.8,116.4L33.9,115.1L30.0,114.5L25.8,117.1L24.3,116.9L22.3,114.2L21.2,109.0L24.1,108.1L30.4,107.7L35.3,109.5L41.7,110.4L46.6,107.9L50.4,110.0L54.9,108.5ZM80.2,7.7L76.4,12.0L74.1,10.8L73.4,9.8L74.6,6.5L80.2,1.0L80.2,7.7ZM44.2,87.4L48.0,90.6L49.0,92.8L44.3,94.1L39.2,90.1L35.8,91.0L34.6,89.1L34.6,88.0L38.0,87.0L44.2,87.4ZM127.6,184.2L127.3,189.4L128.4,193.0L131.0,196.5L132.9,199.1L135.6,201.1L141.8,203.5L141.7,208.9L138.7,212.7L137.6,215.4L136.5,220.6L136.3,224.2L132.4,221.7L130.0,221.4L127.7,222.2L125.9,224.1L123.5,224.6L121.5,224.1L119.3,222.0L116.3,221.1L115.0,219.1L116.8,216.7L118.5,212.7L114.9,205.9L112.5,202.9L113.2,196.3L114.9,193.8L118.0,186.5L122.2,181.4L126.5,182.2L127.6,184.2ZM258.6,339.6L245.5,330.8L233.9,331.7L232.0,328.8L230.5,328.1L229.0,329.2L228.0,329.1L223.8,325.1L222.0,324.5L219.6,325.1L216.8,327.2L215.5,329.8L215.9,331.3L217.4,331.9L221.2,331.5L221.9,332.8L221.5,333.6L218.4,334.3L216.5,335.5L212.6,334.6L207.6,334.6L203.6,336.5L197.2,337.2L188.4,336.8L183.3,334.6L181.9,330.6L182.3,324.6L184.4,316.8L184.9,311.0L184.0,307.3L185.3,301.7L188.7,294.4L191.0,286.6L192.1,278.4L193.8,273.1L205.4,258.1L205.2,252.9L200.0,250.6L185.0,247.6L181.7,246.1L178.9,242.2L177.1,242.1L169.2,244.5L166.1,243.6L164.1,243.8L163.0,244.5L161.6,240.5L157.4,238.9L155.8,239.2L154.6,240.9L152.9,242.1L151.4,241.7L145.2,232.2L143.6,227.7L140.7,224.8L137.8,223.9L136.3,224.2L136.5,220.6L137.6,215.4L138.7,212.7L141.7,208.9L141.8,203.5L135.6,201.1L132.9,199.1L128.4,193.0L127.3,189.4L127.2,185.8L129.8,177.5L137.1,172.5L136.2,164.4L134.4,162.4L130.9,161.6L130.0,160.2L129.6,158.8L132.2,155.8L129.0,153.3L127.7,150.8L123.3,147.6L122.8,146.6L124.9,137.3L123.3,134.6L121.3,133.2L119.0,132.6L117.6,129.8L118.0,128.9L120.7,129.2L128.1,122.8L128.3,121.8L126.2,120.9L126.0,118.2L129.5,110.4L130.7,104.7L130.5,102.4L126.6,95.8L126.5,93.5L125.1,92.2L121.1,86.0L121.1,83.6L123.4,81.7L129.5,78.9L134.5,80.7L136.8,82.3L139.4,80.3L143.0,80.5L151.6,77.1L152.9,75.5L153.9,73.0L150.6,69.6L150.9,67.0L151.9,65.9L156.0,63.7L160.7,59.5L162.3,55.9L162.9,49.0L160.3,45.2L155.1,45.3L151.9,44.0L150.1,41.9L149.7,40.1L150.7,37.5L150.4,34.8L151.9,33.9L162.0,33.9L162.8,32.8L163.5,27.2L166.0,18.7L168.4,14.0L168.8,12.0L168.8,0.0L300.0,0.0L300.0,338.3L295.5,338.5L293.8,337.9L292.5,346.0L291.1,349.0L289.0,352.2L286.2,353.9L284.0,354.3L284.6,349.2L280.6,348.2L279.5,347.4L279.8,345.3L279.2,344.1L275.8,340.7L267.3,336.5L266.0,338.0L263.5,339.5L259.6,339.0L258.6,339.6ZM54.9,108.5L57.9,110.0L60.5,110.3L61.7,109.7L61.0,106.0L63.1,104.1L65.5,103.2L66.6,104.8L68.8,106.4L70.5,106.4L75.2,102.2L77.3,104.5L77.7,107.0L78.8,107.5L82.5,107.2L85.8,103.6L86.9,104.5L88.5,110.9L92.9,114.9L96.6,116.1L103.0,114.6L104.2,115.2L105.4,117.3L108.0,119.7L113.6,121.5L115.2,122.5L116.4,124.1L116.1,126.5L113.5,132.3L113.1,134.0L113.5,134.6L109.5,139.6L109.2,141.0L111.3,145.1L113.3,146.0L122.8,146.6L123.3,147.6L127.7,150.8L129.0,153.3L132.2,155.8L129.6,158.8L130.0,160.2L130.9,161.6L134.4,162.4L136.2,164.4L137.1,172.5L129.8,177.5L127.6,184.2L126.5,182.2L122.2,181.4L118.0,186.5L114.9,193.8L113.2,196.3L112.5,202.9L114.9,205.9L118.5,212.7L116.8,216.7L115.0,219.1L111.9,219.0L104.1,220.7L96.2,212.3L95.3,210.7L92.9,210.0L89.4,208.1L84.9,204.7L79.5,204.1L78.5,196.6L76.5,193.9L79.3,183.3L77.6,182.3L75.9,183.1L73.3,185.6L71.4,191.3L67.1,193.8L60.3,194.7L52.9,193.8L51.9,193.2L51.4,191.4L53.2,188.3L53.5,185.8L51.4,182.8L52.9,176.7L47.9,172.2L38.0,170.7L36.5,170.9L34.2,173.1L33.4,172.0L31.8,164.1L30.6,162.9L26.0,161.6L19.9,161.1L18.2,159.6L16.7,151.8L14.7,147.7L11.8,144.8L8.6,145.6L4.7,148.0L1.5,148.9L0.0,147.7L0.0,119.4L16.4,110.6L21.2,109.0L22.3,114.2L24.3,116.9L25.8,117.1L30.0,114.5L33.9,115.1L36.8,116.4L39.6,118.9L42.4,119.2L47.7,116.8L52.8,113.2L54.3,110.8L54.9,108.5Z"/>
+          <path class="water" d="M117.6,37.3L119.6,37.7L122.1,40.6L123.7,40.6L126.7,43.8L128.3,47.6L126.2,49.6L125.7,52.5L128.7,58.0L130.4,57.6L131.1,66.1L127.8,68.1L127.8,69.6L129.0,69.5L128.7,70.9L126.7,71.9L125.2,71.4L120.7,74.3M124.3,79.0L118.7,72.5L108.7,75.0L102.4,72.5L97.3,74.0M97.3,74.0L94.4,73.0L91.3,73.7L88.6,71.6L72.3,77.9L65.7,76.7L59.3,78.0L55.3,76.7L49.9,72.4M158.5,310.2L156.0,310.8L154.5,313.3L152.8,313.6L149.8,310.0L146.4,309.2L146.4,305.8L140.6,301.7L138.2,292.8L133.0,287.0L135.1,283.5L133.2,279.2L123.8,272.2L119.8,272.4L119.0,270.9L120.9,270.2L123.2,266.3L128.3,264.9L127.7,262.0L126.3,261.2L126.6,258.7L125.2,257.5L124.2,251.7L126.3,246.4L130.9,241.8L130.6,234.9L129.0,230.0L136.4,224.2L136.6,217.4L139.2,213.0L138.6,212.0L142.7,208.6L146.6,208.3L147.3,205.7L149.8,204.4L150.3,202.1L154.0,203.7L155.9,203.7L155.6,200.9L157.7,202.2L157.7,198.4L159.1,199.6L160.3,197.0L163.8,196.1L161.4,193.4L161.9,192.8L164.2,193.3L165.4,192.4L166.3,194.2L166.1,188.4L168.3,190.0L165.9,185.3L168.8,186.5L168.8,185.3L170.6,184.9L170.4,182.4L168.4,183.2L168.1,182.0L175.4,180.4L176.3,178.6L178.8,177.5L179.3,173.0L181.9,172.3L183.4,169.3L184.9,169.7M300.7,191.9L295.8,189.4L291.3,190.6L287.7,188.2L285.7,189.0L283.7,191.9L284.2,197.1L283.2,198.6L285.3,200.0L283.5,200.0L285.1,203.2L283.0,204.2L283.1,206.8L281.6,209.9L282.7,210.7L281.4,211.4L278.9,210.9L274.8,204.7L272.1,202.6L269.7,195.6L268.2,194.5L265.6,189.2L263.5,189.1L261.0,190.8L260.0,193.3L261.7,199.1L260.8,202.4L261.9,203.6L259.9,204.7L257.3,203.7L251.5,204.4L248.0,209.1L245.6,206.8L245.3,204.0L243.8,202.7L244.5,198.3L242.6,194.3L243.9,193.0L241.1,192.4L239.5,188.8L237.8,188.5L238.1,186.9L234.2,183.6L230.1,183.2L229.3,184.7L221.1,185.7L216.2,191.1L211.2,191.9M111.2,145.5L110.8,138.5L114.0,134.0L112.4,134.0L114.5,130.2L114.3,128.1L115.3,127.9L115.6,125.8L117.1,125.4L116.4,123.8L117.7,122.6L119.2,121.3L121.0,121.6L120.5,120.1L122.3,119.6L123.4,115.6L126.9,113.1L129.3,109.4L130.0,101.2L125.1,97.5L121.5,89.0L118.8,88.0L117.8,86.2L113.8,86.0L109.3,82.3L103.9,81.7L100.0,82.7L96.8,86.9L77.9,88.9M53.0,90.6L56.9,92.8L60.5,91.3L61.7,89.2L67.1,90.0L74.6,88.2L78.1,89.0M73.4,205.4L73.1,205.4M107.9,311.0L105.3,310.8L105.0,309.5L106.7,299.6L109.0,295.0L110.0,294.8L110.9,284.1L112.7,280.0L110.5,277.9L111.7,272.5L111.1,271.8L112.5,270.3L111.1,268.5L109.0,269.0L109.8,267.2L104.5,260.9L105.8,259.5L103.7,259.1L105.1,256.7L103.9,255.4L104.1,253.1L100.5,249.2L100.4,243.3L98.4,240.4L98.9,238.2L96.3,237.8L97.6,236.1L94.7,231.6L91.9,229.9L92.2,222.7L91.0,219.0L87.3,217.7L88.3,215.1L82.3,210.3L81.0,207.0L80.5,209.5L77.2,209.7L75.9,206.5L72.1,205.4L74.4,205.4L74.9,201.2L76.3,200.9L74.2,198.0L73.5,198.4L72.1,195.1L71.5,195.8L70.2,194.7L71.8,192.4L73.6,192.1L74.7,185.7L76.1,184.4L77.5,185.4L77.0,183.6L78.7,182.2L78.1,178.7L79.7,179.3L81.8,176.7L81.0,173.0L79.2,170.5L80.4,167.0L80.0,163.6L83.0,162.3L84.6,163.1L86.2,161.6L94.9,159.0L96.6,159.6L100.5,156.4L106.2,154.9L111.1,148.7L111.2,145.5"/>
+
+          <!-- the alternate first, so the river draws over it -->
+          <path class="leg-alt" d="M51.5,74.8L131.8,85.0L145.6,107.6L151.9,137.9L158.5,152.7L177.4,174.4L176.4,180.9L184.4,191.2L193.9,201.4L203.6,196.6L209.7,223.2L208.1,231.3L207.0,249.2L201.7,279.1L191.3,310.5L184.2,337.4"/>
+
+          <!-- the barge route is the river itself, drawn in its two reaches -->
+          <path class="leg-ok"  d="M150.5,104.7L150.7,103.5L149.4,102.9L150.7,101.3L149.0,98.8L149.5,97.8L145.8,97.1L146.2,93.3L145.6,92.2L142.0,91.6L139.0,88.5L138.7,86.5L136.2,85.8L133.8,82.5L126.3,80.5L123.6,78.7L122.1,80.3L120.4,79.2L117.7,80.7L112.3,78.1L105.5,77.7L102.4,78.3L99.0,82.7L97.6,83.2L96.3,82.0L91.6,82.8L88.1,82.0L84.1,82.3M84.1,82.3L81.1,82.0L79.6,83.3L76.5,83.6L72.1,88.6M61.7,89.2L58.6,88.0L49.1,81.1"/>
+          <path class="leg-sus" d="M208.8,253.3L206.9,254.7L203.5,262.8L201.5,263.8L200.6,265.5L198.8,265.8L198.4,267.9L194.3,271.7L192.7,274.3L192.8,280.0L191.4,281.3L189.9,286.8L190.4,290.7L188.5,292.5L187.9,296.0L184.0,303.3L183.7,307.9L185.3,310.9L185.4,312.8L184.0,314.7L183.0,318.1L183.1,320.7L181.7,324.1L182.2,327.1L181.2,328.6L181.4,330.5L184.2,334.5L184.2,337.0M208.8,253.3L213.7,244.7L214.9,237.4L218.5,233.5L218.6,232.8L217.7,232.4L219.1,228.8L219.4,225.5L217.0,224.2L217.8,223.0L213.9,211.5L214.6,208.8L216.9,207.8L218.3,205.4L216.3,205.4L213.1,198.0L213.7,195.9L212.9,193.9L208.8,189.2L206.7,188.7L201.9,190.4L198.5,192.5L195.3,193.1L194.2,190.8L191.0,187.6L189.3,184.1L189.2,182.0L186.6,180.8L183.8,176.5L186.5,175.8L184.3,172.6L185.1,168.5L183.9,166.9L179.3,166.0L176.4,164.6L174.3,162.3L171.9,157.5L169.7,155.8L168.3,149.6L160.6,141.2L163.5,138.2L160.6,137.1L160.1,135.1L161.1,133.3L160.1,132.0L160.3,130.2L157.5,127.5L155.9,127.1L156.9,124.8L155.7,124.0L155.6,122.1L153.9,122.6L153.6,120.6L151.4,120.5L150.9,118.0L152.7,117.4L150.1,115.4L151.2,112.1L148.2,110.1L151.4,108.2L150.5,104.7"/>
+
+          <circle class="node"  cx="51.5" cy="74.8" r="4.5"/>
+          <circle class="gauge" cx="132.7" cy="82.0" r="3.5"/>
+          <circle class="gauge" cx="151.2" cy="104.7" r="3.5"/>
+          <circle class="gauge bind" cx="191.2" cy="186.1" r="4"/>
+          <circle class="node"  cx="184.2" cy="337.4" r="4.5"/>
+
+          <text class="on" x="59.5" y="68.8">ROTTERDAM</text><text x="124.7" y="92.0" text-anchor="end">EMMERICH</text><text x="159.2" y="108.7">DUISBURG-RUHRORT</text><text class="rd" x="203.2" y="190.1">KAUB</text><text class="on" x="192.2" y="341.4">BASEL</text><text class="bl" x="168.0" y="268.0" text-anchor="end">RAIL + ROAD</text><text class="bl" x="168.0" y="280.0" text-anchor="end">+1 d</text>
+        </svg>
+        <figcaption>
+          <b>What &ldquo;the problem is European&rdquo; looks like in the data.</b>
+          The Rotterdam&ndash;Basel corridor as the system models it: the Rhine as the
+          barge route, navigable to Duisburg-Ruhrort and payload-limited above it, and
+          the rail and road alternate that the same booking can be re-moded onto for one
+          extra day. Country outlines and the river&rsquo;s course are Natural Earth,
+          projected and inlined &mdash; the page fetches no map service.
+          <span class="legend">
+            <span><i class="ok"></i>Rhine barge &middot; navigable reach</span>
+            <span><i class="sus"></i>Rhine barge &middot; payload-limited</span>
+            <span><i></i>Rail + road &middot; the re-mode</span>
+          </span>
+        </figcaption>
+      </figure>
 
       <div class="note hard">
         <p class="eyebrow lab">What it does not mean yet</p>
