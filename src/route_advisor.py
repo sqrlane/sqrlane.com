@@ -57,8 +57,42 @@ def _load_json(path):
         return json.load(handle)
 
 
+# The shipments were authored to sit mid-voyage on a particular day. Left alone,
+# a demo run months later shows cargo "in transit" with ETAs in the past, which
+# is the first thing an audience notices. Rolling every date forward by the same
+# whole number of weeks keeps the board plausible and leaves every relationship
+# the screenplay depends on - slack, ordering, the gaps between shipments -
+# exactly as authored.
+DATE_FIELDS = ("etd", "eta", "required_by")
+
+
+def _weeks_since_authored(authored_on: str) -> int:
+    """Whole weeks between the authoring date and today, never negative.
+
+    Whole weeks rather than days so ETAs keep their weekday: cargo authored to
+    arrive on a Tuesday still arrives on a Tuesday.
+    """
+    try:
+        authored = date.fromisoformat(authored_on)
+    except (ValueError, TypeError):
+        return 0
+    return max(0, (date.today() - authored).days // 7)
+
+
 def load_shipments() -> list[dict]:
-    return _load_json(config.SHIPMENTS_FILE)["shipments"]
+    raw = _load_json(config.SHIPMENTS_FILE)
+    shipments = raw["shipments"]
+
+    shift = _weeks_since_authored(raw.get("_authored_on", "")) * 7
+    if not shift:
+        return shipments
+
+    for shipment in shipments:
+        for field in DATE_FIELDS:
+            if shipment.get(field):
+                shipment[field] = _shift_date(shipment[field], shift)
+        shipment["_dates_rolled_forward_days"] = shift
+    return shipments
 
 
 def load_routes() -> dict[str, dict]:

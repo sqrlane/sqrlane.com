@@ -277,9 +277,36 @@ claims were written and tested but unwitnessed. Most are now confirmed.
   `CUSTOMER_SYSTEM` in `comms_agent.py` — the prompts, not the plumbing.
 - **Whether live news sources return anything useful.** The fail-closed path is well
   tested and the deployed run completes, but nobody has confirmed a real
-  GDELT/RSS/PEGELONLINE response was parsed. The dashboard's source line
-  ("N of 14 sources read") answers this at a glance; `python -m src.risk_monitor`
-  on a real connection answers it in detail.
+  GDELT/RSS/PEGELONLINE response was parsed. This is the credibility anchor — "the
+  risk detection is real" is the demo's central honest claim, and the `LIVE` chip on
+  the risk feed asserts it. The dashboard's source line ("N of 14 sources read")
+  settles it at a glance; `python -m src.risk_monitor` on a real connection answers
+  it in detail. **If N is 0 or 1, the live claim is currently decoration.**
+- **The two reroute cards have never been read.** Every review so far has been
+  SHP-002, the hold. SHP-001 and SHP-005 take the other branch in both the advisor
+  and the comms prompts, so the reroute emails have never been seen by anyone.
+
+### Free-tier rate limits are the binding constraint
+
+A cycle makes **nine sequential model calls** — three decisions plus two drafts for
+each of three actioned shipments — and the customer email is the last of them. On
+Groq's free tier that one reliably hit a 429 and fell back to a template. The retry
+loop now honours `retry-after` within a bounded wait budget, but the ceiling is
+real. If drafts keep falling back, the options are a paid tier or collapsing the two
+drafts into one call per shipment (9 → 6) — which would cost the separate carrier
+and customer voices, so prefer the former.
+
+Diagnose it from the card: a `template` badge now prints the reason underneath.
+That instrumentation is what found this after three rounds of wrong guesses; a
+fallback that does not say why is a dead end.
+
+### The dataset ages itself
+
+Shipments are authored to sit mid-voyage on `_authored_on` in `shipments.json`.
+`load_shipments()` rolls every date forward by whole weeks so the board still reads
+as in-transit whenever it runs — ETAs in the past are the first thing an audience
+notices. Whole weeks keep the weekday; a single uniform shift keeps slack, transit
+days and ordering exactly as the screenplay authored them.
 
 ### Running the demo
 
