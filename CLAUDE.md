@@ -657,9 +657,6 @@ uvicorn src.app:app --reload      # then open http://127.0.0.1:8000
 
 `/` is the landing page, `/whitepaper` is the technical whitepaper and `/app` is the
 dashboard; all three are single self-contained files. `GET /api/initial` renders the calm five-green-cards board instantly; `POST /run`
-is the button. `GET /api/health` reports what a running instance can actually see — the
-`/` is the landing page and `/app` is the dashboard; both are single self-contained
-files. `GET /api/initial` renders the calm five-green-cards board instantly; `POST /run`
 is the button. `GET /api/gauges` reads the three Rhine gauges live from PEGELONLINE for
 the landing page's gauge panel — cached for `GAUGE_CACHE_SECONDS` because the page is
 public and the source refreshes about every fifteen minutes, and it answers 200 with
