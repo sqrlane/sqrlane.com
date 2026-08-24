@@ -33,6 +33,36 @@
   h1{margin:0; font-size:19px; letter-spacing:-.01em}
   .sub{margin:2px 0 0; color:var(--ink-3); font-size:13px}
   .spacer{flex:1}
+  /* AI Worker framing - cosmetic product dressing, nothing behind it. */
+  .brand{display:flex; align-items:center; gap:12px}
+  .mark{width:36px; height:36px; border-radius:9px; background:var(--ink); flex:none;
+        display:flex; align-items:center; justify-content:center}
+  .kicker{font-size:10.5px; font-weight:700; letter-spacing:.13em; text-transform:uppercase;
+          color:var(--ink-3)}
+  .status{display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--ink-2);
+          background:var(--bg); border:1px solid var(--line); border-radius:20px;
+          padding:5px 13px 5px 10px; white-space:nowrap}
+  .status i{width:7px; height:7px; border-radius:50%; background:var(--ink-3); flex:none}
+  .status.working i{background:var(--blue); animation:pulse 1.1s ease-in-out infinite}
+  .status.done i{background:var(--green)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+
+  /* The live-vs-synthetic legend: the honest answer to "is this real?" */
+  .legend{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+          padding:14px 16px; margin-bottom:22px; box-shadow:var(--shadow)}
+  .keys{display:flex; gap:22px; flex-wrap:wrap; margin-bottom:10px}
+  .key{display:flex; align-items:flex-start; gap:8px; font-size:12.5px; color:var(--ink-2)}
+  .sw{width:11px; height:11px; border-radius:3px; flex:none; margin-top:3px}
+  .sw.live{background:var(--green-bg); border:1.5px solid var(--green)}
+  .sw.synth{background:var(--amber-bg); border:1.5px solid var(--amber)}
+  .sw.draft{background:var(--bg); border:1.5px dashed var(--line-strong)}
+  .key b{color:var(--ink); font-weight:600}
+  .said{border-top:1px solid var(--line); padding-top:10px; font-size:13.5px;
+        color:var(--ink); font-style:italic}
+  .panel-h .chip{font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+                 padding:2.5px 7px; border-radius:4px}
+  .chip.live{background:var(--green-bg); color:var(--green)}
+  .chip.synth{background:var(--amber-bg); color:var(--amber)}
   button.run{
     background:var(--ink); color:#fff; border:0; border-radius:8px;
     padding:11px 20px; font-size:14px; font-weight:600; cursor:pointer;
@@ -177,26 +207,43 @@
 
 <header>
   <div class="head-in">
-    <div>
-      <h1>Trade-Lane Risk &amp; Reroute Agent</h1>
-      <p class="sub" id="sub">Risk &rarr; decision &rarr; communication, as one loop</p>
+    <div class="brand">
+      <div class="mark">
+        <svg width="19" height="19" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <path d="M3 14h14M5.5 10h9M8 6h4" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="kicker">AI Worker</div>
+        <h1>Trade-Lane Risk &amp; Reroute</h1>
+      </div>
     </div>
+    <span class="status" id="status"><i></i><span id="status-t">Idle</span></span>
     <div class="spacer"></div>
     <button class="run" id="run"><span class="dot"></span><span id="run-t">Inject Hamburg strike</span></button>
   </div>
 </header>
 
 <div class="wrap">
-  <p class="honest">
-    <b>What&rsquo;s real here:</b> the risk detection runs against live news right now.
-    The shipments are synthetic, so a disruption can be shown on demand instead of
-    waiting for one. Emails are <b>drafted and never sent</b>.
-  </p>
+  <div class="legend">
+    <div class="keys">
+      <span class="key"><i class="sw live"></i><span><b>Live</b> &mdash; the risk feed.
+        Real news, pulled now, in several languages.</span></span>
+      <span class="key"><i class="sw synth"></i><span><b>Synthetic</b> &mdash; the five
+        shipments and the injected strike, so a disruption can be shown on demand.</span></span>
+      <span class="key"><i class="sw draft"></i><span><b>Drafted, never sent</b> &mdash;
+        no email leaves this machine.</span></span>
+    </div>
+    <div class="said">&ldquo;The risk detection is real &mdash; it runs against live news
+      right now. The shipments are synthetic, so I can show you a disruption on demand
+      instead of waiting for one.&rdquo;</div>
+  </div>
 
   <div class="cols">
     <div>
       <div class="panel">
-        <div class="panel-h"><h2>Risk feed</h2><span class="count" id="ev-n">0</span></div>
+        <div class="panel-h"><h2>Risk feed</h2><span class="chip live">live</span>
+             <span class="count" id="ev-n">0</span></div>
         <div class="feed" id="feed">
           <div class="empty">No active events.<br>Press the button to run a cycle.</div>
         </div>
@@ -207,7 +254,8 @@
 
     <div>
       <div class="panel">
-        <div class="panel-h"><h2>Shipments in transit</h2><span class="count" id="sh-n">5</span></div>
+        <div class="panel-h"><h2>Shipments in transit</h2><span class="chip synth">synthetic</span>
+             <span class="count" id="sh-n">5</span></div>
         <div class="tally" id="tally">
           <span><b>5</b> on plan</span>
         </div>
@@ -313,6 +361,11 @@ function renderBoard(){
   });
 }
 
+function setStatus(cls, text){
+  $("status").className = "status " + cls;
+  $("status-t").textContent = text;
+}
+
 function renderTally(sum){
   $("tally").innerHTML = sum
     ? `<span><b>${sum.reroute}</b> rerouted</span><span><b>${sum.hold}</b> held</span>
@@ -361,6 +414,7 @@ async function load(){
 
 async function run(){
   const btn = $("run");
+  setStatus("working", "Working");
   btn.disabled = true;
   btn.innerHTML = `<span class="spin"></span><span>Reading sources&hellip;</span>`;
   const steps = ["Reading sources…","Classifying events…",
@@ -379,6 +433,7 @@ async function run(){
     clearInterval(tick);
 
     if (res.state === "error"){
+      setStatus("", "Run failed");
       $("notes").innerHTML = `<div class="note">${esc(res.error)}</div>`;
     } else {
       renderRisk(res.risk);
@@ -386,14 +441,14 @@ async function run(){
       renderBoard();
       renderTally(res.summary);
       $("notes").innerHTML = (res.notes || []).map(n => `<div class="note">${esc(n)}</div>`).join("");
-      $("sub").textContent =
-        `Cycle completed in ${res.duration_seconds}s · ${res.summary.drafts} drafts, none sent`;
+      setStatus("done", `Cycle complete · ${res.duration_seconds}s`);
       // Stagger the state change so the triage reads as a sweep, not a repaint.
       document.querySelectorAll(".card").forEach((c, n) =>
         setTimeout(() => c.classList.add("flip"), n * 110));
     }
   } catch(err){
     clearInterval(tick);
+    setStatus("", "Run failed");
     $("notes").innerHTML = `<div class="note">Could not reach the server: ${esc(err.message)}</div>`;
   } finally {
     btn.disabled = false;

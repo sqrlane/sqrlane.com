@@ -44,7 +44,16 @@ LLM_TEMPERATURE = 0.0        # classification should be repeatable
 
 # --- HTTP ------------------------------------------------------------------
 
-HTTP_TIMEOUT_SECONDS = 20
+# Deliberately short. A dead source fails fast; the danger in a live demo is a
+# source that is merely SLOW, because it stalls the whole run.
+HTTP_TIMEOUT_SECONDS = 8
+
+# Hard ceiling on the entire live pull. Once this is spent, whatever has not
+# been read is marked skipped and the cycle moves on. Thirteen sources at eight
+# seconds each would otherwise be nearly two minutes on its own - the whole
+# demo's budget - so this is what actually keeps the run on time.
+LIVE_PULL_BUDGET_SECONDS = 25
+
 USER_AGENT = "trade-risk-agent/0.1 (demo prototype; contact: local)"
 
 # ===========================================================================
