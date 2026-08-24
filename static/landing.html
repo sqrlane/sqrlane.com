@@ -538,14 +538,20 @@ h1,h2,h3,h4,p{margin:0}
 .not .k{font-size:14px; font-weight:500; letter-spacing:-.2px}
 .not .v{font-size:13px; line-height:19px; color:var(--muted); margin-top:3px}
 
-/* ---------- honest band ---------- */
-.honest .panel{padding:44px; border-radius:var(--r-lg); border:1px solid var(--border-strong);
-               background:var(--card); box-shadow:var(--shadow-pop); position:relative;
-               overflow:hidden}
-.honest .panel::before{content:""; position:absolute; inset:0 auto 0 0; width:3px;
-                       background:var(--fg)}
-.honest blockquote{margin:0; max-width:52ch}
-.honest .who{margin-top:22px; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+/* ---------- honest band ----------
+   bklit-ui's card anatomy, which is a shadcn registry: one hairline border on
+   the card surface at the 12px radius, and nothing else. The old panel carried
+   a 3px black rule, a lifted shadow, the heavier border and the 16px radius -
+   four kinds of emphasis on the quietest claim on the page. The border alone
+   separates it from the background, so the rest was weight without a job. */
+.honest .panel{padding:32px; border-radius:var(--r-md); border:1px solid var(--border);
+               background:var(--card)}
+.honest blockquote{margin:16px 0 0; max-width:52ch}
+/* Each chip stays welded to the words it labels - as a flat run they wrapped
+   apart, leaving "Synthetic" on one line and what it applies to on the next. */
+.honest .who{margin-top:20px; display:flex; gap:8px 24px; flex-wrap:wrap}
+.honest .who > span{display:inline-flex; align-items:center; gap:8px}
+.honest .panel > p{margin-top:18px; max-width:66ch}
 
 /* ---------- final cta ---------- */
 .final{text-align:center; padding:96px 0}
@@ -620,7 +626,16 @@ h1,h2,h3,h4,p{margin:0}
   .step{grid-template-columns:1fr; gap:10px}
   .tbl .tr{grid-template-columns:1fr; gap:6px}
   .tbl .th{display:none}
-  .honest .panel{padding:26px}
+  .honest .panel{padding:24px}
+  /* Stacked, a flat run leaves the two descriptions starting at different x
+     because "SYNTHETIC" is the wider chip. A two-column grid lines them up;
+     display:contents hands each pair's chip and words straight to the grid. */
+  .honest .who{display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:center}
+  .honest .who > span{display:contents}
+  /* ...but a grid item stretches, which blew "LIVE" out to the width of the
+     "SYNTHETIC" column. The chips size to their own text; the column still
+     lines the words up. */
+  .honest .who .chip{justify-self:start}
   .nav .ghost{display:none}
   .shot{margin-top:38px}
   .btn{width:100%}
@@ -1568,26 +1583,20 @@ firm revised ETA as soon as terminals restart.</p>
   <div class="wrap">
     <div class="panel rv">
       <span class="eyebrow">What is real and what is not</span>
-      <blockquote class="h32" style="margin-top:18px">
+      <blockquote class="h24">
         “The risk detection is real — it runs against live news right now. The shipments are
         synthetic, so I can show you a disruption on demand instead of waiting for one.”
       </blockquote>
       <div class="who">
-        <span class="chip live">Live</span>
-        <span class="copy14">news pull, classification, decisions, drafts</span>
-        <span class="chip synth">Synthetic</span>
-        <span class="copy14">the five shipments and the injected Hamburg strike</span>
+        <span><span class="chip live">Live</span>
+          <span class="copy14">news pull, classification, decisions, drafts</span></span>
+        <span><span class="chip synth">Synthetic</span>
+          <span class="copy14">the five shipments and the injected Hamburg strike</span></span>
       </div>
-      <p class="copy14" style="margin-top:20px;max-width:70ch">
-        The injected strike uses the same event format as a live one, so it flows through the
-        real pipeline rather than around it. That is what makes the demo honest and repeatable
-        at the same time — and it is why the Risk Monitor stays genuinely live even though
-        everything downstream runs on authored data.
-      </p>
-      <p class="copy14" style="margin-top:14px;max-width:70ch">
-        This is a strong learning artifact and a compelling demo. It is not a live product —
-        the gap between the two is the integration, trust and liability wall, which is real
-        work for later.
+      <p class="copy14">
+        The injected strike uses the same event format as a live one, so it runs through the
+        real pipeline rather than around it. A demo, not a live product — the gap between the
+        two is the integration, trust and liability wall.
       </p>
     </div>
   </div>
