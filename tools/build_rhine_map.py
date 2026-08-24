@@ -7,6 +7,7 @@ the page fetches no tile, no key and no map service.
 Run it when the frame, the gauges or the traced routes need to change:
 
     python3 tools/build_rhine_map.py            # needs network, once
+    python3 tools/build_rhine_map.py --plain    # without the gauge readings
     # then paste the printed <svg> over the one in static/landing.html
 
 Geometry is Natural Earth via its public GitHub mirror:
@@ -206,11 +207,18 @@ PARTS = {"W": W, "H": H,
 p = PARTS
 W, H = p["W"], p["H"]; pt = p["P"]
 
-ALT = ("The Rhine corridor from Rotterdam up to Basel, drawn on the map. The barge route "
-       "follows the river and is navigable as far as Duisburg-Ruhrort; from there up to "
-       "Basel it is payload-limited, binding at Kaub where the gauge reads 44 centimetres "
-       "against a 78 centimetre loading threshold. A rail and road alternate runs the same "
-       "corridor overland from Rotterdam to Basel for one extra day.")
+_ALT_FULL = ("The Rhine corridor from Rotterdam up to Basel, drawn on the map. The barge "
+             "route follows the river and is navigable as far as Duisburg-Ruhrort; from "
+             "there up to Basel it is payload-limited, binding at Kaub where the gauge "
+             "reads 44 centimetres against a 78 centimetre loading threshold. A rail and "
+             "road alternate runs the same corridor overland from Rotterdam to Basel for "
+             "one extra day.")
+_ALT_PLAIN = ("The Rhine corridor from Rotterdam up to Basel, drawn on the map. The barge "
+              "route follows the river and is navigable as far as Duisburg-Ruhrort; from "
+              "there up to Basel it is payload-limited, binding at Kaub. A rail and road "
+              "alternate runs the same corridor overland from Rotterdam to Basel for one "
+              "extra day.")
+ALT = _ALT_PLAIN if "--plain" in sys.argv else _ALT_FULL
 
 def T(x, y, s, cls="", anchor=None):
     a = ' text-anchor="%s"' % anchor if anchor else ""
@@ -221,16 +229,38 @@ def stack(k, lines, dx, dy, anchor=None):
     x, y = pt[k]
     return "".join(T(x+dx, y+dy+13*i, s, cls, anchor) for i, (s, cls) in enumerate(lines))
 
-labels = (
-    stack("RTM",  [("ROTTERDAM", "on")], 8, -6)
-    # Emmerich and Duisburg-Ruhrort are 23px apart and each wants two lines, so
-    # the upper one hangs to the left rather than stacking into its neighbour.
-    + stack("EMM",  [("EMMERICH", ""), ("51 cm", "")], -8, 10, "end")
-    + stack("DUI",  [("DUISBURG-RUHRORT", ""), ("196 cm", "")], 8, 4)
-    + stack("KAUB", [("KAUB", "rd"), ("44 cm", "rd"), ("threshold 78", "")], 12, -1)
-    + stack("BSL",  [("BASEL", "on")], 8, 4)
-    + T(168, 268, "RAIL + ROAD", "bl", "end") + T(168, 280, "+1 d", "bl", "end")
-)
+# --plain drops the gauge readings. They are the authored scenario's numbers,
+# and the whitepaper uses this map to evidence a claim about geography - which
+# lanes and chokepoints are modelled - not about water levels. Carrying
+# centimetre readings into a technical paper, away from the "Synthetic
+# scenario" label that sits beside them on the landing page, is exactly how an
+# authored figure starts being read as a live one.
+PLAIN = "--plain" in sys.argv
+
+if PLAIN:
+    labels = (
+        # Rotterdam and Emmerich are 7px apart. With the readings gone each is
+        # a single line, so they need the same vertical separation the two-line
+        # version got for free: one above its dot, one below.
+        stack("RTM",  [("ROTTERDAM", "on")], 8, -6)
+        + stack("EMM",  [("EMMERICH", "")], -8, 10, "end")
+        + stack("DUI",  [("DUISBURG-RUHRORT", "")], 8, 4)
+        + stack("KAUB", [("KAUB", "rd")], 12, 4)
+        + stack("BSL",  [("BASEL", "on")], 8, 4)
+        + T(168, 268, "RAIL + ROAD", "bl", "end") + T(168, 280, "+1 d", "bl", "end")
+    )
+else:
+    labels = (
+        stack("RTM",  [("ROTTERDAM", "on")], 8, -6)
+        # Emmerich and Duisburg-Ruhrort are 23px apart and each wants two lines,
+        # so the upper one hangs to the left rather than stacking into its
+        # neighbour.
+        + stack("EMM",  [("EMMERICH", ""), ("51 cm", "")], -8, 10, "end")
+        + stack("DUI",  [("DUISBURG-RUHRORT", ""), ("196 cm", "")], 8, 4)
+        + stack("KAUB", [("KAUB", "rd"), ("44 cm", "rd"), ("threshold 78", "")], 12, -1)
+        + stack("BSL",  [("BASEL", "on")], 8, 4)
+        + T(168, 268, "RAIL + ROAD", "bl", "end") + T(168, 280, "+1 d", "bl", "end")
+    )
 
 svg = f'''<svg class="corridor" viewBox="0 0 {W:.0f} {H}" role="img" aria-label="{ALT}">
           <path class="land" d="{p['land']}"/>
