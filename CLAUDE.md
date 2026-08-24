@@ -43,9 +43,10 @@ it**, in plain language, at the end of every phase. Prefer obvious code over cle
 **All five phases are built.** The demo runs end to end: `uvicorn src.app:app --reload`, then open
 http://127.0.0.1:8000 and press the button. `README.md` is the front door for anyone new.
 
-Two claims still need a human to witness them against the real thing — see
-[Two things still need a human to confirm](#two-things-still-need-a-human-to-confirm) below.
-Everything else is verified.
+It is also **deployed on Vercel** and running against the live Groq key there.
+
+One claim still needs a human to judge it — see
+[What still needs a human](#what-still-needs-a-human) below. Everything else is verified.
 
 > **Path note:** `DESIGN.md` shows the tree rooted at `trade-risk-agent/`. This repo is checked out
 > as `Logistics-Freight-Forwarding`. Build at the **repo root** — `src/`, `data/`, `static/` go
@@ -234,22 +235,33 @@ Alongside that: a failed run returns a readable sentence rather than a stack tra
 missing provider falls back to deterministic logic and every affected card is badged
 `rule`; and the page loads no external asset, so flaky wifi cannot blank it.
 
-### Two things still need a human to confirm
+### What still needs a human
 
-Phases 1 and 2 were built in a sandbox with no outbound network and no AI key, so
-two claims are **written and tested but not yet witnessed against the real thing**:
+Everything was built in a sandbox with no outbound network and no AI key, so several
+claims were written and tested but unwitnessed. Most are now confirmed.
 
-1. **The live news pull.** Every source failed closed and was recorded rather than
-   crashing (that path is well tested), but no real GDELT/RSS/PEGELONLINE response
-   has been parsed. Run `python -m src.risk_monitor` on a real connection and
-   confirm at least one non-English source returns items.
-2. **How the LLM's prose actually reads**, in both the Route Advisor and the Comms
-   Agent. Routing and fallbacks are verified against stubs, and the deterministic
-   templates already produce the correct 2/1/2 split and readable emails. But the
-   wording — the demo's centrepiece — depends on the live model. Run
-   `python -m src.comms_agent --inject` with a key, read SHP-002's reasoning and its
-   two drafts aloud. If they don't sound like a person, tune `ADVISOR_SYSTEM` in
-   `route_advisor.py` and `CARRIER_SYSTEM` / `CUSTOMER_SYSTEM` in `comms_agent.py`.
+**Confirmed in production** (Vercel, live Groq key, observed on screen):
+
+- **The model really is deciding.** A run produced no `rule` badges on any card, which
+  means all three actioned shipments went through `decide_with_llm` and the provider
+  answered. The deterministic fallback was not used.
+- **The pipeline fits the function timeout.** A full cycle makes up to a dozen
+  sequential model calls, and a cold serverless function is capped at 60s. It
+  completed. This was a real risk, not a theoretical one.
+
+**Still open — and it needs judgement, not a test:**
+
+- **How the prose actually reads.** Routing, fallbacks and guard rails are verified
+  against stubs; the model is demonstrably being called. But whether SHP-002's
+  reasoning and its two drafted emails sound like a person wrote them is the demo's
+  centrepiece and cannot be asserted in a test. Read them aloud. If they sound
+  robotic, tune `ADVISOR_SYSTEM` in `route_advisor.py` and `CARRIER_SYSTEM` /
+  `CUSTOMER_SYSTEM` in `comms_agent.py` — the prompts, not the plumbing.
+- **Whether live news sources return anything useful.** The fail-closed path is well
+  tested and the deployed run completes, but nobody has confirmed a real
+  GDELT/RSS/PEGELONLINE response was parsed. The dashboard's source line
+  ("N of 14 sources read") answers this at a glance; `python -m src.risk_monitor`
+  on a real connection answers it in detail.
 
 ### Running the demo
 
@@ -258,7 +270,9 @@ uvicorn src.app:app --reload      # then open http://127.0.0.1:8000
 ```
 
 `GET /api/initial` renders the calm five-green-cards board instantly; `POST /run` is
-the button. The page is a single self-contained file — no CDN, no external font, no
+the button. `GET /api/health` reports what a running instance can actually see — the
+path it received, whether the dashboard and data files shipped, and whether a provider
+is configured. It is the first thing to check when a deploy misbehaves. The page is a single self-contained file — no CDN, no external font, no
 network call beyond its own API — so flaky wifi cannot blank it.
 
 Each component still runs alone, which is how you debug one without the others:
@@ -269,6 +283,19 @@ python -m src.route_advisor --inject --shipment SHP-002
 python -m src.comms_agent  --inject
 python -m src.orchestrator --no-live      # the whole loop, no network
 ```
+
+### Deployed on Vercel
+
+`api/index.py` re-exports the same FastAPI app; `vercel.json` rewrites every path to it
+and lists `includeFiles` so `data/` and `static/` are bundled (the Python builder traces
+imports, not data files). Two serverless facts are handled in `config.py`: the app
+directory is read-only, so `risk_state.json` goes to the temp directory; and functions
+have a hard timeout, so the live pull drops to 10s and the classifier cap to 16 items.
+
+`GROQ_API_KEY` lives in Vercel's environment variables. **Adding it requires a redeploy** —
+Vercel bakes env vars in at deploy time, so an existing deployment will not pick it up.
+
+Deploy for sharing a link; run `uvicorn` locally for a demo you are presenting.
 
 ### How the decision layer splits the work
 
