@@ -424,44 +424,144 @@ h1,h2,h3,h4,p{margin:0}
 .mail-foot .approve.ok{background:var(--green-100); color:var(--green)}
 
 /* ---------- live gauges ---------- */
-/* The only numbers on this page that are not authored. A reading against a
-   limit is a ratio against a limit, which is a meter - so that is what it is:
-   the fill is the level, the notch is where loading restrictions start, and
-   the track is a lighter step of the fill's own ramp so the state reads across
-   the whole bar. The state is spelled out in words beside it, because a colour
-   on its own is not a label. */
-.gauges{margin-top:32px; padding:20px 22px; border:1px solid var(--border);
-        border-radius:var(--r-md); background:var(--card); box-shadow:var(--shadow-card)}
-.gauges .g-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:20px}
+/* The only numbers on this page that are not authored, so they get the room:
+   one card per gauge, and a map of the corridor beside them showing where the
+   readings actually are.
+
+   A reading against a limit is a ratio against a limit, which is a meter - the
+   fill is the level, the notch is where loading restrictions start, and the
+   track is a lighter step of the fill's own ramp so state reads across the
+   whole bar. State is spelled out in words too, because a colour on its own is
+   not a label.
+
+   Anatomy borrowed from bklit-ui (never its code - this page has no build
+   step): the stat card's label-and-pill top row over a large value, the
+   funnel's concentric halo rings and its 0.12s entrance stagger, and the
+   choropleth's graticule. */
+.gauges{margin-top:32px}
+.gauges .g-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px}
 .gauges .g-head h3{font-size:14px; line-height:20px; font-weight:600; letter-spacing:-.28px}
 .gauges .g-when{margin-left:auto; font-size:11.5px; line-height:16px; color:var(--faint)}
-.gauges .g-row{display:grid; grid-template-columns:repeat(3,1fr); gap:24px}
+
+/* The cards are the boxes here, so the panel around them is not one too -
+   nesting a card inside a card is the thing the single card rule exists to
+   stop. */
+.gauges .g-body{display:grid; grid-template-columns:minmax(0,1fr) 228px; gap:16px;
+                align-items:stretch}
+.gauges .g-cards{display:flex; flex-direction:column; gap:12px}
+
+.gauges .g{padding:14px 16px; border:1px solid var(--border); border-radius:var(--r-md);
+           background:var(--card); box-shadow:var(--shadow-card);
+           transition:transform .5s var(--ease), opacity .5s var(--ease),
+                      border-color .2s var(--ease)}
+.gauges .g:hover{border-color:var(--border-strong)}
+/* Entrance, staggered by --i. Held off until the reading lands so the numbers
+   do not animate in and then change. */
+.gauges .g.enter{opacity:0; transform:translateY(10px)}
+.gauges .g.enter.in{opacity:1; transform:none;
+                    transition-delay:calc(var(--i, 0) * .12s)}
+
+.gauges .g-top{display:flex; align-items:center; gap:10px}
 .gauges .g-name{font-size:10px; line-height:14px; font-weight:500; letter-spacing:.07em;
                 text-transform:uppercase; color:var(--faint)}
-/* A standalone display number takes the font's proportional figures. Tabular
-   is for columns that have to line up, and it reads loose at this size. */
-.gauges .g-val{margin-top:5px; font-size:28px; line-height:32px; font-weight:600;
-               letter-spacing:-1.1px; color:var(--fg)}
+.gauges .g-top .st-badge{margin-left:auto}
+/* A standalone display number takes the font's proportional figures. Tabular is
+   for columns that have to line up, and it reads loose at this size. */
+/* Value and meter share a row: given the page's full width a stacked card is
+   mostly empty, and three empty cards stand much taller than the map beside
+   them. Side by side they read as one dashboard line and the heights match. */
+.gauges .g-read{margin-top:10px; display:flex; align-items:baseline; gap:20px}
+.gauges .g-val{font-size:30px; line-height:34px; font-weight:600;
+               letter-spacing:-1.2px; color:var(--fg); flex:none;
+               min-width:104px}
 .gauges .g-val u{text-decoration:none; font-size:14px; font-weight:500;
                  letter-spacing:-.2px; color:var(--faint); margin-left:4px}
-.gauges .g-meter{position:relative; height:6px; border-radius:999px; margin-top:12px;
+
+.gauges .g-line{flex:1; min-width:0; display:flex; align-items:center; gap:10px}
+.gauges .g-meter{position:relative; flex:1; height:6px; border-radius:999px;
                  background:var(--gray-200)}
-.gauges .g-fill{position:absolute; top:0; bottom:0; left:0; border-radius:999px;
-                background:var(--gray-600)}
-/* The notch is the threshold, so it has to stay legible on top of the fill as
-   well as on the empty track - hence a gap in the bar rather than a coloured
-   line on it. */
+.gauges .g-fill{position:absolute; top:0; bottom:0; left:0; width:0; border-radius:999px;
+                background:var(--gray-600);
+                /* Not --ease: that curve overshoots, and a bar that runs past
+                   its own reading before settling is showing a number that was
+                   never read. */
+                transition:width .9s cubic-bezier(.22,.61,.36,1);
+                transition-delay:calc(var(--i, 0) * .12s)}
+/* The notch is the threshold, so it has to stay legible on the fill as well as
+   on the empty track - hence a gap in the bar rather than a line on it. */
 .gauges .g-mark{position:absolute; top:-3px; bottom:-3px; width:2px; margin-left:-1px;
                 background:var(--card); box-shadow:0 0 0 1px var(--border-strong);
                 border-radius:1px}
+.gauges .g-lim{font-size:11px; line-height:16px; color:var(--faint); flex:none;
+               font-variant-numeric:tabular-nums}
 .gauges .g-green{background:var(--green-100)} .gauges .g-green .g-fill{background:var(--green)}
 .gauges .g-amber{background:var(--amber-100)} .gauges .g-amber .g-fill{background:var(--amber)}
 .gauges .g-red{background:var(--red-100)}     .gauges .g-red   .g-fill{background:var(--red)}
-.gauges .g-state{margin-top:12px}
-.gauges .g-sub{margin-top:8px; font-size:11.5px; line-height:16px; color:var(--faint)}
 .gauges .g.gone .g-val{color:var(--gray-600)}
-.gauges .g-note{margin-top:20px; padding-top:16px; border-top:1px solid var(--border);
-                font-size:12.5px; line-height:18px; color:var(--faint); max-width:92ch}
+.gauges .g-err{margin-top:10px; font-size:11.5px; line-height:16px; color:var(--faint)}
+
+/* ---- the corridor map ---- */
+/* Real geography: every point is the actual place, projected equirectangular
+   with a cos(lat) correction so the corridor keeps its true proportions. The
+   river is drawn in a neutral gray on purpose - on this page colour means
+   state, never decoration, so the only colour on the map is the gauges'. */
+.gauges .g-map{margin:0; padding:14px 14px 12px; border:1px solid var(--border);
+               border-radius:var(--r-md); background:var(--card);
+               box-shadow:var(--shadow-card)}
+.gauges .g-map svg{display:block; width:auto; height:300px; margin:0 auto;
+                   max-width:100%}
+.gauges .g-map figcaption{margin-top:8px; font-size:11px; line-height:15px;
+                          color:var(--faint); text-align:center}
+.gauges .g-map .grat{stroke:var(--border); stroke-width:1; fill:none}
+.gauges .g-map .river{stroke:var(--gray-400); stroke-width:2.4; fill:none;
+                      stroke-linecap:round; stroke-linejoin:round;
+                      stroke-dasharray:1; stroke-dashoffset:1;
+                      transition:stroke-dashoffset 1.7s ease}
+.gauges .g-map.in .river{stroke-dashoffset:0}
+.gauges .g-map .end{fill:var(--fg)}
+.gauges .g-map text{font-family:"Geist Mono",ui-monospace,monospace; font-size:8.5px;
+                    letter-spacing:.05em; fill:var(--faint)}
+.gauges .g-map text.on{fill:var(--fg)}
+
+/* The pins fade up after the river has drawn most of itself. */
+.gauges .g-map .pin{opacity:0; transition:opacity .45s var(--ease);
+                    transition-delay:calc(1.05s + var(--i, 0) * .12s)}
+.gauges .g-map.in .pin{opacity:1}
+/* bklit's halo: concentric rings, each larger and fainter than the last. */
+.gauges .g-map .halo-2{opacity:.18} .gauges .g-map .halo-1{opacity:.5}
+.gauges .g-map .pin.s-green .core,.gauges .g-map .pin.s-green .halo-1,
+.gauges .g-map .pin.s-green .halo-2,.gauges .g-map .pin.s-green .pulse{fill:var(--green)}
+.gauges .g-map .pin.s-amber .core,.gauges .g-map .pin.s-amber .halo-1,
+.gauges .g-map .pin.s-amber .halo-2,.gauges .g-map .pin.s-amber .pulse{fill:var(--amber)}
+.gauges .g-map .pin.s-red .core,.gauges .g-map .pin.s-red .halo-1,
+.gauges .g-map .pin.s-red .halo-2,.gauges .g-map .pin.s-red .pulse{fill:var(--red)}
+.gauges .g-map .pin .core,.gauges .g-map .pin .halo-1,
+.gauges .g-map .pin .halo-2,.gauges .g-map .pin .pulse{fill:var(--gray-500)}
+/* Only a gauge that is actually past its limit flashes. A pin that pulses
+   whatever the river is doing is decoration, and it would cry wolf. */
+.gauges .g-map .pulse{opacity:0; transform-box:fill-box; transform-origin:center}
+.gauges .g-map .pin.flash .pulse{animation:g-pulse 2.6s ease-out infinite;
+                                 animation-delay:calc(var(--i, 0) * .5s)}
+@keyframes g-pulse{
+  0%{transform:scale(.35); opacity:.55}
+  70%,100%{transform:scale(2.4); opacity:0}
+}
+
+.gauges .g-note{margin-top:14px; font-size:12px; line-height:17px; color:var(--faint)}
+
+@media (max-width:900px){
+  .gauges .g-body{grid-template-columns:1fr}
+  /* The map is a tall column; given the full width it would tower. */
+  .gauges .g-map{max-width:260px; margin:0 auto}
+}
+@media (prefers-reduced-motion:reduce){
+  .gauges .g,.gauges .g-fill,.gauges .g-map .river,.gauges .g-map .pin{
+    transition:none; transition-delay:0s}
+  .gauges .g.enter{opacity:1; transform:none}
+  .gauges .g-map .river{stroke-dashoffset:0}
+  .gauges .g-map .pin{opacity:1}
+  .gauges .g-map .pin.flash .pulse{animation:none}
+}
 
 /* ---------- worked example (the case study) ---------- */
 .case .cs-note{margin-top:18px; max-width:80ch; font-size:13px; line-height:19px;
@@ -562,6 +662,58 @@ h1,h2,h3,h4,p{margin:0}
 .cs .cs-foot{margin-top:auto; padding-top:16px; font-size:11.5px; line-height:16px;
              color:var(--faint)}
 
+/* ---------- decision card (booked plan vs recommended) ---------- */
+/* The anatomy is a side-by-side: what is booked now against what the advisor
+   proposes, each with its transit figure large enough to compare across the
+   gutter and one line of rationale underneath. The recommended side carries
+   the same blue the board uses for a rerouted shipment, so a card read here
+   and a row read on the board agree on what the colour means.
+
+   Every figure in it is read from routes.json and shipments.json and matches
+   what `python -m src.route_advisor --inject --shipment SHP-001` prints. It
+   is a rendering of a real run of the advisor, not a mock-up with numbers
+   chosen to look good - which is why the recommended route is the SLOWER of
+   the two. Thirty-four days beats thirty-two plus a strike, and the honest
+   version of this card has to show that rather than hide it. */
+.dec{margin-top:34px; background:var(--card); border:1px solid var(--border);
+     border-radius:var(--r-md); box-shadow:var(--shadow-card); overflow:hidden}
+
+.dec-h{display:flex; align-items:center; gap:9px; flex-wrap:wrap; padding:12px 20px;
+       background:var(--card-muted); border-bottom:1px solid var(--border)}
+.dec-h .ref{font-family:"Geist Mono",ui-monospace,monospace; font-size:12.5px;
+            font-weight:500; color:var(--blue)}
+.dec-h .lane{font-family:"Geist Mono",ui-monospace,monospace; font-size:12.5px;
+             color:var(--muted)}
+.dec-h .sep{color:var(--gray-500)}
+.dec-h .r{margin-left:auto}
+
+.dec-t{padding:20px 20px 19px}
+.dec-t h4{margin:0; font-size:22px; line-height:27px; font-weight:600; letter-spacing:-.7px}
+.dec-t .meta{margin:6px 0 0; font-family:"Geist Mono",ui-monospace,monospace;
+             font-size:12.5px; line-height:18px; color:var(--faint)}
+
+.dec-cols{display:grid; grid-template-columns:1fr 1fr; border-top:1px solid var(--border)}
+.dec-col{padding:19px 20px 21px; min-width:0}
+.dec-col + .dec-col{border-left:1px solid var(--border); background:var(--blue-100)}
+.dec-col .k{margin:0; font-size:10px; line-height:14px; font-weight:500; letter-spacing:.07em;
+            text-transform:uppercase; color:var(--faint)}
+.dec-col.rec .k{color:var(--blue)}
+.dec-col .n{margin:9px 0 0; font-size:18px; line-height:24px; font-weight:600;
+            letter-spacing:-.5px}
+.dec-col .d{margin:3px 0 0; font-family:"Geist Mono",ui-monospace,monospace;
+            font-size:12.5px; line-height:18px; color:var(--faint)}
+.dec-col .big{margin:13px 0 0; font-size:38px; line-height:42px; font-weight:600;
+              letter-spacing:-1.8px; font-variant-numeric:tabular-nums}
+.dec-col .big u{text-decoration:none; margin-left:7px; font-size:15px; font-weight:500;
+                letter-spacing:-.2px; color:var(--faint)}
+.dec-col .st-badge{margin-top:11px}
+.dec-col .why{margin:13px 0 0; font-size:13.5px; line-height:20px; color:var(--muted)}
+
+.dec-f{display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:14px 20px;
+       background:var(--card-muted); border-top:1px solid var(--border)}
+.dec-note{margin:14px 0 0; max-width:80ch; font-size:13px; line-height:19px; color:var(--faint)}
+.dec-note code{font-family:"Geist Mono",ui-monospace,monospace; font-size:12px; color:var(--muted)}
+
 /* ---------- signup (a placeholder, and it says so) ---------- */
 .signup{border-top:1px solid var(--border); background:var(--card); padding:88px 0;
         text-align:center}
@@ -594,6 +746,116 @@ h1,h2,h3,h4,p{margin:0}
          align-items:center; gap:8px; flex-wrap:wrap}
 .tbl .ds{font-size:13px; line-height:19px; color:var(--muted)}
 .tbl .kx{justify-self:start}
+
+/* ---------- worker work views ----------
+   The three desk Workers used to be three paragraphs of prose. A paragraph
+   is the wrong instrument for describing a sequence of screens, so each one
+   is now a miniature of its own panel from the board, playing the clicks the
+   job actually takes: pick the booking, the Worker does the work, stop at
+   the approval gate.
+
+   There is no video file and no player. The recording is markup revealed
+   step by step under a drawn cursor, which means it costs no request, cannot
+   buffer, cannot fail on the venue wifi, and stays legible at any zoom - all
+   four of which a screen capture would put at risk in front of a room.
+
+   Every string in them is what the real panel produces for SHP-001 under the
+   Hamburg scenario (src/roster.py, src/tms.py). The cards keep their
+   SCRIPTED tag: these Workers replay authored content, and a prettier
+   rendering of that must not start implying otherwise.
+
+   prefers-reduced-motion skips the timeline and shows the finished panel.
+   The end state is the information; the motion is only the explanation. */
+.wv{position:relative; border:1px solid var(--border); border-radius:var(--r-sm);
+    background:var(--card); overflow:hidden}
+.wv-bar{height:27px; display:flex; align-items:center; gap:5px; padding:0 9px;
+        border-bottom:1px solid var(--border); background:var(--card-muted)}
+.wv-bar i{width:6px; height:6px; border-radius:50%; background:var(--gray-400); flex:none}
+.wv-bar .url{margin-left:7px; font-size:10px; color:var(--faint)}
+.wv-bar .stamp{margin-left:auto; font-size:9.5px; letter-spacing:.04em; color:var(--faint);
+               transition:color .2s linear}
+
+/* The booking picker, standing in for the sidebar the real board carries. */
+.wv-rail{display:flex; gap:5px; padding:8px 9px 0}
+.wv-chip{font-family:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+         font-size:9.5px; padding:2px 6px; border-radius:4px; color:var(--faint);
+         border:1px solid var(--border); background:var(--card);
+         transition:background .18s var(--ease), color .18s var(--ease),
+                    border-color .18s var(--ease)}
+.wv-chip.tapped{background:var(--fg); border-color:var(--fg); color:#fff}
+
+/* The three cards are stretched to the tallest by the grid, so the window
+   is stretched to the card and all three line up - no magic height, and it
+   still holds when the copy rewraps at a narrower width. */
+.wv-card .art-b{display:flex; flex-direction:column}
+.wv-card .wv{display:flex; flex-direction:column; flex:1}
+.wv-b{flex:1; padding:9px; min-height:196px; font-size:11px; line-height:15px}
+.wv-s{opacity:0; transform:translateY(4px);
+      transition:opacity .3s var(--ease), transform .3s var(--ease)}
+.wv-s.on{opacity:1; transform:none}
+.wv .off{display:none}
+.wv-s.swap{display:none}
+.wv-s.swap.on{display:inline-flex}
+
+/* Block, not flex: a flex gap lands between the text runs either side of an
+   inline chip as well as around it, which double-spaces the punctuation. */
+.wv-t{font-size:11px; font-weight:500; letter-spacing:-.1px; margin-bottom:7px}
+.wv-t .chip{margin-left:4px; vertical-align:1px}
+.wv .chip{font-size:9px; padding:1px 5px; letter-spacing:.04em}
+.wv .mono{font-size:10.5px}
+
+/* One inbound item, at the anatomy the board's own .inb card uses. */
+.wv-m{border:1px solid var(--border); border-radius:5px; padding:7px 8px}
+.wv-mh{display:flex; align-items:center; gap:5px; flex-wrap:wrap; margin-bottom:4px}
+.wv-mh .who{font-weight:500; font-size:10.5px}
+.wv-mh .ago{margin-left:auto; font-size:9.5px; color:var(--faint)}
+.wv-sub{font-weight:500; font-size:10.5px; margin-bottom:3px}
+.wv-body{color:var(--muted); font-size:10.5px; line-height:14px}
+.wv-r{margin-top:7px; padding:7px 8px; border-radius:5px; background:var(--card-muted);
+      border:1px solid var(--border); color:var(--fg); font-size:10.5px; line-height:14px}
+.wv-rl{font-size:9px; letter-spacing:.06em; text-transform:uppercase; color:var(--faint);
+       margin-bottom:3px}
+
+/* Key/value rows: the parsed RFQ fields, and the TMS field map. */
+.wv-f{display:grid; grid-template-columns:auto 1fr; gap:3px 10px; margin-top:7px}
+.wv-f .k{color:var(--faint); font-size:10px}
+.wv-f .v{color:var(--fg); font-size:10px; text-align:right}
+.wv-f .v .ar{color:var(--faint); margin:0 3px}
+.wv-f.map .v{text-align:left}
+.wv-note{margin-top:8px; font-size:9.5px; line-height:13px; color:var(--faint)}
+
+.wv-q{width:100%; border-collapse:collapse; margin-top:7px}
+.wv-q th{text-align:left; font-weight:500; font-size:9px; letter-spacing:.05em;
+         text-transform:uppercase; color:var(--faint); padding:0 0 4px}
+.wv-q td{padding:4px 0; border-top:1px solid var(--border); color:var(--muted);
+         font-size:10px}
+.wv-q td:last-child,.wv-q th:last-child{text-align:right}
+.wv-q tr.pick td{color:var(--fg); font-weight:500}
+
+/* The gate. Amber while it waits, green once approved - the same two states,
+   and the same two colours, the board itself uses. Approval changes a badge
+   and nothing else, here as there. */
+.wv-gate{display:flex; align-items:center; gap:7px; margin-top:9px; flex-wrap:wrap}
+.wv-g{display:inline-flex; font-size:9px; font-weight:600; letter-spacing:.04em; text-transform:uppercase;
+      padding:3px 7px; border-radius:4px; align-items:center}
+.wv-g.await{background:var(--amber-100); color:var(--amber)}
+.wv-g.done{background:var(--green-100); color:var(--green)}
+.wv-ap{height:22px; pointer-events:none; padding:0 10px; border-radius:4px; border:0; background:var(--fg);
+       color:#fff; font-family:inherit; font-size:10px; font-weight:500;
+       display:inline-flex; align-items:center; transition:background .18s var(--ease),
+       color .18s var(--ease)}
+.wv-ap.tapped{background:var(--gray-200); color:var(--faint)}
+
+/* The drawn cursor. It is decoration in the strict sense, so it is achromatic
+   and only the tap ring is allowed any colour. */
+.wv-cur{position:absolute; left:0; top:0; width:13px; height:17px; z-index:4;
+        pointer-events:none; opacity:0;
+        transition:transform .62s var(--ease), opacity .25s linear}
+.wv.play .wv-cur{opacity:1}
+.wv-cur::after{content:""; position:absolute; left:-8px; top:-8px; width:26px; height:26px;
+               border-radius:50%; border:1.5px solid var(--blue); opacity:0}
+.wv-cur.tap::after{animation:wvtap .5s var(--ease)}
+@keyframes wvtap{from{opacity:.6; transform:scale(.3)} to{opacity:0; transform:scale(1)}}
 
 /* ---------- non-goals ---------- */
 .nots{margin-top:36px}
@@ -688,6 +950,15 @@ h1,h2,h3,h4,p{margin:0}
   .h32{font-size:26px; line-height:32px; letter-spacing:-1px}
   .copy18{font-size:16px; line-height:25px}
   .g2,.g3,.g4{grid-template-columns:1fr}
+  /* Two 38px figures side by side do not fit a phone. Stacked, the border
+     between them has to move from the left edge to the top or the tinted
+     panel loses its boundary. */
+  .dec-cols{grid-template-columns:1fr}
+  .dec-col + .dec-col{border-left:0; border-top:1px solid var(--border)}
+  .dec-col .big{font-size:32px; line-height:36px; letter-spacing:-1.4px}
+  /* The header wraps to two lines here, and a chip pushed to the right edge of
+     a line of its own reads as detached from the lane it qualifies. */
+  .dec-h .r{margin-left:0}
   /* Three gauges across a phone is three different baselines the moment one
      name wraps to a second line. Full width each, and they line up again. */
   .gauges .g-row{grid-template-columns:1fr; gap:22px}
@@ -1162,18 +1433,72 @@ h1,h2,h3,h4,p{margin:0}
       <div class="g-head">
         <span class="chip" data-g-chip>Reading&hellip;</span>
         <h3>The Rhine, right now</h3>
-        <span class="g-when" data-g-when>PEGELONLINE &middot; three gauges</span>
+        <span class="g-when" data-g-when>PEGELONLINE</span>
       </div>
-      <div class="g-row" data-g-row>
-        <div class="g gone"><p class="g-name">Kaub</p><p class="g-val">&mdash;</p>
-          <div class="g-meter"></div><p class="g-sub">reading the gauge&hellip;</p></div>
-        <div class="g gone"><p class="g-name">Duisburg-Ruhrort</p><p class="g-val">&mdash;</p>
-          <div class="g-meter"></div><p class="g-sub">reading the gauge&hellip;</p></div>
-        <div class="g gone"><p class="g-name">Emmerich</p><p class="g-val">&mdash;</p>
-          <div class="g-meter"></div><p class="g-sub">reading the gauge&hellip;</p></div>
+
+      <div class="g-body">
+        <div class="g-cards" data-g-row>
+          <div class="g gone" style="--i:0"><div class="g-top"><p class="g-name">Kaub</p></div>
+            <div class="g-read"><p class="g-val">&mdash;</p>
+              <div class="g-line"><div class="g-meter"></div></div></div></div>
+          <div class="g gone" style="--i:1"><div class="g-top"><p class="g-name">Duisburg-Ruhrort</p></div>
+            <div class="g-read"><p class="g-val">&mdash;</p>
+              <div class="g-line"><div class="g-meter"></div></div></div></div>
+          <div class="g gone" style="--i:2"><div class="g-top"><p class="g-name">Emmerich</p></div>
+            <div class="g-read"><p class="g-val">&mdash;</p>
+              <div class="g-line"><div class="g-meter"></div></div></div></div>
+        </div>
+
+        <!-- The corridor, drawn from real coordinates: every point is the
+             actual place, projected equirectangular with a cos(lat) correction
+             so the Rhine keeps its true shape rather than a drawn-by-eye one.
+             The cards carry the readings, so the map itself is decorative to a
+             screen reader and the caption says what it is. -->
+        <figure class="g-map" data-g-map>
+          <svg viewBox="0 0 250 400" role="img" aria-hidden="true" focusable="false">
+            <g class="grat">
+              <path d="M8 101.6h234M8 179.4h234M8 257.2h234M8 335h234"/>
+            </g>
+            <path class="river" pathLength="1"
+                  d="M22.0 30.0C29.4 30.6 81.4 34.7 90.9 35.4C100.4 36.2 106.9 35.4 111.1 37.0C115.2 38.6 127.1 47.1 129.7 50.2C132.3 53.4 134.4 63.0 135.2 66.6C136.1 70.1 136.5 79.5 137.7 83.7C139.0 87.9 145.1 102.1 146.8 106.2C148.5 110.4 150.4 117.8 153.8 122.6C157.3 127.4 175.4 146.1 179.0 151.4C182.6 156.7 186.0 169.1 187.6 172.4C189.2 175.6 191.4 181.0 194.1 181.7C196.8 182.5 209.7 175.4 212.7 179.4C215.8 183.4 222.1 210.8 222.8 219.1C223.5 227.3 223.1 248.9 219.3 256.4C215.4 264.0 190.9 277.7 186.6 289.9C182.2 302.0 179.4 361.5 178.5 370.0"/>
+
+            <circle class="end" cx="22" cy="30" r="2.6"/>
+            <text class="on" x="30" y="27">ROTTERDAM</text>
+            <circle class="end" cx="178.5" cy="370" r="2.6"/>
+            <text class="on" x="171" y="384" text-anchor="end">BASEL</text>
+
+            <!-- Emmerich -->
+            <g class="pin" data-pin="EMMERICH" style="--i:2">
+              <circle class="pulse" cx="111.1" cy="37" r="5"/>
+              <circle class="halo-2" cx="111.1" cy="37" r="9"/>
+              <circle class="halo-1" cx="111.1" cy="37" r="5.8"/>
+              <circle class="core"   cx="111.1" cy="37" r="3.1"/>
+              <text x="111.1" y="59" text-anchor="middle" data-pin-label="EMMERICH">EMMERICH</text>
+            </g>
+
+            <!-- Duisburg-Ruhrort -->
+            <g class="pin" data-pin="DUISBURG-RUHRORT" style="--i:1">
+              <circle class="pulse" cx="135.2" cy="66.6" r="5"/>
+              <circle class="halo-2" cx="135.2" cy="66.6" r="9"/>
+              <circle class="halo-1" cx="135.2" cy="66.6" r="5.8"/>
+              <circle class="core"   cx="135.2" cy="66.6" r="3.1"/>
+              <text x="147" y="70" data-pin-label="DUISBURG-RUHRORT">DUISBURG</text>
+            </g>
+
+            <!-- Kaub -->
+            <g class="pin" data-pin="KAUB" style="--i:0">
+              <circle class="pulse" cx="187.6" cy="172.4" r="5"/>
+              <circle class="halo-2" cx="187.6" cy="172.4" r="9"/>
+              <circle class="halo-1" cx="187.6" cy="172.4" r="5.8"/>
+              <circle class="core"   cx="187.6" cy="172.4" r="3.1"/>
+              <text x="176" y="176" text-anchor="end" data-pin-label="KAUB">KAUB</text>
+            </g>
+          </svg>
+          <figcaption>Rhine corridor &middot; Rotterdam to Basel</figcaption>
+        </figure>
       </div>
-      <p class="g-note" data-g-note>Read live from PEGELONLINE when this page loaded.
-        The notch on each bar is the level below which barges stop loading normally.</p>
+
+      <p class="g-note" data-g-note>Reading the gauges&hellip;</p>
     </div>
 
     <p class="cs-note rv">
@@ -1409,6 +1734,135 @@ h1,h2,h3,h4,p{margin:0}
         </div>
       </div>
     </div>
+
+    <!-- The other branch. The trail above is the hold, where there is no good
+         option; these are the same run's two clean reroutes, each laid out as
+         the booked plan against the proposed one. Both halves of the board's
+         behaviour, rather than only the hard half.
+
+         Two cards rather than one because the pair is the argument: same
+         event, same route change, and the reasons are not interchangeable.
+         SHP-001 has a day more slack. SHP-005 has cargo that constrains which
+         ports can take it at all, and a consignee in Hamburg who is still
+         served better by the reroute than by waiting - which is the opposite
+         of the call made for SHP-002, whose consignee is also in Hamburg. A
+         reader who only ever sees one reroute card cannot tell a decision
+         from a rule. -->
+    <div class="head rv" style="max-width:none;margin-top:64px">
+      <span class="eyebrow">The other branch</span>
+      <h3 class="h32" style="margin-top:12px">And these are the clean ones.</h3>
+      <p class="copy16" style="margin-top:12px;max-width:74ch">Two of the five reroute on the
+        same event, and neither is a copy of the other. Each is worth showing whole: the plan
+        that is booked, the plan the advisor proposes, and the arithmetic that separates
+        them.</p>
+    </div>
+
+    <div class="dec rv">
+      <div class="dec-h">
+        <span class="ref">HLCU-2261188</span>
+        <span class="sep">·</span>
+        <span class="lane">Shanghai → Munich</span>
+        <span class="r"><span class="chip red">Hamburg strike · high</span></span>
+      </div>
+
+      <div class="dec-t">
+        <h4>Reroute the discharge port</h4>
+        <p class="meta">SHP-001 · Automotive parts · Hapag-Lloyd · 12 x 40HC · 4d slack</p>
+      </div>
+
+      <div class="dec-cols">
+        <div class="dec-col">
+          <p class="k">Booked</p>
+          <p class="n">Hamburg discharge</p>
+          <p class="d">R-HAM-STD · via Suez · rail ex-Hamburg</p>
+          <p class="big">32<u>days transit</u></p>
+          <span class="st-badge st-red"><i></i>Exposed · HAM</span>
+          <p class="why">Terminal handling, gate operations and rail shunting stop for the
+            walkout. Staying put projects three to five days of delay against four days of
+            slack — in the worst case the deadline breaks.</p>
+        </div>
+
+        <div class="dec-col rec">
+          <p class="k">Recommended</p>
+          <p class="n">Rotterdam discharge</p>
+          <p class="d">R-RTM-ALT · via Suez · road ex-Rotterdam</p>
+          <p class="big">34<u>days transit</u></p>
+          <span class="st-badge st-blue"><i></i>Reroute · RTM</span>
+          <p class="why">Two days longer on paper, and nothing active on any chokepoint it
+            passes. Two days of added transit against four of slack, so the deadline holds
+            without spending the whole margin.</p>
+        </div>
+      </div>
+
+      <div class="dec-f">
+        <span class="fact">ETA <b>Sep 13 → Sep 15</b></span>
+        <span class="fact">required by <b>Sep 17</b></span>
+        <span class="fact">cost index <b>100 → 108</b></span>
+        <span class="fact">alternates weighed <b>2</b></span>
+        <span class="fact">decided by <b>model</b></span>
+      </div>
+    </div>
+
+    <!-- The second reroute. Same event, same pair of routes, and deliberately
+         not the same card: the slack is a day tighter, the cargo is
+         out-of-gauge so the alternate has to be a heavy-lift port, and the
+         consignee is in Hamburg - the fact that made SHP-002 hold. -->
+    <div class="dec rv">
+      <div class="dec-h">
+        <span class="ref">HLCU-2264903</span>
+        <span class="sep">·</span>
+        <span class="lane">Busan → Hamburg</span>
+        <span class="r"><span class="chip red">Hamburg strike · high</span></span>
+      </div>
+
+      <div class="dec-t">
+        <h4>Reroute, with the final leg by road</h4>
+        <p class="meta">SHP-005 · Machinery, out-of-gauge · Hapag-Lloyd · 3 x 40FR flatrack ·
+          3d slack</p>
+      </div>
+
+      <div class="dec-cols">
+        <div class="dec-col">
+          <p class="k">Booked</p>
+          <p class="n">Hamburg discharge</p>
+          <p class="d">R-HAM-STD · via Suez · consignee at the port</p>
+          <p class="big">32<u>days transit</u></p>
+          <span class="st-badge st-red"><i></i>Exposed · HAM</span>
+          <p class="why">The same walkout, one day tighter: three to five days of delay against
+            three days of slack. Heavy-lift handling stops with everything else, so out-of-gauge
+            cargo waits out the backlog rather than moving through it.</p>
+        </div>
+
+        <div class="dec-col rec">
+          <p class="k">Recommended</p>
+          <p class="n">Rotterdam discharge</p>
+          <p class="d">R-RTM-ALT · via Suez · road Rotterdam → Hamburg</p>
+          <p class="big">34<u>days transit</u></p>
+          <span class="st-badge st-blue"><i></i>Reroute · RTM</span>
+          <p class="why">Rotterdam takes heavy lift, which is what makes this reroute available
+            to flatrack cargo at all. Two days of added transit against three of slack — it
+            fits, with a day left over.</p>
+        </div>
+      </div>
+
+      <div class="dec-f">
+        <span class="fact">ETA <b>Sep 14 → Sep 16</b></span>
+        <span class="fact">required by <b>Sep 17</b></span>
+        <span class="fact">cost index <b>100 → 108</b></span>
+        <span class="fact">alternates weighed <b>2</b></span>
+        <span class="fact">decided by <b>model</b></span>
+      </div>
+    </div>
+
+    <p class="dec-note rv">Both shipments were offered the Cape routing <code>R-COGH-ALT</code>
+      as well, and both refused it: ten days longer, and it still discharges at Hamburg, so it
+      carries the disruption it was meant to avoid. SHP-005 is the one to read against the hold
+      above — its consignee is in Hamburg too, and it reroutes anyway, because a road leg from
+      Rotterdam is just road for a machine tool and a broken cold chain for a reefer. The
+      comparisons and the refusals all sit in the reasoning trails —
+      <code>python -m src.route_advisor --inject</code> prints the same figures these cards
+      show.</p>
+
   </div>
 </section>
 
@@ -1512,42 +1966,204 @@ firm revised ETA as soon as terminals restart.</p>
     </div>
 
     <div class="grid g3 rv" style="margin-top:40px">
-      <div class="art">
+      <div class="art wv-card">
         <div class="art-h"><span class="ttl">Inbox Worker</span>
           <span class="r chip synth">SCRIPTED</span></div>
         <div class="art-b">
-          <p class="copy16">Inbound mail read, classified by intent, linked to its booking
-            and answered with a draft. What arrives follows the decision: a rerouted box
-            draws an omit-notice and a status chase, a held one draws berth options.</p>
-          <p class="src" style="margin-top:12px">A booking left on plan gets a routine
-            milestone and <b style="color:var(--fg);font-weight:500">no drafted reply</b> —
-            answering everything is volume, not judgement.</p>
+          <div class="wv">
+            <div class="wv-bar"><i></i><i></i><i></i>
+              <span class="url mono">inbox</span><span class="stamp mono">ready</span></div>
+            <div class="wv-rail">
+              <span class="wv-chip" data-pick>SHP-001</span>
+              <span class="wv-chip">SHP-002</span>
+              <span class="wv-chip">SHP-003</span>
+            </div>
+            <div class="wv-b">
+              <div class="wv-s" data-at="[data-pick]" data-do="booking picked">
+                <p class="wv-t">2 inbound on <span class="mono">SHP-001</span> ·
+                  2 replies drafted</p>
+              </div>
+              <div class="wv-s" data-do="triaged and linked">
+                <div class="wv-m">
+                  <div class="wv-mh"><span class="who">Carrier operations</span>
+                    <span class="chip">booking change</span>
+                    <span class="ago">17m ago</span></div>
+                  <p class="wv-sub">Vessel to omit original discharge port</p>
+                  <p class="wv-body">Please confirm whether the box is discharged at the
+                    alternate port or held on board.</p>
+                </div>
+              </div>
+              <div class="wv-s" data-do="reply drafted">
+                <div class="wv-r"><div class="wv-rl">Drafted reply · carrier</div>
+                  Confirming discharge at RTM for SHP-001. Please re-nominate the booking
+                  to the alternate routing…</div>
+              </div>
+              <div class="wv-s" data-do="second inbound triaged">
+                <div class="wv-m" style="margin-top:7px">
+                  <div class="wv-mh"><span class="who">Bavaria Drivetrain GmbH</span>
+                    <span class="chip">status request</span>
+                    <span class="ago">34m ago</span></div>
+                  <p class="wv-sub">Any update on our automotive parts?</p>
+                  <p class="wv-body">We were expecting this in a few days and have seen the
+                    port news.</p>
+                </div>
+                <p class="wv-note">Triaged and linked automatically. Replies are drafted and
+                  held — there is no way to send one.</p>
+              </div>
+              <div class="wv-s" data-do="held at the gate" data-hold="1500">
+                <div class="wv-gate">
+                  <span class="wv-g await">DRAFT - not sent</span>
+                  <span class="wv-s swap wv-g done" data-at=".wv-ap" data-hide=".wv-g.await"
+                        data-do="approved · nothing sent">Approved — ready to send</span>
+                  <span class="wv-ap">Approve</span>
+                </div>
+              </div>
+              <span class="wv-cur"><svg width="13" height="17" viewBox="0 0 13 17" fill="none" aria-hidden="true">
+                <path d="M1.2 1.1l9.4 7.2-4.2.5 2.3 4.7-2 .9-2.3-4.8-3.2 2.7z"
+                      fill="#171717" stroke="#fff" stroke-width="1.1"
+                      stroke-linejoin="round"/></svg></span>
+            </div>
+          </div>
+          <p class="src" style="margin-top:12px">What arrives depends on the decision. A
+            booking left on plan draws a routine milestone and
+            <b style="color:var(--fg);font-weight:500">no drafted reply at all</b>.</p>
         </div>
       </div>
 
-      <div class="art">
+      <div class="art wv-card">
         <div class="art-h"><span class="ttl">RFQ Worker</span>
           <span class="r chip synth">SCRIPTED</span></div>
         <div class="art-b">
-          <p class="copy16">A rate request arrives as prose, is read into fields — lane,
-            equipment, commodity, ready date — priced against the carriers on that lane, and
-            answered with a drafted quote.</p>
+          <div class="wv">
+            <div class="wv-bar"><i></i><i></i><i></i>
+              <span class="url mono">rfq</span><span class="stamp mono">ready</span></div>
+            <div class="wv-rail">
+              <span class="wv-chip">SHP-001</span>
+              <span class="wv-chip" data-pick>SHP-002</span>
+              <span class="wv-chip">SHP-003</span>
+            </div>
+            <div class="wv-b">
+              <div class="wv-s" data-at="[data-pick]" data-do="booking picked">
+                <p class="wv-t">1 rate request on Ningbo → Hamburg</p>
+              </div>
+              <div class="wv-s" data-do="read">
+                <div class="wv-m">
+                  <div class="wv-mh"><span class="who">Nordmed Pharma Logistik AG</span>
+                    <span class="chip">rate request</span>
+                    <span class="ago">24m ago</span></div>
+                  <p class="wv-body">Need pricing Ningbo to Hamburg, 2 x 40ft, ready in
+                    about three weeks. What can you do?</p>
+                </div>
+              </div>
+              <div class="wv-s" data-do="read into fields">
+                <div class="wv-f">
+                  <span class="k">lane</span><span class="v">Ningbo → Hamburg</span>
+                  <span class="k">equipment</span><span class="v">2 x 40ft reefer</span>
+                  <span class="k">commodity</span><span class="v">Refrigerated pharma</span>
+                  <span class="k">ready</span><span class="v">≈ 3 weeks</span>
+                </div>
+              </div>
+              <div class="wv-s" data-do="priced against the lane">
+                <table class="wv-q"><thead><tr><th>Carrier</th><th>Via</th><th>Transit</th>
+                  <th>Index</th></tr></thead>
+                  <tbody>
+                    <tr class="pick"><td>Hapag-Lloyd</td><td>HAM</td><td>32d</td>
+                      <td>106 <span class="chip">+ surcharge</span></td></tr>
+                    <tr><td>Hapag-Lloyd</td><td>HAM</td><td>42d</td><td>130</td></tr>
+                  </tbody></table>
+              </div>
+              <div class="wv-s" data-do="quote drafted">
+                <div class="wv-r"><div class="wv-rl">Drafted quote</div>
+                  On Ningbo → Hamburg we would route via HAM with Hapag-Lloyd, around 32 days
+                  port to port. A port disruption surcharge of 6 index points currently
+                  applies…</div>
+              </div>
+              <div class="wv-s" data-do="held at the gate" data-hold="1500">
+                <div class="wv-gate">
+                  <span class="wv-g await">DRAFT - not sent</span>
+                  <span class="wv-s swap wv-g done" data-at=".wv-ap" data-hide=".wv-g.await"
+                        data-do="approved · nothing sent">Approved — ready to send</span>
+                  <span class="wv-ap">Approve</span>
+                </div>
+              </div>
+              <span class="wv-cur"><svg width="13" height="17" viewBox="0 0 13 17" fill="none" aria-hidden="true">
+                <path d="M1.2 1.1l9.4 7.2-4.2.5 2.3 4.7-2 .9-2.3-4.8-3.2 2.7z"
+                      fill="#171717" stroke="#fff" stroke-width="1.1"
+                      stroke-linejoin="round"/></svg></span>
+            </div>
+          </div>
           <p class="src" style="margin-top:12px">The active disruption is priced in. A quote
             written during a closure that ignores the surcharge is a quote that loses
             money.</p>
         </div>
       </div>
 
-      <div class="art">
+      <div class="art wv-card">
         <div class="art-h"><span class="ttl">TMS Link</span>
           <span class="r chip synth">DEMO CONNECTOR</span></div>
         <div class="art-b">
-          <p class="copy16">Bookings read in; each decision turned into the booking change it
-            implies — discharge port, routing code, revised ETA.
-            <b style="color:var(--fg);font-weight:500">Queued, never written.</b></p>
-          <p class="src" style="margin-top:12px">No TMS is contacted: no client, no credential,
-            no endpoint. What the connector models is the field mapping, which is the part an
-            ops lead recognises. A booking left on plan produces no write-back at all.</p>
+          <div class="wv">
+            <div class="wv-bar"><i></i><i></i><i></i>
+              <span class="url mono">tms</span><span class="stamp mono">ready</span></div>
+            <div class="wv-rail">
+              <span class="wv-chip" data-pick>SHP-001</span>
+              <span class="wv-chip">SHP-002</span>
+              <span class="wv-chip">SHP-003</span>
+            </div>
+            <div class="wv-b">
+              <div class="wv-s" data-at="[data-pick]" data-do="booking picked">
+                <p class="wv-t">TMS (demo connector)
+                  <span class="chip">connected (demo)</span></p>
+              </div>
+              <div class="wv-s" data-do="field map">
+                <div class="wv-f map">
+                  <span class="k">booking_ref</span><span class="v"><span class="ar">→</span> id
+                    <span class="chip">in</span></span>
+                  <span class="k">commodity</span><span class="v"><span class="ar">→</span> cargo
+                    <span class="chip">in</span></span>
+                  <span class="k">port_of_loading</span><span class="v"><span class="ar">→</span> origin
+                    <span class="chip">in</span></span>
+                  <span class="k">port_of_discharge</span><span class="v"><span class="ar">→</span> discharge_port
+                    <span class="chip">both</span></span>
+                  <span class="k">routing_code</span><span class="v"><span class="ar">→</span> primary_route
+                    <span class="chip">both</span></span>
+                  <span class="k">eta</span><span class="v"><span class="ar">→</span> eta
+                    <span class="chip">both</span></span>
+                  <span class="k">required_by</span><span class="v"><span class="ar">→</span> required_by
+                    <span class="chip">in</span></span>
+                  <span class="k">temperature_regime</span><span class="v"><span class="ar">→</span> cold_chain
+                    <span class="chip">in</span></span>
+                </div>
+                <p class="wv-note">Bookings read in; routing, discharge port and ETA
+                  written back once a person approves.</p>
+              </div>
+              <div class="wv-s" data-do="write-back derived">
+                <div class="wv-r"><div class="wv-rl">Write-back · SHP-001</div>
+                  <div class="wv-f" style="margin-top:0">
+                    <span class="k">port_of_discharge</span>
+                    <span class="v">HAM <span class="ar">→</span> RTM</span>
+                    <span class="k">routing_code</span>
+                    <span class="v">R-HAM-STD <span class="ar">→</span> R-RTM-ALT</span>
+                  </div>
+                </div>
+              </div>
+              <div class="wv-s" data-do="held at the gate" data-hold="1500">
+                <div class="wv-gate">
+                  <span class="wv-g await">QUEUED - not written</span>
+                  <span class="wv-s swap wv-g done" data-at=".wv-ap" data-hide=".wv-g.await"
+                        data-do="approved · nothing written">Approved — ready to write</span>
+                  <span class="wv-ap">Approve</span>
+                </div>
+              </div>
+              <span class="wv-cur"><svg width="13" height="17" viewBox="0 0 13 17" fill="none" aria-hidden="true">
+                <path d="M1.2 1.1l9.4 7.2-4.2.5 2.3 4.7-2 .9-2.3-4.8-3.2 2.7z"
+                      fill="#171717" stroke="#fff" stroke-width="1.1"
+                      stroke-linejoin="round"/></svg></span>
+            </div>
+          </div>
+          <p class="src" style="margin-top:12px">No TMS is contacted at any point: no client,
+            no credential, no endpoint. Approving does not change that — the write-back stays a
+            described change, because there is nothing in the codebase to write it with.</p>
         </div>
       </div>
     </div>
@@ -1810,7 +2426,11 @@ firm revised ETA as soon as terminals restart.</p>
    that still looks like it is loading reads as broken - so there is a timeout
    on this side too, not only on the server's. And it never invents a number:
    when the gauge is down it says the gauge is down, which is the whole reason
-   the live claim is worth making. */
+   the live claim is worth making.
+
+   The motion is deliberately all after the fact. Nothing animates until the
+   real reading is in hand, so no bar ever sweeps to a number and then corrects
+   itself - which would be the page appearing to show a reading it never had. */
 (function () {
   var panel = document.querySelector("[data-gauges]");
   if (!panel) return;
@@ -1819,6 +2439,10 @@ firm revised ETA as soon as terminals restart.</p>
   var chip = panel.querySelector("[data-g-chip]");
   var when = panel.querySelector("[data-g-when]");
   var note = panel.querySelector("[data-g-note]");
+  var map  = panel.querySelector("[data-g-map]");
+
+  var still = window.matchMedia &&
+              window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /* Four bands, three colours. The label is what tells them apart - colour is
      the second channel, never the only one. */
@@ -1838,35 +2462,90 @@ firm revised ETA as soon as terminals restart.</p>
   function clock(iso) {
     var d = new Date(iso);
     if (isNaN(d)) return "";
-    return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
 
-  function cell(g) {
-    if (!g.ok) {
-      return '<div class="g gone"><p class="g-name">' + esc(g.name) + "</p>" +
-             '<p class="g-val">&mdash;</p><div class="g-meter"></div>' +
-             '<p class="g-sub">' + esc(g.error || "no reading") + "</p></div>";
-    }
-    var s = STATES[g.state] || STATES.normal;
-    /* Full scale is three times the level at which restrictions start, which
-       is a property of the gauge and not of today's reading - so the bar means
-       the same thing on every visit and a falling river visibly retreats past
-       the notch. Deriving the top from the reading instead looks reasonable
-       and is not: it made 214 cm and 240 cm draw the identical bar. A reading
-       over full scale is clamped, and the number above it is always exact. */
-    var top  = g.warn_cm * 3;
-    var fill = Math.min(100, (g.level_cm / top) * 100);
-    var mark = Math.min(100, (g.high_cm  / top) * 100);
+  /* Full scale is three times the level at which restrictions start, which is
+     a property of the gauge and not of today's reading - so the bar means the
+     same thing on every visit and a falling river visibly retreats past the
+     notch. Deriving the top from the reading instead looks reasonable and is
+     not: it made 214 cm and 240 cm draw the identical bar. */
+  function geometry(g) {
+    var top = g.warn_cm * 3;
+    return { fill: Math.min(100, (g.level_cm / top) * 100),
+             mark: Math.min(100, (g.high_cm  / top) * 100) };
+  }
 
-    return '<div class="g">' +
-      '<p class="g-name">' + esc(g.name) + "</p>" +
-      '<p class="g-val">' + esc(g.level_cm) + "<u>cm</u></p>" +
-      '<div class="g-meter g-' + s.cls + '">' +
-        '<span class="g-fill" style="width:' + fill.toFixed(1) + '%"></span>' +
-        '<i class="g-mark" style="left:' + mark.toFixed(1) + '%"></i></div>' +
-      '<p class="g-state"><span class="st-badge st-' + s.cls + '"><i></i>' +
-        s.label + "</span></p>" +
-      '<p class="g-sub">Loading restricted below ' + esc(g.high_cm) + " cm</p></div>";
+  function cell(g, i) {
+    if (!g.ok) {
+      return '<div class="g gone" style="--i:' + i + '">' +
+        '<div class="g-top"><p class="g-name">' + esc(g.name) + "</p></div>" +
+        '<p class="g-val">&mdash;</p>' +
+        '<p class="g-err">' + esc(g.error || "no reading") + "</p></div>";
+    }
+    var s = STATES[g.state] || STATES.normal, m = geometry(g);
+    return '<div class="g enter" style="--i:' + i + '" data-card="' + esc(g.station) + '">' +
+      '<div class="g-top"><p class="g-name">' + esc(g.name) + "</p>" +
+        '<span class="st-badge st-' + s.cls + '"><i></i>' + s.label + "</span></div>" +
+      '<div class="g-read">' +
+        '<p class="g-val"><span data-count="' + esc(g.level_cm) + '">' +
+          (still ? esc(g.level_cm) : "0") + "</span><u>cm</u></p>" +
+        '<div class="g-line"><div class="g-meter g-' + s.cls + '">' +
+          '<span class="g-fill" data-w="' + m.fill.toFixed(1) + '"></span>' +
+          '<i class="g-mark" style="left:' + m.mark.toFixed(1) + '%"></i></div>' +
+          '<span class="g-lim">limit ' + esc(g.high_cm) + "</span></div></div></div>";
+  }
+
+  /* Count the value up rather than snapping it in - bklit's NumberFlow, done
+     with the two lines of arithmetic this page can afford. */
+  function countUp(el, target, delay) {
+    var span = 620, from = 0;
+    setTimeout(function () {
+      var t0 = null;
+      function step(now) {
+        if (t0 === null) t0 = now;
+        var k = Math.min(1, (now - t0) / span);
+        k = 1 - Math.pow(1 - k, 3);                    // ease out
+        el.textContent = Math.round(from + (target - from) * k);
+        if (k < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }, delay);
+  }
+
+  function play() {
+    /* One frame after the cards are in the DOM, so the browser has a starting
+       width and a starting opacity to transition FROM. Without this the fills
+       are simply born at their final width and nothing moves. */
+    requestAnimationFrame(function () {
+      panel.querySelectorAll(".g.enter").forEach(function (c) { c.classList.add("in"); });
+      panel.querySelectorAll(".g-fill").forEach(function (f) {
+        f.style.width = f.getAttribute("data-w") + "%";
+      });
+      if (map) map.classList.add("in");
+      if (still) return;
+      panel.querySelectorAll("[data-count]").forEach(function (el, i) {
+        countUp(el, parseFloat(el.getAttribute("data-count")), i * 120);
+      });
+    });
+  }
+
+  /* The map shows state, not readings - the cards carry the numbers. Only a
+     gauge actually past its loading limit flashes; a pin that pulses whatever
+     the river is doing is decoration, and it cries wolf. */
+  function paintMap(gauges) {
+    if (!map) return;
+    gauges.forEach(function (g) {
+      var pin = map.querySelector('[data-pin="' + g.station + '"]');
+      var label = map.querySelector('[data-pin-label="' + g.station + '"]');
+      if (!pin) return;
+      pin.classList.remove("s-green", "s-amber", "s-red", "flash");
+      if (!g.ok) return;
+      var s = STATES[g.state] || STATES.normal;
+      pin.classList.add("s-" + s.cls);
+      if (g.state === "restricted" || g.state === "critical") pin.classList.add("flash");
+      if (label && s.cls === "red") label.classList.add("on");
+    });
   }
 
   function unavailable(why) {
@@ -1874,11 +2553,10 @@ firm revised ETA as soon as terminals restart.</p>
     chip.textContent = "Unavailable";
     when.textContent = "PEGELONLINE";
     row.innerHTML = ["Kaub", "Duisburg-Ruhrort", "Emmerich"]
-      .map(function (n) { return cell({ name: n, ok: false, error: why }); }).join("");
-    note.textContent =
-      "The gauges are not answering right now. They are the one live reading on this " +
-      "page, so when the source is down it says so rather than showing a number that " +
-      "is not there.";
+      .map(function (n, i) { return cell({ name: n, ok: false, error: why }, i); }).join("");
+    note.textContent = "The gauges are not answering. They are the only live reading " +
+      "on this page, so when the source is down it says so.";
+    if (map) map.classList.add("in");
   }
 
   function render(data) {
@@ -1889,35 +2567,30 @@ firm revised ETA as soon as terminals restart.</p>
     if (!gauges.length) return unavailable("could not reach the gauge service");
 
     row.innerHTML = gauges.map(cell).join("");
+    paintMap(gauges);
+    play();
+
     var first = gauges.filter(function (g) { return g.ok; })[0];
     var at = first ? clock(first.measured_at) : "";
+    when.textContent = "PEGELONLINE" + (at ? " · " + at : "");
 
     if (!data.ok) {
       chip.className = "chip";
       chip.textContent = "Unavailable";
-      when.textContent = "PEGELONLINE";
-      note.textContent = "The gauges are not answering right now, and each one above " +
-        "says what came back. They are the only live reading on this page, so when the " +
-        "source is down it says so rather than showing a number that is not there.";
+      note.textContent = "The gauges are not answering, and each card says what came back.";
       return;
     }
-
     if (data.stale) {
       chip.className = "chip synth";
       chip.textContent = "Last good reading";
-      note.textContent = "PEGELONLINE did not answer just now, so this is the last " +
-        "reading that came back" + (at ? ", taken at " + at : "") +
-        ". Nothing here is estimated to fill the gap.";
-    } else {
-      chip.className = "chip live";
-      chip.textContent = "Live";
-      note.textContent = "Read from PEGELONLINE when this page loaded" +
-        (at ? ", gauged at " + at : "") + ". The gauges refresh about every fifteen " +
-        "minutes. Each bar is scaled to its own gauge's restriction levels, and the " +
-        "notch is where barges stop loading normally \u2014 left of it the river is " +
-        "working against the shipper. Everything under the line below is authored.";
+      note.textContent = "PEGELONLINE did not answer just now, so this is the last reading " +
+        "that came back. Nothing is estimated to fill the gap.";
+      return;
     }
-    when.textContent = "PEGELONLINE \u00b7 " + gauges.length + " gauges";
+    chip.className = "chip live";
+    chip.textContent = "Live";
+    note.textContent = "The notch on each bar is where barges stop loading normally. " +
+      "Everything below the line is authored.";
   }
 
   /* AbortController is what stops a hung request leaving the panel mid-read.
@@ -1998,6 +2671,123 @@ document.querySelectorAll("[data-approve]").forEach(function (btn) {
     if (badge) { badge.className = "r chip live"; badge.textContent = "Approved"; }
   });
 });
+
+/* Worker work views. Each of the three desk Workers plays its own panel:
+   booking picked, work done, approval gate. There is no video file and no
+   player - the recording is markup revealed step by step under a drawn
+   cursor, so it costs no request, cannot buffer, and cannot fail on the
+   venue wifi.
+
+   Every step is in the DOM from the start and only its opacity changes, so
+   nothing reflows mid-play and a screen reader gets the whole panel. Under
+   reduced motion, or with no IntersectionObserver, the finished panel is
+   shown outright: the end state is the information, the motion is only the
+   explanation. */
+(function () {
+  var views = [].slice.call(document.querySelectorAll(".wv"));
+  if (!views.length) return;
+  var still = !("IntersectionObserver" in window) ||
+              (window.matchMedia &&
+               window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+  views.forEach(function (wv, vi) {
+    var steps = [].slice.call(wv.querySelectorAll(".wv-s"));
+    var cur   = wv.querySelector(".wv-cur");
+    var stamp = wv.querySelector(".wv-bar .stamp");
+    var timers = [];
+
+    function each(sel, fn) {
+      if (sel) [].slice.call(wv.querySelectorAll(sel)).forEach(fn);
+    }
+    function reveal(s) {
+      s.classList.add("on");
+      each(s.getAttribute("data-hide"), function (el) { el.classList.add("off"); });
+      var label = s.getAttribute("data-do");
+      if (stamp && label) stamp.textContent = label;
+    }
+
+    if (still || !cur) {
+      /* The resting state is the gate, not the approval. Someone who never
+         sees the timeline should be left looking at the draft being held,
+         which is the point of the section - not at a green badge that could
+         be read as something having gone out. */
+      steps.forEach(function (s) {
+        if (s.classList.contains("swap")) return;
+        reveal(s);
+        each(s.getAttribute("data-at"), function (el) { el.classList.add("tapped"); });
+      });
+      return;
+    }
+
+    var i = 0, live = false;
+    function at(ms, fn) { timers.push(setTimeout(fn, ms)); }
+    function reset() {
+      timers.forEach(clearTimeout);
+      timers = [];
+      steps.forEach(function (s) { s.classList.remove("on"); });
+      each(".off", function (el) { el.classList.remove("off"); });
+      each(".tapped", function (el) { el.classList.remove("tapped"); });
+      cur.classList.remove("tap");
+      cur.style.transform = "translate(14px,11px)";
+      wv.classList.remove("play");
+      if (stamp) stamp.textContent = "ready";
+      i = 0;
+    }
+    /* Measured against .wv, which is the cursor's containing block. Both
+       rects move together, so a reveal-on-scroll transform on an ancestor
+       cancels out of the subtraction instead of throwing the aim off. */
+    function point(el) {
+      var a = el.getBoundingClientRect(), b = wv.getBoundingClientRect();
+      return { x: a.left - b.left + a.width / 2,
+               y: a.top  - b.top  + Math.min(a.height / 2, 12) };
+    }
+    function frame() {
+      if (!live) return;
+      if (i >= steps.length) {
+        /* Hold the finished panel long enough to read, then rewind. The gap
+           is kept short because the window is empty across it, and an empty
+           window is the one frame that looks like a bug rather than a step. */
+        at(2600, function () { reset(); at(350, frame); });
+        return;
+      }
+      var s    = steps[i++];
+      var hold = parseInt(s.getAttribute("data-hold"), 10) || 1150;
+      var sel  = s.getAttribute("data-at");
+      var tgt  = sel ? wv.querySelector(sel) : null;
+      /* No target means the Worker did this step on its own. The cursor
+         leaves rather than hovering over work no person is doing. */
+      if (!tgt) { wv.classList.remove("play"); reveal(s); at(hold, frame); return; }
+      wv.classList.add("play");
+      var p = point(tgt);
+      cur.style.transform = "translate(" + p.x + "px," + p.y + "px)";
+      at(620, function () {                       /* arrive, then click */
+        cur.classList.add("tap");
+        tgt.classList.add("tapped");
+        at(200, function () { reveal(s); at(hold, frame); });
+        at(520, function () { cur.classList.remove("tap"); });
+      });
+    }
+
+    /* Only plays while on screen - three panels looping behind the fold is
+       work nobody is watching. Leaving the screen PAUSES rather than resets:
+       wiping it meant that on a phone, where the cards stack and each one
+       is half-scrolled for a while, a card you were part-way through went
+       back to an empty window and read as broken. A view that already
+       finished starts over on the way back; one caught mid-play picks up
+       where it stopped. */
+    new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting === live) return;
+        live = e.isIntersecting;
+        if (!live) { timers.forEach(clearTimeout); timers = []; return; }
+        if (i === 0 || i >= steps.length) { reset(); at(500 + vi * 420, frame); }
+        else { at(400, frame); }
+      });
+    }, { threshold: 0.2 }).observe(wv);
+
+    reset();
+  });
+})();
 </script>
 </body>
 </html>
