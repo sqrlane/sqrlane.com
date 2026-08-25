@@ -613,9 +613,34 @@ h1,h2,h3,h4,p{margin:0}
    over the entrance, not in a sweep. --d is baked into each cell at build time
    so the scatter is identical on every load and the block needs no script. */
 .heat .hc{opacity:0; transform:scale(.72);
-          transition:opacity .45s ease, transform .45s var(--ease);
-          transition-delay:var(--d, 0ms)}
+          transition:opacity .45s ease var(--d, 0ms),
+                     transform .45s var(--ease) var(--d, 0ms),
+                     scale .26s var(--ease), box-shadow .26s var(--ease)}
 .heat.in .hc{opacity:1; transform:none}
+
+/* ---- the playhead ----
+   The same idea as the escalation timeline further down the page: the scroll
+   drives a position through a sequence rather than a timer does. Here the
+   sequence runs across instead of down - and it is the same sixteen days - so
+   the block's travel up the screen sweeps one day-column at a time, all three
+   gauges together, and the fall happens under the reader's own scrolling.
+
+   The mark is a lift, deliberately not a colour. Colour in this grid encodes
+   how bad a reading is, so a cell that brightened because it was being pointed
+   at would be saying something the data is not. Rising out of the grid says
+   "here" without saying "worse".
+
+   scale is used as its own property rather than folded into the transform
+   above, and that is load-bearing: the entrance carries a per-cell delay of up
+   to 680ms, and a highlight sharing that transition would answer the scroll
+   two thirds of a second late. Its own property gets its own timing. */
+.heat .hc.on{scale:1.16; box-shadow:0 1px 5px rgba(0,0,0,.17)}
+/* The day the call was made keeps its ring and rises a little further, so it
+   stays the strongest column on the grid whether the playhead is on it or not
+   - the same rule the timeline's two marked entries follow. */
+.heat .hc.call.on{scale:1.24;
+                  box-shadow:0 0 0 2px var(--card), 0 0 0 3.5px var(--fg),
+                             0 2px 6px rgba(0,0,0,.22)}
 
 .heat-axis{display:grid; grid-template-columns:repeat(16, minmax(0,1fr));
            gap:3px; margin-top:9px}
@@ -2708,50 +2733,102 @@ firm revised ETA as soon as terminals restart.</p>
   items.forEach(function (el) { io.observe(el); });
 })();
 
-/* The escalation timeline follows the scroll. Whichever entry is sitting at
-   the reading line - a little above the middle of the screen - is the one lit,
-   and it hands over as the card moves up, so each of the fifteen days is
-   highlighted in turn at the reader's own pace.
+/* ---------- the two blocks that follow the scroll ----------
+   The escalation timeline and the fall heatmap both put a playhead through a
+   sequence, driven by where the reader has scrolled to rather than by a timer
+   of ours. They share their plumbing and nothing else: what to measure, and
+   what to do with it, is each one's own business below.
 
-   Three things this deliberately does not do: it does not dim anything (the
-   resting state is the card as it was, so an entry can be read whether or not
-   the line has reached it), it does not run on a timer, and it does not run at
-   all for a reader who has asked for reduced motion. It is also cheap: the
-   handler is passive and only measures inside a frame it asked for, and only
-   while the list is on screen. */
+   Three things neither of them does. Neither dims anything - the resting state
+   of both blocks is exactly what it was before, so nothing is ever harder to
+   read for not having been reached yet. Neither runs on a clock. And neither
+   runs at all for a reader who has asked for reduced motion. */
 (function () {
-  var ul = document.querySelector(".cs-tl");
-  if (!ul || !("IntersectionObserver" in window)) return;
-  if (window.matchMedia &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-  var items = Array.prototype.slice.call(ul.children);
-  if (!items.length) return;
-  var live = false, queued = false, cur = -1;
-
-  function mark() {
-    queued = false;
-    if (!live) return;
-    var line = window.innerHeight * 0.45, at = -1;
-    /* the last entry the line has passed the top of - so exactly one is lit
-       once the card is reached, including in the gaps between entries. */
-    for (var i = 0; i < items.length; i++) {
-      if (items[i].getBoundingClientRect().top <= line) at = i;
+  /* Run update() while el is on screen and the reader is moving. The handler
+     is passive and measures only inside a frame the browser gave us, so a
+     scroll costs one rect read per block per frame at worst. Returns a poke,
+     for a caller that needs to re-run it for its own reasons. */
+  function follow(el, update) {
+    if (!el || !("IntersectionObserver" in window)) return function () {};
+    if (window.matchMedia &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return function () {};
     }
-    if (at === cur) return;
-    if (cur > -1) items[cur].classList.remove("on");
-    cur = at;
-    if (cur > -1) items[cur].classList.add("on");
+    var live = false, queued = false;
+    function run() { queued = false; if (live) update(); }
+    function queue() { if (!queued) { queued = true; requestAnimationFrame(run); } }
+    new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { live = e.isIntersecting; });
+      queue();
+    }, { threshold: 0 }).observe(el);
+    window.addEventListener("scroll", queue, { passive: true });
+    window.addEventListener("resize", queue);
+    return queue;
   }
-  function queue() { if (!queued) { queued = true; requestAnimationFrame(mark); } }
 
-  new IntersectionObserver(function (entries) {
-    entries.forEach(function (e) { live = e.isIntersecting; });
-    queue();
-  }, { threshold: 0 }).observe(ul);
+  /* Only one thing is ever lit in each block, so both switch the same way. */
+  function light(list, was, now) {
+    if (now === was) return was;
+    if (was > -1 && list[was]) list[was].forEach(function (el) { el.classList.remove("on"); });
+    if (now > -1 && list[now]) list[now].forEach(function (el) { el.classList.add("on"); });
+    return now;
+  }
 
-  window.addEventListener("scroll", queue, { passive: true });
-  window.addEventListener("resize", queue);
+  /* 1. The escalation timeline. Whichever entry is sitting at the reading
+     line - a little above the middle of the screen - is the one lit, and it
+     hands over as the card moves up, so each of the fifteen days is
+     highlighted in turn at the reader's own pace. */
+  (function () {
+    var ul = document.querySelector(".cs-tl");
+    if (!ul || !ul.children.length) return;
+    var items = Array.prototype.map.call(ul.children, function (li) { return [li]; });
+    var cur = -1;
+    follow(ul, function () {
+      var line = window.innerHeight * 0.45, at = -1;
+      /* the last entry the line has passed the top of - so exactly one is lit
+         once the card is reached, including in the gaps between entries. */
+      for (var i = 0; i < items.length; i++) {
+        if (items[i][0].getBoundingClientRect().top <= line) at = i;
+      }
+      cur = light(items, cur, at);
+    });
+  })();
+
+  /* 2. The fall heatmap. Same playhead, turned on its side: the sequence here
+     runs across the grid, so the block's travel up the screen sweeps one
+     day-column at a time - all three gauges for that day together. The
+     columns are read out of the DOM rather than hard-coded, so adding a day
+     or a gauge to the grid needs nothing here. */
+  (function () {
+    var heat = document.querySelector("[data-heat]");
+    var grid = heat && heat.querySelector(".heat-grid");
+    if (!grid) return;
+    /* the grid is one flat list: a gauge name, then that gauge's cells. */
+    var rows = [], row = null;
+    Array.prototype.forEach.call(grid.children, function (el) {
+      if (el.classList.contains("hr-name")) { row = []; rows.push(row); }
+      else if (row) row.push(el);
+    });
+    var days = rows.length ? rows[0].length : 0;
+    if (!days) return;
+    var cols = [];
+    for (var c = 0; c < days; c++) {
+      cols.push(rows.map(function (r) { return r[c]; }).filter(Boolean));
+    }
+    var cur = -1;
+    follow(heat, function () {
+      var r = heat.getBoundingClientRect(), vh = window.innerHeight;
+      /* how far the block has crossed the screen: 0 as its top reaches the
+         bottom edge, 1 as its bottom clears the top. The whole crossing is
+         the sweep, which is what gives sixteen days room to read - the block
+         itself is only a couple of hundred pixels tall. */
+      var p = (vh - r.top) / (vh + r.height);
+      var at = Math.floor(p * days);
+      cur = light(cols, cur, Math.max(0, Math.min(days - 1, at)));
+    });
+  })();
+
 })();
 
 /* The Rhine gauges - the one thing on this page that is actually read rather
