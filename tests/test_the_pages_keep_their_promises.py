@@ -15,9 +15,10 @@ are tests now, so `python -m unittest discover -s tests` covers all four.
     history to compare a run against, so that number would be fabricated - and a
     fabricated number is the one thing this project refuses to produce.
   * **The Worker names are ours.** Never the names the reference product ships.
-  * **Naming a system is not claiming one.** The page names the TMSs, port
-    systems and exchanges the connector is built to point at. None of them is
-    connected, and the band has to say so.
+  * **Naming a system is not claiming one.** The landing page and the dashboard
+    both name the TMSs, port systems and exchanges the connector is built to
+    point at. None of them is connected, and each page has to say so in the same
+    block that names them.
   * **Nothing loads from off-origin.** No CDN, no web font, no map tile. Flaky
     wifi in front of an audience must not be able to strip the typography or
     blank a page.
@@ -182,39 +183,38 @@ class NamingASystemIsNotClaimingOne(unittest.TestCase):
     started claiming something this build cannot do.
     """
 
-    @staticmethod
-    def _band(html):
-        """The systems band's own markup, or None if it is not on the page.
+    # Where each page names them, so the disclaimer is checked where the claim
+    # is made. An earlier version of this looked at the whole page and passed on
+    # the "TMS (demo connector)" further down, which meant the line could be
+    # deleted from the band with the guard still green.
+    WHERE_NAMED = {
+        "landing.html": ('<section class="strip targets">', "</section>"),
+        "index.html": ("const SYSTEMS = [", "function connectionsView()"),
+    }
 
-        Scoped deliberately. An earlier version of this check looked at the
-        whole page and passed on the "TMS (demo connector)" further down, which
-        meant the disclaimer could be deleted from the band with the guard still
-        green. A claim has to be checked where it is made.
-        """
-        start = html.find('<section class="strip targets">')
-        if start < 0:
-            return None
-        return html[start:html.find("</section>", start)]
+    REQUIRED = ("None of these is connected", "no vendor, no credential, no endpoint",
+                "nothing is ever written")
 
-    def test_the_systems_band_says_none_of_them_is_connected(self):
-        html = LANDING.read_text(encoding="utf-8")
-        band = self._band(html)
-        named = [n for n in NAMED_SYSTEMS if n in html]
-        if band is None:
-            self.assertEqual(named, [], "The landing page names " + ", ".join(named) +
-                             " but the systems band that disclaims them is gone.")
-            self.skipTest("The landing page names no third-party system.")
+    def test_both_pages_say_none_of_the_named_systems_is_connected(self):
+        for page in (LANDING, DASHBOARD):
+            html = page.read_text(encoding="utf-8")
+            named = [n for n in NAMED_SYSTEMS if n in html]
+            opener, closer = self.WHERE_NAMED[page.name]
+            start = html.find(opener)
 
-        flat = " ".join(band.split())
-        self.assertTrue(named, "The band exists but names nothing - this tests nothing.")
-        for required in ("None of these is connected", "no vendor, no credential, no endpoint",
-                         "nothing is ever written"):
-            with self.subTest(phrase=required):
-                self.assertIn(required, flat,
-                              "The band names " + ", ".join(named) + " and has to say, in "
-                              "the band itself, that none of them is reached. Without that "
-                              "line a row of vendor names in the source strip's own styling "
-                              "is an integration claim this build cannot support.")
+            with self.subTest(page=page.name):
+                if start < 0:
+                    self.assertEqual(named, [], f"{page.name} names " + ", ".join(named) +
+                                     " but the block that disclaims them is gone.")
+                    continue
+                self.assertTrue(named, f"{page.name} has the block but names nothing.")
+                block = " ".join(html[start:html.find(closer, start)].split())
+                for required in self.REQUIRED:
+                    self.assertIn(required, block,
+                                  f"{page.name} names " + ", ".join(named) + " and has to "
+                                  "say, in the same block, that none of them is reached. "
+                                  "Without that line a row of vendor names is an "
+                                  "integration claim this build cannot support.")
 
     def test_no_named_system_appears_in_the_sources_band(self):
         """The sources band is what the Risk Monitor reads. None of these is read."""
