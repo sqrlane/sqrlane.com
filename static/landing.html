@@ -72,6 +72,17 @@
      A third step existed only so some cards could shout at the others. */
   --shadow-lift:0 1px 1px rgba(0,0,0,.02),0 8px 16px -4px rgba(0,0,0,.04),
                 0 24px 32px -8px rgba(0,0,0,.06);
+  /* A ring and a halo, for the one card in a set that is the answer. The ring
+     is a 1px box-shadow rather than a border - the same thing Tailwind's ring-*
+     does, and bklit-ui is a shadcn registry - so the edge stays crisp while the
+     halo does the lifting. Zero-offset blur so the light sits *around* the card
+     instead of only under it; the last step grounds it. */
+  --shadow-ring:0 0 0 1px var(--border-strong),
+                0 0 26px rgba(0,0,0,.08),
+                0 12px 26px -10px rgba(0,0,0,.2);
+  --shadow-ring-hover:0 0 0 1px var(--border-strong),
+                0 0 30px rgba(0,0,0,.1),
+                0 16px 32px -12px rgba(0,0,0,.24);
 
   --ease:cubic-bezier(.175,.885,.32,1.1);
   --gutter:24px;
@@ -329,17 +340,43 @@ h1,h2,h3,h4,p{margin:0}
 
 /* ---------- contrast cards (the gap) ---------- */
 .gap-grid{margin-top:40px}
-.gap-card{padding:22px; border-radius:var(--r-md); border:1px solid var(--border);
+/* shadcn's card anatomy, which is what bklit-ui ships: hairline border, 12px
+   radius, one small shadow, and 24px of padding on every side. The rhythm
+   inside is set per element rather than by one flex gap - the number is an
+   eyebrow for the title and belongs closer to it than the body does. */
+.gap-card{padding:24px; border-radius:var(--r-md); border:1px solid var(--border);
           background:var(--card); box-shadow:var(--shadow-card); display:flex;
-          flex-direction:column; gap:12px}
+          flex-direction:column;
+          transition:box-shadow .18s var(--ease), border-color .18s var(--ease),
+                     transform .18s var(--ease)}
 .gap-card.dim{background:var(--card-muted); box-shadow:none}
-.gap-card .n{font-family:"Geist Mono",ui-monospace,monospace; font-size:11px; color:var(--faint)}
-.gap-card .stops{margin-top:auto; padding-top:14px; border-top:1px solid var(--border);
+.gap-card .n{font-family:"Geist Mono",ui-monospace,monospace; font-size:11px;
+             font-variant-numeric:tabular-nums; letter-spacing:.06em; color:var(--faint);
+             margin-bottom:14px}
+.gap-card h3{margin-bottom:10px}
+.gap-card .copy14{margin-bottom:18px}
+.gap-card .stops{margin-top:auto; padding-top:16px; border-top:1px solid var(--border);
                  font-size:12px; line-height:16px; color:var(--faint)}
-/* The black border already says which column is ours. The lifted shadow under
-   it was saying the same thing a second time, louder. */
-.gap-card.us{border-color:var(--fg)}
+
+/* The two that stop short lift a little when you point at them - enough to
+   read as one set of three rather than two greyed cards and a live one. */
+.gap-card.dim:hover{border-color:var(--border-strong); box-shadow:var(--shadow-card);
+                    transform:translateY(-1px)}
+
+/* The one that closes the loop. This used to be a black border, which is the
+   heaviest mark on the page spent on the quietest signal; a ring and a halo say
+   the same thing without shouting. Still exactly one kind of emphasis - the
+   card does not also get a heavier border, a tint and a bigger radius. */
+.gap-card.us{box-shadow:var(--shadow-ring); transform:translateY(-1px)}
+.gap-card.us:hover{box-shadow:var(--shadow-ring-hover); transform:translateY(-3px)}
 .gap-card.us .stops{color:var(--fg); font-weight:500}
+
+@media (prefers-reduced-motion:reduce){
+  .gap-card{transition:none}
+  .gap-card.dim:hover,
+  .gap-card.us,
+  .gap-card.us:hover{transform:none}
+}
 
 /* ---------- steps ---------- */
 .steps{margin-top:40px; counter-reset:step}
