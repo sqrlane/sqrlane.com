@@ -1065,6 +1065,28 @@ h1,h2,h3,h4,p{margin:0}
 .not .k{font-size:14px; font-weight:500; letter-spacing:-.2px}
 .not .v{font-size:13px; line-height:19px; color:var(--muted); margin-top:3px}
 
+/* ---------- weighed options ----------
+   Two rows, one number each, and the winner marked. The point of the block is a
+   comparison, so the figures are the only thing set large and they share a
+   column: two euro amounts that do not line up cannot be compared at a glance. */
+.wgh{display:flex; flex-direction:column; gap:8px}
+.wgh-r{display:grid; grid-template-columns:minmax(0,1fr) 122px; gap:2px 14px;
+       align-items:baseline; padding:11px 13px; border-radius:var(--r);
+       border:1px solid var(--border); background:var(--card-muted)}
+.wgh-r.win{border-color:var(--green-400); background:var(--green-100)}
+.wgh-r.lose{border-color:var(--border-strong)}
+.wgh-k{font-size:13.5px; font-weight:500; letter-spacing:-.2px}
+.wgh-b{grid-column:1; font-size:12px; line-height:17px; color:var(--muted)}
+/* Explicit column, not auto-placement, which put the figure in column 1 and
+   right-aligned the option name. A fixed track rather than `auto` so the two
+   amounts share an edge - the comparison is the whole point of the block, and
+   two euro figures that do not line up cannot be compared at a glance. */
+.wgh-v{grid-column:2; grid-row:1 / span 2; align-self:center; text-align:right;
+       font-size:21px; font-weight:600;
+       letter-spacing:-.7px; font-variant-numeric:tabular-nums; white-space:nowrap}
+.wgh-r.win .wgh-v{color:var(--green)}
+.wgh-r.lose .wgh-v{color:var(--muted)}
+
 /* ---------- honest band ----------
    The same card rule as everything else on the page - hairline border, 12px
    radius, --shadow-card - which is bklit-ui's anatomy, it being a shadcn
@@ -1236,7 +1258,7 @@ h1,h2,h3,h4,p{margin:0}
       <a href="#case">Case study</a>
       <a href="#reasoning">Reasoning</a>
       <a href="#sources">Sources</a>
-      <a href="#scope">Scope</a>
+      <a href="#cost">Cost</a>
       <a href="/whitepaper">Whitepaper</a>
     </nav>
     <div class="right">
@@ -2768,49 +2790,95 @@ firm revised ETA as soon as terminals restart.</p>
 </section>
 
 <!-- ======================== SCOPE ======================== -->
-<section class="section" id="scope">
+<section class="section" id="cost">
   <div class="wrap">
     <div class="head rv">
-      <span class="eyebrow">Scope</span>
-      <h2 class="d2">What it deliberately does not do.</h2>
-      <p class="copy18">Scope creep is the failure mode for a prototype. These are not
-        roadmap items being coy — they are out, by decision.</p>
+      <span class="eyebrow">What a delay costs</span>
+      <h2 class="d2">The cheap option is not the cheap option.</h2>
+      <p class="copy18">A freight rate is what an option costs to take. It is not what the
+        decision costs. Ranking routings by days and breaking ties on a relative index
+        answers which one lands soonest — which is not the question anyone is asking.</p>
     </div>
 
-    <div class="grid g2 nots rv">
+    <!-- The board's own arithmetic, not an illustration. Every figure here is
+         computed by cost_of() from the terms on the booking. -->
+    <div class="grid g2 rv" style="margin-top:40px">
+      <div class="card">
+        <div class="art-h"><span class="ttl">SHP-001 · Automotive parts · Shanghai → Munich</span>
+          <span class="r chip blue">Reroute</span></div>
+        <div class="art-b">
+          <p class="copy14" style="margin-bottom:14px">Four days of slack. The strike at Hamburg
+            projects up to five days of delay, so one day spills past the date the line needs it.</p>
+          <div class="wgh">
+            <div class="wgh-r lose">
+              <span class="wgh-k">Stay on the booked routing</span>
+              <span class="wgh-b">no premium · 1 day late</span>
+              <span class="wgh-v">€31,500</span>
+            </div>
+            <div class="wgh-r win">
+              <span class="wgh-k">Reroute via Rotterdam</span>
+              <span class="wgh-b">€2,304 premium · nothing late</span>
+              <span class="wgh-v">€2,304</span>
+            </div>
+          </div>
+          <p class="src" style="margin-top:13px">The option that costs nothing to take is the one
+            that costs €31,500 — a stopped assembly line for a day, plus the expedited parts to
+            restart it. Paying the premium is thirteen times cheaper than not paying it.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="art-h"><span class="ttl">SHP-002 · Reefer pharma · Ningbo → Hamburg</span>
+          <span class="r chip synth">Hold</span></div>
+        <div class="art-b">
+          <p class="copy14" style="margin-bottom:14px">One day of slack, a customer who is
+            <i>in Hamburg</i>, and the only alternate on file is the Cape.</p>
+          <div class="wgh">
+            <div class="wgh-r win">
+              <span class="wgh-k">Hold at origin and notify</span>
+              <span class="wgh-b">no premium · 4 days late</span>
+              <span class="wgh-v">€91,000</span>
+            </div>
+            <div class="wgh-r lose">
+              <span class="wgh-k">Reroute via the Cape</span>
+              <span class="wgh-b">€3,420 premium · 14 days late</span>
+              <span class="wgh-v">€234,420</span>
+            </div>
+          </div>
+          <p class="src" style="margin-top:13px">The hard call, and now a defensible one. Holding
+            is not the good answer — it is the €143,000 cheaper answer, and the drafted mail says
+            the date is at risk rather than pretending otherwise.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout rv" style="margin-top:24px">
+      <p class="copy16"><b style="color:var(--fg);font-weight:500">A reroute has to be worth what
+        it costs.</b> Slack absorbs the first days, so what is priced is days <i>late</i>, not
+        days of delay. The deadline penalty fires once rather than per day. On a cold chain, an
+        extra handling is priced only when a candidate actually moves the discharge port. An
+        alternate that does not beat staying put in money is refused, and the record says so in
+        euros.</p>
+    </div>
+
+    <div class="grid g2 nots rv" style="margin-top:16px">
       <div class="not">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/>
           <path d="M5.6 5.6l12.8 12.8"/></svg>
-        <div><p class="k">No route optimisation</p>
-          <p class="v">Routes are pre-authored candidates. The agent chooses among them and
-            justifies the choice; it never computes a route.</p></div>
+        <div><p class="k">The commercial terms are authored</p>
+          <p class="v">What a day late costs each customer is written into the booking, like the
+            bookings themselves. Nothing here is measured, no rate card is read, and no
+            probability is applied to anything — the arithmetic is exact, its inputs are
+            synthetic.</p></div>
       </div>
       <div class="not">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/>
           <path d="M5.6 5.6l12.8 12.8"/></svg>
-        <div><p class="k">No sending</p>
-          <p class="v">Emails are drafted and displayed. No transport of any kind is
-            imported anywhere in the codebase, and a test enforces it.</p></div>
-      </div>
-      <div class="not">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/>
-          <path d="M5.6 5.6l12.8 12.8"/></svg>
-        <div><p class="k">No live TMS connection — yet</p>
-          <p class="v">Working through the TMS is the design, and the connector models both
-            directions. What is missing is the far end: no vendor, no credential, no endpoint.
-            The bookings behind it are synthetic, authored so one disruption yields three
-            different decisions.</p></div>
-      </div>
-      <div class="not">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/>
-          <path d="M5.6 5.6l12.8 12.8"/></svg>
-        <div><p class="k">No scheduler, no database</p>
-          <p class="v">Button-triggered, JSON files, in memory. For a demo, magic on command
-            beats a background job.</p></div>
+        <div><p class="k">It prices the options on file, it does not invent one</p>
+          <p class="v">Routes are pre-authored candidates. The agent weighs what each would cost
+            and justifies the choice; it never computes a route.</p></div>
       </div>
     </div>
   </div>
@@ -2909,7 +2977,7 @@ firm revised ETA as soon as terminals restart.</p>
         <h4>Detail</h4>
         <ul>
           <li><a href="#sources">Data sources</a></li>
-          <li><a href="#scope">Scope &amp; non-goals</a></li>
+          <li><a href="#cost">What a delay costs</a></li>
           <li><a href="#honest">What's real</a></li>
         </ul>
       </div>
