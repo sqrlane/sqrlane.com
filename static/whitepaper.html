@@ -435,7 +435,7 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
           <span class="n">02</span>
           <div class="t">Route Advisor</div>
           <div class="d">Maps each booking's route against active risk, then weighs schedule
-            slack against added transit and expected delay.</div>
+            slack, added transit, expected delay and what each option costs.</div>
           <span class="chip live">Live</span>
         </div>
         <div class="stage">
@@ -522,13 +522,25 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
       <p class="copy16">
         <b>Code computes the facts.</b> Which chokepoints a route passes through. Which of
         them carry active risk. How many days an alternative adds. Whether that fits inside the
-        schedule slack. What the revised arrival date is. All ordinary, testable code. Dates
-        and sums never go near a model.
+        schedule slack. What the revised arrival date is. What each option costs — the premium
+        for taking it, plus what the days it lands late are worth to that customer. All ordinary,
+        testable code. Dates and sums never go near a model.
       </p>
       <p class="copy16">
         <b>The model makes the call and explains it.</b> Given those facts, is the right answer
         to move the box, hold it, or leave it alone — and why, in language an operations lead
         would accept.
+      </p>
+      <p class="copy16">
+        Pricing the options is the sharpest case of the line. A rate is what an option costs to
+        take; it is not what the decision costs, and ranking routings by days answers only which
+        one lands soonest. So the advisor sums a premium, a per-day cost of being late and a
+        one-off cost of missing the date at all, then refuses any alternate that does not beat
+        staying put in money. Every term is arithmetic and <b>no probability is applied
+        anywhere</b> — the moment a model is asked how likely a cold chain is to break, the
+        number it returns is invented, and an invented number is worse than none. The commercial
+        terms are authored on each booking, like the bookings themselves: the arithmetic is
+        exact, its inputs are synthetic, and nothing here is measured.
       </p>
       <p class="copy16">
         This split has a useful side effect: a booking whose route carries no active risk never
