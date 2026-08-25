@@ -1,6 +1,6 @@
 # DATA-SOURCES.md — the free APIs worth using (curated)
 
-Yes, the big list helps — but only as a *directory*. `public-apis/public-apis` catalogues thousands of APIs; it won't tell you which ones fit *this* build. This file is that shortlist, mapped to the four components.
+Yes, the big list helps — but only as a *directory*. `public-apis/public-apis` catalogues thousands of APIs; it won't tell you which ones fit *this* build. This file is that shortlist, mapped to the components that consume it.
 
 **The one rule:** wire the **CORE** sources only. Every extra source is one more thing that can break live in front of an audience. Three sources carry the whole story — GDELT + multilingual RSS + Rhine levels.
 

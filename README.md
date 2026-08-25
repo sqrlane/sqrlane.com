@@ -64,6 +64,8 @@ performing one trick.
 
 ![The dashboard after a run](docs/dashboard.png)
 
+*Captured offline — no network and no provider key — so the risk feed falls back to the scripted scenario and every decision is badged `rule`. On the deployed instance the sources are live and the model decides; the layout and the numbers are otherwise exactly what a run produces.*
+
 > **The honest line:** the risk detection is real — it runs against live news right now.
 > The shipments are synthetic, so a disruption can be shown on demand instead of waiting
 > for one. **Emails are drafted and never sent.**
@@ -125,13 +127,13 @@ and every card that used one is badged `rule` so you can see it.
 
 ## What happens when you press the button
 
-1. **Five bookings in transit**, read out of the TMS, all green.
+1. **Seven bookings in transit**, read out of the TMS, all green.
 2. **A strike hits the Port of Hamburg.** One click.
 3. **It was caught from a German-language source first** — the feed shows the original
    headline (*"Warnstreik im Hamburger Hafen…"*) next to the English one, roughly a day
    before the English wires carried it.
-4. **All five are triaged in seconds** — two reroute, one holds, two stay green. It
-   doesn't cry wolf.
+4. **The whole board is triaged in seconds** — two reroute, one holds, four stay green.
+   It doesn't cry wolf.
 5. **Each decision opens up** into plain-English reasoning, the routes it rejected and
    why, and the full recorded trail of checks behind the call.
 6. **The emails are drafted** — one to the carrier, one to the customer. Nothing is sent.
@@ -247,7 +249,7 @@ The demo runs itself; these are the things only a person can check.
    here is the least-bad one. If you would not send it as written, the prompts in
    `comms_agent.py` are what to change.
 5. **Run it from `uvicorn` locally**, not the deployed link. A cold serverless
-   function plus a dozen model calls sits close to the 60-second ceiling.
+   function plus about fourteen model calls sits close to the 60-second ceiling.
 
 ---
 
@@ -270,8 +272,9 @@ business is the integration, trust and liability wall, which is real work for la
 python -m unittest discover -s tests
 ```
 
-Standard library — nothing to install. Two files hold up the two claims the demo makes
-out loud.
+No test framework to install — `unittest` from the standard library, plus the
+`requests` the app already depends on. Five files, each holding up a claim the demo makes
+out loud. A claim nobody checks is a claim that has already stopped being true.
 
 `tests/test_comms_agent_sends_nothing.py` — **the Comms Agent drafts emails and never
 sends them.** It parses every file in `src/` and fails, naming the file and line, if a
@@ -285,6 +288,22 @@ one door to the book. Then it runs a cycle and checks that all three live Worker
 something back, that every actioned booking has a write-back and every on-plan booking has
 none, and that every one of them is `QUEUED - not written` behind the approval gate.
 
+`tests/test_the_pages_keep_their_promises.py` — **the pages say what they should and
+nothing they should not.** No language is named on the landing page or the dashboard (the
+edge is source proximity, and the whitepaper is the stated exception because it names
+where models come from); no period-over-period delta appears anywhere, because there is no
+history to compute one from; no reference product's Worker name appears, in copy or in a
+comment; and nothing loads or fetches from another host.
+
+`tests/test_the_simulation_holds_together.py` — **the authored week makes sense as a
+week.** No booking is ever offered the route it just left, yesterday's reroute is still in
+place this morning, and a held booking pays a day for every day it waits.
+
+`tests/test_a_slow_source_cannot_stall_the_demo.py` — **a slow feed cannot hang a
+demo.** Against real sockets: a source that hangs and a source that trickles one byte at a
+time are both cut off, and a run whose every source trickles still ends inside its budget
+with the scenario intact.
+
 It is deliberately *not* a "no networking" rule. The app makes real HTTP calls on purpose
 — GDELT, PEGELONLINE, six RSS feeds and the LLM provider — and the live news pull is the
 credibility anchor. What must not exist is a way to send a *message*. So `requests` is
@@ -293,7 +312,7 @@ fine and `smtplib` is not.
 ## Where things are
 
 ```
-data/     the screenplay - chokepoints, routes, 5 shipments, the injected strike
+data/     the screenplay - chokepoints, routes, 7 bookings, four scenarios
 src/      the five components + llm.py (the only door to the AI provider) + config.py
           tms.py is the only door to the book of bookings
 static/   landing.html - the front page  ·  index.html - the dashboard
