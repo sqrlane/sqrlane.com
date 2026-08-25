@@ -35,7 +35,14 @@
       "eta": "2026-09-13",
       "required_by": "2026-09-17",
       "cold_chain": false,
-      "special_requirements": null
+      "special_requirements": null,
+      "commercial": {
+        "freight_eur": 28800,
+        "late_eur_per_day": 9500,
+        "breach_eur": 22000,
+        "transfer_risk_eur": 0,
+        "basis": "12 x 40HC. Munich assembly line; a stopped line is the cost."
+      }
     },
     {
       "id": "SHP-002",
@@ -58,7 +65,14 @@
       "eta": "2026-09-16",
       "required_by": "2026-09-17",
       "cold_chain": true,
-      "special_requirements": "Maintain +2 to +8 C. Continuous power required. Every transfer is a cold-chain break risk and a GDP-compliance event."
+      "special_requirements": "Maintain +2 to +8 C. Continuous power required. Every transfer is a cold-chain break risk and a GDP-compliance event.",
+      "commercial": {
+        "freight_eur": 11400,
+        "late_eur_per_day": 14000,
+        "breach_eur": 35000,
+        "transfer_risk_eur": 180000,
+        "basis": "2 x 40RH GDP pharma. A cold-chain break writes off the consignment."
+      }
     },
     {
       "id": "SHP-003",
@@ -81,7 +95,14 @@
       "eta": "2026-09-16",
       "required_by": "2026-09-19",
       "cold_chain": false,
-      "special_requirements": null
+      "special_requirements": null,
+      "commercial": {
+        "freight_eur": 19100,
+        "late_eur_per_day": 1500,
+        "breach_eur": 4500,
+        "transfer_risk_eur": 0,
+        "basis": "8 x 40HC retail furniture on a replenishment order. Late is a stockout on the shelf, not a stopped line."
+      }
     },
     {
       "id": "SHP-004",
@@ -104,7 +125,14 @@
       "eta": "2026-09-18",
       "required_by": "2026-09-20",
       "cold_chain": false,
-      "special_requirements": null
+      "special_requirements": null,
+      "commercial": {
+        "freight_eur": 13600,
+        "late_eur_per_day": 6100,
+        "breach_eur": 15000,
+        "transfer_risk_eur": 0,
+        "basis": "5 x 40HC consumer electronics into a dated promotion."
+      }
     },
     {
       "id": "SHP-005",
@@ -128,7 +156,14 @@
       "eta": "2026-09-14",
       "required_by": "2026-09-17",
       "cold_chain": false,
-      "special_requirements": "Out-of-gauge flatrack cargo. Discharge port must have heavy-lift capability."
+      "special_requirements": "Out-of-gauge flatrack cargo. Discharge port must have heavy-lift capability.",
+      "commercial": {
+        "freight_eur": 16200,
+        "late_eur_per_day": 4800,
+        "breach_eur": 9000,
+        "transfer_risk_eur": 0,
+        "basis": "Project machinery against a commissioning window."
+      }
     },
     {
       "id": "SHP-006",
@@ -152,7 +187,14 @@
       "eta": "2026-09-17",
       "required_by": "2026-09-20",
       "cold_chain": false,
-      "special_requirements": "ISO tanks. Barge loading depends on Rhine draught; low water cuts payload per barge."
+      "special_requirements": "ISO tanks. Barge loading depends on Rhine draught; low water cuts payload per barge.",
+      "commercial": {
+        "freight_eur": 21400,
+        "late_eur_per_day": 7300,
+        "breach_eur": 18000,
+        "transfer_risk_eur": 0,
+        "basis": "Industrial chemicals on a continuous-process intake."
+      }
     },
     {
       "id": "SHP-007",
@@ -176,7 +218,15 @@
       "eta": "2026-09-18",
       "required_by": "2026-09-23",
       "cold_chain": false,
-      "special_requirements": null
+      "special_requirements": null,
+      "commercial": {
+        "freight_eur": 9800,
+        "late_eur_per_day": 900,
+        "breach_eur": 3200,
+        "transfer_risk_eur": 0,
+        "basis": "Seasonal textiles. Late is discounted, not refused."
+      }
     }
-  ]
+  ],
+  "_commercial_note": "Authored commercial terms, synthetic like the bookings themselves. They exist so the advisor can weigh what a delay costs against what avoiding it costs, instead of ranking options by days and breaking ties on a relative index. No figure here is measured."
 }

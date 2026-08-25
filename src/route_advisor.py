@@ -98,6 +98,51 @@ def events_on_route(route: dict, events: list[dict]) -> list[dict]:
     return [e for e in events if e.get("chokepoint") in route["chokepoints"]]
 
 
+def _eur(n: int) -> str:
+    return f"EUR {n:,.0f}"
+
+
+def cost_of(candidate: dict, shipment: dict, primary: dict) -> dict:
+    """What this option actually costs the customer, in money.
+
+    The whole point of the exercise: a freight rate is not a cost. Three things
+    are, and they are summed here rather than left for a person to hold in their
+    head - the premium for taking the option at all, what every day past the
+    required-by date costs, and the one-off cost of missing the date even once.
+
+    Arithmetic only, as everywhere else in this file. Every input is an authored
+    term on the booking; nothing here is estimated and no probability is applied.
+    """
+    terms = shipment.get("commercial") or {}
+    freight = terms.get("freight_eur", 0)
+
+    # The premium for taking this routing, from the relative index it is quoted in.
+    freight_delta = round(freight * candidate["added_cost_index"] / 100)
+
+    # Days past the deadline, not days of delay - slack is what absorbs the first
+    # of them, and only what spills past it is billable to anyone.
+    worst_delay = candidate["projected_delay_days"][1]
+    days_late = max(0, worst_delay - shipment["deadline_slack_days"])
+
+    delay_cost = days_late * terms.get("late_eur_per_day", 0)
+    breach_cost = terms.get("breach_eur", 0) if days_late > 0 else 0
+
+    # A changed discharge port means an extra handling. On a cold chain that is a
+    # compliance event, so it is priced rather than described. Deterministic: it
+    # applies when the port actually moves, and not otherwise.
+    moves_port = candidate["discharge_port"] != primary["discharge_port"]
+    transfer_cost = terms.get("transfer_risk_eur", 0) if (moves_port and shipment.get("cold_chain")) else 0
+
+    return {
+        "freight_delta_eur": freight_delta,
+        "days_late": days_late,
+        "delay_cost_eur": delay_cost,
+        "breach_cost_eur": breach_cost,
+        "transfer_cost_eur": transfer_cost,
+        "exposure_eur": freight_delta + delay_cost + breach_cost + transfer_cost,
+    }
+
+
 def assess_route(route: dict, primary: dict, events: list[dict]) -> dict:
     """Everything measurable about one candidate route, versus the primary."""
     exposure = events_on_route(route, events)
@@ -143,6 +188,7 @@ def build_assessment(shipment: dict, routes: dict, events: list[dict]) -> dict:
          f"{primary['route_id']} passes {', '.join(primary['chokepoints'])}.")
 
     current = assess_route(primary, primary, events)
+    current.update(cost_of(current, shipment, primary))
     if current["exposed_to"]:
         note("Cross-reference active risk",
              "Exposed: " + "; ".join(
@@ -159,6 +205,7 @@ def build_assessment(shipment: dict, routes: dict, events: list[dict]) -> dict:
             note("Candidate route", f"{route_id} is not in routes.json - skipped.")
             continue
         assessment = assess_route(route, primary, events)
+        assessment.update(cost_of(assessment, shipment, primary))
         candidates.append(assessment)
         exposure_note = (
             "also exposed to " + ", ".join(x["chokepoint"] for x in assessment["exposed_to"])
@@ -167,9 +214,23 @@ def build_assessment(shipment: dict, routes: dict, events: list[dict]) -> dict:
              f"{route_id}: {assessment['added_transit_days']:+d}d transit, "
              f"{assessment['added_cost_index']:+d} cost index, "
              f"discharges {assessment['discharge_port']}, {exposure_note}.")
+        note("Price the alternate",
+             f"{route_id} exposure {_eur(assessment['exposure_eur'])} "
+             f"= {_eur(assessment['freight_delta_eur'])} routing premium"
+             + (f" + {assessment['days_late']}d late at "
+                f"{_eur(assessment.get('delay_cost_eur', 0) // max(1, assessment['days_late']))}/day"
+                if assessment["days_late"] else " + nothing late")
+             + (f" + {_eur(assessment['breach_cost_eur'])} deadline breach"
+                if assessment["breach_cost_eur"] else "")
+             + (f" + {_eur(assessment['transfer_cost_eur'])} cold-chain transfer"
+                if assessment["transfer_cost_eur"] else "") + ".")
 
     slack = shipment["deadline_slack_days"]
     worst = current["projected_delay_days"][1]
+    note("Price staying put",
+         f"Doing nothing exposes {_eur(current['exposure_eur'])}"
+         + (f" - {current['days_late']}d past the required-by date."
+            if current["days_late"] else " - the date still holds."))
     note("Compare against schedule slack",
          f"Staying put projects {current['projected_delay_days'][0]}-{worst}d of delay "
          f"against {slack}d of slack - "
@@ -227,6 +288,16 @@ def _decision_prompt(assessment: dict) -> str:
             lines.append("      no active risk on its chokepoints")
         low, high = candidate["projected_delay_days"]
         lines.append(f"      projected total delay: {low}-{high} days")
+        bits = [f"{_eur(candidate['freight_delta_eur'])} routing premium"]
+        if candidate["days_late"]:
+            bits.append(f"{candidate['days_late']}d past the required-by date "
+                        f"= {_eur(candidate['delay_cost_eur'])}")
+        if candidate["breach_cost_eur"]:
+            bits.append(f"{_eur(candidate['breach_cost_eur'])} deadline breach")
+        if candidate["transfer_cost_eur"]:
+            bits.append(f"{_eur(candidate['transfer_cost_eur'])} cold-chain transfer risk")
+        lines.append(f"      COST OF THIS OPTION: {_eur(candidate['exposure_eur'])}  "
+                     f"({'; '.join(bits)})")
         return "\n".join(lines)
 
     options = [render(current, "CURRENT ROUTE")]
@@ -283,10 +354,19 @@ HOW TO DECIDE
               the "no good option" call: recommend holding and notifying, and be
               explicit about why each alternative would be worse.
 
-Weigh three things against each other: the schedule slack, the transit days an
-alternate adds, and the delay the disruption is expected to cause. For a
-shipment whose final destination IS the disrupted port, remember that rerouting
-elsewhere adds road transit and extra handling on top of the detour.
+Weigh four things against each other: the schedule slack, the transit days an
+alternate adds, the delay the disruption is expected to cause, and COST OF THIS
+OPTION. For a shipment whose final destination IS the disrupted port, remember
+that rerouting elsewhere adds road transit and extra handling on top of the
+detour.
+
+The cost line is the one that settles most of these, and it is already computed
+for you - do not recalculate it, quote it. It is not the freight rate: it is the
+routing premium plus what being late actually costs this customer. A cheaper
+routing that lands late is usually the expensive option, and a premium worth
+paying is one smaller than the delay it avoids. Say which is which in euros.
+If the cheapest option is also the latest, name the trade explicitly rather than
+letting the number decide silently.
 
 HARD CONSTRAINT
 {choice_rule}
@@ -355,7 +435,20 @@ def decide_with_rules(assessment: dict) -> dict:
         viable = [c for c in alternates
                   if c["projected_delay_days"][1] <= slack
                   or c["projected_delay_days"][1] <= staying_worst - MATERIAL_GAIN_DAYS]
-        viable.sort(key=lambda c: (c["projected_delay_days"][1], c["added_cost_index"]))
+
+        # A reroute has to be worth what it costs. Landing sooner is not the same
+        # as being better off: a Cape routing that arrives nine days late at a
+        # thirty-point premium can cost more than absorbing the delay where it
+        # is. Anything that does not beat staying put in money is not an option,
+        # it is a more expensive way to be late.
+        stay_exposure = current["exposure_eur"]
+        priced_out = [c for c in viable if c["exposure_eur"] >= stay_exposure]
+        viable = [c for c in viable if c["exposure_eur"] < stay_exposure]
+
+        # Money first, days to break ties - the inversion is the point. Ranking
+        # by days and breaking ties on a relative index answers "which is
+        # soonest", which is not the question anyone is actually asking.
+        viable.sort(key=lambda c: (c["exposure_eur"], c["projected_delay_days"][1]))
         for candidate in assessment["candidates"][1:]:
             if candidate not in viable[:1]:
                 if candidate["exposed_to"]:
@@ -364,6 +457,11 @@ def decide_with_rules(assessment: dict) -> dict:
                            f"through {hit}, so it projects "
                            f"{candidate['projected_delay_days'][1]}d against "
                            f"{_days(slack)} of slack")
+                elif candidate in priced_out:
+                    why = (f"lands {candidate['projected_delay_days'][1]}d out and costs "
+                           f"{_eur(candidate['exposure_eur'])} against "
+                           f"{_eur(stay_exposure)} for staying put - a more expensive "
+                           f"way to be late")
                 else:
                     why = (f"projects {candidate['projected_delay_days'][1]}d of delay "
                            f"against {_days(slack)} of slack")
