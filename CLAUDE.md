@@ -434,26 +434,36 @@ Three of them earn their place by reacting to the decision rather than decoratin
   **escalates rather than files**, which is the honest behaviour and matches how these
   systems are supposed to treat a novel exception.
 
-**The landing page names the systems it is built to point at** — CargoWise, Riege
-Scope, Descartes, Transporeon, TIMOCOM, AEB, DAKOSY, Portbase — in a second band
-below the workflow section, styled like the sources strip. Two rules hold it:
+**Both pages name the systems the connector is built to point at** — CargoWise, Riege
+Scope, Descartes, Transporeon, TIMOCOM, AEB, DAKOSY, Portbase. On the landing page
+they are a second band below the workflow section, styled like the sources strip; on
+the dashboard they are a card in the **TMS link** view, under the connector summary.
+The dashboard's is a **grid, not a marquee** — a sliding band is a marketing device,
+and the dashboard is a working view. Same names, same tags, same disclaimer.
+
+Two rules hold both:
 
 - **It is not the sources strip.** That band is headed "Watching, keyless and in the
   open" and lists what the Risk Monitor actually reads. None of these is read, so
   putting one there would claim an integration that does not exist.
   `tests/test_the_pages_keep_their_promises.py` fails if a named system appears
   inside the sources band.
-- **The disclaimer is load-bearing and lives in the band itself.** A row of familiar
-  vendor names in the source strip's own styling reads as an integration list unless
-  the page says otherwise, so the band carries "None of these is connected", "no
-  vendor, no credential, no endpoint" and "nothing is ever written" — and the test
-  asserts all three, scoped to that section. An earlier version of that check looked
-  at the whole page and passed on the `TMS (demo connector)` further down, which meant
-  the line could have been deleted with the guard still green.
+- **The disclaimer is load-bearing and lives with the names.** A row of familiar
+  vendor names — in the source strip's styling, or inside a view called "TMS link" —
+  reads as an integration list unless the page says otherwise, so each block carries
+  "None of these is connected", "no vendor, no credential, no endpoint" and "nothing
+  is ever written". The test asserts all three **scoped to the block that names
+  them**, on both pages. An earlier version looked at the whole page and passed on the
+  `TMS (demo connector)` further down, which meant the line could have been deleted
+  with the guard still green; it was caught by deleting the line and watching the test
+  not fail.
 
 No logo is reproduced. The marks are plain pictograms of what each *kind* of system
 is — a container, a gantry, a ship, a shield — the same convention the sources strip
-already states in its own comment.
+already states in its own comment. The same eight symbols are defined in both files,
+because each page is self-contained by design; on the dashboard they are `.sysmk`,
+**not** `.mk`, which that page already uses for the map's lane rows. Reusing it drew
+every icon as an empty bordered box.
 
 **The connection point** is its own view in the sidebar — **TMS link**, under `System` —
 not just a Worker chip: connector name, `connected (demo)`, the one-line positioning,
