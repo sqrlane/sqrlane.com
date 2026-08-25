@@ -21,7 +21,11 @@ gone wrong in this project before:
 Run it with the rest:  python -m unittest discover -s tests
 """
 
+import http.server
+import socketserver
 import sys
+import threading
+import time
 import unittest
 from pathlib import Path
 
@@ -259,6 +263,93 @@ class SignalsTest(unittest.TestCase):
         self.assertEqual(len(read["entries"]), len(signals.SIGNAL_SOURCES))
         self.assertTrue(all(e["status"] == "skipped" for e in read["entries"]))
         self.assertEqual(read["events"], [])
+
+
+class SlowSourceTest(unittest.TestCase):
+    """The failure mode that actually threatens a demo.
+
+    A dead source fails fast. A slow one does not, and there are two kinds:
+    one that accepts the connection and never replies, and one that replies
+    forever, a byte at a time. The second is the nasty one - `requests`' timeout
+    is measured BETWEEN BYTES, so a source sending one byte a second never trips
+    an eight-second timeout, and the thread reading it never ends. One such feed
+    once hung a whole run indefinitely.
+
+    Both are checked here against real local servers rather than stubs, because
+    what is being tested is socket behaviour, not our own control flow.
+    """
+
+    TIMEOUT = 2.0
+
+    @classmethod
+    def setUpClass(cls):
+        cls._servers = []
+        cls.hang_port = cls._serve(cls, _Hang)
+        cls.trickle_port = cls._serve(cls, _Trickle)
+
+    @classmethod
+    def tearDownClass(cls):
+        for server in cls._servers:
+            server.shutdown()
+            server.server_close()
+
+    def _serve(cls, handler):
+        # Threading, not plain TCPServer: a single-threaded server is still
+        # inside the hanging handler when the test ends, so shutdown() would
+        # block until that handler returned and the suite would pay for the
+        # whole hang it just proved it does not wait for.
+        server = socketserver.ThreadingTCPServer(("127.0.0.1", 0), handler)
+        server.allow_reuse_address = True
+        server.daemon_threads = True
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        cls._servers.append(server)
+        return server.server_address[1]
+
+    def _ends_within(self, port, seconds):
+        started = time.monotonic()
+        with self.assertRaises(Exception) as caught:
+            httpget.get_capped(f"http://127.0.0.1:{port}/x", timeout=self.TIMEOUT)
+        return time.monotonic() - started, caught.exception
+
+    def test_a_source_that_never_replies_ends_at_the_timeout(self):
+        elapsed, _exc = self._ends_within(self.hang_port, self.TIMEOUT)
+        self.assertLess(elapsed, self.TIMEOUT + 2)
+
+    def test_a_source_that_trickles_forever_is_cut_off(self):
+        """Without the watchdog this call never returns at all, so the assertion
+        that matters is simply that it ends - and that it says why in one line."""
+        elapsed, exc = self._ends_within(self.trickle_port, self.TIMEOUT)
+        self.assertLess(elapsed, self.TIMEOUT + 2)
+        self.assertIsInstance(exc, httpget.SourceTooSlow)
+        detail = httpget.short_error(exc, "example.invalid")
+        self.assertIn("still sending", detail)
+        self.assertLess(len(detail), 140)
+
+
+class _Hang(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        time.sleep(8)          # comfortably longer than the timeout under test
+
+    def log_message(self, *args):
+        pass
+
+
+class _Trickle(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Transfer-Encoding", "chunked")
+        self.end_headers()
+        try:
+            while True:
+                self.wfile.write(b"1\r\n{\r\n")
+                self.wfile.flush()
+                time.sleep(0.2)
+        except Exception:                      # noqa: BLE001
+            pass
+
+    def log_message(self, *args):
+        pass
 
 
 class SourceRosterTest(unittest.TestCase):

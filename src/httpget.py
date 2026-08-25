@@ -76,7 +76,14 @@ def get_capped(url, *, timeout, params=None, headers=None):
             raise SourceTooSlow(f"still sending after {timeout:.0f}s - gave up")
         response._content = b"".join(chunks)     # so .json() and .content still work
         return response
-    except (OSError, requests.RequestException) as exc:
+    except Exception as exc:                     # noqa: BLE001
+        # Deliberately broad, and only on the way out. Shutting the socket from
+        # under a read in flight does not raise one predictable exception - the
+        # trickle case surfaces as AttributeError from inside urllib3, which an
+        # (OSError, RequestException) clause lets through raw. The point of this
+        # function is that a slow source produces ONE READABLE LINE, so anything
+        # raised after the watchdog fired is that line; anything else is re-raised
+        # untouched for the caller to report.
         if expired:
             raise SourceTooSlow(f"still sending after {timeout:.0f}s - gave up") from exc
         raise
@@ -93,12 +100,17 @@ def short_error(exc, host_hint: str = "") -> str:
     """
     name = type(exc).__name__
     text = str(exc)
+    if isinstance(exc, SourceTooSlow):
+        return f"{text} ({host_hint or 'the source'})"
     if "Tunnel connection failed" in text or "ProxyError" in name or "ProxyError" in text:
         return f"blocked by network/proxy policy ({host_hint or 'host unreachable'})"
     if "NameResolution" in text or "getaddrinfo" in text:
         return f"DNS lookup failed ({host_hint})"
     if "timed out" in text.lower():
-        return f"timed out after {config.HTTP_TIMEOUT_SECONDS}s ({host_hint})"
+        # Not "after N seconds": the live budget shortens the per-request timeout
+        # as it runs down, so the configured value is often not the one that was
+        # actually waited, and printing it states a number that is not true.
+        return f"timed out waiting for {host_hint or 'the source'}"
     # A refusal carries its status code and nothing else worth reading: the raw
     # text is the whole request URL again, which is a wall on a dashboard and
     # unreadable on a public page.

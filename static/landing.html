@@ -176,10 +176,12 @@ h1,h2,h3,h4,p{margin:0}
 .brand .name{font-size:16px; font-weight:600; letter-spacing:-.32px}
 .nav-links{display:flex; align-items:center; gap:4px; margin-left:8px}
 .nav-links a{padding:6px 10px; border-radius:var(--r-sm); font-size:14px; line-height:20px;
+             white-space:nowrap;
              color:var(--muted); transition:background .15s var(--ease), color .15s var(--ease)}
 .nav-links a:hover{background:var(--gray-100); color:var(--fg)}
 .nav .right{margin-left:auto; display:flex; align-items:center; gap:10px}
-.nav .ghost{font-size:14px; color:var(--muted); padding:6px 10px; border-radius:var(--r-sm)}
+.nav .ghost{font-size:14px; color:var(--muted); padding:6px 10px; border-radius:var(--r-sm);
+            white-space:nowrap}
 .nav .ghost:hover{background:var(--gray-100); color:var(--fg)}
 
 /* ---------- hero ---------- */
@@ -1078,19 +1080,26 @@ h1,h2,h3,h4,p{margin:0}
    612px, and 257px of actions. The old rule kept every one of them until
    860px and then dropped the links all at once, so the page scrolled
    sideways across the whole band between - and every link added since made
-   that band wider. Two links have been added since the breakpoint was set.
+   that band wider.
 
    So: tighten first - close the gaps and drop the ghost link, which the
    footer carries anyway - and only hide the links once tightening is not
    enough. Anything added to this nav shifts both numbers; the fix is to
-   re-measure, not to nudge them. */
+   re-measure, not to nudge them.
+
+   Re-measured after the TMS link was added: tightened, the bar holds one row
+   down to 928px and overflows at 926, so the links are hidden below 940. The
+   `nowrap` above is part of that measurement and not decoration - without it
+   flex does not overflow, it wraps "How it works" onto two lines inside its
+   own pill, which is worse than a scrollbar and invisible to a width probe
+   looking only at scrollWidth. */
 @media (max-width:1180px){
   .nav .wrap{gap:18px}
   .nav-links{gap:0; margin-left:0}
   .nav-links a{padding:6px 8px}
   .nav .ghost{display:none}
 }
-@media (max-width:900px){
+@media (max-width:940px){
   .nav-links{display:none}
 }
 

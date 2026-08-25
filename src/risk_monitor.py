@@ -472,7 +472,8 @@ FAMILY_LABELS = {
 
 # The scripted scenario reports itself as a source so the CLI can show where
 # each event came from. It is not a live source and never counts as one.
-DISPLAY_LABELS = {**FAMILY_LABELS, "scenario": "Scripted scenario"}
+DISPLAY_LABELS = {**FAMILY_LABELS, "scenario": "Scripted scenario",
+                  "offline": "Live sources (not read)"}
 
 
 def expected_sources() -> list[dict]:
@@ -887,7 +888,11 @@ def run(*, live=True, inject=False, use_llm=True, verbose=True, scenario=None) -
                     print(f"  ! {llm.configuration_hint()}")
                 events += classify_without_llm(candidates, chokepoints)
     else:
-        report.skipped("live sources", "--inject-only: network skipped")
+        # Its own family, so the family strip does not report "News 0/1" and
+        # imply the board watches a single news source.
+        offline = SourceReport("offline")
+        offline.skipped("live sources", "--inject-only: network skipped")
+        report.entries += offline.entries
 
     scenario_meta = None
     if inject:
