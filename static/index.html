@@ -453,7 +453,7 @@ html[data-theme="dark"] .atlas .land{fill:#161616;stroke:#2a2a2a}
     background:var(--amber-bg);color:var(--amber);border-radius:4px;padding:2px 5px;margin-left:7px}
 
 /* ---------- scenario switcher ---------- */
-.scen{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.scen{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
 .scen-b{border:1px solid var(--border);background:var(--card);color:var(--muted);
         border-radius:var(--r);padding:7px 12px;cursor:pointer;font-size:13px;
         display:flex;flex-direction:column;gap:1px;text-align:left;min-width:150px}
@@ -461,19 +461,22 @@ html[data-theme="dark"] .atlas .land{fill:#161616;stroke:#2a2a2a}
 .scen-b.on{border-color:var(--fg);color:var(--fg);box-shadow:inset 0 0 0 1px var(--fg)}
 .scen-b .k{font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em}
 .scen-b .nm{font-weight:500}
-.scen-note{font-size:12.5px;color:var(--muted);margin:-4px 0 16px}
+.scen-note{font-size:12.5px;color:var(--muted);margin:-2px 0 14px}
 .scen-note b{color:var(--fg)}
 
-/* ---------- worker roster strip ---------- */
-.roster{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:20px}
-.wchip{border:1px solid var(--border);background:var(--card);border-radius:var(--r-md);
-       padding:10px 12px;cursor:pointer;text-align:left;box-shadow:var(--shadow);
-       display:flex;flex-direction:column;gap:5px}
+/* ---------- worker roster strip ----------
+   One row per Worker, not a card each. Thirteen 200px cards stacked three rows
+   deep made this band ~400px tall, and the band sits above every view - so on a
+   1280x720 laptop clicking a nav item changed two pixels of screen and the board
+   looked broken. A pill keeps the two things that carry meaning, the state dot
+   and the mode tag, and gives the view underneath the room it needs. */
+.roster{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.wchip{border:1px solid var(--border);background:var(--card);border-radius:var(--r);
+       padding:5px 9px;cursor:pointer;text-align:left;
+       display:flex;align-items:center;gap:7px}
 .wchip:hover{border-color:var(--border-strong)}
 .wchip.on{border-color:var(--fg);box-shadow:inset 0 0 0 1px var(--fg)}
-.wchip .top{display:flex;align-items:center;gap:7px}
-.wchip .nm{font-size:12.5px;font-weight:500;flex:1;min-width:0;overflow:hidden;
-           text-overflow:ellipsis;white-space:nowrap}
+.wchip .nm{font-size:12.5px;font-weight:500;white-space:nowrap}
 .wtag{font-size:9.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
       padding:1.5px 5px;border-radius:3px}
 .wtag.live{background:var(--green-bg);color:var(--green)}
@@ -481,9 +484,6 @@ html[data-theme="dark"] .atlas .land{fill:#161616;stroke:#2a2a2a}
 /* The link is neither live nor scripted: its write-backs are derived from the
    run, but no TMS is contacted. Its own tag, so neither word has to stretch. */
 .wtag.demo{background:var(--blue-bg);color:var(--blue)}
-.wchip .bot{display:flex;align-items:center;gap:6px;min-width:0}
-.wchip .st{font-size:11px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;
-           white-space:nowrap;flex:1;min-width:0}
 
 /* ---------- worker panel band ---------- */
 .wpanel{border:1px solid var(--border);background:var(--card);border-radius:var(--r-md);
@@ -1503,18 +1503,23 @@ function scenarioSwitcher(){
     <p class="scen-note"><b>${esc(sc.decision_type)}.</b> ${esc(sc.summary)}</p>`;
 }
 
+/* Every entry in this strip is a Worker, so the word is carried by the heading
+   rather than repeated thirteen times. The full name stays in the tooltip and in
+   the panel header, where there is room for it. */
+function shortWorker(n){ return String(n).replace(/\s+Worker$/, ""); }
+
 function rosterStrip(){
   if (!workers.length) return "";
   return `<p class="sec-t">Workers</p><div class="roster">${workers.map(w=>{
     const mode = w.mode==="live" ? "live" : w.mode==="demo" ? "demo" : "scripted";
-    /* The tag sits under the name, not beside it. On a roster this size the two
-       compete for one line and the name is what loses - "Milestones Worker"
-       became "Mile…", which is not a Worker anyone can identify. */
-    return `<button class="wchip ${openWorker===w.id?"on":""}" data-worker="${esc(w.id)}">
-      <span class="top"><span class="wdot" style="margin:0"></span>
-        <span class="nm">${esc(w.name)}</span></span>
-      <span class="bot"><span class="wtag ${mode}">${mode}</span>
-        <span class="st">${esc(w.summary || w.role)}</span></span></button>`;}).join("")}</div>`;
+    /* The summary was ellipsised to "Reads the wires, the regional …" at every
+       width this strip is ever shown at, so it moves to the tooltip. The mode
+       tag stays on screen: it is the honest half, and it is never abbreviated. */
+    return `<button class="wchip ${openWorker===w.id?"on":""}" data-worker="${esc(w.id)}"
+                    title="${esc(w.name)} — ${esc(w.summary || w.role)}">
+      <span class="wdot" style="margin:0"></span>
+      <span class="nm">${esc(shortWorker(w.name))}</span>
+      <span class="wtag ${mode}">${mode}</span></button>`;}).join("")}</div>`;
 }
 
 function workerPanel(){

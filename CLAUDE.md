@@ -280,8 +280,19 @@ step, so what carries over is **anatomy, never code**:
   against the slack the booking had. A real proportion, and the number every decision
   turns on. SHP-002 reads `100%+` in red.
 
-Two things worth keeping:
+Three things worth keeping:
 
+- **Global chrome above per-view content has to stay short.** The scenario switcher
+  and the Worker roster sit in one band above every view, so their height is
+  subtracted from every view's first screen. As a grid of thirteen 200px cards the
+  band ran ~400px, and `go()` scrolls back to the top — so on a 1280x720 laptop
+  clicking *TMS link* scrolled to an unchanged band and left **two pixels** of the
+  clicked view on screen. Nothing was broken; the nav simply had nothing visible to
+  change, which reads exactly like a dead button. The roster is now a wrapped strip
+  of pills (dot, name, mode tag; the ellipsised summary moved to the tooltip) and the
+  band is ~230px. Measure `innerHeight - .view.on.getBoundingClientRect().top` after a
+  nav click before adding anything to that band: if it approaches zero, the board looks
+  broken however well it works.
 - **The gauge figure is capped to its track.** SHP-002 is 5 days of delay against 1 of
   slack — literally 500%. A full arc labelled "500%" reads as a bug, so the headline caps
   at `100%+` and the exact days sit in the line beside it. Nothing is lost.
