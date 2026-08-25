@@ -301,6 +301,22 @@ h1,h2,h3,h4,p{margin:0}
                 padding:0 4px; line-height:14px}
 .strip .sprite{position:absolute; width:0; height:0; overflow:hidden}
 
+/* ---- the playhead ----
+   The third of the three blocks that follow the scroll, and the one the band's
+   own motion changes. On the timeline and the heatmap the scroll picks an
+   index into a sequence that is standing still. This band is already sliding,
+   so an index would spend a third of its time pointing at a source that is off
+   screen. What the scroll moves here is a position in the band instead, and
+   whatever source is under it is lit - so the lit one is always a source the
+   reader can actually see, and each is lit in turn as it slides through.
+
+   Colour only, and no lift: this band is 60 pixels of quiet under the hero,
+   and a source that jumped out of the row would be louder than the band is
+   meant to be. --muted to --fg is a clear step and nothing more. */
+.strip .src,.strip .src .mk{transition:color .3s var(--ease)}
+.strip .src.on{color:var(--fg)}
+.strip .src.on .mk{color:var(--fg)}
+
 /* Asked for no motion, the band becomes what it was before: the same list,
    centred, wrapped, standing still. */
 @media (prefers-reduced-motion:reduce){
@@ -314,6 +330,7 @@ h1,h2,h3,h4,p{margin:0}
   .strip .strip-row{flex:1 1 auto; max-width:100%; flex-wrap:wrap;
                     justify-content:center; gap:12px 28px; padding-right:0}
   .strip .strip-row.dup{display:none}
+  .strip .src,.strip .src .mk{transition:none}
 }
 
 /* ---------- contrast cards (the gap) ---------- */
@@ -2748,15 +2765,24 @@ firm revised ETA as soon as terminals restart.</p>
   /* Run update() while el is on screen and the reader is moving. The handler
      is passive and measures only inside a frame the browser gave us, so a
      scroll costs one rect read per block per frame at worst. Returns a poke,
-     for a caller that needs to re-run it for its own reasons. */
-  function follow(el, update) {
+     for a caller that needs to re-run it for its own reasons.
+
+     everyFrame is for a block that moves on its own as well: it keeps asking
+     for the next frame instead of waiting to be scrolled, and stops the
+     moment the block leaves the screen. Only the sources band needs it. */
+  function follow(el, update, everyFrame) {
     if (!el || !("IntersectionObserver" in window)) return function () {};
     if (window.matchMedia &&
         window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       return function () {};
     }
     var live = false, queued = false;
-    function run() { queued = false; if (live) update(); }
+    function run() {
+      queued = false;
+      if (!live) return;
+      update();
+      if (everyFrame) queue();
+    }
     function queue() { if (!queued) { queued = true; requestAnimationFrame(run); } }
     new IntersectionObserver(function (entries) {
       entries.forEach(function (e) { live = e.isIntersecting; });
@@ -2827,6 +2853,44 @@ firm revised ETA as soon as terminals restart.</p>
       var at = Math.floor(p * days);
       cur = light(cols, cur, Math.max(0, Math.min(days - 1, at)));
     });
+  })();
+
+  /* 3. The sources band, where the band's own motion changes the shape of the
+     thing. The other two sequences stand still, so the scroll can pick an
+     index into them. This one is sliding, and an index into a sliding list
+     would spend a third of its time pointing at a source that is off screen.
+
+     So what the scroll moves here is a line - a position in the band - and
+     whatever source is under it is the one lit. The lit source is therefore
+     always one the reader can see, and each is lit in turn twice over: as the
+     reader scrolls the line across the band, and as the band carries the next
+     source into it. That second half is why this block re-reads every frame
+     while it is on screen; the other two only move when the reader does.
+
+     Asking the page what is at a point, rather than working it out from the
+     track's offset, is what keeps this short: the band is transformed, cloned
+     three times and masked at both ends, and a hit test is right about all of
+     that for free. */
+  (function () {
+    var view = document.querySelector(".strip .strip-view");
+    if (!view) return;
+    var lit = null;
+    follow(view, function () {
+      var r = view.getBoundingClientRect(), vh = window.innerHeight;
+      var p = Math.max(0, Math.min(1, (vh - r.top) / (vh + r.height)));
+      /* .18 to .82 keeps the line clear of the masked ends, where a source is
+         faded out and lighting it would look like nothing happened. */
+      var el = document.elementFromPoint(r.left + r.width * (0.18 + 0.64 * p),
+                                         r.top + r.height / 2);
+      var src = el && el.closest ? el.closest(".src") : null;
+      /* Between two sources there is only the gap, and the hit test finds
+         nothing of ours there. Holding the last one lit is what stops the
+         band blinking off every 44 pixels. */
+      if (!src || src === lit) return;
+      if (lit) lit.classList.remove("on");
+      lit = src;
+      src.classList.add("on");
+    }, true);
   })();
 
 })();
