@@ -305,6 +305,51 @@ Not ported, deliberately: kokonutui's decorative pieces (glitch-text, liquid-gla
 background-paths) and anything needing teams or avatar stacks. The first fight a demo
 that has to read clearly in a room; the second would be invented data.
 
+### Made to be worked in, not just looked at
+
+The board renders the run correctly; a later pass made it a thing a person can
+actually operate. Four changes, each closing a hole that looked like polish and
+was really a workflow:
+
+- **Approvals is a queue, not a transcript.** Eighteen drafts rendered open ran
+  **5,452px** — five and a half screens to work a queue whose entire purpose is a
+  person working it, with no way to scan, select or act in bulk. It is now one row
+  per item (what it is, what it changes, its gate) opening to the full body on
+  demand: **1,382px**. Rows group **by booking, not by kind**, because a
+  write-back's `booking_ref` *is* the shipment id — so everything waiting on
+  SHP-001, both mails and all four queued changes, reads as one block. That is the
+  product's own claim ("every decision lands on the booking it came from") made
+  navigable instead of asserted. Bulk approve is **select-then-approve**, never a
+  blind "approve everything": the count is on the button so a person sees exactly
+  what they are signing off, and only unapproved rows are selectable so the count
+  can never claim work already done. It is still a browser state change with no
+  transport behind it, in bulk exactly as singly.
+- **Every view has an address.** `#/approvals`, `#/shipments/SHP-002`. Refresh
+  keeps you where you were, the back button walks the views, and a link to the
+  queue is a link someone can send. Before this every reload dropped you on
+  Overview and Back left the dashboard. The `hashchange` handler is idempotent by
+  construction — if we wrote the hash ourselves the state already matches it and
+  the handler returns — so no guard flag is needed to stop `go()` and the URL
+  bouncing off each other.
+- **The risk feed stopped being a dead end.** An event now names the bookings it
+  moved, and each one is a button through to the board. The link was *already in
+  the data* — `decision.triggering_events` carries the `event_id` — and the feed
+  simply never used it, leaving a person to work out by hand which bookings a
+  strike moved. That hand-work is the manual bridge this product exists to remove,
+  so leaving it in the UI was the demo arguing against itself.
+- **`g`-then-key navigation**, `/` to search, `?` for the sheet. Typing in a field
+  is never a shortcut and any modifier defers to the browser.
+
+Two traps worth remembering, both found in a browser and invisible to a unit test:
+
+- **A shared class name silently reparents a dialog.** The shortcut sheet reused
+  `.pal` for its geometry and took `keys` as its modifier — which collided with an
+  existing `.keys{display:flex}` legend rule and laid the dialog's header and body
+  out side by side. Grep the class before adding a modifier to a shared component.
+- **One body flag cannot open two dialogs.** `body.pal-on` showed both the palette
+  and the sheet at once; each needs its own flag, with the scrim listening for
+  either.
+
 ### The simulation loop — a week, not a snapshot
 
 The button runs **one** cycle: one set of active events, one set of decisions. That
