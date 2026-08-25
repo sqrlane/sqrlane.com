@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lanewatch — trade-lane risk, decided</title>
-<meta name="description" content="Lanewatch reads news from sources worldwide, works out which shipments are exposed, decides reroute or hold, and drafts the emails. The reasoning is recorded for every call.">
+<meta name="description" content="Lanewatch reads 42 free sources — news, river gauges, weather, sea state, hazards, government notices and rates — works out which bookings in your TMS are exposed, decides reroute or hold, drafts the emails, and writes every change back onto the booking for a person to approve.">
 <meta name="color-scheme" content="light">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3.5' fill='%23171717'/%3E%3Cpath d='M3 11.2h10M3 8h6.5M3 4.8h3.5' stroke='%23fff' stroke-width='1.7' stroke-linecap='round'/%3E%3C/svg%3E">
 
@@ -1174,7 +1174,8 @@ h1,h2,h3,h4,p{margin:0}
     </a>
     <nav class="nav-links">
       <a href="#loop">How it works</a>
-      <a href="#edge">The edge</a>
+      <a href="#edge">Signals</a>
+      <a href="#desk">TMS</a>
       <a href="#case">Case study</a>
       <a href="#reasoning">Reasoning</a>
       <a href="#sources">Sources</a>
@@ -1194,18 +1195,20 @@ h1,h2,h3,h4,p{margin:0}
 <!-- ======================== HERO ======================== -->
 <section class="hero">
   <div class="wrap">
-    <span class="pill"><span class="dot"></span>20 live sources worldwide, no API keys</span>
+    <span class="pill"><span class="dot"></span>42 live sources across six families, no API keys</span>
 
     <h1 class="d1">Trade-lane risk, decided.</h1>
 
     <p class="sub copy18">
-      Risk platforms stop at the alert. Lanewatch runs on the bookings in your TMS: it reads
-      the disruption — usually from a local source, ahead of the international wires — works
-      out which of them are exposed, decides
-      <b style="color:var(--fg);font-weight:500">reroute</b> or
-      <b style="color:var(--fg);font-weight:500">hold</b> for each, writes the change back
-      onto the booking, and drafts the emails a human would otherwise write. Every call keeps
-      its reasoning, and every write waits for you.
+      Risk platforms stop at the alert, and someone on your desk still has to key the
+      consequence into the TMS. Lanewatch does that part. It watches everything that moves a
+      lane — the wires, the press next to the port, river gauges, weather, sea state,
+      hazards, government notices, rates — works out which of your bookings are exposed,
+      decides <b style="color:var(--fg);font-weight:500">reroute</b> or
+      <b style="color:var(--fg);font-weight:500">hold</b> for each, drafts the emails a human
+      would otherwise write, and <b style="color:var(--fg);font-weight:500">writes every
+      change back onto the booking it came from</b>. Each call keeps its reasoning. Every
+      write waits for you.
     </p>
 
     <div class="cta">
@@ -1215,8 +1218,8 @@ h1,h2,h3,h4,p{margin:0}
           <path d="M5 12h13M12 5l7 7-7 7"/></svg></a>
       <a class="btn btn-secondary btn-lg" href="#loop">See how the loop closes</a>
     </div>
-    <p class="under">One button. Five bookings out of the TMS. Three different, defensible
-      decisions — and the write-back each one implies — in under two minutes.</p>
+    <p class="under">One button. Every booking read out of the TMS, three different and
+      defensible decisions, and the write-back each one implies — in under two minutes.</p>
 
     <!-- A rendering of the actual board, drawn in HTML so it stays sharp. -->
     <div class="shot">
@@ -1293,7 +1296,7 @@ h1,h2,h3,h4,p{margin:0}
 <!-- ======================== SOURCE STRIP ======================== -->
 <section class="strip">
   <div class="wrap">
-    <p class="lead">Watching, keyless and in the open</p>
+    <p class="lead">Forty-two sources, keyless and in the open</p>
   </div>
 
   <!-- The marks, defined once and referenced by every copy of the row. They
@@ -1381,6 +1384,48 @@ h1,h2,h3,h4,p{margin:0}
       <path d="M5.4 20.5q2.2-1.8 4.4 0t4.4 0t4.4 0"/>
     </symbol>
 
+
+    <!-- Open-Meteo: wind over a port -->
+    <symbol id="mk-wind" viewBox="0 0 24 24">
+      <path d="M3 8.5h9.4a2.6 2.6 0 1 0-2.6-2.6"/>
+      <path d="M3 12.5h13a2.8 2.8 0 1 1-2.8 2.8"/>
+      <path d="M3 16.6h6.4"/>
+    </symbol>
+
+    <!-- Open-Meteo Marine: sea state on the open leg -->
+    <symbol id="mk-wave" viewBox="0 0 24 24">
+      <path d="M2.6 9.4c1.9 0 1.9 2.1 3.8 2.1s1.9-2.1 3.8-2.1 1.9 2.1 3.8 2.1
+               1.9-2.1 3.8-2.1 1.9 2.1 3.8 2.1"/>
+      <path d="M2.6 14.6c1.9 0 1.9 2.1 3.8 2.1s1.9-2.1 3.8-2.1 1.9 2.1 3.8 2.1
+               1.9-2.1 3.8-2.1 1.9 2.1 3.8 2.1"/>
+    </symbol>
+
+    <!-- USGS: a seismograph trace -->
+    <symbol id="mk-seismic" viewBox="0 0 24 24">
+      <path d="M2.4 12h3.1l2-6.4 3 12.8 2.4-8.3 1.7 4.3 1.5-2.4h5.5"/>
+    </symbol>
+
+    <!-- NASA EONET: watching from above -->
+    <symbol id="mk-sat" viewBox="0 0 24 24">
+      <path d="M6.6 12.4 12 7l5 5-5.4 5.4z"/>
+      <path d="M4.1 9.9 6.6 7.4M17 12l2.6-2.6M9.1 19.9a6.9 6.9 0 0 0 6.9-6.9"/>
+      <path d="M8.6 4.3 11 6.7M13.4 19.7 11 17.3"/>
+    </symbol>
+
+    <!-- Federal Register: a filing, sealed -->
+    <symbol id="mk-doc" viewBox="0 0 24 24">
+      <path d="M6 3.2h8.2L18.4 7v13.8H6z"/>
+      <path d="M14 3.2V7h4.4"/>
+      <circle cx="12.2" cy="14.4" r="2.6"/>
+      <path d="M8.9 10.4h3"/>
+    </symbol>
+
+    <!-- Frankfurter: the ECB's own reference rates -->
+    <symbol id="mk-fx" viewBox="0 0 24 24">
+      <path d="M3.4 8.2h15.2M15.4 4.9l3.2 3.3-3.2 3.3"/>
+      <path d="M20.6 15.8H5.4M8.6 12.5l-3.2 3.3 3.2 3.3"/>
+    </symbol>
+
   </defs></svg>
 
   <div class="strip-view">
@@ -1397,7 +1442,17 @@ h1,h2,h3,h4,p{margin:0}
         <span class="src"><svg class="mk"><use href="#mk-drop"/></svg>الجزيرة <span class="lg">ar</span></span>
         <span class="src"><svg class="mk"><use href="#mk-drop"/></svg>Al Jazeera <span class="lg">en</span></span>
         <span class="src"><svg class="mk"><use href="#mk-anchor"/></svg>gCaptain <span class="lg">en</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-anchor"/></svg>Splash 247 <span class="lg">en</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-signal"/></svg>VRT NWS <span class="lg">nl</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-paper"/></svg>ANSA <span class="lg">it</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-tv"/></svg>NHK <span class="lg">ja</span></span>
         <span class="src"><svg class="mk"><use href="#mk-gauge"/></svg>PEGELONLINE</span>
+        <span class="src"><svg class="mk"><use href="#mk-wind"/></svg>Open-Meteo</span>
+        <span class="src"><svg class="mk"><use href="#mk-wave"/></svg>Open-Meteo Marine</span>
+        <span class="src"><svg class="mk"><use href="#mk-seismic"/></svg>USGS</span>
+        <span class="src"><svg class="mk"><use href="#mk-sat"/></svg>NASA EONET</span>
+        <span class="src"><svg class="mk"><use href="#mk-doc"/></svg>Federal Register</span>
+        <span class="src"><svg class="mk"><use href="#mk-fx"/></svg>Frankfurter <span class="lg">ecb</span></span>
       </div>
     </div>
   </div>
@@ -1410,8 +1465,9 @@ h1,h2,h3,h4,p{margin:0}
       <span class="eyebrow">The gap</span>
       <h2 class="d2">Everyone stops one step short.</h2>
       <p class="copy18">A forwarder's operations desk watches for disruptions <i>and</i> reacts to
-        them by hand. The tools sold into that desk each own one half of the job and
-        hand the other half back to a person at 7am.</p>
+        them by hand. The tools sold into that desk each own one half of the job and hand the
+        other half back to a person at 7am — who then re-keys the consequence into the TMS,
+        booking by booking, because that is the only place the change actually counts.</p>
     </div>
 
     <div class="grid g3 gap-grid rv">
@@ -1419,7 +1475,8 @@ h1,h2,h3,h4,p{margin:0}
         <span class="n">01</span>
         <h3 class="h20">Risk platforms</h3>
         <p class="copy14">Everstream, Interos, Resilinc. Broad, credible monitoring that
-          surfaces the event and scores it. Then it is your problem.</p>
+          surfaces the event and scores it. Then it is your problem — and it is mostly
+          reading the same wires you already read.</p>
         <p class="stops">Stops at: <b>the alert</b></p>
       </div>
       <div class="gap-card dim">
@@ -1433,9 +1490,9 @@ h1,h2,h3,h4,p{margin:0}
       <div class="gap-card us">
         <span class="n">03</span>
         <h3 class="h20">Lanewatch</h3>
-        <p class="copy14">Sits on the TMS you already run. Reads the event, triages the book,
-          makes the call per booking, explains it, writes the change back onto the record, and
-          drafts the two emails that call requires.</p>
+        <p class="copy14">Sits on the TMS you already run. Reads everything that moves a lane,
+          triages the book, makes the call per booking, explains it, drafts the two emails that
+          call requires — and writes the change back onto the record so nobody re-keys it.</p>
         <p class="stops">Closes: <b>risk → reroute → comms → the TMS</b></p>
       </div>
     </div>
@@ -1445,6 +1502,27 @@ h1,h2,h3,h4,p{margin:0}
       Head of Operations at a mid-size DACH or Benelux forwarder — sits below that line
       and joins them by hand.
     </p>
+
+    <div class="grid g2 rv" style="margin-top:34px">
+      <div class="not">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round"><path d="M4 12l5.5 5.5L20 7"/></svg>
+        <div><p class="k">It watches everything that moves a lane</p>
+          <p class="v">Not only headlines. Forty-two free sources in six families — the wires
+            and the press next to the port, river gauges, weather and sea state, natural
+            hazards, government filings and the rate a reroute is billed at — read together on
+            every run, because a lane is not moved by news alone.</p></div>
+      </div>
+      <div class="not">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round"><path d="M4 12l5.5 5.5L20 7"/></svg>
+        <div><p class="k">And then it does the TMS work — this is the big one</p>
+          <p class="v">Every decision comes back as the change it implies on the booking it
+            came from: the exception, the discharge port, the routing code, the revised ETA,
+            each drafted mail on the communication log. Queued against the record, named by
+            the agent that made it, waiting on one click. The desk stops re-typing.</p></div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -1480,15 +1558,18 @@ h1,h2,h3,h4,p{margin:0}
         <div class="num">01</div>
         <div class="body">
           <h3 class="h24">Risk Monitor <span class="chip live">Live</span></h3>
-          <p class="copy16">Pulls GDELT, six RSS feeds and three Rhine gauges, then has the
-            model classify each item for logistics relevance — chokepoint, disruption type,
-            severity. Numbers from the gauges are read by threshold, not by the model.
-            Whatever has not answered inside the budget is marked skipped and the cycle
-            moves on.</p>
+          <p class="copy16">Reads all forty-two sources at once — eleven GDELT queries,
+            twenty feeds, three Rhine gauges, port weather, sea state, seismic activity,
+            natural events, government filings and the ECB's rates. Prose goes to the model,
+            which calls chokepoint, disruption type and severity. Numbers do not: a gust, a
+            wave height, a magnitude and a water level are read by threshold, which costs
+            nothing and cannot hallucinate. Whatever has not answered inside the budget is
+            marked skipped and the cycle moves on.</p>
           <div class="facts">
+            <span class="fact"><b>42</b> sources, <b>6</b> families, <b>0</b> API keys</span>
             <span class="fact"><b>25s</b> hard budget for the whole pull</span>
             <span class="fact"><b>8s</b> per-request timeout</span>
-            <span class="fact">Seven chokepoints: <b>HAM · RTM · ANR · SUEZ · REDSEA · COGH · RHINE</b></span>
+            <span class="fact">Nine chokepoints: <b>HAM · RTM · ANR · FOS · SUEZ · REDSEA · COGH · RHINE · FRINL</b></span>
           </div>
         </div>
       </div>
@@ -1550,23 +1631,26 @@ h1,h2,h3,h4,p{margin:0}
   <div class="wrap">
     <div class="feature">
       <div class="txt rv">
-        <span class="eyebrow">Differentiator one</span>
-        <h2 class="d2" style="margin-top:14px">The wires are not first.</h2>
-        <p class="copy18">A disruption is known locally long before it is news globally. The
-          union announces the walkout; the regional broadcaster carries it; and only then
-          does an international wire pick it up, often the better part of a day later. A
-          monitor watching the wires is late because it is reading downstream.</p>
-        <p class="copy16" style="margin-top:16px">So Lanewatch reads those sources
-          directly — local outlets, regional broadcasters, trade press, government
-          gauges — across every region its lanes cross. Whatever the hour here, one of
-          them is publishing.</p>
+        <span class="eyebrow">The signal layer</span>
+        <h2 class="d2" style="margin-top:14px">A lane is not moved by news alone.</h2>
+        <p class="copy18">It is moved by a walkout, a gale over the crane, a river that has
+          dropped, a swell off the Cape, a wildfire across the rail leg, a tariff filed in
+          Washington — and, when the invoice lands, by an exchange rate. Those arrive in
+          different formats from different institutions, and a monitor that only reads
+          headlines is reading a summary of some of them, late.</p>
+        <p class="copy16" style="margin-top:16px">So Lanewatch reads all of it on every run:
+          forty-two free, keyless sources in six families, from GDELT and the broadcasters
+          next to the port through to the gauges, the weather models, USGS, NASA and the
+          federal register. Prose goes to the model. Numbers go to a threshold. Everything
+          lands on one screen before anything is decided.</p>
         <ul class="claims">
+          <li><span class="k">Breadth</span>
+            <span class="v">News · river gauges · weather &amp; sea state · natural hazards ·
+            government filings · rates — <b>42 sources, no API keys</b></span></li>
           <li><span class="k">At source</span>
-            <span class="v">Local sources are read <b>directly</b>, not picked up
-            second-hand from a wire</span></li>
-          <li><span class="k">Coverage</span>
-            <span class="v">Sources spanning the North Range, the Low Countries, the Red Sea
-            and Gulf, and the Western Mediterranean — every corridor on the board</span></li>
+            <span class="v">The press closest to a corridor is read <b>directly</b>, not
+            picked up second-hand from a wire — which is why an event often lands here
+            first</span></li>
           <li><span class="k">Evidence</span>
             <span class="v">Every event shows the outlets that carried it and how far ahead
             of the wires they were — checkable, not asserted</span></li>
@@ -1931,7 +2015,7 @@ h1,h2,h3,h4,p{margin:0}
   <div class="wrap">
     <div class="feature flip">
       <div class="txt rv">
-        <span class="eyebrow">Differentiator two</span>
+        <span class="eyebrow">The judgement</span>
         <h2 class="d2" style="margin-top:14px">The hard one is the interesting one.</h2>
         <p class="copy18">Two of the five shipments reroute cleanly and two are never
           touched — the system does not cry wolf. The one worth reading is SHP-002, where
@@ -2215,12 +2299,19 @@ firm revised ETA as soon as terminals restart.</p>
 <section class="section" id="desk">
   <div class="wrap">
     <div class="head rv">
-      <span class="eyebrow">The rest of the desk</span>
-      <h2 class="d2">A disruption is not one email. It is a day of them.</h2>
-      <p class="copy18">The carrier sends a notice. The customer asks where their box is.
-        A rate request lands on the lane you are busy re-planning. And until someone types it
-        in, the TMS still says the old discharge port. Deciding is the interesting half; this
-        is the half that eats the day — and all of it is work on the same booking record.</p>
+      <span class="eyebrow">The biggest value</span>
+      <h2 class="d2">The decision is the easy half. The TMS work is the day.</h2>
+      <p class="copy18">The carrier sends a notice. The customer asks where their box is. A
+        rate request lands on the lane you are busy re-planning. The entry has to be reissued
+        because the country of clearance just changed. And until someone types it in, the TMS
+        still says the old discharge port — so nothing that was decided has actually
+        happened yet.</p>
+      <p class="copy16" style="margin-top:14px;max-width:74ch">This is the half Lanewatch
+        automates, and it is the reason it is worth having. Every agent works
+        <i>in</i> the system of record rather than beside it: the booking comes out of it,
+        and the exception, the new discharge port, the routing code, the revised ETA and each
+        drafted mail go back onto it as queued changes, named by the agent that made them.
+        One person approves. Nobody re-keys.</p>
     </div>
 
     <div class="grid g3 rv" style="margin-top:40px">
@@ -2451,33 +2542,69 @@ firm revised ETA as soon as terminals restart.</p>
   <div class="wrap">
     <div class="head rv">
       <span class="eyebrow">What it reads</span>
-      <h2 class="d2">Free, keyless, and few on purpose.</h2>
-      <p class="copy18">Every extra source is one more thing that can break in front of an
-        audience. Three families carry the whole story, each behind its own small function
-        so one can be pulled without touching the others.</p>
+      <h2 class="d2">Forty-two sources. Not one of them load-bearing.</h2>
+      <p class="copy18">Breadth is the point, and it is only safe because nothing depends on
+        any single source: each one sits behind its own small function, inside a shared time
+        budget, and a source that is down, slow or has quietly reshaped its response is
+        reported as failed and skipped while the rest of the run carries on. Every one is
+        free, keyless, and in the open catalogue.</p>
     </div>
 
     <div class="tbl rv">
       <div class="tr th"><span>Source</span><span>Role</span><span>Key</span></div>
       <div class="tr">
-        <span class="nm">GDELT DOC 2.0 <span class="chip plain">7 queries</span></span>
-        <span class="ds">Global news backbone, refreshing about every 15 minutes. Queries are
-          pinned per corridor — North Range, Low Countries, Red Sea and Gulf, Western
-          Mediterranean — so each one watches the regional press for that lane.</span>
+        <span class="nm">GDELT DOC 2.0 <span class="chip plain">11 queries</span></span>
+        <span class="ds">Global news backbone, refreshing about every 15 minutes. One query
+          pinned per corridor — North Range, Low Countries, Western Mediterranean and the
+          Rhone, Red Sea and Gulf, Asian gateway ports, the Turkish straits, Panama and the
+          Americas — plus one on customs, tariffs and sanctions.</span>
         <span class="kx chip">None</span>
       </div>
       <div class="tr">
-        <span class="nm">RSS <span class="chip plain">10 feeds</span></span>
-        <span class="ds">Regional broadcasters and trade press close to the lanes — NDR Hamburg,
-          tagesschau, DW, NOS, RTVE, France Info, Le Monde, Al Jazeera and gCaptain. This is
-          where the earliness edge actually lives; the wire feeds are kept so the lead over
-          them is measurable rather than asserted.</span>
+        <span class="nm">RSS <span class="chip plain">20 feeds</span></span>
+        <span class="ds">Broadcasters and papers on the corridors' doorsteps — NDR Hamburg,
+          tagesschau, DW, NOS, VRT, RTVE, El País, France Info, Le Monde, ANSA, NHK,
+          Al Jazeera, France 24, The Straits Times, Times of India — plus the narrow trade
+          press where nearly every item is on topic: gCaptain, Splash 247, The Maritime
+          Executive. Reading close to the event is why one of them is usually first; the
+          international feeds stay so the lead over them is measurable rather than asserted.</span>
         <span class="kx chip">None</span>
       </div>
       <div class="tr">
         <span class="nm">PEGELONLINE <span class="chip plain">3 gauges</span></span>
         <span class="ds">Rhine water levels at Kaub, Duisburg-Ruhrort and Emmerich, mapped to
           the RHINE chokepoint. Read by threshold, not by the model — they are numbers, not prose.</span>
+        <span class="kx chip">None</span>
+      </div>
+      <div class="tr">
+        <span class="nm">Open-Meteo <span class="chip plain">wind + sea</span></span>
+        <span class="ds">Gusts over Hamburg, Rotterdam, Antwerp and Fos-sur-Mer, and
+          significant wave height at the Suez approaches, Bab-el-Mandeb and the Cape of Good
+          Hope. A terminal loses crane hours around gale force 8 and stops near force 10, so
+          the bands are the thresholds an operator would use.</span>
+        <span class="kx chip">None</span>
+      </div>
+      <div class="tr">
+        <span class="nm">USGS · NASA EONET <span class="chip plain">hazards</span></span>
+        <span class="ds">Real-time seismic activity, and NASA's tracker for open wildfires,
+          severe storms, floods and volcanoes. Each reading carries a coordinate, so it is
+          mapped to the nearest corridor and <b>dropped if none is within reach</b> — a
+          magnitude 7 in the South Pacific is real and is not this board's problem.</span>
+        <span class="kx chip">None</span>
+      </div>
+      <div class="tr">
+        <span class="nm">Federal Register <span class="chip plain">filings</span></span>
+        <span class="ds">Tariff, sanctions, customs and port-security filings, which land as
+          a government document days before a trade paper writes them up. Prose, so this one
+          goes to the model rather than to a threshold.</span>
+        <span class="kx chip">None</span>
+      </div>
+      <div class="tr">
+        <span class="nm">Frankfurter · NWS · HK Observatory <span class="chip plain">context</span></span>
+        <span class="ds">The ECB's own reference rates, active US government weather alerts,
+          and the warnings in force over the Pearl River Delta. Real, read live, and they
+          move nothing on this board — so they sit in their own panel saying exactly that,
+          rather than being promoted to look like risk.</span>
         <span class="kx chip">None</span>
       </div>
       <div class="tr">
@@ -2490,9 +2617,11 @@ firm revised ETA as soon as terminals restart.</p>
     </div>
 
     <p class="copy14 rv" style="margin-top:20px;max-width:74ch">
-      Deliberately not wired: anything paid, and anything optional. Reuters is named in the
-      research but retired its public RSS feeds, so it is left out — a dead feed is a live
-      failure.
+      Deliberately not wired: anything paid, anything that needs a key, and anything whose
+      response shape is not published. Reuters is named in the research but retired its public
+      RSS feeds, so it is left out — a dead feed is a live failure. The paid AIS vendors are
+      out on price; OpenSanctions is out because its hosted API now gates behind a key, and
+      "no API keys" has to stay true.
     </p>
   </div>
 </section>
@@ -2630,10 +2759,10 @@ firm revised ETA as soon as terminals restart.</p>
         <h4>Product</h4>
         <ul>
           <li><a href="#loop">How it works</a></li>
-          <li><a href="#edge">The source edge</a></li>
+          <li><a href="#edge">The signal layer</a></li>
           <li><a href="#reasoning">Recorded reasoning</a></li>
           <li><a href="#drafts">Drafts &amp; approval</a></li>
-          <li><a href="#desk">The workflow layer</a></li>
+          <li><a href="#desk">The TMS work, automated</a></li>
         </ul>
       </div>
       <div>

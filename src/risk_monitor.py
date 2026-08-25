@@ -1,15 +1,25 @@
 """risk_monitor.py - component 1: the real, live part.
 
-Pulls the CORE sources from DATA-SOURCES.md, works out which of them matter to
-our chokepoints, and writes structured events to risk_state.json.
+Reads the prose half of what the desk watches - news and trade press - works out
+which of it matters to our chokepoints, and assembles risk_state.json from every
+family at once. The structured half (weather, sea state, seismic, natural
+hazards, government filings, rates) lives in signals.py and is merged in here.
 
-    live news  ->  cheap keyword prefilter  ->  LLM classification  ->  events
-    Rhine gauges  ->  threshold check  ->  events        (numbers need no LLM)
-    injected file ->  already classified  ->  events     (the scripted strike)
+    news + filings ->  cheap keyword prefilter  ->  LLM classification  ->  events
+    Rhine gauges   ->  threshold check  ->  events       (numbers need no LLM)
+    instruments    ->  signals.py, threshold + proximity ->  events
+    injected file  ->  already classified  ->  events    (the scripted strike)
 
-Injected and live events share one schema on purpose: the scripted Hamburg
-strike flows through the same pipeline as everything else, so the demo happens
-on command while the plumbing stays honest.
+Four producers, one schema, on purpose: the scripted Hamburg strike flows
+through the same pipeline as a wave height and a wire story, so the demo happens
+on command while the plumbing stays honest. Parity between them has broken three
+times in this project, every time by adding a field to one producer and not the
+others - `tests/test_signals_read_wide_and_fail_soft.py` now compares them.
+
+All four families are read CONCURRENTLY inside one shared time budget (see
+pull_everything). Read in turn, the first family would spend the budget and the
+rest would be skipped, which is how a board that claims to watch the world
+quietly ends up watching one feed.
 
 Run it on its own:
 
@@ -23,9 +33,7 @@ import argparse
 import hashlib
 import json
 import re
-import socket
 import sys
-import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from concurrent.futures import TimeoutError as FuturesTimeout
@@ -34,34 +42,19 @@ from datetime import datetime, timedelta, timezone
 import feedparser
 import requests
 
-from src import config, llm
+from src import config, httpget, llm, signals
+
+# The capped GET and the one-line error live in httpget.py, because the
+# structured sources in signals.py need exactly the same guarantees and neither
+# module should have to import the other. The names are kept here so the rest of
+# this file - and anything that has ever reached for them - still reads the same.
+_get_capped = httpget.get_capped
+_short_error = httpget.short_error
+SourceTooSlow = httpget.SourceTooSlow
 
 # ---------------------------------------------------------------------------
 # Small helpers
 # ---------------------------------------------------------------------------
-
-
-def _short_error(exc, host_hint: str = "") -> str:
-    """Turn a wall of urllib3 traceback text into one readable line.
-
-    A demo operator needs to know *which* source is down and roughly why, not
-    the full connection-pool stack.
-    """
-    name = type(exc).__name__
-    text = str(exc)
-    if "Tunnel connection failed" in text or "ProxyError" in name or "ProxyError" in text:
-        return f"blocked by network/proxy policy ({host_hint or 'host unreachable'})"
-    if "NameResolution" in text or "getaddrinfo" in text:
-        return f"DNS lookup failed ({host_hint})"
-    if "timed out" in text.lower():
-        return f"timed out after {config.HTTP_TIMEOUT_SECONDS}s ({host_hint})"
-    # A refusal carries its status code and nothing else worth reading: the raw
-    # text is the whole request URL again, which is a wall on a dashboard and
-    # unreadable on a public page.
-    status = getattr(getattr(exc, "response", None), "status_code", None)
-    if status:
-        return f"HTTP {status} from {host_hint or 'the source'}"
-    return f"{name}: {text[:110]}"
 
 
 def _stable_id(text: str, length: int = 6) -> str:
@@ -107,19 +100,31 @@ class Budget:
 
 class SourceReport:
     """Records how each source did, so the dashboard can say 'GDELT was down'
-    instead of the whole demo falling over."""
+    instead of the whole demo falling over.
 
-    def __init__(self):
+    Each report belongs to one family - news, water, weather, and so on - which
+    is what lets the board group forty-odd sources into something a person can
+    read at a glance instead of one long list.
+    """
+
+    def __init__(self, family: str = "news", tier: str = "lane"):
+        self.family = family
+        self.tier = tier
         self.entries: list[dict] = []
 
-    def ok(self, name, items, detail=""):
-        self.entries.append({"name": name, "status": "ok", "items": items, "detail": detail})
+    def _add(self, name, status, items, detail, language=None):
+        self.entries.append({"name": name, "status": status, "items": items,
+                             "detail": detail, "family": self.family,
+                             "tier": self.tier, "language": language})
 
-    def failed(self, name, detail):
-        self.entries.append({"name": name, "status": "failed", "items": 0, "detail": detail})
+    def ok(self, name, items, detail="", language=None):
+        self._add(name, "ok", items, detail, language)
 
-    def skipped(self, name, detail):
-        self.entries.append({"name": name, "status": "skipped", "items": 0, "detail": detail})
+    def failed(self, name, detail, language=None):
+        self._add(name, "failed", 0, detail, language)
+
+    def skipped(self, name, detail, language=None):
+        self._add(name, "skipped", 0, detail, language)
 
     @property
     def failures(self):
@@ -137,7 +142,7 @@ def fetch_gdelt(report: SourceReport, budget: "Budget") -> list[dict]:
     for spec in config.GDELT_QUERIES:
         label = f"GDELT: {spec['label']}"
         if budget.spent():
-            report.skipped(label, "live-pull time budget spent")
+            report.skipped(label, "live-pull time budget spent", language=spec["language"])
             continue
         try:
             response = _get_capped(
@@ -148,11 +153,13 @@ def fetch_gdelt(report: SourceReport, budget: "Budget") -> list[dict]:
             )
             articles = response.json().get("articles", [])
         except requests.RequestException as exc:
-            report.failed(label, _short_error(exc, "api.gdeltproject.org"))
+            report.failed(label, _short_error(exc, "api.gdeltproject.org"),
+                          language=spec["language"])
             continue
-        except ValueError as exc:
+        except ValueError:
             # GDELT answers 200 with HTML when it is overloaded or rate-limiting.
-            report.failed(label, "non-JSON reply - GDELT is probably throttling; try again shortly")
+            report.failed(label, "non-JSON reply - GDELT is probably throttling; try again shortly",
+                          language=spec["language"])
             continue
 
         found = [
@@ -169,7 +176,7 @@ def fetch_gdelt(report: SourceReport, budget: "Budget") -> list[dict]:
             if article.get("title")
         ]
         items.extend(found)
-        report.ok(label, len(found))
+        report.ok(label, len(found), language=spec["language"])
         time.sleep(min(config.GDELT_PAUSE_SECONDS, budget.remaining()))
     return items
 
@@ -186,63 +193,6 @@ def _parse_gdelt_date(seendate: str) -> str:
 # ---------------------------------------------------------------------------
 # Source 2 - RSS (where the multilingual earliness edge lives)
 # ---------------------------------------------------------------------------
-
-
-class SourceTooSlow(requests.RequestException):
-    """A source that is answering, but too slowly to be worth waiting for."""
-
-
-def _get_capped(url, *, timeout, params=None):
-    """A GET that is guaranteed to end.
-
-    requests' timeout is between-bytes, not total: a server that trickles one
-    byte per second never trips an eight-second timeout, so the call - and the
-    thread running it - lasts forever. Every source here is a third-party server
-    we do not control, so each read is capped by a total deadline and a size
-    limit as well. Without this a single slow feed hangs the whole demo, which
-    is the failure mode that actually shows up in front of an audience.
-    """
-    response = requests.get(url, params=params, headers={"User-Agent": config.USER_AGENT},
-                            timeout=timeout, stream=True)
-    # Checking a deadline between chunks is not enough: a read blocks until its
-    # chunk is full, so a trickling source never reaches the check. The socket
-    # has to be closed from outside, which makes the blocked read raise.
-    expired = []
-
-    def _give_up():
-        # Shutting the socket down is what actually unblocks a read that is
-        # already waiting; closing the response object alone does not.
-        expired.append(True)
-        sock = getattr(getattr(response.raw, "_connection", None), "sock", None)
-        for stop in (lambda: sock.shutdown(socket.SHUT_RDWR), lambda: sock.close(),
-                     response.raw.close):
-            try:
-                stop()
-            except Exception:                    # noqa: BLE001
-                pass
-
-    watchdog = threading.Timer(timeout, _give_up)
-    watchdog.daemon = True
-    watchdog.start()
-    try:
-        response.raise_for_status()
-        chunks, total = [], 0
-        for chunk in response.iter_content(8192):
-            chunks.append(chunk)
-            total += len(chunk)
-            if total > config.HTTP_MAX_BYTES or expired:
-                break
-        if expired:
-            raise SourceTooSlow(f"still sending after {timeout:.0f}s - gave up")
-        response._content = b"".join(chunks)     # so .json() and .content still work
-        return response
-    except (OSError, requests.RequestException) as exc:
-        if expired:
-            raise SourceTooSlow(f"still sending after {timeout:.0f}s - gave up") from exc
-        raise
-    finally:
-        watchdog.cancel()
-        response.close()
 
 
 def _fetch_one_feed(feed_spec: dict, timeout: float) -> tuple:
@@ -285,7 +235,7 @@ def fetch_rss(report: SourceReport, budget: "Budget") -> list[dict]:
     if budget.spent():
         for feed_spec in config.RSS_FEEDS:
             report.skipped(f"RSS: {feed_spec['name']} [{feed_spec['language']}]",
-                           "live-pull time budget spent")
+                           "live-pull time budget spent", language=feed_spec["language"])
         return []
 
     timeout = budget.timeout()
@@ -319,12 +269,12 @@ def fetch_rss(report: SourceReport, budget: "Budget") -> list[dict]:
             spec["name"], (f"RSS: {spec['name']} [{spec['language']}]",
                            "skipped", [], "not reached inside the time budget"))
         if status == "ok":
-            report.ok(label, len(found))
+            report.ok(label, len(found), language=spec["language"])
             items.extend(found)
         elif status == "failed":
-            report.failed(label, detail)
+            report.failed(label, detail, language=spec["language"])
         else:
-            report.skipped(label, detail)
+            report.skipped(label, detail, language=spec["language"])
     return items
 
 
@@ -447,20 +397,20 @@ def fetch_rhine_levels(report: SourceReport, budget: "Budget") -> list[dict]:
     for gauge in config.RHINE_GAUGES:
         label = f"PEGELONLINE: {gauge['name']}"
         if budget.spent():
-            report.skipped(label, "live-pull time budget spent")
+            report.skipped(label, "live-pull time budget spent", language="de")
             continue
 
         reading = _read_one_gauge(gauge, budget.timeout())
         if not reading["ok"]:
-            report.failed(label, reading["error"])
+            report.failed(label, reading["error"], language="de")
             continue
 
         event = _rhine_event(gauge, reading["level_cm"], reading["measured_at"])
         if event:
             events.append(event)
-            report.ok(label, 1, f"{reading['level_cm']} cm - {event['severity']}")
+            report.ok(label, 1, f"{reading['level_cm']} cm - {event['severity']}", language="de")
         else:
-            report.ok(label, 0, f"{reading['level_cm']} cm - normal, no event")
+            report.ok(label, 0, f"{reading['level_cm']} cm - normal, no event", language="de")
     return events
 
 
@@ -499,6 +449,148 @@ def _rhine_event(gauge, level_cm, timestamp):
                       f"{gauge['high_cm']} cm restriction threshold for {gauge['name']}, "
                       f"so Rhine barge capacity out of the North Range is constrained."),
     }
+
+
+# ---------------------------------------------------------------------------
+# Reading everything at once
+# ---------------------------------------------------------------------------
+
+# The order the board reads in. News first because it is the biggest family and
+# the one an audience checks, then the instruments, then the notices and the
+# rates. Every source the desk watches appears here whatever happened to it, so
+# the count on screen is of what was ATTEMPTED, not of what happened to answer.
+FAMILY_LABELS = {
+    "news": "News",
+    "water": "River gauges",
+    **signals.FAMILY_LABELS,
+    # Read live like everything else, and unable to move a booking on this
+    # board. Kept as its own family so the count of what decides things stays
+    # honest - see the `tier` note in signals.py.
+    **{f"{family}-context": f"{label} (context)"
+       for family, label in signals.FAMILY_LABELS.items()},
+}
+
+# The scripted scenario reports itself as a source so the CLI can show where
+# each event came from. It is not a live source and never counts as one.
+DISPLAY_LABELS = {**FAMILY_LABELS, "scenario": "Scripted scenario"}
+
+
+def expected_sources() -> list[dict]:
+    """Every source the desk watches, in reading order, before anything is read.
+
+    Kept in one place because three separate screens quote the source count and
+    they must not be able to disagree about it.
+    """
+    listed = [{"name": f"GDELT: {q['label']}", "family": "news", "tier": "lane"}
+              for q in config.GDELT_QUERIES]
+    listed += [{"name": f"RSS: {f['name']} [{f['language']}]", "family": "news",
+                "tier": "lane"} for f in config.RSS_FEEDS]
+    listed += [{"name": f"PEGELONLINE: {g['name']}", "family": "water", "tier": "lane"}
+               for g in config.RHINE_GAUGES]
+    listed += [{"name": f"{sig['name']} [{sig['family']}]", "family": sig["family"],
+                "tier": sig["tier"]} for sig in signals.SIGNAL_SOURCES
+               if sig["tier"] == "lane"]
+    # Context sources last, and grouped together: a family that can move a
+    # booking and a family that cannot should not be interleaved on screen.
+    listed += [{"name": f"{sig['name']} [{sig['family']}]",
+                "family": f"{sig['family']}-context", "tier": "context"}
+               for sig in signals.SIGNAL_SOURCES if sig["tier"] == "context"]
+    return listed
+
+
+def source_count() -> int:
+    return len(expected_sources())
+
+
+def family_summary(entries: list[dict]) -> list[dict]:
+    """One row per family: how many of its sources answered, and what it is for.
+
+    Forty-odd sources in a flat list is a wall. Grouped, it is the shape of the
+    claim - the desk reads news, instruments, notices and rates, not just news.
+    """
+    rows = []
+    for family, label in FAMILY_LABELS.items():
+        mine = [e for e in entries if e.get("family") == family
+                and not e["name"].startswith("scenario:")]
+        if not mine:
+            continue
+        rows.append({
+            "id": family,
+            "label": label,
+            "total": len(mine),
+            "read": sum(1 for e in mine if e["status"] == "ok"),
+            "items": sum(e["items"] for e in mine),
+            # A family is context-only when none of its sources can move a
+            # booking on this board. Said out loud rather than implied.
+            "tier": "lane" if any(e.get("tier", "lane") == "lane" for e in mine) else "context",
+        })
+    return rows
+
+
+def pull_everything(budget: "Budget") -> dict:
+    """Every family at once, inside one shared time budget.
+
+    Read in turn, forty sources cannot fit a serverless budget: the first family
+    would spend it and the rest would be skipped, which is how a board that
+    claims to watch the world quietly ends up watching one feed. The families
+    are independent requests to different hosts, so they run together and the
+    whole pull costs about what the slowest single family costs.
+
+    Each family fills its own report, and the reports are merged in the fixed
+    order above - so the output is stable run to run even though the reads are
+    not. Anything that has not answered by the deadline is reported skipped
+    against the source it belongs to, never silently dropped.
+    """
+    news_report = SourceReport("news")
+    water_report = SourceReport("water")
+    collected = {"items": [], "events": [], "context": {}, "signal_entries": []}
+
+    def _rss():
+        collected["items"] += fetch_rss(news_report, budget)
+
+    def _gdelt():
+        collected["items"] += fetch_gdelt(news_report, budget)
+
+    def _gauges():
+        collected["events"] += fetch_rhine_levels(water_report, budget)
+
+    def _signals():
+        read = signals.read_signals(budget)
+        collected["events"] += read["events"]
+        collected["items"] += read["items"]
+        collected["context"].update(read["context"])
+        collected["signal_entries"] += read["entries"]
+
+    # Not a `with` block, for the same reason as the pools inside it: its exit
+    # joins every worker, so one wedged family would block here instead.
+    pool = ThreadPoolExecutor(max_workers=4)
+    try:
+        futures = [pool.submit(job) for job in (_rss, _gdelt, _gauges, _signals)]
+        try:
+            for future in as_completed(futures, timeout=budget.remaining() + 2):
+                future.result()
+        except FuturesTimeout:
+            pass          # whatever is missing is marked skipped just below
+        except Exception:                                       # noqa: BLE001
+            pass          # a family that threw is reported through its own entries
+    finally:
+        pool.shutdown(wait=False, cancel_futures=True)
+
+    recorded = {e["name"]: e for e in
+                news_report.entries + water_report.entries + collected["signal_entries"]}
+    # The expected list is the one authority on which family a source belongs
+    # to, so its family and tier are laid over whatever came back. Otherwise a
+    # source that answered would be grouped by its own idea of itself and a
+    # source that did not by the board's, and the two would drift.
+    entries = []
+    for spec in expected_sources():
+        entry = recorded.get(spec["name"])
+        if entry is None:
+            entry = {"name": spec["name"], "status": "skipped", "items": 0,
+                     "detail": "not reached inside the time budget", "language": None}
+        entries.append({**entry, "family": spec["family"], "tier": spec["tier"]})
+    return {"entries": entries, "items": collected["items"],
+            "events": collected["events"], "context": collected["context"]}
 
 
 # ---------------------------------------------------------------------------
@@ -762,21 +854,18 @@ def run(*, live=True, inject=False, use_llm=True, verbose=True, scenario=None) -
     """The whole monitor. Returns the risk_state dict it also writes to disk."""
     chokepoints = load_chokepoints()
     report = SourceReport()
-    raw_items, events = [], []
+    raw_items, events, context = [], [], {}
     stats = {"raw_items": 0, "after_prefilter": 0, "llm_used": False}
 
     if live:
         budget = Budget(config.LIVE_PULL_BUDGET_SECONDS)
         if verbose:
-            print(f"Pulling live sources (up to {budget.total:.0f}s) ...")
-        # Order matters, because whatever the budget does not reach is skipped.
-        # RSS first: it is one request per feed with no pauses, and it carries
-        # the German-language feeds the whole earliness claim rests on. Gauges
-        # next, being three small requests. GDELT last: four queries with a
-        # pause between each, so it is the slowest and the most expendable.
-        raw_items += fetch_rss(report, budget)
-        events += fetch_rhine_levels(report, budget)
-        raw_items += fetch_gdelt(report, budget)
+            print(f"Pulling {source_count()} live sources (up to {budget.total:.0f}s) ...")
+        pulled = pull_everything(budget)
+        report.entries = pulled["entries"]
+        raw_items += pulled["items"]
+        events += pulled["events"]
+        context = pulled["context"]
         out_of_time = [e for e in report.entries if e["status"] == "skipped"]
         if out_of_time and verbose:
             print(f"  {len(out_of_time)} source(s) not reached inside the time budget")
@@ -805,12 +894,17 @@ def run(*, live=True, inject=False, use_llm=True, verbose=True, scenario=None) -
         scenario_meta = find_scenario(scenario)
         injected = load_injected_events(scenario)
         events += injected
-        report.ok(f"scenario: {scenario_meta['name'] if scenario_meta else 'unknown'} (scripted)",
-                  len(injected), scenario_meta["kind"] if scenario_meta else "")
+        scenario_report = SourceReport("scenario")
+        scenario_report.ok(
+            f"scenario: {scenario_meta['name'] if scenario_meta else 'unknown'} (scripted)",
+            len(injected), scenario_meta["kind"] if scenario_meta else "")
+        report.entries += scenario_report.entries
 
-    languages_read = sorted({s["name"].split("[")[-1].rstrip("]")
-                             for s in report.entries
-                             if s["status"] == "ok" and "[" in s["name"]})
+    # Taken from what each source recorded rather than scraped out of its label:
+    # the structured sources carry a family in brackets, not a language, so
+    # parsing the name would have counted "weather" as a language.
+    languages_read = sorted({s["language"] for s in report.entries
+                             if s["status"] == "ok" and s.get("language")})
     # The scripted scenario reports itself as a source so the CLI can show where
     # each event came from. It is not a live source, and "N of M sources read" is
     # the claim an audience uses to check that the news pull is real - so the
@@ -823,6 +917,11 @@ def run(*, live=True, inject=False, use_llm=True, verbose=True, scenario=None) -
         "live_sources_read": sum(1 for e in live_sources if e["status"] == "ok"),
         "provider": llm.describe() if stats["llm_used"] else "none (no LLM call made)",
         "sources": report.entries,
+        # Readings that are real and decide nothing: the rate a reroute is
+        # billed at, weather over ports this board does not call at. Kept apart
+        # from `events` on purpose - a number on a screen is not a risk.
+        "context": context,
+        "families": family_summary(report.entries),
         "stats": stats,
         "scenario": ({k: scenario_meta[k] for k in
                       ("id", "name", "kind", "summary", "decision_type", "expected")}
@@ -845,10 +944,20 @@ def print_state(state):
     print("=" * 74)
 
     print("\nSOURCES")
+    shown = None
     for entry in state["sources"]:
+        family = entry.get("family", "news")
+        if family != shown:
+            shown = family
+            note = "  - real, and moves nothing on this board" if entry.get("tier") == "context" else ""
+            print(f"\n  -- {DISPLAY_LABELS.get(family, family)}{note}")
         mark = {"ok": "ok  ", "failed": "FAIL", "skipped": "skip"}[entry["status"]]
         detail = f"  {entry['detail']}" if entry["detail"] else ""
-        print(f"  [{mark}] {entry['name']:<42} {entry['items']:>3} items{detail}")
+        print(f"  [{mark}] {entry['name']:<44} {entry['items']:>3} items{detail}")
+
+    if state.get("families"):
+        print("\n  " + "   ".join(f"{f['label']} {f['read']}/{f['total']}"
+                                  for f in state["families"]))
 
     stats = state["stats"]
     print(f"\n  {stats['raw_items']} pulled -> {stats['after_prefilter']} mention a chokepoint "
@@ -877,8 +986,29 @@ def print_state(state):
     non_english = {e["source_language"] for e in state["events"] if e["source_language"] != "en"}
     if non_english:
         print(f"\n  Non-English sources produced events: {', '.join(sorted(non_english))}"
-              "  <- this is the earliness edge, made visible.")
+              "  <- read closer to the event than the wires are.")
+
+    _print_context(state.get("context") or {})
     print(f"\nWritten to {config.RISK_STATE_FILE}\n")
+
+
+def _print_context(context):
+    """The readings that are real and decide nothing. Labelled as such."""
+    if not context:
+        return
+    print("\nBOARD CONTEXT  (read live; affects no booking on this board)")
+    for reading in context.get("ports", []):
+        print(f"  wind   {reading['name']:<22} {reading['gusts_kn']:>3} kn gusts - {reading['state']}")
+    for reading in context.get("seas", []):
+        print(f"  sea    {reading['name']:<22} {reading['wave_m']:>4} m - {reading['state']}")
+    fx = context.get("fx")
+    if fx:
+        rates = "  ".join(f"{p['pair']} {p['rate']}" for p in fx["pairs"])
+        print(f"  fx     as of {fx['as_of']}: {rates}")
+    for alert in context.get("us_alerts", [])[:4]:
+        print(f"  us     {alert['event']} - {alert['area']}")
+    for warning in context.get("hk_warnings", [])[:4]:
+        print(f"  hk     {warning['name']} ({warning['code']})")
 
 
 def main():

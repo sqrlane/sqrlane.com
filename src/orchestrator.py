@@ -44,8 +44,9 @@ STATE_FOR_DECISION = {"reroute": "rerouted", "hold": "hold", "no-action": "green
 # nothing here is illustrative.
 WORKERS = [
     {"id": "risk", "name": "Risk Worker",
-     "role": "Reads global news in several languages, tags what threatens a lane, "
-             "and flags the exception on the booking it threatens"},
+     "role": "Reads the wires, the regional press, the instruments and the "
+             "government notices, tags what threatens a lane, and flags the "
+             "exception on the booking it threatens"},
     {"id": "routing", "name": "Routing Worker",
      "role": "Weighs schedule slack against added transit and expected delay, then "
              "writes the booking change the call implies"},
@@ -115,7 +116,8 @@ def initial_state() -> dict:
         "scenarios": [{k: sc[k] for k in ("id", "name", "kind", "summary",
                                           "decision_type", "expected")}
                       for sc in risk_monitor.load_scenarios()],
-        "risk": {"events": [], "sources": [], "stats": {}},
+        "risk": {"events": [], "sources": [], "stats": {}, "context": {}, "families": [],
+                 "live_sources_total": risk_monitor.source_count(), "live_sources_read": 0},
         "shipments": cards,
         # The link is up before anything happens: the bookings are synced and
         # nothing is queued, because nothing has been decided yet.
@@ -176,6 +178,12 @@ def run_cycle(*, live=True, inject=True, use_llm=True, verbose=False,
             # worldwide" would read as a claim rather than a debug mode.
             (f"drawn from {risk['live_sources_total']} sources worldwide"
              if risk["live_sources_total"] > 1 else None),
+            # Which KINDS of source answered, not just how many. News, river
+            # gauges, weather, hazards, notices and rates are different signals,
+            # and a board that reads all of them is the whole claim.
+            (" · ".join(f"{f['label'].lower()} {f['read']}/{f['total']}"
+                        for f in risk.get("families", []) if f["total"])
+             if risk.get("families") else None),
             f"a regional source was first on {led_by_regional} of "
             f"{total_events} event{'' if total_events == 1 else 's'}",
         ] if d])

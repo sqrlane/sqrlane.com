@@ -563,6 +563,24 @@ table.q tr.pick td{background:var(--surface)}
 .ev-why{margin-top:6px;font-size:12.5px;color:var(--muted)}
 .srcline{padding:11px 15px;border-top:1px solid var(--border);font-size:11.5px;color:var(--faint)}
 .srcline .r{display:flex;gap:7px;padding:1px 0}
+/* Which KINDS of source answered. Forty-odd rows is a wall; six families is a
+   sentence, and the families are the claim - news, instruments, notices, rates. */
+.fams{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
+.fam{display:inline-flex;align-items:baseline;gap:5px;padding:2px 7px;border-radius:var(--r);
+     border:1px solid var(--border);background:var(--surface);font-size:11px;color:var(--muted)}
+.fam b{font-variant-numeric:tabular-nums;font-weight:600;color:var(--text)}
+.fam.ctx{opacity:.62}
+/* Instrument readings and board context. Deliberately quieter than an event:
+   promoting a number to look like an alarm is the one lie this board must not tell. */
+.ctxgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:8px;padding:14px 15px}
+.ctxi{border:1px solid var(--border);border-radius:var(--r);padding:9px 11px;background:var(--surface)}
+.ctxi .k{font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint)}
+.ctxi .v{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:3px}
+.ctxi .s{font-size:11.5px;color:var(--muted);margin-top:1px}
+/* A reading that crossed its threshold is also an event in the feed above, so
+   it is marked here rather than sitting silently among the quiet ones. */
+.ctxi.hot{border-color:var(--amber);background:var(--amber-bg)}
+.ctxi.hot .v{color:var(--amber)}
 .empty{padding:30px 16px;text-align:center;color:var(--faint);font-size:13px}
 
 /* ---------- slide-over detail ---------- */
@@ -1139,7 +1157,7 @@ function notchGauge(pct, label, tone){
 const PAGES = {
   overview:   ["Overview", "The board, the run, and what the Workers did with it"],
   shipments:  ["Shipments", "Every booking on the board, grouped by what it needs"],
-  risk:       ["Risk feed", "What the sources carried, and how far ahead of the wires"],
+  risk:       ["Risk feed", "Everything the desk read this run — news, gauges, weather, hazards, filings, rates"],
   approvals:  ["Approvals", "Drafted work waiting on a person. Nothing is sent"],
   map:        ["Map", "Lanes drawn through what they transit, and what is blocked"],
   simulation: ["Simulation", "An authored week, decided for real, day by day"],
@@ -1159,7 +1177,7 @@ function palSource(){
   const views = [
     {id:"overview", label:"Overview", hint:"The board and the run"},
     {id:"shipments", label:"Shipments", hint:"Every booking, grouped by state"},
-    {id:"risk", label:"Risk feed", hint:"What the sources carried"},
+    {id:"risk", label:"Risk feed", hint:"Every source read this run"},
     {id:"approvals", label:"Approvals", hint:"Drafts waiting on a person"},
     {id:"map", label:"Map", hint:"Lanes, chokepoints and blockades"},
     {id:"simulation", label:"Simulation", hint:"The authored week, replayed"},
@@ -1433,7 +1451,7 @@ function statRow(){
                 sub:`${onPlan} on plan · ${queued} change${queued===1?"":"s"} queued back`})}
     ${statCard({label:"Risk events", value:(risk.events||[]).length,
                 pill:read?"live":"no live source", tone:read?"green":"amber",
-                sub:`${read} of ${total} sources read`})}
+                sub:`${read} of ${total} sources read · ${(risk.families||[]).length} families`})}
     ${statCard({label:"Deadlines at risk", value:late,
                 pill:late?"breach":"clear", tone:late?"red":"green",
                 sub:late?"customer date missed":"all within required-by"})}
@@ -1698,8 +1716,71 @@ function riskCard(compact){
     </div>`).join("") : `<div class="empty">No active events.<br>Press <b>Inject Hamburg strike</b> to start.</div>`}
     ${srcs.length?`<div class="srcline">
       <div class="r">✓ ${ok} of ${total} sources read</div>
+      ${familyStrip()}
       ${bad.length?`<div class="r">! unavailable: ${esc(bad.slice(0,4).map(s=>s.name.replace(/^(RSS|GDELT|PEGELONLINE): /,"").replace(/\s*\[\w{2}\]$/,"")).join(", "))}${bad.length>4?` +${bad.length-4} more`:""}</div>`:""}
     </div>`:""}</div>`;
+}
+
+/* The families, not the forty rows. A source that answered and a source that
+   did not are both counted, because the denominator is what the claim rests on. */
+function familyStrip(){
+  const fams = risk.families || [];
+  if (!fams.length) return "";
+  return `<div class="fams">${fams.map(f=>`<span class="fam ${f.tier==="context"?"ctx":""}"
+    title="${f.tier==="context"?"Read live, and moves nothing on this board":"Can put an exception on a booking"}">
+    ${esc(f.label)} <b>${f.read}/${f.total}</b></span>`).join("")}</div>`;
+}
+
+/* The instruments: what the numbers actually read this run.
+
+   These are LANE sources - a gust or a wave height over its threshold becomes an
+   event in the feed above - so they are NOT lumped in with the context card.
+   Most readings are quiet, and showing the quiet ones is the point: a board that
+   only ever displayed alarms would be lying about the shape of the job. */
+function instrumentCard(){
+  const c = risk.context || {};
+  const tiles = [];
+  (c.ports || []).forEach(r => tiles.push(
+    {k:`Wind · ${esc(r.name)}`, v:`${r.gusts_kn} kn`, s:esc(r.state), sev:r.severity}));
+  (c.seas || []).forEach(r => tiles.push(
+    {k:`Sea · ${esc(r.name)}`, v:`${r.wave_m} m`, s:esc(r.state), sev:r.severity}));
+  if (!tiles.length) return "";
+  const firing = tiles.filter(t => t.sev).length;
+  return `<div class="card" style="margin-top:20px">
+    <div class="card-h"><h2>Instrument readings</h2><span class="chip live">live</span>
+      <span class="n">${tiles.length}</span></div>
+    <div class="ctxgrid">${tiles.map(t=>`<div class="ctxi ${t.sev?"hot":""}">
+      <div class="k">${t.k}</div><div class="v">${t.v}</div><div class="s">${t.s}</div>
+    </div>`).join("")}</div>
+    <div class="srcline"><div class="r">Read by threshold, not by the model — a number cannot be
+      misread into a severity. ${firing
+        ? `${firing} of ${tiles.length} crossed a threshold and ${firing===1?"is":"are"} in the feed above; the rest are quiet, which is the usual answer.`
+        : `None crossed a threshold on this run, which is the usual answer.`}</div></div>
+  </div>`;
+}
+
+/* Board context - readings that are real and decide nothing. Kept apart from
+   the instruments above, and labelled in words rather than by position. */
+function contextCard(){
+  const c = risk.context || {};
+  const tiles = [];
+  (c.fx?.pairs || []).forEach(p => tiles.push(
+    {k:esc(p.pair), v:Number(p.rate).toFixed(4), s:`ECB reference, ${esc(c.fx.as_of||"")}`}));
+  (c.hk_warnings || []).slice(0,3).forEach(w => tiles.push(
+    {k:"Hong Kong", v:esc(w.code||"—"), s:esc(w.name||"")}));
+  (c.us_alerts || []).slice(0,3).forEach(a => tiles.push(
+    {k:"US ports", v:esc(a.event||"—"), s:esc(a.area||"")}));
+  if (!tiles.length) return "";
+  return `<div class="card" style="margin-top:20px">
+    <div class="card-h"><h2>Board context</h2><span class="chip live">live</span>
+      <span class="n">${tiles.length}</span></div>
+    <div class="ctxgrid">${tiles.map(t=>`<div class="ctxi">
+      <div class="k">${t.k}</div><div class="v">${t.v}</div><div class="s">${t.s}</div>
+    </div>`).join("")}</div>
+    <div class="srcline"><div class="r">The rate a reroute is billed at, and weather over ports
+      this board does not call at. Read live on this run, and none of it moves a booking here —
+      shown rather than implied, and never promoted to look like risk.</div></div>
+  </div>`;
 }
 
 /* Scripts that run right-to-left. This is a rendering fact, not a claim about
@@ -1715,11 +1796,21 @@ const RTL = new Set(["ar","he","fa","ur"]);
    a local outlet carries a disruption while the international wires are still
    downstream of it. Which language that happens to be in is incidental, so the
    dashboard never names one. */
-const REGION = {de:"Regional", ar:"Regional", fr:"Regional",
-                nl:"Regional", es:"Regional", en:"International"};
+/* Where a source sits, not what language it publishes in. The edge is proximity
+   to the event; naming a language would make a general capability look like one
+   rehearsed trick, so only these two words ever reach the screen. Anything not
+   listed is regional by default - a new corridor's press should not have to be
+   registered here before it can be labelled. */
+const REGION = {de:"Regional", ar:"Regional", fr:"Regional", nl:"Regional",
+                es:"Regional", it:"Regional", tr:"Regional", zh:"Regional",
+                ja:"Regional", pt:"Regional", en:"International"};
 
+/* Events carry `source_language`; the entries in a detection trail carry
+   `language`. Reading only the first meant every trail row - including the
+   international wire the whole lead is measured against - was labelled
+   "Regional", which is the one row where that word is wrong. */
 function regionOf(e){
-  return REGION[e.source_language] || "Regional";
+  return REGION[e.source_language || e.language] || "Regional";
 }
 
 function offsetLabel(mins){
@@ -1793,7 +1884,7 @@ function render(){
   if (view === "shipments") $("v-shipments").innerHTML = pageHeader("shipments") +
     (running ? skeletonRows(5) : statRow() + shipmentGroups());
   if (view === "risk")      $("v-risk").innerHTML = pageHeader("risk") +
-    (running ? skeletonRows(3) : riskCard(false));
+    (running ? skeletonRows(3) : riskCard(false) + instrumentCard() + contextCard());
   if (view === "approvals") $("v-approvals").innerHTML = pageHeader("approvals") + approvalsView();
   if (view === "connections") $("v-connections").innerHTML = pageHeader("connections") + connectionsView();
   if (view === "simulation")  $("v-simulation").innerHTML = pageHeader("simulation") + simulationView();
