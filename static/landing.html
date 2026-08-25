@@ -863,11 +863,22 @@ h1,h2,h3,h4,p{margin:0}
                     border-color .18s var(--ease)}
 .wv-chip.tapped{background:var(--fg); border-color:var(--fg); color:#fff}
 
-/* The three cards are stretched to the tallest by the grid, so the window
-   is stretched to the card and all three line up - no magic height, and it
-   still holds when the copy rewraps at a narrower width. */
+/* The grid stretches all three cards to the tallest, and the window takes
+   whatever the caption beneath it leaves. That lines the windows up only while
+   the three captions are the same height - which they are not. They rewrap
+   independently, so across the three-column range the counts run 3/3/4, then
+   3/4/4, then 4/4/5, and each mismatched line drags one window 24px off its
+   neighbours.
+
+   So the caption gets a fixed slot and the window gets the rest. Five lines is
+   the measured worst case anywhere the cards sit side by side (at 900px, where
+   the column is narrowest before they stack), so a caption that fits five lines
+   leaves every window identical. Keep them inside that budget: a sixth line
+   pushes one window up again. The px value is a fallback for the lh below it,
+   which is the same number said properly - five lines of this element's text. */
 .wv-card .art-b{display:flex; flex-direction:column}
 .wv-card .wv{display:flex; flex-direction:column; flex:1}
+.wv-card .src{min-height:120px; min-height:5lh}
 .wv-b{flex:1; padding:9px; min-height:196px; font-size:11px; line-height:15px}
 .wv-s{opacity:0; transform:translateY(4px);
       transition:opacity .3s var(--ease), transform .3s var(--ease)}
@@ -1047,6 +1058,8 @@ h1,h2,h3,h4,p{margin:0}
   .h32{font-size:26px; line-height:32px; letter-spacing:-1px}
   .copy18{font-size:16px; line-height:25px}
   .g2,.g3,.g4{grid-template-columns:1fr}
+  /* One per row: nothing to align against, so the reserved slot is only padding. */
+  .wv-card .src{min-height:0}
   /* Two 38px figures side by side do not fit a phone. Stacked, the border
      between them has to move from the left edge to the top or the tinted
      panel loses its boundary. */
@@ -2346,9 +2359,9 @@ firm revised ETA as soon as terminals restart.</p>
                       stroke-linejoin="round"/></svg></span>
             </div>
           </div>
-          <p class="src" style="margin-top:12px">No TMS is contacted at any point: no client,
-            no credential, no endpoint. Approving does not change that — the write-back stays a
-            described change, because there is nothing in the codebase to write it with.</p>
+          <p class="src" style="margin-top:12px">No TMS is contacted: no client, no credential,
+            no endpoint. Approving does not change that — there is nothing here to write it
+            with.</p>
         </div>
       </div>
     </div>
