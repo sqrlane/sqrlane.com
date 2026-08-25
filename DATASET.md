@@ -1,5 +1,12 @@
 # DATASET.md — the screenplay (dummy data)
 
+> **This is a build-time document, kept as the record of how the prototype was
+> planned.** The build has moved on since: the pool grew to **seven bookings** and
+> four scenarios, and the loop now opens and closes on the forwarder's TMS — the
+> bookings are read out of the system of record through `src/tms.py` and every
+> agent action is queued back onto them. `CLAUDE.md` and `README.md` describe what
+> the system does today; read those first if the two disagree.
+
 This is authored for **drama, not realism**. The shipments are positioned so that *one* injected disruption produces three different, defensible decisions. It's a screenplay, not a database. Claude Code should turn this into the JSON files in `data/`.
 
 ## Chokepoints
@@ -28,9 +35,14 @@ Each shipment has a **primary** route and one or more **alternates**. Each route
 | R-ANR-STD | Asia → Suez → Antwerp | ANR | road ex-Antwerp | 33 | 100 | SUEZ, REDSEA, ANR |
 | R-COGH-ALT | Asia → Cape of Good Hope → Hamburg | HAM | rail/road ex-Hamburg | 42 | 130 | COGH, HAM |
 
-## The 5 shipments (the board)
+## The 5 shipments (the board as first authored)
 
 Authored so the injected Hamburg strike splits them 2 reroute / 1 hold / 2 green.
+
+> **Two more joined later.** SHP-006 (industrial chemicals, Shanghai → Basel) and SHP-007
+> (textiles, Shanghai → Lyon) were added for the Rhine and France scenarios. They touch
+> none of Hamburg's chokepoints, so on the strike the board reads **2 reroute · 1 hold ·
+> 4 on plan** across seven bookings. `data/shipments.json` is the live list.
 
 | id | cargo | origin → final | primary route | alternates | deadline_slack_days | notes |
 |---|---|---|---|---|---|---|

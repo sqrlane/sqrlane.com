@@ -72,6 +72,17 @@
      A third step existed only so some cards could shout at the others. */
   --shadow-lift:0 1px 1px rgba(0,0,0,.02),0 8px 16px -4px rgba(0,0,0,.04),
                 0 24px 32px -8px rgba(0,0,0,.06);
+  /* A ring and a halo, for the one card in a set that is the answer. The ring
+     is a 1px box-shadow rather than a border - the same thing Tailwind's ring-*
+     does, and bklit-ui is a shadcn registry - so the edge stays crisp while the
+     halo does the lifting. Zero-offset blur so the light sits *around* the card
+     instead of only under it; the last step grounds it. */
+  --shadow-ring:0 0 0 1px var(--border-strong),
+                0 0 26px rgba(0,0,0,.08),
+                0 12px 26px -10px rgba(0,0,0,.2);
+  --shadow-ring-hover:0 0 0 1px var(--border-strong),
+                0 0 30px rgba(0,0,0,.1),
+                0 16px 32px -12px rgba(0,0,0,.24);
 
   --ease:cubic-bezier(.175,.885,.32,1.1);
   --gutter:24px;
@@ -298,9 +309,20 @@ h1,h2,h3,h4,p{margin:0}
 .strip .src .mk{width:19px; height:19px; flex:none; color:var(--faint);
                 fill:none; stroke:currentColor; stroke-width:1.7;
                 stroke-linecap:round; stroke-linejoin:round}
-.strip .src .lg{font-size:9px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+.strip .src .lg,
+.strip .src .kind{font-size:9px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
                 color:var(--faint); border:1px solid var(--border-strong); border-radius:3px;
                 padding:0 4px; line-height:14px}
+
+/* The second band: the systems the connector is built to point at, rather than
+   the sources it reads. It closes rather than opens a section, so it carries a
+   bottom rule too - and it says what it is under the band, because a row of
+   familiar names is exactly the thing a reader will take for an integration
+   list if nobody tells them otherwise. */
+.strip.targets{border-bottom:1px solid var(--border)}
+.strip .note{font-size:12px; line-height:18px; color:var(--faint); text-align:center;
+             margin:22px auto 0; max-width:78ch; padding:0 var(--gutter)}
+.strip .note b{color:var(--muted); font-weight:600}
 .strip .sprite{position:absolute; width:0; height:0; overflow:hidden}
 
 /* Asked for no motion, the band becomes what it was before: the same list,
@@ -320,17 +342,43 @@ h1,h2,h3,h4,p{margin:0}
 
 /* ---------- contrast cards (the gap) ---------- */
 .gap-grid{margin-top:40px}
-.gap-card{padding:22px; border-radius:var(--r-md); border:1px solid var(--border);
+/* shadcn's card anatomy, which is what bklit-ui ships: hairline border, 12px
+   radius, one small shadow, and 24px of padding on every side. The rhythm
+   inside is set per element rather than by one flex gap - the number is an
+   eyebrow for the title and belongs closer to it than the body does. */
+.gap-card{padding:24px; border-radius:var(--r-md); border:1px solid var(--border);
           background:var(--card); box-shadow:var(--shadow-card); display:flex;
-          flex-direction:column; gap:12px}
+          flex-direction:column;
+          transition:box-shadow .18s var(--ease), border-color .18s var(--ease),
+                     transform .18s var(--ease)}
 .gap-card.dim{background:var(--card-muted); box-shadow:none}
-.gap-card .n{font-family:"Geist Mono",ui-monospace,monospace; font-size:11px; color:var(--faint)}
-.gap-card .stops{margin-top:auto; padding-top:14px; border-top:1px solid var(--border);
+.gap-card .n{font-family:"Geist Mono",ui-monospace,monospace; font-size:11px;
+             font-variant-numeric:tabular-nums; letter-spacing:.06em; color:var(--faint);
+             margin-bottom:14px}
+.gap-card h3{margin-bottom:10px}
+.gap-card .copy14{margin-bottom:18px}
+.gap-card .stops{margin-top:auto; padding-top:16px; border-top:1px solid var(--border);
                  font-size:12px; line-height:16px; color:var(--faint)}
-/* The black border already says which column is ours. The lifted shadow under
-   it was saying the same thing a second time, louder. */
-.gap-card.us{border-color:var(--fg)}
+
+/* The two that stop short lift a little when you point at them - enough to
+   read as one set of three rather than two greyed cards and a live one. */
+.gap-card.dim:hover{border-color:var(--border-strong); box-shadow:var(--shadow-card);
+                    transform:translateY(-1px)}
+
+/* The one that closes the loop. This used to be a black border, which is the
+   heaviest mark on the page spent on the quietest signal; a ring and a halo say
+   the same thing without shouting. Still exactly one kind of emphasis - the
+   card does not also get a heavier border, a tint and a bigger radius. */
+.gap-card.us{box-shadow:var(--shadow-ring); transform:translateY(-1px)}
+.gap-card.us:hover{box-shadow:var(--shadow-ring-hover); transform:translateY(-3px)}
 .gap-card.us .stops{color:var(--fg); font-weight:500}
+
+@media (prefers-reduced-motion:reduce){
+  .gap-card{transition:none}
+  .gap-card.dim:hover,
+  .gap-card.us,
+  .gap-card.us:hover{transform:none}
+}
 
 /* ---------- steps ---------- */
 .steps{margin-top:40px; counter-reset:step}
@@ -1168,8 +1216,8 @@ h1,h2,h3,h4,p{margin:0}
 <div class="banner">
   <div class="wrap">
     <b>The risk detection is real</b>
-    <span>— it runs against live news right now. The shipments are synthetic, so a
-    disruption can be shown on demand instead of waited for.</span>
+    <span>— it runs on live news. The shipments are synthetic, so a disruption
+    can be shown on demand.</span>
   </div>
 </div>
 
@@ -1209,15 +1257,12 @@ h1,h2,h3,h4,p{margin:0}
     <h1 class="d1">Trade-lane risk, decided.</h1>
 
     <p class="sub copy18">
-      Risk platforms stop at the alert, and someone on your desk still has to key the
-      consequence into the TMS. Lanewatch does that part. It watches everything that moves a
-      lane — the wires, the press next to the port, river gauges, weather, sea state,
-      hazards, government notices, rates — works out which of your bookings are exposed,
-      decides <b style="color:var(--fg);font-weight:500">reroute</b> or
-      <b style="color:var(--fg);font-weight:500">hold</b> for each, drafts the emails a human
-      would otherwise write, and <b style="color:var(--fg);font-weight:500">writes every
-      change back onto the booking it came from</b>. Each call keeps its reasoning. Every
-      write waits for you.
+      Risk platforms stop at the alert. Lanewatch runs on the bookings in your TMS:
+      catches the disruption early, finds which bookings are exposed, decides
+      <b style="color:var(--fg);font-weight:500">reroute</b> or
+      <b style="color:var(--fg);font-weight:500">hold</b>, drafts the emails, writes the
+      change back onto the booking. Every call keeps its reasoning. Every write waits
+      for you.
     </p>
 
     <div class="cta">
@@ -1227,8 +1272,8 @@ h1,h2,h3,h4,p{margin:0}
           <path d="M5 12h13M12 5l7 7-7 7"/></svg></a>
       <a class="btn btn-secondary btn-lg" href="#loop">See how the loop closes</a>
     </div>
-    <p class="under">One button. Every booking read out of the TMS, three different and
-      defensible decisions, and the write-back each one implies — in under two minutes.</p>
+    <p class="under">One button. Seven bookings out of the TMS. Three defensible decisions,
+      each written back onto its booking, in under two minutes.</p>
 
     <!-- A rendering of the actual board, drawn in HTML so it stays sharp. -->
     <div class="shot">
@@ -1249,7 +1294,7 @@ h1,h2,h3,h4,p{margin:0}
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                    stroke-width="2" stroke-linecap="round"><path d="M3 7h13v10H3zM16 10h3l2 3v4h-5"/>
                 <circle cx="7" cy="18" r="1.6"/><circle cx="18" cy="18" r="1.6"/></svg>
-              Shipments<span class="n">5</span></div>
+              Shipments<span class="n">7</span></div>
             <div class="i">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                    stroke-width="2" stroke-linecap="round"><path d="M12 3l9 16H3z"/>
@@ -1257,7 +1302,12 @@ h1,h2,h3,h4,p{margin:0}
             <div class="i">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                    stroke-width="2" stroke-linecap="round"><path d="M4 5h16v11H4z"/>
-                <path d="M4 6l8 6 8-6"/></svg>Approvals<span class="n">6</span></div>
+                <path d="M4 6l8 6 8-6"/></svg>Approvals<span class="n">18</span></div>
+            <div class="i">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0z"/><path d="M12 18v4"/></svg>
+              TMS link<span class="n">12</span></div>
           </aside>
           <div class="board-main">
             <div class="board-top">
@@ -1268,7 +1318,7 @@ h1,h2,h3,h4,p{margin:0}
               </div>
             </div>
             <div class="mini-stats">
-              <div class="ms"><div class="l">Shipments tracked</div><div class="v tabular">5</div></div>
+              <div class="ms"><div class="l">Bookings from the TMS</div><div class="v tabular">7</div></div>
               <div class="ms"><div class="l">Needing action</div><div class="v amber tabular">3</div></div>
               <div class="ms"><div class="l">Drafts written</div><div class="v tabular">6</div></div>
               <div class="ms"><div class="l">Model decisions</div><div class="v blue tabular">3/3</div></div>
@@ -1294,6 +1344,14 @@ h1,h2,h3,h4,p{margin:0}
                 <span class="lane">Machinery · Busan → Hamburg</span>
                 <span class="meta">3d slack</span>
                 <span class="st"><span class="st-badge st-blue"><i></i>Rerouted · RTM</span></span></div>
+              <div class="row"><span class="id">SHP-006</span>
+                <span class="lane">Industrial chemicals · Shanghai → Basel</span>
+                <span class="meta">3d slack</span>
+                <span class="st"><span class="st-badge st-green"><i></i>On plan</span></span></div>
+              <div class="row"><span class="id">SHP-007</span>
+                <span class="lane">Textiles · Shanghai → Lyon</span>
+                <span class="meta">5d slack</span>
+                <span class="st"><span class="st-badge st-green"><i></i>On plan</span></span></div>
             </div>
           </div>
         </div>
@@ -1473,43 +1531,39 @@ h1,h2,h3,h4,p{margin:0}
     <div class="head rv">
       <span class="eyebrow">The gap</span>
       <h2 class="d2">Everyone stops one step short.</h2>
-      <p class="copy18">A forwarder's operations desk watches for disruptions <i>and</i> reacts to
-        them by hand. The tools sold into that desk each own one half of the job and hand the
-        other half back to a person at 7am — who then re-keys the consequence into the TMS,
-        booking by booking, because that is the only place the change actually counts.</p>
+      <p class="copy18">The desk watches for disruptions <i>and</i> reacts to them by hand.
+        Every tool sold into it owns one half of the job and hands the other half back to
+        a person.</p>
     </div>
 
     <div class="grid g3 gap-grid rv">
       <div class="gap-card dim">
         <span class="n">01</span>
         <h3 class="h20">Risk platforms</h3>
-        <p class="copy14">Everstream, Interos, Resilinc. Broad, credible monitoring that
-          surfaces the event and scores it. Then it is your problem — and it is mostly
-          reading the same wires you already read.</p>
+        <p class="copy14">Everstream, Interos, Resilinc. They surface the event and score
+          it. Then it is your problem.</p>
         <p class="stops">Stops at: <b>the alert</b></p>
       </div>
       <div class="gap-card dim">
         <span class="n">02</span>
         <h3 class="h20">Execution tools</h3>
-        <p class="copy14">The TMS and the visibility stack hold the booking and move it once
-          someone has already decided it should move. They do not watch the world, and they do
-          not decide.</p>
+        <p class="copy14">The TMS and the visibility stack move the booking once someone
+          has decided it should move. They do not watch the world, and they do not decide.</p>
         <p class="stops">Starts at: <b>the decision already made</b></p>
       </div>
       <div class="gap-card us">
         <span class="n">03</span>
         <h3 class="h20">Lanewatch</h3>
-        <p class="copy14">Sits on the TMS you already run. Reads everything that moves a lane,
-          triages the book, makes the call per booking, explains it, drafts the two emails that
-          call requires — and writes the change back onto the record so nobody re-keys it.</p>
+        <p class="copy14">Sits on the TMS you already run. Reads the event, triages the
+          book, decides per booking, explains it, drafts the emails, and writes the change
+          back onto the record.</p>
         <p class="stops">Closes: <b>risk → reroute → comms → the TMS</b></p>
       </div>
     </div>
 
     <p class="copy14 rv" style="margin-top:24px;max-width:70ch">
-      The two halves are also priced for enterprise. The desk this is modelled on — a
-      Head of Operations at a mid-size DACH or Benelux forwarder — sits below that line
-      and joins them by hand.
+      Both halves are priced for enterprise. The desk this is modelled on — a mid-size
+      DACH or Benelux forwarder — sits below that line and joins them by hand.
     </p>
 
     <div class="grid g2 rv" style="margin-top:34px">
@@ -1541,10 +1595,9 @@ h1,h2,h3,h4,p{margin:0}
     <div class="head rv">
       <span class="eyebrow">How it works</span>
       <h2 class="d2">Three agents, one closed loop — run on your TMS.</h2>
-      <p class="copy18">No framework, no scheduler, no queue. Plain functions calling
-        functions over shared JSON state — which is exactly why you can read what
-        happened afterwards. The loop opens and closes in the same place: the bookings
-        come out of the system of record, and every decision goes back into it.</p>
+      <p class="copy18">The bookings come out of the system of record, and every decision
+        goes back into it. No framework, no scheduler, no queue — plain functions over
+        shared JSON, which is why you can read what happened afterwards.</p>
     </div>
 
     <div class="steps rv">
@@ -1552,10 +1605,10 @@ h1,h2,h3,h4,p{margin:0}
         <div class="num">00</div>
         <div class="body">
           <h3 class="h24">TMS link <span class="chip synth">Demo connector</span></h3>
-          <p class="copy16">The book is not ours. Every booking the agents work on is read out
-            of the TMS through one connector — reference, commodity, load and discharge port,
-            routing code, ETA, required-by, temperature regime. There is one door in, so the
-            day it points at a real TMS, the whole board follows it.</p>
+          <p class="copy16">The book is not ours. Every booking is read out of the TMS
+            through one connector — reference, commodity, ports, routing code, ETA,
+            required-by, temperature regime. One door in, so the day it points at a real
+            TMS the whole board follows.</p>
           <div class="facts">
             <span class="fact">One read path — <b>nothing else opens the book</b></span>
             <span class="fact">The demo's records are <b>synthetic</b>, the mapping is not</span>
@@ -1567,13 +1620,13 @@ h1,h2,h3,h4,p{margin:0}
         <div class="num">01</div>
         <div class="body">
           <h3 class="h24">Risk Monitor <span class="chip live">Live</span></h3>
-          <p class="copy16">Reads all forty-two sources at once — eleven GDELT queries,
-            twenty feeds, three Rhine gauges, port weather, sea state, seismic activity,
-            natural events, government filings and the ECB's rates. Prose goes to the model,
-            which calls chokepoint, disruption type and severity. Numbers do not: a gust, a
-            wave height, a magnitude and a water level are read by threshold, which costs
-            nothing and cannot hallucinate. Whatever has not answered inside the budget is
-            marked skipped and the cycle moves on.</p>
+          <p class="copy16">Reads all forty-two sources at once — GDELT, twenty feeds,
+            three Rhine gauges, port weather, sea state, seismic activity, natural events,
+            government filings and the ECB's rates. Prose goes to the model, which calls
+            chokepoint, disruption type and severity. Numbers do not: a gust, a wave height,
+            a magnitude and a water level are read by threshold, which costs nothing and
+            cannot hallucinate. Whatever has not answered inside the budget is marked
+            skipped and the cycle moves on.</p>
           <div class="facts">
             <span class="fact"><b>42</b> sources, <b>6</b> families, <b>0</b> API keys</span>
             <span class="fact"><b>25s</b> hard budget for the whole pull</span>
@@ -1587,11 +1640,10 @@ h1,h2,h3,h4,p{margin:0}
         <div class="num">02</div>
         <div class="body">
           <h3 class="h24">Route Advisor <span class="chip blue">Decides</span></h3>
-          <p class="copy16">Maps each shipment's route against active risk. Code computes the
-            facts — which chokepoints the lane touches, added transit days, whether the
-            schedule slack absorbs them, the revised ETA. The model weighs slack against
-            added transit against expected disruption delay, makes the call, and explains
-            it in plain language.</p>
+          <p class="copy16">Code computes the facts — which chokepoints the lane touches,
+            added transit days, whether the slack absorbs them, the revised ETA. The model
+            weighs slack against added transit against expected delay, makes the call, and
+            explains it in plain language.</p>
           <div class="facts">
             <span class="fact">Arithmetic and dates <b>never</b> go to the model</span>
             <span class="fact">A route it wasn't offered is <b>refused and downgraded to hold</b></span>
@@ -1604,10 +1656,10 @@ h1,h2,h3,h4,p{margin:0}
         <div class="num">03</div>
         <div class="body">
           <h3 class="h24">Comms Agent <span class="chip synth">Drafts only</span></h3>
-          <p class="copy16">Two separate calls, two different voices. A carrier email is a
-            transaction between operators, so route codes and chokepoint ids are fine in it.
-            A customer email is a relationship, so internal vocabulary appearing there is
-            flagged as a warning. Both come back as text and stop there.</p>
+          <p class="copy16">Two calls, two voices. A carrier email is a transaction between
+            operators, so route codes and chokepoint ids are fine in it. A customer email is
+            a relationship, so internal vocabulary there is flagged. Both come back as text
+            and stop there.</p>
           <div class="facts">
             <span class="fact">Every draft carries <b>status: DRAFT — not sent</b></span>
             <span class="fact">Nothing leaves the process</span>
@@ -1619,11 +1671,10 @@ h1,h2,h3,h4,p{margin:0}
         <div class="num">04</div>
         <div class="body">
           <h3 class="h24">Back into the TMS <span class="chip synth">Demo connector</span></h3>
-          <p class="copy16">A decision nobody records is a decision nobody acts on, so each
-            agent's output is expressed as a change to the record it came from: the Risk Worker
-            flags the exception on the booking, the Routing Worker changes discharge port,
-            routing code, ETA or status, and the Comms Worker files each drafted email against
-            the booking's communication log. A booking left on plan writes nothing at all.</p>
+          <p class="copy16">A decision nobody records is a decision nobody acts on. Risk
+            flags the exception on the booking. Routing changes discharge port, routing code,
+            ETA and status. Comms files each draft on the booking's communication log. A
+            booking left on plan writes nothing at all.</p>
           <div class="facts">
             <span class="fact">Every change is <b>QUEUED — not written</b></span>
             <span class="fact">No client, no credential, <b>no endpoint</b></span>
@@ -1660,9 +1711,12 @@ h1,h2,h3,h4,p{margin:0}
             <span class="v">The press closest to a corridor is read <b>directly</b>, not
             picked up second-hand from a wire — which is why an event often lands here
             first</span></li>
+          <li><span class="k">Coverage</span>
+            <span class="v">The North Range, the Low Countries, the Red Sea and Gulf, the
+            Western Mediterranean — every corridor on the board</span></li>
           <li><span class="k">Evidence</span>
-            <span class="v">Every event shows the outlets that carried it and how far ahead
-            of the wires they were — checkable, not asserted</span></li>
+            <span class="v">Every event shows which outlets carried it and how far ahead of
+            the wires — checkable, not asserted</span></li>
         </ul>
       </div>
 
@@ -1718,14 +1772,13 @@ h1,h2,h3,h4,p{margin:0}
       <span class="eyebrow">Worked example</span>
       <h2 class="d2" style="margin-top:14px">Rotterdam &rarr; Basel &middot; called nine days early.</h2>
       <p class="copy18" style="margin-top:16px;max-width:74ch">August 2026 &middot; Rhine low
-        water &middot; the inland leg was re-moded to rail nine days before operators stopped
-        quoting Basel barge bookings at all.</p>
+        water &middot; the inland leg moved to rail nine days before operators stopped quoting
+        Basel barge at all.</p>
       <p class="cs-note">
         <span class="chip synth">Synthetic scenario</span>
-        &nbsp;Authored, not a live reading. The corridor, the two routes and the gauges are
-        real &mdash; Kaub, Duisburg-Ruhrort and Emmerich from PEGELONLINE, the 78&nbsp;cm
-        loading threshold from <code>config.py</code>. The readings, vessel counts and dates
-        are written to show the shape of the call: no product metric, no outcome claimed.
+        &nbsp;Authored, not a live reading. The corridor, the routes and the gauges are
+        real; the readings, vessel counts and dates are written to show the shape of the
+        call. No product metric, no outcome claimed.
       </p>
     </div>
 
@@ -1882,12 +1935,10 @@ h1,h2,h3,h4,p{margin:0}
 
     <p class="cs-note rv">
       <span class="chip synth">Synthetic scenario</span>
-      &nbsp;Everything below this line is authored, not read. The corridor, the gauges and
-      the two routes are the real ones Lanewatch watches &mdash; <code>R-RTM-RHINE</code>
-      against <code>R-RTM-RAIL</code>, and the 78&nbsp;cm loading threshold is the one in
-      <code>config.py</code> that the live panel above is measuring against. The readings,
-      the vessel counts and the dates in the write-up are written to show the shape of the
-      call. Nothing here is a product metric, and no outcome is being claimed.
+      &nbsp;Everything below this line is authored, not read. The routes are the real ones
+      Lanewatch watches &mdash; <code>R-RTM-RHINE</code> against <code>R-RTM-RAIL</code> &mdash;
+      and the 78&nbsp;cm threshold is the one the live panel above measures against. The
+      readings, vessel counts and dates show the shape of the call. No outcome is claimed.
     </p>
 
     <div class="grid g3 cs-grid">
@@ -1925,11 +1976,10 @@ h1,h2,h3,h4,p{margin:0}
           <span><i></i>Rail + road &middot; the re-mode</span>
         </div>
 
-        <p class="cs-cap">The sea leg is not the problem. Rotterdam discharges on schedule
-          &mdash; the constraint is the run upcountry, and it binds at Kaub, where the river
-          is shallowest. The booking&rsquo;s third route, the Cape sailing, reaches Basel
-          over this same overland leg: there are two ways up the corridor, not three, and
-          the difference between those two is ten days at sea.</p>
+        <p class="cs-cap">The sea leg is not the problem. Rotterdam discharges on schedule;
+          the constraint is the run upcountry, and it binds at Kaub where the river is
+          shallowest. The Cape sailing reaches Basel over this same overland leg &mdash; two
+          ways up the corridor, not three.</p>
 
         <div class="nums">
           <div><p class="k">Baseline</p><p class="v">38 d</p></div>
@@ -1944,23 +1994,23 @@ h1,h2,h3,h4,p{margin:0}
         <ul class="cs-tl">
           <li>
             <p class="d">Aug 06</p>
-            <p class="t">A regional outlet upstream carries a third dry week in the
-              catchments. The Kaub gauge is already falling through its loading band.</p>
+            <p class="t">A regional outlet carries a third dry week in the catchments.
+              Kaub is already falling through its loading band.</p>
           </li>
           <li>
             <p class="d">Aug 09</p>
-            <p class="t">Kaub 96 cm. Operators cut loaded draught and the first part-load
-              notices reach shippers.</p>
+            <p class="t">Kaub 96 cm. Operators cut draught; the first part-load notices
+              go out.</p>
           </li>
           <li class="call">
             <p class="d">Aug 12</p>
-            <p class="t"><b>Lanewatch re-modes SHP-006 from Rhine barge to rail</b> and takes
-              the slot while capacity is still quotable.</p>
+            <p class="t"><b>Lanewatch re-modes SHP-006 from barge to rail</b> and takes the
+              slot while capacity is still quotable.</p>
           </li>
           <li>
             <p class="d">Aug 14</p>
-            <p class="t">Kaub 78 cm &mdash; the loading threshold. Large-tonnage barges sail
-              at roughly a third of nominal.</p>
+            <p class="t">Kaub 78 cm &mdash; the loading threshold. Large barges sail at
+              about a third of nominal.</p>
           </li>
           <li>
             <p class="d">Aug 17</p>
@@ -1974,12 +2024,12 @@ h1,h2,h3,h4,p{margin:0}
           </li>
           <li class="now">
             <p class="d">Aug 21</p>
-            <p class="t">Kaub 44 cm. <b>140 vessels</b> held and operators stop quoting Basel
-              bookings outright.</p>
+            <p class="t">Kaub 44 cm. <b>140 vessels</b> held; operators stop quoting Basel
+              outright.</p>
           </li>
         </ul>
-        <p class="cs-foot">The Aug 06 item was carried by a regional outlet and corroborated
-          by the Kaub gauge 36 hours before the international wires ran it.</p>
+        <p class="cs-foot">A regional outlet ran the Aug 06 item, and the Kaub gauge
+          confirmed it, 36 hours before the wires.</p>
       </div>
 
       <!-- 03 -->
@@ -1995,10 +2045,10 @@ h1,h2,h3,h4,p{margin:0}
           <p class="h">Re-mode &middot; R-RTM-RAIL</p>
           <p class="e">Revised ETA <code>Sep 18</code> &middot; original <code>Sep 17</code>
             &middot; required by <code>Sep 20</code></p>
-          <p class="b">Rail and road out of Rotterdam book ten to fourteen days ahead, so the
-            slot has to be taken before the queue forms rather than after it. Cost index rises
-            100 &rarr; 114. The sea leg and the discharge port are untouched &mdash; only the
-            inland leg moves, which is why this is a re-mode and not a reroute.</p>
+          <p class="b">Rail and road out of Rotterdam book ten to fourteen days ahead, so
+            the slot has to be taken before the queue forms. Cost index 100 &rarr; 114. The
+            sea leg and the discharge port are untouched &mdash; only the inland leg moves,
+            which is why this is a re-mode and not a reroute.</p>
         </div>
 
         <p class="cs-sub">What the advisor weighed</p>
@@ -2010,9 +2060,8 @@ h1,h2,h3,h4,p{margin:0}
             far outside the slack.</li>
         </ul>
 
-        <p class="cs-foot">Three days of slack absorb the extra day. SHP-006 is the only
-          Rhine-barge leg on the board, so the other six shipments stay on plan &mdash; the
-          system does not cry wolf across the whole book.</p>
+        <p class="cs-foot">SHP-006 is the only Rhine-barge leg on the board, so the other
+          six stay on plan. The system does not cry wolf.</p>
       </div>
 
     </div>
@@ -2026,25 +2075,24 @@ h1,h2,h3,h4,p{margin:0}
       <div class="txt rv">
         <span class="eyebrow">The judgement</span>
         <h2 class="d2" style="margin-top:14px">The hard one is the interesting one.</h2>
-        <p class="copy18">Two of the five shipments reroute cleanly and two are never
-          touched — the system does not cry wolf. The one worth reading is SHP-002, where
-          there is no good option and the job is to pick the least-bad one and say why.</p>
-        <p class="copy16" style="margin-top:16px">Two 40ft reefers of temperature-controlled
-          pharma, one day of slack, and a customer who is <i>in Hamburg</i>. Rerouting via
-          Rotterdam adds road transit and a cold-chain transfer, and every transfer is a
-          GDP-compliance event. So: hold, notify, and be explicit that the deadline is at
-          risk.</p>
+        <p class="copy18">Two of the seven reroute cleanly and four are never touched. The
+          one worth reading is SHP-002, where there is no good option and the job is to pick
+          the least-bad one and say why.</p>
+        <p class="copy16" style="margin-top:16px">Two 40ft reefers of pharma, one day of
+          slack, and a customer who is <i>in Hamburg</i>. Rerouting via Rotterdam adds road
+          transit and a cold-chain transfer, and every transfer is a GDP-compliance event.
+          So: hold, notify, and say plainly that the deadline is at risk.</p>
         <ul class="claims">
           <li><span class="k">Trail</span>
             <span class="v">Every decision keeps a <b>reasoning trail</b> — including the
             guard rails that fired</span></li>
           <li><span class="k">Fallback</span>
-            <span class="v">If the provider is unreachable, the fallback is transparent rules
-            and the card is badged <span class="mono" style="font-size:13px">rule</span>
+            <span class="v">If the provider is unreachable it falls back to rules and the card
+            is badged <span class="mono" style="font-size:13px">rule</span>
             — never a silent downgrade</span></li>
           <li><span class="k">Model split</span>
             <span class="v">A strip on the board names the model in use and the
-            model-versus-rules split, so the central claim is checkable at a glance</span></li>
+            model-versus-rules split — checkable at a glance</span></li>
         </ul>
       </div>
 
@@ -2102,10 +2150,9 @@ h1,h2,h3,h4,p{margin:0}
     <div class="head rv" style="max-width:none;margin-top:64px">
       <span class="eyebrow">The other branch</span>
       <h3 class="h32" style="margin-top:12px">And these are the clean ones.</h3>
-      <p class="copy16" style="margin-top:12px;max-width:74ch">Two of the five reroute on the
-        same event, and neither is a copy of the other. Each is worth showing whole: the plan
-        that is booked, the plan the advisor proposes, and the arithmetic that separates
-        them.</p>
+      <p class="copy16" style="margin-top:12px;max-width:74ch">Two reroute on the same event,
+        and neither is a copy of the other: the plan booked, the plan proposed, and the
+        arithmetic between them.</p>
     </div>
 
     <div class="dec rv">
@@ -2128,9 +2175,9 @@ h1,h2,h3,h4,p{margin:0}
           <p class="d">R-HAM-STD · via Suez · rail ex-Hamburg</p>
           <p class="big">32<u>days transit</u></p>
           <span class="st-badge st-red"><i></i>Exposed · HAM</span>
-          <p class="why">Terminal handling, gate operations and rail shunting stop for the
-            walkout. Staying put projects three to five days of delay against four days of
-            slack — in the worst case the deadline breaks.</p>
+          <p class="why">Terminal handling, gates and rail shunting stop for the walkout.
+            Staying put costs three to five days against four of slack — in the worst case
+            the deadline breaks.</p>
         </div>
 
         <div class="dec-col rec">
@@ -2140,8 +2187,8 @@ h1,h2,h3,h4,p{margin:0}
           <p class="big">34<u>days transit</u></p>
           <span class="st-badge st-blue"><i></i>Reroute · RTM</span>
           <p class="why">Two days longer on paper, and nothing active on any chokepoint it
-            passes. Two days of added transit against four of slack, so the deadline holds
-            without spending the whole margin.</p>
+            passes. Two days against four of slack — the deadline holds with margin to
+            spare.</p>
         </div>
       </div>
 
@@ -2179,9 +2226,9 @@ h1,h2,h3,h4,p{margin:0}
           <p class="d">R-HAM-STD · via Suez · consignee at the port</p>
           <p class="big">32<u>days transit</u></p>
           <span class="st-badge st-red"><i></i>Exposed · HAM</span>
-          <p class="why">The same walkout, one day tighter: three to five days of delay against
-            three days of slack. Heavy-lift handling stops with everything else, so out-of-gauge
-            cargo waits out the backlog rather than moving through it.</p>
+          <p class="why">The same walkout, one day tighter: three to five days against three
+            of slack. Heavy-lift handling stops with everything else, so out-of-gauge cargo
+            waits out the backlog rather than moving through it.</p>
         </div>
 
         <div class="dec-col rec">
@@ -2190,9 +2237,9 @@ h1,h2,h3,h4,p{margin:0}
           <p class="d">R-RTM-ALT · via Suez · road Rotterdam → Hamburg</p>
           <p class="big">34<u>days transit</u></p>
           <span class="st-badge st-blue"><i></i>Reroute · RTM</span>
-          <p class="why">Rotterdam takes heavy lift, which is what makes this reroute available
-            to flatrack cargo at all. Two days of added transit against three of slack — it
-            fits, with a day left over.</p>
+          <p class="why">Rotterdam takes heavy lift, which is what makes this reroute
+            available to flatrack cargo at all. Two days against three of slack — it fits,
+            with a day left over.</p>
         </div>
       </div>
 
@@ -2205,14 +2252,11 @@ h1,h2,h3,h4,p{margin:0}
       </div>
     </div>
 
-    <p class="dec-note rv">Both shipments were offered the Cape routing <code>R-COGH-ALT</code>
-      as well, and both refused it: ten days longer, and it still discharges at Hamburg, so it
-      carries the disruption it was meant to avoid. SHP-005 is the one to read against the hold
-      above — its consignee is in Hamburg too, and it reroutes anyway, because a road leg from
-      Rotterdam is just road for a machine tool and a broken cold chain for a reefer. The
-      comparisons and the refusals all sit in the reasoning trails —
-      <code>python -m src.route_advisor --inject</code> prints the same figures these cards
-      show.</p>
+    <p class="dec-note rv">Both were offered the Cape routing <code>R-COGH-ALT</code> and
+      refused it: ten days longer, and it still discharges at Hamburg. Read SHP-005 against the
+      hold above — its consignee is in Hamburg too, and it reroutes anyway: a road leg from
+      Rotterdam is just road for a machine tool, and a broken cold chain for a reefer.
+      <code>python -m src.route_advisor --inject</code> prints the same figures.</p>
 
   </div>
 </section>
@@ -2224,8 +2268,8 @@ h1,h2,h3,h4,p{margin:0}
       <span class="eyebrow">The last mile</span>
       <h2 class="d2">It writes the emails. It does not send them.</h2>
       <p class="copy18">A decision that lands in a dashboard is still work for a person.
-        Every actioned shipment comes back with the two emails it requires — one to the
-        carrier, one to the customer — behind an approval gate.</p>
+        Every actioned shipment comes back with both emails it needs — carrier and
+        customer — behind an approval gate.</p>
     </div>
 
     <div class="grid g2 rv" style="margin-top:40px">
@@ -2310,17 +2354,15 @@ firm revised ETA as soon as terminals restart.</p>
     <div class="head rv">
       <span class="eyebrow">The biggest value</span>
       <h2 class="d2">The decision is the easy half. The TMS work is the day.</h2>
-      <p class="copy18">The carrier sends a notice. The customer asks where their box is. A
-        rate request lands on the lane you are busy re-planning. The entry has to be reissued
-        because the country of clearance just changed. And until someone types it in, the TMS
-        still says the old discharge port — so nothing that was decided has actually
-        happened yet.</p>
+      <p class="copy18">The carrier sends a notice. The customer asks where their box is.
+        A rate request lands on the lane you are re-planning. And until someone types it in,
+        the TMS still says the old discharge port — so nothing that was decided has
+        actually happened yet.</p>
       <p class="copy16" style="margin-top:14px;max-width:74ch">This is the half Lanewatch
-        automates, and it is the reason it is worth having. Every agent works
-        <i>in</i> the system of record rather than beside it: the booking comes out of it,
-        and the exception, the new discharge port, the routing code, the revised ETA and each
-        drafted mail go back onto it as queued changes, named by the agent that made them.
-        One person approves. Nobody re-keys.</p>
+        automates. Every agent works <i>in</i> the system of record rather than beside it:
+        the booking comes out of it, and the exception, the new discharge port, the routing
+        code, the revised ETA and each drafted mail go back onto it as queued changes, named
+        by the agent that made them. One person approves. Nobody re-keys.</p>
     </div>
 
     <div class="grid g3 rv" style="margin-top:40px">
@@ -2451,8 +2493,7 @@ firm revised ETA as soon as terminals restart.</p>
             </div>
           </div>
           <p class="src" style="margin-top:12px">The active disruption is priced in. A quote
-            written during a closure that ignores the surcharge is a quote that loses
-            money.</p>
+            that ignores the surcharge loses money.</p>
         </div>
       </div>
 
@@ -2492,9 +2533,8 @@ firm revised ETA as soon as terminals restart.</p>
                   <span class="k">temperature_regime</span><span class="v"><span class="ar">→</span> cold_chain
                     <span class="chip">in</span></span>
                 </div>
-                <p class="wv-note">Bookings read in; the risk exception, routing, discharge
-                  port, ETA, booking status and the communication log written back once a
-                  person approves.</p>
+                <p class="wv-note">Bookings read in. Exception, routing, discharge port,
+                  ETA, status and communication log written back once a person approves.</p>
               </div>
               <div class="wv-s" data-do="write-back derived">
                 <div class="wv-r"><div class="wv-rl">Write-backs · SHP-001 · one per Worker</div>
@@ -2537,13 +2577,107 @@ firm revised ETA as soon as terminals restart.</p>
 
     <div class="callout rv" style="margin-top:32px">
       <p class="copy16"><b style="color:var(--fg);font-weight:500">Everything outbound sits
-        behind the same gate.</b> A drafted reply, a drafted quote and a change queued into the
-        TMS all leave the building, so all three wait on a person —
+        behind the same gate.</b> A drafted reply, a drafted quote and a queued TMS change all
+        leave the building, so all three wait on a person —
         <span class="mono" style="font-size:13px">DRAFT - not sent</span>,
         <span class="mono" style="font-size:13px">QUEUED - not written</span>. The test that
         proves the emails cannot be sent checks these too.</p>
     </div>
   </div>
+</section>
+
+<!-- ================== WHAT IT IS BUILT TO PLUG INTO ================== -->
+<!-- Deliberately NOT in the source strip above. That one lists what the Risk
+     Monitor reads, and none of these is read - putting them there would claim
+     an integration this build does not have. Same visual language, different
+     claim, and the claim is written under the band. -->
+<section class="strip targets">
+  <div class="wrap">
+    <p class="lead">Built to run on the systems the desk already has</p>
+  </div>
+
+  <!-- Pictograms of what each kind of system is - a container, a gantry, a
+       ship, a shield - drawn here for the same reason as the source marks
+       above: no logo is reproduced and no trademark is used as a badge. -->
+  <svg class="sprite" aria-hidden="true" focusable="false"><defs>
+
+    <!-- a forwarding TMS: the box everything is booked against -->
+    <symbol id="tms-container" viewBox="0 0 24 24">
+      <rect x="2.8" y="7.4" width="18.4" height="9.2" rx="1.2"/>
+      <path d="M8.2 7.4v9.2M12 7.4v9.2M15.8 7.4v9.2"/>
+    </symbol>
+
+    <!-- a forwarding suite built around one view of the file -->
+    <symbol id="tms-scope" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="7.4"/>
+      <path d="M12 2.8v3.8M12 17.4v3.8M2.8 12h3.8M17.4 12h3.8"/>
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+    </symbol>
+
+    <!-- customs and trade compliance: cleared, and the check that says so -->
+    <symbol id="tms-shield" viewBox="0 0 24 24">
+      <path d="M12 2.9 20 5.6v6.1c0 4.4-3.2 7.6-8 9.4-4.8-1.8-8-5-8-9.4V5.6Z"/>
+      <path d="M8.7 11.9 11 14.3l4.5-4.7"/>
+    </symbol>
+
+    <!-- transport execution: the leg that actually moves -->
+    <symbol id="tms-truck" viewBox="0 0 24 24">
+      <path d="M2.8 6.8h11v9.6h-11z"/>
+      <path d="M13.8 10.2h3.7l3.7 3.9v2.3h-7.4"/>
+      <circle cx="7" cy="18.3" r="1.7"/>
+      <circle cx="17.4" cy="18.3" r="1.7"/>
+    </symbol>
+
+    <!-- a freight exchange: capacity going one way, loads the other -->
+    <symbol id="tms-exchange" viewBox="0 0 24 24">
+      <path d="M3.4 8.9h14.2M14.1 5.3l3.5 3.6-3.5 3.6"/>
+      <path d="M20.6 15.1H6.4M9.9 18.7l-3.5-3.6 3.5-3.6"/>
+    </symbol>
+
+    <!-- a logistics network: everyone on one set of messages -->
+    <symbol id="tms-network" viewBox="0 0 24 24">
+      <circle cx="12" cy="4.9" r="2"/>
+      <circle cx="5.3" cy="17.4" r="2"/>
+      <circle cx="18.7" cy="17.4" r="2"/>
+      <path d="M11 6.7 6.3 15.6M13 6.7l4.7 8.9M7.3 17.4h9.4"/>
+    </symbol>
+
+    <!-- a port community system: the quay it is all declared against -->
+    <symbol id="tms-crane" viewBox="0 0 24 24">
+      <path d="M3.4 20.6h17.2"/>
+      <path d="M7.2 20.6V5.4h13.4"/>
+      <path d="M7.2 5.4H3.6"/>
+      <path d="M14.8 5.4v4.9"/>
+      <rect x="12.4" y="10.3" width="4.9" height="3.4" rx=".8"/>
+    </symbol>
+
+    <!-- the other port system: the call the declarations hang off -->
+    <symbol id="tms-ship" viewBox="0 0 24 24">
+      <path d="M3.4 14.8h17.2l-2.6 5.2H6Z"/>
+      <path d="M7.8 14.8V9.6h8.4v5.2"/>
+      <path d="M12 9.6V5.4"/>
+    </symbol>
+
+  </defs></svg>
+
+  <div class="strip-view">
+    <div class="strip-track">
+      <div class="strip-row">
+        <span class="src"><svg class="mk"><use href="#tms-container"/></svg>CargoWise <span class="kind">tms</span></span>
+        <span class="src"><svg class="mk"><use href="#tms-scope"/></svg>Riege Scope <span class="kind">tms</span></span>
+        <span class="src"><svg class="mk"><use href="#tms-network"/></svg>Descartes <span class="kind">network</span></span>
+        <span class="src"><svg class="mk"><use href="#tms-truck"/></svg>Transporeon <span class="kind">execution</span></span>
+        <span class="src"><svg class="mk"><use href="#tms-exchange"/></svg>TIMOCOM <span class="kind">exchange</span></span>
+        <span class="src"><svg class="mk"><use href="#tms-shield"/></svg>AEB <span class="kind">customs</span></span>
+        <span class="src"><svg class="mk"><use href="#tms-crane"/></svg>DAKOSY <span class="kind">port system</span></span>
+        <span class="src"><svg class="mk"><use href="#tms-ship"/></svg>Portbase <span class="kind">port system</span></span>
+      </div>
+    </div>
+  </div>
+
+  <p class="note"><b>None of these is connected.</b> The link in this build is a demo
+    connector &mdash; no vendor, no credential, no endpoint, and nothing is ever written.
+    Naming them says where the read path is pointed, not what it has reached.</p>
 </section>
 
 <!-- ======================== SOURCES ======================== -->
@@ -2582,7 +2716,7 @@ firm revised ETA as soon as terminals restart.</p>
       <div class="tr">
         <span class="nm">PEGELONLINE <span class="chip plain">3 gauges</span></span>
         <span class="ds">Rhine water levels at Kaub, Duisburg-Ruhrort and Emmerich, mapped to
-          the RHINE chokepoint. Read by threshold, not by the model — they are numbers, not prose.</span>
+          the RHINE chokepoint. Read by threshold, not by the model — numbers, not prose.</span>
         <span class="kx chip">None</span>
       </div>
       <div class="tr">
@@ -2618,19 +2752,17 @@ firm revised ETA as soon as terminals restart.</p>
       </div>
       <div class="tr">
         <span class="nm">Runtime model <span class="chip blue">Groq</span></span>
-        <span class="ds">Resolved at runtime against the provider's own model list rather than
-          hard-coded, because a retired model name returns a 404 that looks exactly like a
-          broken key. Swappable in one file.</span>
+        <span class="ds">Resolved at runtime against the provider's own model list, never
+          hard-coded — a retired model name returns a 404 that looks exactly like a broken
+          key. Swappable in one file.</span>
         <span class="kx chip">Yours</span>
       </div>
     </div>
 
     <p class="copy14 rv" style="margin-top:20px;max-width:74ch">
-      Deliberately not wired: anything paid, anything that needs a key, and anything whose
-      response shape is not published. Reuters is named in the research but retired its public
-      RSS feeds, so it is left out — a dead feed is a live failure. The paid AIS vendors are
-      out on price; OpenSanctions is out because its hosted API now gates behind a key, and
-      "no API keys" has to stay true.
+      Not wired, deliberately: anything paid, anything that needs a key. Reuters retired
+      its public RSS feeds, so it is out — a dead feed is a live failure. OpenSanctions now
+      gates its hosted API behind a key, and "no API keys" has to stay true.
     </p>
   </div>
 </section>
@@ -2641,8 +2773,8 @@ firm revised ETA as soon as terminals restart.</p>
     <div class="head rv">
       <span class="eyebrow">Scope</span>
       <h2 class="d2">What it deliberately does not do.</h2>
-      <p class="copy18">Scope creep is the failure mode for a prototype like this. These are
-        not roadmap items being coy — they are out, by decision.</p>
+      <p class="copy18">Scope creep is the failure mode for a prototype. These are not
+        roadmap items being coy — they are out, by decision.</p>
     </div>
 
     <div class="grid g2 nots rv">
@@ -2668,9 +2800,9 @@ firm revised ETA as soon as terminals restart.</p>
           <path d="M5.6 5.6l12.8 12.8"/></svg>
         <div><p class="k">No live TMS connection — yet</p>
           <p class="v">Working through the TMS is the design, and the connector models both
-            directions of it. What is missing is the far end: no vendor, no credential, no
-            endpoint. The bookings behind it are synthetic, authored so one disruption yields
-            three different, defensible decisions.</p></div>
+            directions. What is missing is the far end: no vendor, no credential, no endpoint.
+            The bookings behind it are synthetic, authored so one disruption yields three
+            different decisions.</p></div>
       </div>
       <div class="not">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -2697,17 +2829,16 @@ firm revised ETA as soon as terminals restart.</p>
         <span><span class="chip live">Live</span>
           <span class="copy14">news pull, classification, decisions, drafts</span></span>
         <span><span class="chip synth">Synthetic</span>
-          <span class="copy14">the five shipments and the injected Hamburg strike</span></span>
+          <span class="copy14">the seven bookings and the injected Hamburg strike</span></span>
         <span><span class="chip synth">Demo connector</span>
           <span class="copy14">the TMS the bookings are read from and written back to</span></span>
       </div>
       <p class="copy14">
         The injected strike uses the same event format as a live one, so it runs through the
-        real pipeline rather than around it. The TMS link is the same idea in the other
-        direction: the read is the only door to the book and every decision is expressed as a
-        change to the record it came from, but no TMS is contacted and nothing is written.
-        A demo, not a live product — the gap between the two is the integration, trust and
-        liability wall, and that wall is exactly where this connector stops.
+        real pipeline rather than around it. The TMS link is the same idea in reverse: one door
+        to the book, every decision written back onto the record it came from, but no TMS
+        contacted and nothing written. A demo, not a live product — the wall between the two is
+        integration and trust, and this connector stops at it.
       </p>
     </div>
   </div>
@@ -2717,8 +2848,8 @@ firm revised ETA as soon as terminals restart.</p>
 <section class="final">
   <div class="wrap rv">
     <h2 class="d2">One news event. One button.</h2>
-    <p class="copy18">Five shipments in transit, a strike at Hamburg, and three different
-      decisions with the reasoning attached — start to finish in under two minutes.</p>
+    <p class="copy18">Seven bookings in transit, a strike at Hamburg, three different
+      decisions with the reasoning attached. Under two minutes.</p>
     <div class="cta">
       <a class="btn btn-primary btn-lg" href="/app">Open the demo
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -2744,8 +2875,8 @@ firm revised ETA as soon as terminals restart.</p>
              autocomplete="email" spellcheck="false">
       <button class="btn btn-primary btn-lg" type="button" data-sub>Subscribe</button>
     </div>
-    <p class="note">Placeholder. This field is not wired to anything &mdash; there is no form
-      element here and no transport anywhere in the app.</p>
+    <p class="note">Placeholder. Not wired to anything &mdash; no form element here, and no
+      transport anywhere in the app.</p>
     <p class="walk">Prefer a walkthrough? <a href="/app">Open the demo instead &rarr;</a></p>
   </div>
 </section>
@@ -2761,8 +2892,8 @@ firm revised ETA as soon as terminals restart.</p>
                   stroke-linecap="round"/></svg></span>
           <span class="name">Lanewatch</span>
         </a>
-        <p>Trade-lane risk, decided. A demo-grade AI-agent prototype for freight forwarding —
-          real reasoning on synthetic shipments.</p>
+        <p>Trade-lane risk, decided. A demo-grade prototype for freight forwarding — real
+          reasoning on synthetic shipments.</p>
       </div>
       <div>
         <h4>Product</h4>
@@ -3040,16 +3171,19 @@ firm revised ETA as soon as terminals restart.</p>
    never runs, the strip stays a plain static list rather than a short band
    sliding off into empty space. */
 (function () {
-  var track = document.querySelector(".strip .strip-track");
-  var row = track && track.querySelector(".strip-row");
-  if (!row) return;
-  for (var i = 0; i < 2; i++) {
-    var copy = row.cloneNode(true);
-    copy.classList.add("dup");
-    copy.setAttribute("aria-hidden", "true");
-    track.appendChild(copy);
-  }
-  track.classList.add("go");
+  // Every strip on the page, not just the first: the sources band and the
+  // systems band below it both run on this.
+  document.querySelectorAll(".strip .strip-track").forEach(function (track) {
+    var row = track.querySelector(".strip-row");
+    if (!row) return;
+    for (var i = 0; i < 2; i++) {
+      var copy = row.cloneNode(true);
+      copy.classList.add("dup");
+      copy.setAttribute("aria-hidden", "true");
+      track.appendChild(copy);
+    }
+    track.classList.add("go");
+  });
 })();
 
 /* The subscribe button is the same gesture again: it rewrites the note under

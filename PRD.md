@@ -31,7 +31,7 @@ This is a prototype, so success is narrow and specific:
 
 - The **demo narrative in START-HERE.md runs start to finish in under ~2 minutes**, on command, without breaking.
 - The **Risk Monitor genuinely pulls live news** (real, verifiable) — the credibility anchor.
-- On the injected strike, the system produces **three distinct, defensible decisions** across the 5 shipments (reroute / hold / no-action), each with plain-English reasoning.
+- On the injected strike, the system produces **three distinct, defensible decisions** across the board (reroute / hold / no-action), each with plain-English reasoning.
 - **Drafted emails read like something a human would actually send.**
 - It **looks good enough to present** — cards, states, and drafts are legible on a screen in a room.
 - **Every decision lands on the booking it came from** — read through one door, queued back against the record, and visibly waiting on a person.

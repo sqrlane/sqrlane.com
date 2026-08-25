@@ -1,5 +1,12 @@
 # BUILD-GUIDE.md — build it, step by step
 
+> **This is a build-time document, kept as the record of how the prototype was
+> planned.** The build has moved on since: the pool grew to **seven bookings** and
+> four scenarios, and the loop now opens and closes on the forwarder's TMS — the
+> bookings are read out of the system of record through `src/tms.py` and every
+> agent action is queued back onto them. `CLAUDE.md` and `README.md` describe what
+> the system does today; read those first if the two disagree.
+
 This is your spine. Work top to bottom. Each phase has: a **prompt to paste into Claude Code**, a **checkpoint** (how you know it worked), and a **commit** step (save to GitHub).
 
 **Rules of the road:**
@@ -16,7 +23,7 @@ This is your spine. Work top to bottom. Each phase has: a **prompt to paste into
 ## Phase 0 — orient Claude Code
 
 **Paste:**
-> "Read START-HERE.md, PRD.md, DESIGN.md, DATASET.md, and DATA-SOURCES.md fully. Summarise back to me in a few sentences: what we're building, the demo narrative, and the four components. Don't write any code yet — I just want to confirm you understand before we start."
+> "Read START-HERE.md, PRD.md, DESIGN.md, DATASET.md, and DATA-SOURCES.md fully. Summarise back to me in a few sentences: what we're building, the demo narrative, and the components. Don't write any code yet — I just want to confirm you understand before we start."
 
 **Checkpoint:** its summary matches the demo narrative and lists Risk Monitor, Route Advisor, Comms Agent, Orchestrator/Dashboard. If it's off, correct it now — this context carries through everything.
 

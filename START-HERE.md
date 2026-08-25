@@ -6,6 +6,15 @@
 
 ---
 
+> **This is a build-time document, kept as the record of how the prototype was
+> planned.** The build has moved on since: the pool grew to **seven bookings** and
+> four scenarios, and the loop now opens and closes on the forwarder's TMS — the
+> bookings are read out of the system of record through `src/tms.py` and every
+> agent action is queued back onto them. `CLAUDE.md` and `README.md` describe what
+> the system does today; read those first if the two disagree.
+
+---
+
 ## The one-paragraph pitch
 
 Small agents watch **everything that moves a trade lane** — 42 free, keyless sources across six families: news in multiple languages, river gauges, port weather and sea state, seismic and natural-hazard feeds, government filings, and the reference rate a reroute is billed at. When a disruption hits, the system reads your bookings out of the TMS, works out which are affected, decides whether to reroute or hold each one — and *explains why* — drafts the carrier and customer emails a human would need to send, and **queues each change back onto the booking it came from**, which is the part a person otherwise re-types. Risk → decision → communication → the system of record, as one closed loop, with the reasoning recorded and every write held for approval. A light "5U AI-style AI Worker" wrapper sits on top purely as demo framing.

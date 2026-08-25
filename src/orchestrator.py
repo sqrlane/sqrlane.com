@@ -151,7 +151,6 @@ def run_cycle(*, live=True, inject=True, use_llm=True, verbose=False,
     stage_started = time.monotonic()
     risk = risk_monitor.run(live=live, inject=inject, use_llm=use_llm, verbose=verbose,
                             scenario=scenario)
-    read = [s for s in risk["sources"] if s["status"] == "ok"]
     live_events = [e for e in risk["events"] if e.get("origin") == "live"]
     # How many events a regional source carried before the international wires.
     # That lead is the earliness claim, and it is counted from the run rather
