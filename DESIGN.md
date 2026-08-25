@@ -11,7 +11,8 @@ The same shape 5U AI uses (listener → worker → approval → communicator), w
         |  (src/tms.py - the ONLY door in. Nothing else opens shipments.json)
         v
   [ Risk Monitor ] --writes--> risk_state.json
-        |  (live news, multilingual, GDELT/RSS/gauges)
+        |  (42 keyless sources: news GDELT/RSS, gauges, weather, sea
+        |   state, seismic, natural hazards, government filings, FX)
         v
   [ Orchestrator ] --reads shipments + risk--> decides which shipments are affected
         |
@@ -37,7 +38,7 @@ The same shape 5U AI uses (listener → worker → approval → communicator), w
 - **A demo connector in this build.** Imports `json`, `datetime` and `config` and nothing else: no client, no credential, no endpoint. A write-back is a dict describing a change, and it stays a dict, `QUEUED - not written` behind the same approval gate as an email.
 
 ### 1. Risk Monitor (the real, live part — build first)
-- Pulls from **free** sources: GDELT (no key), RSS feeds (feedparser), and at least one German-language source so the "caught it first" story is true. The exact curated list — and which sources to skip — lives in **DATA-SOURCES.md**; use the ones marked CORE.
+- Pulls from **free, keyless** sources across six families: GDELT, RSS via feedparser (including at least one German-language feed, so the "caught it first" story is true), river gauges, weather and sea state, seismic and natural-hazard feeds, government filings and reference rates. Prose is classified by the model; numbers are classified by threshold. The exact list — what each one tells a forwarder, and what was deliberately skipped — lives in **DATA-SOURCES.md**. The rule is no longer "few sources": it is **no source may be load-bearing**.
 - For each item: use the LLM to classify — is this logistics-relevant? Which **chokepoint** (see DATASET.md) does it affect? What **type** (strike/weather/congestion/geopolitical/customs) and **severity** (low/med/high)?
 - Writes structured events to `risk_state.json`.
 - **Also accepts an injected event** (the scripted Hamburg strike) via the trigger, so the demo is on-command. Injected and live events use the same format — the audience can't tell the plumbing apart, and you tell them honestly which is which.
@@ -84,7 +85,10 @@ trade-risk-agent/
 │   ├── config.py             # keys, model names, source list
 │   ├── tms.py                # component 0 — the system of record: the ONLY door
 │   │                         #   to the book, and every action as a queued change
-│   ├── risk_monitor.py       # component 1
+│   ├── httpget.py            # a GET that is guaranteed to end - shared plumbing
+│   ├── risk_monitor.py       # component 1a - the prose half (GDELT, RSS, gauges)
+│   ├── signals.py            # component 1b - the structured half (weather, sea
+│   │                         #   state, seismic, hazards, filings, FX)
 │   ├── route_advisor.py      # component 2
 │   ├── comms_agent.py        # component 3
 │   ├── orchestrator.py       # component 4 (the loop)

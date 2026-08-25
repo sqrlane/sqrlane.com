@@ -361,9 +361,12 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
     <section id="summary">
       <h2 class="h32">In one paragraph</h2>
       <p class="copy16">
-        A disruption — a port strike, a river running low, a corridor closing — is known
-        locally long before it is news globally. Lanewatch runs on the bookings in a
-        forwarder's TMS: it reads around twenty sources close to those events, decides which
+        A disruption — a port strike, a river running low, a corridor closing, a tariff
+        filed — reaches a freight desk through a dozen different institutions, in a dozen
+        different formats, and usually later than it reached somebody local. Lanewatch runs
+        on the bookings in a forwarder's TMS: it reads forty-two free sources across six
+        families — news, river gauges, weather and sea state, natural hazards, government
+        filings and reference rates — decides which
         of those bookings are affected, and produces three things for each one: a decision,
         the reasoning behind it, and the carrier and customer emails it implies. Each of those
         is expressed as a change to the booking record it came from and queued back into the
@@ -379,9 +382,13 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
       <p class="copy16">
         A mid-size forwarder's operations desk does two jobs badly, through no fault of its
         own. It <b>watches</b> for disruption, which means someone reading trade press
-        between other work. And it <b>reacts</b> to disruption, which means opening the
-        booking system, checking which boxes are exposed, weighing the options, and writing
-        the same six emails it wrote last time.
+        between other work — one narrow slice of a signal that actually arrives from
+        broadcasters, waterway authorities, weather services, seismic networks, government
+        registers and central banks, in that many different formats. And it <b>reacts</b> to
+        disruption, which means opening the booking system, checking which boxes are exposed,
+        weighing the options, writing the same six emails it wrote last time, and then keying
+        every one of those decisions back into the TMS booking by booking — because until
+        that last step happens, nothing that was decided has actually happened.
       </p>
       <p class="copy16">
         Existing risk platforms do the first job and stop. They raise an alert and leave the
@@ -390,7 +397,11 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
         hundred bookings in the water.
       </p>
       <p class="copy16">
-        The gap is not detection. It is <b>everything after detection</b>.
+        So there are two gaps, and the second is the expensive one. The first is that
+        detection is <b>narrower than the problem</b> — a monitor reading headlines is
+        reading a summary of some of the signal, late. The second is that detection is
+        <b>where every tool stops</b>: the decision, the two emails and the write-back are
+        left to a person, and the write-back is the part that eats the day.
       </p>
     </section>
 
@@ -413,8 +424,11 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
         <div class="stage">
           <span class="n">01</span>
           <div class="t">Risk Monitor</div>
-          <div class="d">Reads news, trade press and government gauges. Classifies each item:
-            is this a logistics disruption, where, what kind, how bad.</div>
+          <div class="d">Reads forty-two keyless sources at once: news and trade press, river
+            gauges, port weather, sea state, seismic and natural-hazard feeds, government
+            filings and reference rates. Prose is classified by the model — is this a
+            logistics disruption, where, what kind, how bad. Numbers are classified by
+            threshold.</div>
           <span class="chip live">Live</span>
         </div>
         <div class="stage">
@@ -475,7 +489,7 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
           <thead><tr><th>Component</th><th>Status</th><th>What that means</th></tr></thead>
           <tbody>
             <tr><td><b>News monitoring</b></td><td><span class="tag ok">Real</span></td>
-              <td>Around twenty live sources, read on every run. The classification is a real model call against real current headlines.</td></tr>
+              <td>Forty-two live sources across six families, read on every run, all keyless. Prose is classified by a real model call against real current headlines; gauges, gusts, wave heights and magnitudes are classified by threshold instead.</td></tr>
             <tr><td><b>Routing decisions</b></td><td><span class="tag ok">Real</span></td>
               <td>The model genuinely weighs the trade-off and writes the justification. Nothing is pre-written.</td></tr>
             <tr><td><b>Email drafts</b></td><td><span class="tag ok">Real</span></td>

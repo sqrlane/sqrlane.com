@@ -104,9 +104,9 @@ LLM_TEMPERATURE = 0.0        # classification should be repeatable
 HTTP_TIMEOUT_SECONDS = _env_int("HTTP_TIMEOUT_SECONDS", 6 if SERVERLESS else 8)
 
 # Hard ceiling on the entire live pull. Once this is spent, whatever has not
-# been read is marked skipped and the cycle moves on. Thirteen sources at eight
-# seconds each would otherwise be nearly two minutes on its own - the whole
-# demo's budget - so this is what actually keeps the run on time.
+# been read is marked skipped and the cycle moves on. Forty-two sources at eight
+# seconds each would otherwise be most of an hour - so this, plus reading every
+# family concurrently, is what actually keeps the run on time.
 #
 # Deployed, the ceiling is the function's own timeout, and the LLM calls that
 # follow the pull need most of it. Both are tunable by environment variable so
@@ -116,10 +116,18 @@ LIVE_PULL_BUDGET_SECONDS = _env_int("LIVE_PULL_BUDGET_SECONDS", 10 if SERVERLESS
 USER_AGENT = "trade-risk-agent/0.1 (demo prototype; contact: local)"
 
 # ===========================================================================
-# Risk Monitor sources - CORE ONLY (see DATA-SOURCES.md)
+# Risk Monitor sources 1-3 - the prose and the river (read by risk_monitor.py)
 #
-# The rule: every extra source is one more thing that can break live in front
-# of an audience. Three keyless sources carry the whole story.
+# The rule used to be "wire CORE only: every extra source is one more thing
+# that can break live in front of an audience". Breadth is the point now, so
+# what holds instead is the reason behind that rule - NO SOURCE MAY BE
+# LOAD-BEARING. Each is its own small function, inside a shared budget,
+# reporting its own failure; the families are read concurrently. See
+# DATA-SOURCES.md, and src/signals.py for sources 4-11.
+#
+# (These numbers are the sources; the SIX FAMILIES they group into - news,
+# river gauges, weather & sea state, natural hazards, government, markets -
+# are what the board shows. FAMILY_LABELS in risk_monitor.py owns that.)
 # ===========================================================================
 
 # --- 1. GDELT DOC 2.0 - global news backbone, no key, refreshes ~15 min -----
@@ -129,9 +137,10 @@ USER_AGENT = "trade-risk-agent/0.1 (demo prototype; contact: local)"
 GDELT_ENDPOINT = "https://api.gdeltproject.org/api/v2/doc/doc"
 GDELT_TIMESPAN = "3d"
 GDELT_MAX_RECORDS = 20
-# Be polite - GDELT throttles rapid calls. But four queries at 1.5s is six
-# seconds of pure waiting, which is most of a serverless budget, so it is
-# shorter there.
+# Be polite - GDELT throttles rapid calls. But eleven queries at 1.5s is more
+# waiting than a serverless budget has in total, so it is much shorter there.
+# GDELT runs alongside the other families rather than after them, so this
+# waiting overlaps their reads instead of delaying them.
 GDELT_PAUSE_SECONDS = _env_int("GDELT_PAUSE_MS", 400 if SERVERLESS else 1500) / 1000
 
 GDELT_QUERIES = [
@@ -149,6 +158,15 @@ GDELT_QUERIES = [
      "query": '("Red Sea" OR "Suez Canal") (attack OR closure OR diverted OR delay)'},
     {"label": "North Range ports - wires", "language": "en",
      "query": "(Hamburg OR Rotterdam OR Antwerp) (strike OR congestion OR backlog)"},
+    {"label": "Asian gateway ports - regional", "language": "zh",
+     "query": "(港口 OR 罢工 OR 台风 OR 拥堵) sourcelang:chinese"},
+    {"label": "Turkish straits & East Med - regional", "language": "tr",
+     "query": "(liman OR grev OR boğaz OR tersane) sourcelang:turkish"},
+    {"label": "Panama & the Americas - regional", "language": "es",
+     "query": "(canal de Panamá OR puerto OR huelga portuaria) sourcelang:spanish"},
+    {"label": "Customs, tariffs & sanctions", "language": "en",
+     "query": '("export controls" OR "new tariffs" OR "customs delays" OR sanctions) '
+              '(shipping OR freight OR port)'},
 ]
 
 # What each language code is called on screen, and which way its script runs.
@@ -159,6 +177,11 @@ LANGUAGES = {
     "fr": {"name": "French",  "dir": "ltr"},
     "nl": {"name": "Dutch",   "dir": "ltr"},
     "es": {"name": "Spanish", "dir": "ltr"},
+    "it": {"name": "Italian", "dir": "ltr"},
+    "tr": {"name": "Turkish", "dir": "ltr"},
+    "zh": {"name": "Chinese", "dir": "ltr"},
+    "ja": {"name": "Japanese", "dir": "ltr"},
+    "pt": {"name": "Portuguese", "dir": "ltr"},
     "en": {"name": "English", "dir": "ltr"},
 }
 
@@ -184,6 +207,29 @@ RSS_FEEDS = [
     {"name": "NOS Nieuws", "language": "nl", "url": "https://feeds.nos.nl/nosnieuwsalgemeen"},
     # Spanish - Algeciras, Valencia and the western Mediterranean.
     {"name": "RTVE", "language": "es", "url": "https://api2.rtve.es/rss/temas_noticias.xml"},
+    # Flemish - Antwerp's own regional broadcaster, on the port's doorstep.
+    {"name": "VRT NWS", "language": "nl", "url": "https://www.vrt.be/vrtnws/nl.rss.articles.xml"},
+    # Arabic - more than one reader on the Red Sea and Gulf, because a single
+    # feed having a bad day should not silence a whole corridor.
+    {"name": "DW (العربية)", "language": "ar", "url": "https://rss.dw.com/rdf/rss-ar-all"},
+    {"name": "France 24 (العربية)", "language": "ar", "url": "https://www.france24.com/ar/rss"},
+    # Italian - Genoa, Trieste and the Adriatic feeder network.
+    {"name": "ANSA", "language": "it", "url": "https://www.ansa.it/sito/ansait_rss.xml"},
+    # Spanish - Algeciras and Valencia already have GDELT; this is the paper.
+    {"name": "El País", "language": "es",
+     "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada"},
+    # Japanese - Tokyo, Yokohama and Kobe, and the typhoon season that closes them.
+    {"name": "NHK", "language": "ja", "url": "https://www3.nhk.or.jp/rss/news/cat0.xml"},
+    # English, but close to the lane rather than to the newsroom: the load ports
+    # and the transshipment hub our boxes actually pass through.
+    {"name": "The Straits Times", "language": "en",
+     "url": "https://www.straitstimes.com/news/singapore/rss.xml"},
+    {"name": "Times of India", "language": "en",
+     "url": "https://timesofindia.indiatimes.com/rssfeedstopstories.cms"},
+    # English trade press - narrow, and almost every item is on topic.
+    {"name": "Splash 247 (maritime)", "language": "en", "url": "https://splash247.com/feed/"},
+    {"name": "The Maritime Executive", "language": "en",
+     "url": "https://www.maritime-executive.com/articles.rss"},
     # English - the wires, kept so the lag against them is measurable.
     {"name": "gCaptain (maritime)", "language": "en", "url": "https://gcaptain.com/feed/"},
     {"name": "Al Jazeera English", "language": "en", "url": "https://www.aljazeera.com/xml/rss/all.xml"},
@@ -196,9 +242,10 @@ RSS_MAX_ITEMS_PER_FEED = 25
 HTTP_MAX_BYTES = _env_int("HTTP_MAX_BYTES", 4_000_000)
 
 # Feeds are independent requests, so they are read at once rather than in turn.
-# Sequentially, ten feeds at the per-source timeout cannot fit in a serverless
-# budget and all but the first would be skipped.
-RSS_CONCURRENCY = _env_int("RSS_CONCURRENCY", 10)
+# Sequentially, twenty feeds at the per-source timeout cannot fit in a
+# serverless budget and all but the first would be skipped - taking the language
+# spread, and most of the point, with them.
+RSS_CONCURRENCY = _env_int("RSS_CONCURRENCY", 20)
 
 # --- 3. PEGELONLINE - Rhine water levels, the DACH domain-depth signal ------
 # Gauge readings are numbers, not prose, so they are classified by threshold
@@ -220,6 +267,139 @@ RHINE_GAUGES = [
 GAUGE_TIMEOUT_SECONDS = _env_int("GAUGE_TIMEOUT_SECONDS", 5 if SERVERLESS else 6)
 GAUGE_BUDGET_SECONDS = _env_int("GAUGE_BUDGET_SECONDS", 8 if SERVERLESS else 10)
 GAUGE_CACHE_SECONDS = _env_int("GAUGE_CACHE_SECONDS", 300)
+
+# ===========================================================================
+# Sources 4-11 - the structured public APIs (read by src/signals.py)
+#
+# Everything above this line is prose: a headline that a model has to read and
+# judge. Everything below it arrives as a NUMBER or a government notice, which
+# is a different kind of signal and a cheaper one - a wave height or a warning
+# code is classified by threshold, so it costs nothing and cannot hallucinate.
+#
+# All keyless, all HTTPS, every one of them listed in the public-apis catalogue
+# (github.com/public-apis/public-apis). DATA-SOURCES.md says which catalogue
+# entry each one is and why it earns its place on a freight desk.
+#
+# None of these are load-bearing for the demo. Each is read in its own small
+# function, and a source that is down, slow or reshaped is reported as failed
+# and skipped - never allowed to take the run with it.
+# ===========================================================================
+
+# Where each source looks is NOT repeated here: data/geo.json already carries a
+# real lat/lon for every chokepoint on the board, so the watch lists below are
+# chokepoint ids and the coordinates are read from there. One source of truth.
+
+# --- 4. Open-Meteo - weather over the ports a route discharges through ------
+# public-apis: Weather > Open-Meteo (Auth: No, HTTPS: Yes, CORS: Yes).
+# One request covers every port: the API takes comma-separated coordinates and
+# answers with one block per location.
+
+OPEN_METEO_ENDPOINT = "https://api.open-meteo.com/v1/forecast"
+WEATHER_PORTS = ["HAM", "RTM", "ANR", "FOS"]
+
+# Gusts in knots. A container terminal starts losing crane hours around gale
+# force 8 and stops near force 10. The first band a reading clears is the one
+# it gets - same shape as GAUGE_BANDS, and approximate for the same reason:
+# this positions a demo, it does not run a terminal.
+WIND_BANDS = [
+    # gusts kn  severity  state          delay days  what it means
+    (47, "high",   "storm force",  [2, 4], "cranes down, berths likely closed"),
+    (39, "medium", "strong gale",  [1, 3], "crane hours lost and vessels bunching"),
+    (34, "low",    "gale force",   [1, 2], "handling slows, some moves suspended"),
+]
+
+# --- 5. Open-Meteo Marine - sea state on the open legs ----------------------
+# public-apis: Weather > Open-Meteo (the same provider's marine endpoint).
+# The three points a box on this board actually rounds.
+
+OPEN_METEO_MARINE_ENDPOINT = "https://marine-api.open-meteo.com/v1/marine"
+MARINE_WAYPOINTS = ["SUEZ", "REDSEA", "COGH"]
+
+# Significant wave height in metres.
+WAVE_BANDS = [
+    (6.0, "high",   "very rough", [2, 4], "routing and speed both constrained"),
+    (4.0, "medium", "rough",      [1, 3], "speed reduced over the leg"),
+    (3.0, "low",    "moderate",   [1, 2], "minor speed loss over the leg"),
+]
+
+# --- 6. USGS Earthquake Hazards Program - real-time seismic -----------------
+# public-apis: Science & Math > USGS Earthquake Hazards Program (Auth: No).
+# A quake matters to this board only if it is near something on it, so a
+# reading is mapped to the nearest watched chokepoint and dropped if there
+# isn't one within reach.
+
+USGS_QUAKE_ENDPOINT = "https://earthquake.usgs.gov/fdsnws/event/1/query"
+QUAKE_MIN_MAGNITUDE = 5.5
+QUAKE_RADIUS_KM = 300
+QUAKE_LOOKBACK_DAYS = 3
+QUAKE_BANDS = [
+    (7.0, "high",   [3, 7], "port infrastructure and inland links likely damaged"),
+    (6.3, "medium", [2, 4], "terminal inspections and handling suspensions likely"),
+    (5.5, "low",    [1, 2], "precautionary checks at nearby terminals"),
+]
+
+# --- 7. NASA EONET - open natural events, worldwide -------------------------
+# public-apis: Science & Math > NASA (Auth: No). EONET is NASA's natural-event
+# tracker: wildfires, severe storms, floods and volcanoes, each with a
+# coordinate, which is what lets it be mapped onto a corridor the same way a
+# quake is. The `france` scenario is a wildfire on a land leg, so this is the
+# live source that scenario is a rehearsal of.
+
+EONET_ENDPOINT = "https://eonet.gsfc.nasa.gov/api/v3/events"
+EONET_CATEGORIES = "wildfires,severeStorms,floods,volcanoes"
+EONET_RADIUS_KM = 250
+EONET_MAX_EVENTS = 40
+EONET_SEVERITY = {"volcanoes": "high", "severeStorms": "medium",
+                  "floods": "medium", "wildfires": "medium"}
+
+# --- 8. Federal Register - the rule before it is the news -------------------
+# public-apis: Government > Federal Register (Auth: No).
+# A tariff, an export control or a port-security rule lands here as a filing
+# days before a trade paper writes it up. It is prose, so unlike the rest of
+# this section it goes to the classifier rather than to a threshold.
+#
+# It is a US journal and this is a European board, which is the point: what
+# Washington publishes moves an Asia-Europe lane whether or not the box ever
+# touches a US port.
+
+FEDERAL_REGISTER_ENDPOINT = "https://www.federalregister.gov/api/v1/documents.json"
+FEDERAL_REGISTER_TERMS = "tariff OR sanctions OR customs OR \"port security\""
+FEDERAL_REGISTER_LOOKBACK_DAYS = 7
+FEDERAL_REGISTER_MAX = 20
+
+# --- 9. Frankfurter - the ECB's own reference rates -------------------------
+# public-apis: Currency Exchange > Frankfurter (Auth: No, CORS: Yes).
+# Board context, not a risk event. A reroute is priced as a cost index; the
+# rate is what turns that index into what the customer is actually billed.
+
+FX_ENDPOINT = "https://api.frankfurter.app/latest"
+FX_BASE = "EUR"
+FX_SYMBOLS = ["USD", "CNY", "GBP"]
+
+# --- 10. US National Weather Service - active government alerts -------------
+# public-apis: Weather > US Weather (Auth: No, CORS: Yes).
+# Board context: these are the US port states, and no booking on this synthetic
+# board discharges there. It is wired anyway because it is the same read as
+# every other source, and the day a transatlantic lane is on the board it is
+# already connected. api.weather.gov asks for a contact in the User-Agent.
+
+NWS_ENDPOINT = "https://api.weather.gov/alerts/active"
+NWS_AREAS = ["NY", "NJ", "GA", "SC", "VA", "TX", "LA", "CA", "WA", "FL"]
+NWS_MAX_ALERTS = 12
+
+# --- 11. Hong Kong Observatory - the warnings in force ----------------------
+# public-apis: Weather > Hong Kong Obervatory (Auth: No).
+# Board context, for the same reason: two of the five bookings load in the
+# Pearl River Delta, and a T8 signal shuts Yantian and Hong Kong for a day.
+# The load ports are not modelled as chokepoints, so this informs the desk
+# without moving a booking - which is exactly what it should do.
+
+HKO_ENDPOINT = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php"
+
+# How many of the structured sources are read at once. They are independent
+# requests to different hosts, so reading them in turn would spend the whole
+# budget on the slowest one.
+SIGNAL_CONCURRENCY = _env_int("SIGNAL_CONCURRENCY", 8)
 
 # --- Classification tuning -------------------------------------------------
 

@@ -198,10 +198,64 @@ html[data-theme="dark"]{
 .sl-t span{font-size:12.5px;color:var(--muted);line-height:1.5}
 .sl-t .sl-x{color:var(--red);font-weight:500}
 
-.ap-g{margin-bottom:22px}
+.ap-g{margin-bottom:18px}
 .ap-h{display:flex;align-items:center;gap:10px;margin-bottom:6px}
 .ap-h b{font-size:14px}
 .ap-c{font-size:12.5px;color:var(--muted)}
+
+/* An event's consequences, on the event. These are the same data-pick buttons
+   the sidebar uses, so clicking one selects the booking and opens the board. */
+.ev-aff{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:11px;
+        padding-top:11px;border-top:1px solid var(--border)}
+.ev-aff .lbl{font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;
+             color:var(--faint);margin-right:3px}
+.ev-aff.none{font-size:12.5px;color:var(--faint);display:block}
+.aff-b{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);
+       background:var(--card);border-radius:var(--r);padding:3px 8px;cursor:pointer;
+       font-size:12px;color:var(--fg)}
+.aff-b:hover{border-color:var(--fg)}
+.aff-b .aff-d{color:var(--faint)}
+
+/* ---------- the approvals queue ----------
+   Eighteen drafts rendered open ran 5,452px - five and a half screens to work a
+   queue whose whole purpose is a person working it. A row states what the item
+   is and what it changes; the body opens on demand. Same gate, same copy, one
+   twentieth of the scrolling. */
+.ap-rows{border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;
+         background:var(--card);box-shadow:var(--shadow)}
+.ap-r+.ap-r{border-top:1px solid var(--border)}
+.ap-rh{display:flex;align-items:center;gap:9px;padding:9px 12px;cursor:pointer;
+       font-size:12.5px;min-width:0}
+.ap-rh:hover{background:var(--surface)}
+.ap-r.open .ap-rh{background:var(--surface)}
+.ap-r.done .ap-t{color:var(--muted)}
+.ap-ck{width:15px;height:15px;flex:none;border:1px solid var(--border-strong);
+       border-radius:4px;background:var(--card);cursor:pointer;padding:0;
+       display:flex;align-items:center;justify-content:center;color:transparent}
+.ap-ck:hover{border-color:var(--fg)}
+.ap-ck.on{background:var(--fg);border-color:var(--fg);color:var(--card)}
+.ap-ck.done{border-color:transparent;background:none;color:var(--green);cursor:default}
+.ap-ck svg{width:11px;height:11px}
+.ap-t{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:none;
+      max-width:44%}
+.ap-sub{color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+        flex:1;min-width:0}
+.ap-st{font-size:9.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+       padding:2px 6px;border-radius:4px;flex:none}
+.ap-st.awaiting{background:var(--amber-bg);color:var(--amber)}
+.ap-st.approved{background:var(--green-bg);color:var(--green)}
+.ap-x{color:var(--faint);flex:none;display:flex;transition:transform .12s ease}
+.ap-r.open .ap-x{transform:rotate(90deg)}
+.ap-rb{padding:0 12px 12px 12px;border-top:1px solid var(--border);background:var(--surface)}
+.ap-rb .mail,.ap-rb .wb{margin-top:12px;background:var(--card)}
+/* The bulk bar. It selects; it still never sends - the count is there so the
+   person can see exactly how much they are signing off in one action. */
+.ap-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+.ap-bar .n{font-size:12.5px;color:var(--muted);margin-right:auto}
+.ap-bar .n b{color:var(--fg)}
+.ap-lnk{border:0;background:none;color:var(--blue);font-size:12.5px;cursor:pointer;padding:0}
+.ap-lnk:hover{text-decoration:underline}
+.approve.sm{padding:4px 9px;font-size:11.5px;flex:none}
 
 /* ---------- element kit: segmented control, empty state, skeleton, gauge ---- */
 .seg{display:inline-flex;gap:2px;padding:3px;background:var(--surface);border-radius:var(--r);
@@ -259,8 +313,11 @@ html[data-theme="dark"]{
      background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);
      box-shadow:var(--shadow-pop);opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;
      z-index:61;overflow:hidden}
-body.pal-on .pal-scrim{opacity:1;pointer-events:auto}
-body.pal-on .pal{opacity:1;pointer-events:auto;transform:translateX(-50%) scale(1)}
+body.pal-on .pal-scrim,body.keys-on .pal-scrim{opacity:1;pointer-events:auto}
+/* Both dialogs are .pal so they share the sheet's geometry and motion, but each
+   is opened by its own body class - otherwise one body flag shows both at once. */
+body.pal-on .pal:not(.kbd),
+body.keys-on .pal.kbd{opacity:1;pointer-events:auto;transform:translateX(-50%) scale(1)}
 .pal-h{display:flex;align-items:center;gap:10px;padding:13px 14px;border-bottom:1px solid var(--border);
        color:var(--faint)}
 .pal-h input{flex:1;border:0;background:none;outline:none;font:inherit;font-size:14.5px;color:var(--fg)}
@@ -276,6 +333,14 @@ body.pal-on .pal{opacity:1;pointer-events:auto;transform:translateX(-50%) scale(
        font-family:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px}
 .pal-hint{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px}
 .pal-empty{padding:22px 14px;text-align:center;color:var(--faint);font-size:13px}
+.keys-l{padding:6px 14px 14px}
+.keys-g{margin-top:10px}
+.keys-t{font-size:10.5px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;
+        color:var(--faint);margin:0 0 5px}
+.keys-r{display:flex;align-items:center;gap:10px;padding:4px 0;font-size:12.5px;color:var(--muted)}
+.keys-r .d{flex:1}
+.keys-r kbd{font-family:var(--mono);font-size:10.5px;background:var(--surface);
+            border:1px solid var(--border);border-radius:4px;padding:2px 5px;color:var(--fg)}
 
 /* Every page opens the same way: a title, a line saying what it is, and its
    actions on the right. */
@@ -453,7 +518,7 @@ html[data-theme="dark"] .atlas .land{fill:#161616;stroke:#2a2a2a}
     background:var(--amber-bg);color:var(--amber);border-radius:4px;padding:2px 5px;margin-left:7px}
 
 /* ---------- scenario switcher ---------- */
-.scen{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.scen{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
 .scen-b{border:1px solid var(--border);background:var(--card);color:var(--muted);
         border-radius:var(--r);padding:7px 12px;cursor:pointer;font-size:13px;
         display:flex;flex-direction:column;gap:1px;text-align:left;min-width:150px}
@@ -461,19 +526,22 @@ html[data-theme="dark"] .atlas .land{fill:#161616;stroke:#2a2a2a}
 .scen-b.on{border-color:var(--fg);color:var(--fg);box-shadow:inset 0 0 0 1px var(--fg)}
 .scen-b .k{font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em}
 .scen-b .nm{font-weight:500}
-.scen-note{font-size:12.5px;color:var(--muted);margin:-4px 0 16px}
+.scen-note{font-size:12.5px;color:var(--muted);margin:-2px 0 14px}
 .scen-note b{color:var(--fg)}
 
-/* ---------- worker roster strip ---------- */
-.roster{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:20px}
-.wchip{border:1px solid var(--border);background:var(--card);border-radius:var(--r-md);
-       padding:10px 12px;cursor:pointer;text-align:left;box-shadow:var(--shadow);
-       display:flex;flex-direction:column;gap:5px}
+/* ---------- worker roster strip ----------
+   One row per Worker, not a card each. Thirteen 200px cards stacked three rows
+   deep made this band ~400px tall, and the band sits above every view - so on a
+   1280x720 laptop clicking a nav item changed two pixels of screen and the board
+   looked broken. A pill keeps the two things that carry meaning, the state dot
+   and the mode tag, and gives the view underneath the room it needs. */
+.roster{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.wchip{border:1px solid var(--border);background:var(--card);border-radius:var(--r);
+       padding:5px 9px;cursor:pointer;text-align:left;
+       display:flex;align-items:center;gap:7px}
 .wchip:hover{border-color:var(--border-strong)}
 .wchip.on{border-color:var(--fg);box-shadow:inset 0 0 0 1px var(--fg)}
-.wchip .top{display:flex;align-items:center;gap:7px}
-.wchip .nm{font-size:12.5px;font-weight:500;flex:1;min-width:0;overflow:hidden;
-           text-overflow:ellipsis;white-space:nowrap}
+.wchip .nm{font-size:12.5px;font-weight:500;white-space:nowrap}
 .wtag{font-size:9.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
       padding:1.5px 5px;border-radius:3px}
 .wtag.live{background:var(--green-bg);color:var(--green)}
@@ -481,9 +549,6 @@ html[data-theme="dark"] .atlas .land{fill:#161616;stroke:#2a2a2a}
 /* The link is neither live nor scripted: its write-backs are derived from the
    run, but no TMS is contacted. Its own tag, so neither word has to stretch. */
 .wtag.demo{background:var(--blue-bg);color:var(--blue)}
-.wchip .bot{display:flex;align-items:center;gap:6px;min-width:0}
-.wchip .st{font-size:11px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;
-           white-space:nowrap;flex:1;min-width:0}
 
 /* ---------- worker panel band ---------- */
 .wpanel{border:1px solid var(--border);background:var(--card);border-radius:var(--r-md);
@@ -563,6 +628,24 @@ table.q tr.pick td{background:var(--surface)}
 .ev-why{margin-top:6px;font-size:12.5px;color:var(--muted)}
 .srcline{padding:11px 15px;border-top:1px solid var(--border);font-size:11.5px;color:var(--faint)}
 .srcline .r{display:flex;gap:7px;padding:1px 0}
+/* Which KINDS of source answered. Forty-odd rows is a wall; six families is a
+   sentence, and the families are the claim - news, instruments, notices, rates. */
+.fams{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
+.fam{display:inline-flex;align-items:baseline;gap:5px;padding:2px 7px;border-radius:var(--r);
+     border:1px solid var(--border);background:var(--surface);font-size:11px;color:var(--muted)}
+.fam b{font-variant-numeric:tabular-nums;font-weight:600;color:var(--text)}
+.fam.ctx{opacity:.62}
+/* Instrument readings and board context. Deliberately quieter than an event:
+   promoting a number to look like an alarm is the one lie this board must not tell. */
+.ctxgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:8px;padding:14px 15px}
+.ctxi{border:1px solid var(--border);border-radius:var(--r);padding:9px 11px;background:var(--surface)}
+.ctxi .k{font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint)}
+.ctxi .v{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:3px}
+.ctxi .s{font-size:11.5px;color:var(--muted);margin-top:1px}
+/* A reading that crossed its threshold is also an event in the feed above, so
+   it is marked here rather than sitting silently among the quiet ones. */
+.ctxi.hot{border-color:var(--amber);background:var(--amber-bg)}
+.ctxi.hot .v{color:var(--amber)}
 .empty{padding:30px 16px;text-align:center;color:var(--faint);font-size:13px}
 
 /* ---------- slide-over detail ---------- */
@@ -710,6 +793,10 @@ table.q tr.pick td{background:var(--surface)}
 </div>
 
 <div class="pal-scrim" id="pal-scrim"></div>
+<div class="pal kbd" id="keys" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
+  <div class="pal-h"><b style="flex:1;font-size:13.5px">Keyboard shortcuts</b><kbd>Esc</kbd></div>
+  <div class="keys-l" id="keys-l"></div>
+</div>
 <div class="pal" id="pal" role="dialog" aria-modal="true" aria-label="Search">
   <div class="pal-h">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -783,6 +870,8 @@ const ICON = {
   simulation:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>',
   connections:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0z"/><path d="M12 18v4"/></svg>',
   close:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  chev:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l6 6L20 5"/></svg>',
 };
 
 let board=[], workers=[], risk={events:[],sources:[]}, ai=null, summary=null, notes=[], hasRun=false;
@@ -1231,7 +1320,7 @@ function notchGauge(pct, label, tone){
 const PAGES = {
   overview:   ["Overview", "The board, the run, and what the Workers did with it"],
   shipments:  ["Shipments", "Every booking on the board, grouped by what it needs"],
-  risk:       ["Risk feed", "What the sources carried, and how far ahead of the wires"],
+  risk:       ["Risk feed", "Everything the desk read this run — news, gauges, weather, hazards, filings, rates"],
   approvals:  ["Approvals", "Drafted work waiting on a person. Nothing is sent"],
   map:        ["Map", "Lanes drawn through what they transit, and what is blocked"],
   simulation: ["Simulation", "An authored week, decided for real, day by day"],
@@ -1251,7 +1340,7 @@ function palSource(){
   const views = [
     {id:"overview", label:"Overview", hint:"The board and the run"},
     {id:"shipments", label:"Shipments", hint:"Every booking, grouped by state"},
-    {id:"risk", label:"Risk feed", hint:"What the sources carried"},
+    {id:"risk", label:"Risk feed", hint:"Every source read this run"},
     {id:"approvals", label:"Approvals", hint:"Drafts waiting on a person"},
     {id:"map", label:"Map", hint:"Lanes, chokepoints and blockades"},
     {id:"simulation", label:"Simulation", hint:"The authored week, replayed"},
@@ -1262,7 +1351,7 @@ function palSource(){
     kind:"booking", id:sh.id, label:sh.id,
     hint:`${sh.cargo} · ${sh.origin} → ${sh.final_destination}`,
     state:sh.state,
-    go:() => { selected = sh.id; go("shipments"); openPanel(sh.id); },
+    go:() => { pick(sh.id); openPanel(sh.id); },
   }));
   return views.concat(ships);
 }
@@ -1323,6 +1412,59 @@ function initPalette(){
   });
 }
 
+/* ---------- keyboard ----------
+   g-then-key jumps between views, the way most developer dashboards bind it. A
+   dashboard someone works a queue in should not need the mouse for the parts
+   that repeat. Typing in a field is never a shortcut, and any modifier means the
+   browser's own binding wins. */
+const GO_KEYS = {o:"overview", s:"shipments", r:"risk", a:"approvals",
+                 t:"connections", m:"map", w:"simulation"};
+const KEY_SHEET = [
+  {title:"Go to", rows:[
+    ["g o","Overview"], ["g s","Shipments"], ["g r","Risk feed"], ["g a","Approvals"],
+    ["g t","TMS link"], ["g m","Map"], ["g w","Simulation"]]},
+  {title:"Actions", rows:[
+    ["⌘K / /","Search views and bookings"], ["⌘B","Collapse the sidebar"],
+    ["Enter","Run the selected scenario"], ["?","This sheet"], ["Esc","Close"]]},
+];
+
+let keysOpen = false, keysReady = false;
+
+function keysToggle(on){
+  keysOpen = on;
+  document.body.classList.toggle("keys-on", on);
+  if (on) $("keys-l").innerHTML = KEY_SHEET.map(g => `<div class="keys-g">
+      <p class="keys-t">${esc(g.title)}</p>
+      ${g.rows.map(([k,d])=>`<div class="keys-r"><span class="d">${esc(d)}</span>
+        ${k.split(" ").map(x=>`<kbd>${esc(x)}</kbd>`).join("")}</div>`).join("")}
+    </div>`).join("");
+}
+
+function typingIn(el){
+  return !!el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable);
+}
+
+let gArmed = false, gTimer = null;
+function disarmG(){ gArmed = false; clearTimeout(gTimer); }
+
+function initKeys(){
+  if (keysReady) return;             // render() calls this; bind the listener once
+  keysReady = true;
+  $("pal-scrim").addEventListener("click", () => { if (keysOpen) keysToggle(false); });
+  addEventListener("keydown", e => {
+    if (e.key === "Escape" && keysOpen) { e.preventDefault(); keysToggle(false); return; }
+    if (typingIn(e.target) || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (palOpen || keysOpen) return;  // whichever dialog is up owns the keyboard
+    const k = e.key.toLowerCase();
+    if (gArmed && GO_KEYS[k]) { e.preventDefault(); disarmG(); go(GO_KEYS[k]); return; }
+    disarmG();
+    if (k === "g")      { gArmed = true; gTimer = setTimeout(disarmG, 1200); }
+    else if (e.key === "?") { e.preventDefault(); keysToggle(true); }
+    else if (e.key === "/") { e.preventDefault(); palToggle(true); }
+    else if (e.key === "Enter" && !running) { e.preventDefault(); run(); }
+  });
+}
+
 function paintBell(){
   const n = pending();
   const b = $("bell");
@@ -1359,20 +1501,55 @@ function renderNav(){
 
   $("nav").innerHTML = groups + list;
   document.querySelectorAll("[data-view]").forEach(b => b.onclick = () => go(b.dataset.view));
-  document.querySelectorAll("[data-pick]").forEach(b => b.onclick = () => {
-    selected = b.dataset.pick;                 // same selection the Workers react to
-    if (view !== "shipments") go("shipments");
-    else render();
-  });
+  document.querySelectorAll("[data-pick]").forEach(b => b.onclick = () =>
+    pick(b.dataset.pick));                     // same selection the Workers react to
 }
-function go(id){
+/* ---------- routing ----------
+   The view lives in the URL. Refreshing keeps you where you were, the back
+   button walks the views you visited, and a link to the queue is a link someone
+   can actually send. Before this, every reload dropped you on Overview and the
+   back button left the dashboard entirely. */
+const VIEW_TITLES = {overview:"Overview", shipments:"Shipments", risk:"Risk feed",
+                     approvals:"Approvals", connections:"TMS link",
+                     simulation:"Simulation", map:"Map"};
+
+function routeOf(){
+  const parts = (location.hash || "").replace(/^#\/?/, "").split("/");
+  const v = parts[0];
+  return {view: VIEW_TITLES[v] ? v : "overview", id: parts[1] || null};
+}
+
+/* Idempotent by construction: if we wrote this hash ourselves the state already
+   matches it and the handler returns without re-rendering, so no guard flag is
+   needed to stop go() and the URL bouncing off each other. */
+addEventListener("hashchange", () => {
+  const r = routeOf();
+  const idChanged = r.id && r.id !== selected && board.some(s => s.id === r.id);
+  if (r.view === view && !idChanged) return;
+  if (idChanged) selected = r.id;
+  go(r.view, true);
+});
+
+function writeRoute(){
+  const want = "#/" + view + (view === "shipments" && selected ? "/" + selected : "");
+  if (location.hash !== want) location.hash = want;
+}
+
+/* Picking a booking is the same action from the sidebar, the palette or a row,
+   so it lives in one place and always lands in the URL. */
+function pick(id){
+  selected = id;
+  if (view !== "shipments") go("shipments"); else { writeRoute(); render(); }
+}
+
+function go(id, fromRoute){
   view = id;
   document.querySelectorAll(".view").forEach(v => v.classList.remove("on"));
   $("v-"+id).classList.add("on");
-  $("crumb").textContent = {overview:"Overview",shipments:"Shipments",risk:"Risk feed",
-                           approvals:"Approvals",connections:"TMS link",
-                           simulation:"Simulation",map:"Map"}[id];
+  $("crumb").textContent = VIEW_TITLES[id];
+  document.title = `${VIEW_TITLES[id]} · Lanewatch`;
   $("scroll").scrollTop = 0;
+  if (!fromRoute) writeRoute();
   render();
 }
 
@@ -1525,7 +1702,7 @@ function statRow(){
                 sub:`${onPlan} on plan · ${queued} change${queued===1?"":"s"} queued back`})}
     ${statCard({label:"Risk events", value:(risk.events||[]).length,
                 pill:read?"live":"no live source", tone:read?"green":"amber",
-                sub:`${read} of ${total} sources read`})}
+                sub:`${read} of ${total} sources read · ${(risk.families||[]).length} families`})}
     ${statCard({label:"Deadlines at risk", value:late,
                 pill:late?"breach":"clear", tone:late?"red":"green",
                 sub:late?"customer date missed":"all within required-by"})}
@@ -1579,18 +1756,23 @@ function scenarioSwitcher(){
     <p class="scen-note"><b>${esc(sc.decision_type)}.</b> ${esc(sc.summary)}</p>`;
 }
 
+/* Every entry in this strip is a Worker, so the word is carried by the heading
+   rather than repeated thirteen times. The full name stays in the tooltip and in
+   the panel header, where there is room for it. */
+function shortWorker(n){ return String(n).replace(/\s+Worker$/, ""); }
+
 function rosterStrip(){
   if (!workers.length) return "";
   return `<p class="sec-t">Workers</p><div class="roster">${workers.map(w=>{
     const mode = w.mode==="live" ? "live" : w.mode==="demo" ? "demo" : "scripted";
-    /* The tag sits under the name, not beside it. On a roster this size the two
-       compete for one line and the name is what loses - "Milestones Worker"
-       became "Mile…", which is not a Worker anyone can identify. */
-    return `<button class="wchip ${openWorker===w.id?"on":""}" data-worker="${esc(w.id)}">
-      <span class="top"><span class="wdot" style="margin:0"></span>
-        <span class="nm">${esc(w.name)}</span></span>
-      <span class="bot"><span class="wtag ${mode}">${mode}</span>
-        <span class="st">${esc(w.summary || w.role)}</span></span></button>`;}).join("")}</div>`;
+    /* The summary was ellipsised to "Reads the wires, the regional …" at every
+       width this strip is ever shown at, so it moves to the tooltip. The mode
+       tag stays on screen: it is the honest half, and it is never abbreviated. */
+    return `<button class="wchip ${openWorker===w.id?"on":""}" data-worker="${esc(w.id)}"
+                    title="${esc(w.name)} — ${esc(w.summary || w.role)}">
+      <span class="wdot" style="margin:0"></span>
+      <span class="nm">${esc(shortWorker(w.name))}</span>
+      <span class="wtag ${mode}">${mode}</span></button>`;}).join("")}</div>`;
 }
 
 function workerPanel(){
@@ -1769,6 +1951,25 @@ function workersCard(){
       </div></div>`).join("")}</div>`;
 }
 
+/* The event and the decisions it caused were already linked in the data -
+   decision.triggering_events carries the event_id - and the feed simply never
+   used it. Without this the risk view is a dead end: it tells you a strike
+   closed HAM and leaves you to work out by hand which bookings that moved,
+   which is the manual bridge this product exists to remove. */
+function affectedBy(e){
+  if (!hasRun) return "";
+  const hit = board.filter(s =>
+    ((s.decision||{}).triggering_events||[]).includes(e.event_id));
+  if (!hit.length) return `<div class="ev-aff none">No booking on this board is
+    exposed to ${esc(e.chokepoint)} — read, classified, and correctly actioned nothing.</div>`;
+  return `<div class="ev-aff">
+    <span class="lbl">${hit.length} booking${hit.length===1?"":"s"} moved by this</span>
+    ${hit.map(s=>`<button class="aff-b" data-pick="${esc(s.id)}"
+        title="${esc(s.cargo)} — open on the board">
+        <span class="sdot ${esc(s.state)}"></span><span class="mono">${esc(s.id)}</span>
+        <span class="aff-d">${esc(LABEL[s.state])}</span></button>`).join("")}</div>`;
+}
+
 function riskCard(compact){
   const ev = risk.events||[];
   /* live_sources_* are counted in risk_monitor, which is the one place that
@@ -1793,11 +1994,75 @@ function riskCard(compact){
       <div class="ev-src">${esc(e.detected_first_from||e.source)}</div>
       ${!compact && e.reasoning?`<div class="ev-why">${esc(e.reasoning)}</div>`:""}
       ${detectionTrail(e, compact)}
+      ${affectedBy(e)}
     </div>`).join("") : `<div class="empty">No active events.<br>Press <b>Inject Hamburg strike</b> to start.</div>`}
     ${srcs.length?`<div class="srcline">
       <div class="r">✓ ${ok} of ${total} sources read</div>
+      ${familyStrip()}
       ${bad.length?`<div class="r">! unavailable: ${esc(bad.slice(0,4).map(s=>s.name.replace(/^(RSS|GDELT|PEGELONLINE): /,"").replace(/\s*\[\w{2}\]$/,"")).join(", "))}${bad.length>4?` +${bad.length-4} more`:""}</div>`:""}
     </div>`:""}</div>`;
+}
+
+/* The families, not the forty rows. A source that answered and a source that
+   did not are both counted, because the denominator is what the claim rests on. */
+function familyStrip(){
+  const fams = risk.families || [];
+  if (!fams.length) return "";
+  return `<div class="fams">${fams.map(f=>`<span class="fam ${f.tier==="context"?"ctx":""}"
+    title="${f.tier==="context"?"Read live, and moves nothing on this board":"Can put an exception on a booking"}">
+    ${esc(f.label)} <b>${f.read}/${f.total}</b></span>`).join("")}</div>`;
+}
+
+/* The instruments: what the numbers actually read this run.
+
+   These are LANE sources - a gust or a wave height over its threshold becomes an
+   event in the feed above - so they are NOT lumped in with the context card.
+   Most readings are quiet, and showing the quiet ones is the point: a board that
+   only ever displayed alarms would be lying about the shape of the job. */
+function instrumentCard(){
+  const c = risk.context || {};
+  const tiles = [];
+  (c.ports || []).forEach(r => tiles.push(
+    {k:`Wind · ${esc(r.name)}`, v:`${r.gusts_kn} kn`, s:esc(r.state), sev:r.severity}));
+  (c.seas || []).forEach(r => tiles.push(
+    {k:`Sea · ${esc(r.name)}`, v:`${r.wave_m} m`, s:esc(r.state), sev:r.severity}));
+  if (!tiles.length) return "";
+  const firing = tiles.filter(t => t.sev).length;
+  return `<div class="card" style="margin-top:20px">
+    <div class="card-h"><h2>Instrument readings</h2><span class="chip live">live</span>
+      <span class="n">${tiles.length}</span></div>
+    <div class="ctxgrid">${tiles.map(t=>`<div class="ctxi ${t.sev?"hot":""}">
+      <div class="k">${t.k}</div><div class="v">${t.v}</div><div class="s">${t.s}</div>
+    </div>`).join("")}</div>
+    <div class="srcline"><div class="r">Read by threshold, not by the model — a number cannot be
+      misread into a severity. ${firing
+        ? `${firing} of ${tiles.length} crossed a threshold and ${firing===1?"is":"are"} in the feed above; the rest are quiet, which is the usual answer.`
+        : `None crossed a threshold on this run, which is the usual answer.`}</div></div>
+  </div>`;
+}
+
+/* Board context - readings that are real and decide nothing. Kept apart from
+   the instruments above, and labelled in words rather than by position. */
+function contextCard(){
+  const c = risk.context || {};
+  const tiles = [];
+  (c.fx?.pairs || []).forEach(p => tiles.push(
+    {k:esc(p.pair), v:Number(p.rate).toFixed(4), s:`ECB reference, ${esc(c.fx.as_of||"")}`}));
+  (c.hk_warnings || []).slice(0,3).forEach(w => tiles.push(
+    {k:"Hong Kong", v:esc(w.code||"—"), s:esc(w.name||"")}));
+  (c.us_alerts || []).slice(0,3).forEach(a => tiles.push(
+    {k:"US ports", v:esc(a.event||"—"), s:esc(a.area||"")}));
+  if (!tiles.length) return "";
+  return `<div class="card" style="margin-top:20px">
+    <div class="card-h"><h2>Board context</h2><span class="chip live">live</span>
+      <span class="n">${tiles.length}</span></div>
+    <div class="ctxgrid">${tiles.map(t=>`<div class="ctxi">
+      <div class="k">${t.k}</div><div class="v">${t.v}</div><div class="s">${t.s}</div>
+    </div>`).join("")}</div>
+    <div class="srcline"><div class="r">The rate a reroute is billed at, and weather over ports
+      this board does not call at. Read live on this run, and none of it moves a booking here —
+      shown rather than implied, and never promoted to look like risk.</div></div>
+  </div>`;
 }
 
 /* Scripts that run right-to-left. This is a rendering fact, not a claim about
@@ -1813,11 +2078,21 @@ const RTL = new Set(["ar","he","fa","ur"]);
    a local outlet carries a disruption while the international wires are still
    downstream of it. Which language that happens to be in is incidental, so the
    dashboard never names one. */
-const REGION = {de:"Regional", ar:"Regional", fr:"Regional",
-                nl:"Regional", es:"Regional", en:"International"};
+/* Where a source sits, not what language it publishes in. The edge is proximity
+   to the event; naming a language would make a general capability look like one
+   rehearsed trick, so only these two words ever reach the screen. Anything not
+   listed is regional by default - a new corridor's press should not have to be
+   registered here before it can be labelled. */
+const REGION = {de:"Regional", ar:"Regional", fr:"Regional", nl:"Regional",
+                es:"Regional", it:"Regional", tr:"Regional", zh:"Regional",
+                ja:"Regional", pt:"Regional", en:"International"};
 
+/* Events carry `source_language`; the entries in a detection trail carry
+   `language`. Reading only the first meant every trail row - including the
+   international wire the whole lead is measured against - was labelled
+   "Regional", which is the one row where that word is wrong. */
 function regionOf(e){
-  return REGION[e.source_language] || "Regional";
+  return REGION[e.source_language || e.language] || "Regional";
 }
 
 function offsetLabel(mins){
@@ -1891,7 +2166,7 @@ function render(){
   if (view === "shipments") $("v-shipments").innerHTML = pageHeader("shipments") +
     (running ? skeletonRows(5) : statRow() + shipmentGroups());
   if (view === "risk")      $("v-risk").innerHTML = pageHeader("risk") +
-    (running ? skeletonRows(3) : riskCard(false));
+    (running ? skeletonRows(3) : riskCard(false) + instrumentCard() + contextCard());
   if (view === "approvals") $("v-approvals").innerHTML = pageHeader("approvals") + approvalsView();
   if (view === "connections") $("v-connections").innerHTML = pageHeader("connections") + connectionsView();
   if (view === "simulation")  $("v-simulation").innerHTML = pageHeader("simulation") + simulationView();
@@ -1905,6 +2180,30 @@ function render(){
   });
   document.querySelectorAll("[data-atab]").forEach(b => b.onclick = () => {
     approvalTab = b.dataset.atab; render();
+  });
+  // Row click expands; the tick and the Approve button inside it stop the event
+  // so selecting or approving never also toggles the body open.
+  document.querySelectorAll("[data-aprow]").forEach(b => b.onclick = () => {
+    const k = b.dataset.aprow;
+    apOpen.has(k) ? apOpen.delete(k) : apOpen.add(k);
+    render();
+  });
+  document.querySelectorAll("[data-apsel]").forEach(b => b.onclick = e => {
+    e.stopPropagation();
+    const k = b.dataset.apsel;
+    apSel.has(k) ? apSel.delete(k) : apSel.add(k);
+    render();
+  });
+  document.querySelectorAll("[data-apall]").forEach(b => b.onclick = () => {
+    const items = apItems().filter(i => !approved.has(i.k));
+    if (b.dataset.apall === "all") items.forEach(i => apSel.add(i.k));
+    else apSel.clear();
+    render();
+  });
+  document.querySelectorAll("[data-apbulk]").forEach(b => b.onclick = () => {
+    // Still only a state change, in bulk: there is no transport to reach.
+    apSel.forEach(k => approved.add(k));
+    apSel.clear(); render();
   });
   document.querySelectorAll("[data-mappick]").forEach(b => b.onclick = () => {
     mapPick = (mapPick === b.dataset.mappick) ? null : b.dataset.mappick; render();
@@ -1929,71 +2228,135 @@ function render(){
   bindApprove();
   initCollapse();
   initPalette();
+  initKeys();
   $("bell").onclick = () => go("approvals");
   renderNav();
 }
 
 let approvalTab = "waiting";
+let apOpen = new Set();     // rows expanded to their full body
+let apSel  = new Set();     // rows ticked for a bulk approve
+
+/* Everything waiting on a person, flattened to rows and keyed exactly the way
+   the approved set is keyed. A drafted email and a queued TMS change are the
+   same kind of thing here - work the Workers finished that leaves the building -
+   so one row renderer covers both and one gate holds both.
+
+   Grouped by booking rather than by kind: a write-back's booking_ref IS the
+   shipment id, so everything waiting on SHP-001 - its carrier mail, its customer
+   mail and the changes queued against the record - reads as one block. That is
+   the product's own claim ("every decision lands on the booking it came from")
+   made navigable instead of asserted. */
+function apItems(){
+  const out = [];
+  board.forEach(sh => (sh.drafts||[]).forEach(m => out.push({
+    k: key(m), sh, kind: "mail",
+    title: m.subject,
+    sub: `to the ${m.audience} · ${m.to}`,
+    flag: m.fallback ? "template" : "", flagTitle: m.fallback_reason || "",
+    mail: m,
+  })));
+  queuedWrites().forEach(w => {
+    const sh = board.find(x => x.id === w.booking_ref);
+    out.push({
+      k: wkey(w), sh, kind: "write",
+      title: (w.changes||[]).length
+        ? (w.changes||[]).map(c => `${c.field} → ${c.to}`).join(" · ")
+        : `${w.operation} · ${w.record}`,
+      sub: `${w.agent} · ${w.record}`,
+      wb: w,
+    });
+  });
+  return out;
+}
+
+function apRowHTML(i){
+  const ok = approved.has(i.k), open = apOpen.has(i.k), sel = apSel.has(i.k);
+  return `<div class="ap-r ${open?"open":""} ${ok?"done":""}">
+    <div class="ap-rh" data-aprow="${esc(i.k)}">
+      ${ok ? `<span class="ap-ck done" title="Approved">${ICON.check}</span>`
+           : `<button class="ap-ck ${sel?"on":""}" data-apsel="${esc(i.k)}"
+                      role="checkbox" aria-checked="${sel}"
+                      aria-label="Select for bulk approval">${ICON.check}</button>`}
+      <span class="qtag ${i.kind==="write"?"":"cheap"}">${i.kind==="write"?"TMS":"MAIL"}</span>
+      <span class="ap-t">${esc(i.title)}</span>
+      ${i.flag?`<span class="fb" title="${esc(i.flagTitle)}">${esc(i.flag)}</span>`:""}
+      <span class="ap-sub">${esc(i.sub)}</span>
+      <span class="ap-st ${ok?"approved":"awaiting"}">${ok?"approved":"awaiting"}</span>
+      ${ok?"":`<button class="approve sm" data-approve="${esc(i.k)}">Approve</button>`}
+      <span class="ap-x">${ICON.chev}</span>
+    </div>
+    ${open ? `<div class="ap-rb">${i.kind==="mail"?mailHTML(i.mail):wbHTML(i.wb)}</div>` : ""}
+  </div>`;
+}
 
 function approvalsView(){
   if (running) return skeletonRows(4);
-  const withDrafts = board.filter(s => (s.drafts||[]).length);
-  // The write-backs belong here too. A change queued into the system of record
-  // is as outbound as an email, and a queue a person never sees is not a gate.
-  const writes = queuedWrites();
-  if (!withDrafts.length && !writes.length) return emptyState({
+  const all = apItems();
+  if (!all.length) return emptyState({
     icon: "approvals", title: "Nothing waiting yet",
     body: `Press <b>Run</b>. Any booking that needs action gets a carrier and a
            customer email, and the change it implies is queued back into the TMS.
            All of it waits here for you — nothing is sent, and nothing is written.`});
 
-  const isWaiting = m => !approved.has(key(m));
-  const wWaiting = w => !approved.has(wkey(w));
-  const counts = {waiting: 0, approved: 0};
-  withDrafts.forEach(sh => sh.drafts.forEach(m => counts[isWaiting(m) ? "waiting" : "approved"]++));
-  writes.forEach(w => counts[wWaiting(w) ? "waiting" : "approved"]++);
+  const waiting = i => !approved.has(i.k);
+  const counts = {waiting: all.filter(waiting).length,
+                  approved: all.filter(i => !waiting(i)).length};
 
   const tabs = segmented([
     {id:"waiting",  label:"Awaiting you", n:counts.waiting},
     {id:"approved", label:"Approved",     n:counts.approved},
-    {id:"all",      label:"All",          n:counts.waiting + counts.approved},
+    {id:"all",      label:"All",          n:all.length},
   ], approvalTab, "atab");
 
-  const groups = withDrafts.map(sh => {
-    const mails = sh.drafts.filter(m =>
-      approvalTab === "all" ? true :
-      approvalTab === "waiting" ? isWaiting(m) : !isWaiting(m));
-    if (!mails.length) return "";
-    return `<div class="ap-g">
-      <div class="ap-h">
-        <span class="badge ${sh.state}">${LABEL[sh.state]}</span>
-        <b>${esc(sh.id)} · ${esc(sh.cargo)}</b>
-        <span class="ap-c">${esc(sh.customer||"")}</span>
-      </div>
-      ${mails.map(m => mailHTML(m)).join("")}</div>`;
-  }).join("");
+  const shown = all.filter(i => approvalTab === "all" ? true
+                              : approvalTab === "waiting" ? waiting(i) : !waiting(i));
 
-  const shownWrites = writes.filter(w =>
-    approvalTab === "all" ? true :
-    approvalTab === "waiting" ? wWaiting(w) : !wWaiting(w));
+  // Only an unapproved row can be selected, so the bulk count can never claim
+  // work that is already done.
+  const selectable = shown.filter(waiting);
+  const picked = selectable.filter(i => apSel.has(i.k));
+  const bar = selectable.length ? `<div class="ap-bar">
+      <span class="n">${picked.length ? `<b>${picked.length}</b> of ${selectable.length} selected`
+        : `<b>${selectable.length}</b> awaiting you`} · nothing is sent, and nothing is written</span>
+      <button class="ap-lnk" data-apall="${picked.length===selectable.length?"none":"all"}">${
+        picked.length===selectable.length ? "Clear selection" : `Select all ${selectable.length}`}</button>
+      ${picked.length?`<button class="approve sm" data-apbulk="1">Approve ${picked.length} selected</button>`:""}
+    </div>` : "";
 
-  const tmsBlock = shownWrites.length ? `<div class="ap-g">
-    <div class="ap-h">
-      <span class="qtag">TMS</span>
-      <b>Queued to ${esc(tmsLink.connector || "the system of record")}</b>
-      <span class="ap-c">${esc(tmsLink.status || "")}</span>
-    </div>
-    ${shownWrites.map(wbHTML).join("")}</div>` : "";
+  // One block per booking, in board order, then anything whose booking is not on
+  // the board (there is none today, but a write-back could outlive a card).
+  const order = board.map(s => s.id);
+  const byShip = new Map();
+  shown.forEach(i => {
+    const id = (i.sh||{}).id || "—";
+    if (!byShip.has(id)) byShip.set(id, []);
+    byShip.get(id).push(i);
+  });
+  const groups = [...byShip.entries()]
+    .sort((a,b) => order.indexOf(a[0]) - order.indexOf(b[0]))
+    .map(([id, items]) => {
+      const sh = board.find(x => x.id === id);
+      const nWait = items.filter(waiting).length;
+      return `<div class="ap-g">
+        <div class="ap-h">
+          ${sh?`<span class="badge ${sh.state}">${LABEL[sh.state]}</span>`:""}
+          <b>${esc(id)}${sh?` · ${esc(sh.cargo)}`:""}</b>
+          <span class="ap-c">${sh?esc(sh.customer||""):""}</span>
+          <span class="ap-c" style="margin-left:auto">${
+            nWait ? `${nWait} awaiting` : "all approved"}</span>
+        </div>
+        <div class="ap-rows">${items.map(apRowHTML).join("")}</div></div>`;
+    }).join("");
 
-  const body = (groups + tmsBlock) || emptyState({
+  const body = groups || emptyState({
     icon: "approvals",
     title: approvalTab === "waiting" ? "Nothing waiting on you" : "Nothing approved yet",
     body: approvalTab === "waiting"
       ? "Every draft and every write-back has been approved. Approving is a state change here and nothing else — there is no transport in the app to send an email, and no client to write to a TMS."
       : "Approve something and it moves here."});
 
-  return `${tabs}<p class="sec-t">${counts.waiting ? `${counts.waiting} awaiting your approval`
-    : "All approved"} · nothing is sent, and nothing is written</p>${body}`;
+  return `${tabs}${bar}${body}`;
 }
 
 function mailHTML(m){
@@ -2120,7 +2483,11 @@ async function load(){
   const r = await fetch("/api/initial").then(r=>r.json());
   board = r.shipments; workers = r.workers||[]; ai = r.ai||null; tmsLink = r.tms||{}; atlas = r.map||{};
   scenarios = r.scenarios||[]; chosenScenario = chosenScenario || (r.scenarios||[{}])[0].id;
-  render(); renderEngine();
+  // Land on whatever the URL asked for, now that there is a board to select from.
+  const r0 = routeOf();
+  if (r0.id && board.some(s => s.id === r0.id)) selected = r0.id;
+  if (r0.view !== "overview") go(r0.view, true); else { render(); }
+  renderEngine();
 }
 
 async function run(){

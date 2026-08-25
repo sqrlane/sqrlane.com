@@ -4,13 +4,15 @@
 
 ## Problem
 
-Freight forwarders live inside two jobs at once: watching for disruptions that threaten shipments in transit, and reacting fast when one hits (reroute, hold, notify the customer, and re-key all of it into the TMS). Today that means a person scanning news and portals, then manually deciding, emailing, and updating the booking. Disruptions that surface first in non-English sources — a German port strike, an Arabic-language Red Sea incident — are seen late. Existing risk tools (Everstream, Interos, Resilinc) alert big shippers but stop at the alert; they don't decide or act, and they're priced out of the mid-market. The TMS sits on the other side of the same gap: it holds the booking and moves it once someone has already decided, but it does not watch the world. The desk is the manual bridge between the two.
+Freight forwarders live inside two jobs at once: watching for disruptions that threaten shipments in transit, and reacting fast when one hits (reroute, hold, notify the customer, and re-key all of it into the TMS). Today that means a person scanning news and portals, then manually deciding, emailing, and updating the booking.
+
+Both halves are worse than they look. The *watching* is narrower than the problem: a lane is moved by a strike, a gale over the crane, a river that has dropped, a swell off the Cape, a wildfire across a rail leg and a tariff filed in Washington — signals that arrive from broadcasters, waterway authorities, weather services, seismic networks, government registers and central banks, in that many formats. Someone reading trade press between other calls is seeing a summary of a fraction of it, late; and anything that surfaces first in a non-English source is later still. The *reacting* is worse: existing risk tools (Everstream, Interos, Resilinc) alert big shippers but stop at the alert; they don't decide or act, and they're priced out of the mid-market. The TMS sits on the other side of the same gap: it holds the booking and moves it once someone has already decided, but it does not watch the world. The desk is the manual bridge between the two — and the last plank of that bridge, keying each decision back onto each booking, is the part that eats the day.
 
 ## What we're building
 
 A prototype that **works through the forwarder's TMS**, where small AI agents:
 0. **Read** the book of bookings out of the TMS — the system of record, not a second copy.
-1. **Detect** logistics-relevant disruptions from live, multilingual news.
+1. **Detect** logistics-relevant disruptions from live, free, keyless sources across six families — news (multilingual), river gauges, weather and sea state, natural hazards, government filings and reference rates.
 2. **Decide** per booking whether to reroute, hold, or do nothing — with recorded reasoning.
 3. **Draft** the resulting carrier and customer emails for a human to approve.
 4. **Write back** each of those actions as a change to the booking it came from — the risk exception, the new discharge port, routing code and ETA, the drafted mail on the communication log — every one held for the same human approval.
@@ -45,15 +47,15 @@ Naming these protects you from scope creep — the thing that kills beginner pro
 - **No *live* TMS connection.** Working through the TMS is the design, not a non-goal — what is out of scope is the far end: no vendor, no credential, no endpoint, and nothing is ever written. The connector models both directions and owns the only read path; the bookings behind it are synthetic (DATASET.md).
 - **No scheduler / always-on.** Everything is triggered by a button.
 - **No database.** In-memory + simple files are enough for a demo.
-- **No Bloomberg / paid data.** Free sources only (news, GDELT, public gauges).
+- **No paid data.** Free, keyless sources only — news, GDELT, public gauges, public weather, seismic and hazard feeds, government registers and central-bank rates. Breadth is the point; the bill is not.
 - **No user accounts, billing, multi-tenant, or the real 5U AI product.** The AI-Worker layer is cosmetic framing.
 
 ## The differentiation angle (what makes it more than "AI summarises news")
 
-Two things, and only these two, are the story:
+Two things, and only these two, are the story. The second is the bigger one.
 
-1. **Earlier signal from non-English sources.** English-only tools miss a German `Warnstreik` or an Arabic-language port notice until it hits the wires. Reading regional/multilingual sources *first* is a real informational edge.
-2. **A closed risk → reroute → comms loop that runs on the TMS, with recorded reasoning.** Risk incumbents stop at the alert; execution players (like 5U AI) start after the decision and don't touch risk. Welding them — reading the book out of the system of record, deciding, recording *why*, and putting the result back on the same record — is the whitespace. The loop opening and closing in the same place is what makes it operational rather than advisory: a decision that never reaches the TMS is a decision nobody acts on.
+1. **One terminal for everything that moves a lane.** Not a news monitor — 42 free, keyless sources across six families, read together on every run: the wires and the press next to the port, river gauges, port weather and sea state, seismic and natural-hazard feeds, government filings, and the reference rate a reroute is billed at. Prose goes to the model; numbers go to a threshold. Reading close to the event is why a disruption often lands here before the wires carry it, and reading *widely* is why it lands here at all when it never becomes a headline. Breadth is safe because nothing is load-bearing: any single source can be down without the run failing.
+2. **The agent does the TMS work — the closed risk → reroute → comms → record loop, with recorded reasoning.** This is the biggest value in the product. Risk incumbents stop at the alert; execution players (like 5U AI) start after the decision and don't touch risk. Between them sits a person re-keying consequences into the booking system, one booking at a time, because that is the only place a decision counts. Welding the two — reading the book out of the system of record, deciding, recording *why*, and putting the result back on the same record as a queued change a human approves — is the whitespace. A decision that never reaches the TMS is a decision nobody acts on.
 
 ## Honest caveat (carry this, don't bury it)
 

@@ -18,13 +18,15 @@ agents decide against those records, and every action they take is written back 
 Risk → decision → communication → the system of record, closed. Nothing the agents do
 happens beside the TMS.
 
-Small agents watch global news (in multiple languages) for events that disrupt shipping. When a
-disruption hits, the system checks which of those bookings are affected, decides whether to
-**reroute** or **hold** each one — and *explains why* — drafts the carrier and customer emails a
-human would need to send, and queues the booking change each decision implies back into the TMS:
-the exception on the booking, the new discharge port, routing code and ETA, the drafted mail on
-the communication log. Every message and every write waits for a person. A light "5U AI-style AI
-Worker" wrapper sits on top purely as demo framing.
+Small agents watch **everything that moves a trade lane**, not just the news: 42 free, keyless
+sources across six families — news in multiple languages, river gauges, port weather and sea
+state, seismic and natural-hazard feeds, government filings, and the reference rate a reroute is
+billed at. When a disruption hits, the system checks which of those bookings are affected,
+decides whether to **reroute** or **hold** each one — and *explains why* — drafts the carrier and
+customer emails a human would need to send, and queues the booking change each decision implies
+back into the TMS: the exception on the booking, the new discharge port, routing code and ETA,
+the drafted mail on the communication log. Every message and every write waits for a person. A
+light "5U AI-style AI Worker" wrapper sits on top purely as demo framing.
 
 **In this build the TMS is a demo connector** (`src/tms.py`), and that word is on screen
 everywhere it is surfaced. Both directions are modelled and the read is genuinely the only
@@ -34,43 +36,61 @@ write-back is a dict describing a change, and it stays a dict. **Never present t
 connector as a live TMS link, and never quietly drop the "runs through the TMS" framing
 either — the first is a lie about this build, the second is a lie about the product.**
 
-**The problem it models:** forwarders watch for disruptions *and* react to them by hand. Signals
-that surface first in non-English sources (a German port strike, an Arabic-language Red Sea
-incident) are seen late. Incumbent risk tools (Everstream, Interos, Resilinc) stop at the alert —
-they don't decide or act, and they're priced out of the mid-market. On the other side, the TMS and
-the visibility stack hold the booking and move it once someone has already decided it should
-move — they don't watch the world. The desk is the manual bridge between the two, and re-keying
-the decision into the TMS is a real part of what eats the day.
+**The problem it models:** forwarders watch for disruptions *and* react to them by hand, and both
+halves are worse than they look. The watching is **narrower than the problem** — a lane is moved
+by a strike, a gale over the crane, a river that has dropped, a swell off the Cape, a wildfire
+across a rail leg and a tariff filed in Washington, and those arrive from broadcasters, waterway
+authorities, weather services, seismic networks, government registers and central banks in that
+many different formats. Someone reading trade press between other calls sees a summary of a
+fraction of it, late; anything that surfaces first in a non-English source is later still.
+Incumbent risk tools (Everstream, Interos, Resilinc) stop at the alert — they don't decide or
+act, they mostly read the same wires, and they're priced out of the mid-market. On the other
+side, the TMS and the visibility stack hold the booking and move it once someone has already
+decided it should move — they don't watch the world. The desk is the manual bridge between the
+two, and **re-keying each decision into the TMS is the plank of that bridge that eats the day**.
 
 **Modelled end user:** Head of Operations at a mid-size DACH/Benelux forwarder.
 **Actual audience:** whoever is being shown the demo — a forwarder ops lead, investor, or interviewer.
 
 ### The two differentiators (the whole story — nothing else)
 
-1. **Earlier signal, because the sources are closer to the event.** A disruption is known
-   locally long before it is news globally: the union announces it, the regional broadcaster
-   carries it, and only then does an international wire pick it up. A monitor watching the
-   wires is structurally late because it is reading *downstream*. Lanewatch reads ~20 sources
-   across every corridor on the board, so somewhere one of them is publishing whatever the
-   hour is here.
+**The second one is the bigger one.** Say so.
 
-   **The website never names a language.** Multilingual reading is the *mechanism*, not the
-   pitch — the edge is source proximity, and it holds wherever in the world the event
-   happens. Naming a language makes a general capability look like one rehearsed trick, so
-   the UI says "regional" and "international wires" throughout. Real outlet names
-   (Al Jazeera Arabic, DW Deutsch) are fine: those identify a source, they do not claim an
-   edge. `tests/test_the_pages_keep_their_promises.py` holds this on the landing page and the
-   dashboard, reading past comments — a word that appears only in a `/* ... */`
+1. **One terminal for everything that moves a lane.** Not a news monitor. **42 sources in six
+   families**, read together on every run: news (11 GDELT queries + 20 feeds), river gauges,
+   port weather and sea state, seismic and natural-hazard feeds, government filings, and
+   reference rates. Prose goes to the model; a gust, a wave height, a magnitude and a water
+   level go to a threshold, which costs nothing and cannot hallucinate. Two things follow:
+   reading *close* to the event is why a disruption often lands here before the wires carry
+   it, and reading *widely* is why it lands here at all when it never becomes a headline.
+
+   **Breadth is only safe because nothing is load-bearing.** The old rule was "wire CORE
+   only — every extra source is one more thing that can break". The reason behind it still
+   holds and is now enforced structurally instead: every source is its own small function,
+   inside a shared budget, reporting its own failure, and the families are read concurrently
+   so 42 sources cost about what the slowest family costs. If a new source can make the
+   cycle fail, it is wired wrong.
+
+   **The website never names a language.** Multilingual reading is one *mechanism* among
+   several, not the pitch — the edge is breadth and source proximity, and it holds wherever
+   in the world the event happens. Naming a language makes a general capability look like
+   one rehearsed trick, so the UI says "regional" and "international wires" throughout. Real
+   outlet names (Al Jazeera Arabic, DW Deutsch) are fine: those identify a source, they do
+   not claim an edge. `tests/test_the_pages_keep_their_promises.py` holds this on the landing
+   page and the dashboard, reading past comments — a word that appears only in a `/* ... */`
    explaining why it is avoided has not been said to anyone. **The whitepaper is the
    stated exception**: it has to say where a model came from ("a German research
    consortium", "Mistral is French"), and that is provenance, not a claim about the
    detection edge. See [The detection trail](#the-detection-trail).
-2. **A closed risk → reroute → comms loop that runs on the TMS, with recorded reasoning.**
-   Risk incumbents stop at the alert; execution players start after the decision and don't
-   touch risk. Welding them — reading the book out of the system of record, deciding,
-   recording *why*, and putting the result back on the same record — is the whitespace. The
-   loop opening and closing in the same place is what makes it operational rather than
-   advisory: a decision that never reaches the TMS is a decision nobody acts on.
+2. **The agent does the TMS work — a closed risk → reroute → comms → record loop, with
+   recorded reasoning. This is the biggest value in the product.** Risk incumbents stop at
+   the alert; execution players start after the decision and don't touch risk. Between them
+   sits a person re-keying consequences into the booking system, one booking at a time,
+   because that is the only place a decision counts. Welding them — reading the book out of
+   the system of record, deciding, recording *why*, and putting the result back on the same
+   record as a queued change a human approves — is the whitespace. The loop opening and
+   closing in the same place is what makes it operational rather than advisory: a decision
+   that never reaches the TMS is a decision nobody acts on.
 
 ### The build owner
 
@@ -87,6 +107,13 @@ http://127.0.0.1:8000 for the landing page and http://127.0.0.1:8000/app for the
 the button. `README.md` is the front door for anyone new.
 
 It is also **deployed on Vercel** and running against the live Groq key there.
+
+**The source layer was widened from 20 to 42** — eight structured public APIs added on top of
+the news feeds, so the board reads weather, sea state, seismic activity, natural hazards,
+government filings and reference rates as well as headlines. All eight are keyless and all
+eight are unwitnessed from the build sandbox, which blocks every third-party host at the
+proxy; they are covered by stub tests and by graceful degradation, and
+[What still needs a human](#what-still-needs-a-human) says what to check before presenting.
 
 Three claims still need a human to judge them — see
 [What still needs a human](#what-still-needs-a-human) below. Everything else is verified.
@@ -107,7 +134,9 @@ Target: runs start to finish in **under ~2 minutes**, on command, without breaki
    book, not a second copy of it.
 2. **"Watch — a strike hits the Port of Hamburg."** Click a trigger button.
 3. **"The system caught it from a German-language source before the English news wires."** The risk
-   feed shows the event, flagged as detected from a German source first.
+   feed shows the event, flagged as detected from a German source first — and under it, the
+   family strip showing the other 41 sources read on the same run, with the instrument
+   readings and the board context below that. Breadth first, then the lead.
 4. **"It triaged the whole board in seconds."** Cards change state — two reroute, one hold,
    four stay green (the system doesn't cry wolf).
 5. **"Here's the reasoning for each decision."** Click a rerouted card → plain-English justification
@@ -130,7 +159,7 @@ the real pipeline.
 
 ---
 
-## Architecture — five components
+## Architecture — five components (the Risk Monitor is in two files)
 
 The loop opens and closes in the same place. That is the shape of the product: the agents
 work on the TMS's records, not on a book of their own.
@@ -140,7 +169,10 @@ work on the TMS's records, not on a book of their own.
         |  (src/tms.py - the ONLY door in. Nothing else opens shipments.json)
         v
   [ Risk Monitor ] --writes--> risk_state.json
-        |  (live news, multilingual, GDELT/RSS/gauges)
+        |  (42 keyless sources, read concurrently, in six families:
+        |   news GDELT/RSS, river gauges, weather + sea state, seismic
+        |   + natural hazards, government filings, reference rates.
+        |   The prose half is risk_monitor.py, the instruments are signals.py)
         v
   [ Orchestrator ] --reads shipments + risk--> decides which shipments are affected
         |
@@ -167,9 +199,19 @@ work on the TMS's records, not on a book of their own.
    agent's output into the change it implies on that record, named by the Worker that made
    it and gated. Imports nothing but `json`, `datetime` and `config` — no client, no
    credential, no endpoint.
-1. **Risk Monitor** (the real, live part) — pulls CORE free sources, LLM-classifies each item for
-   logistics relevance → chokepoint / type / severity, writes `risk_state.json`. Also loads the
-   injected Hamburg event in the same format.
+1. **Risk Monitor** (the real, live part) — reads all 42 free sources at once. Prose (GDELT,
+   RSS, Federal Register filings) is LLM-classified for logistics relevance → chokepoint /
+   type / severity; numbers (gauges, gusts, wave heights, magnitudes, hazard coordinates) are
+   classified by threshold in `signals.py` and never reach the model. Writes `risk_state.json`.
+   Also loads the injected Hamburg event in the same format.
+
+   **Two tiers, and the line is not cosmetic.** A `lane` source produces readings that map
+   onto a chokepoint some route passes through, so it can move a booking. A `context` source
+   is real, read live, and moves nothing on this board — the ECB rate a reroute is billed at,
+   a hurricane warning over a US port this board does not call at, a typhoon signal over a
+   load port that is not modelled as a chokepoint. Context is rendered in its own panel
+   saying exactly that. A test asserts a context source never emits an event; the day one
+   does, the board is inflating its own alarm count.
 2. **Route Advisor** — maps each candidate route's chokepoints against active risk; LLM weighs
    **schedule slack vs. added transit vs. expected disruption delay** → `reroute` / `hold` /
    `no-action` + plain-English reasoning + a recorded reasoning trail.
@@ -244,8 +286,19 @@ step, so what carries over is **anatomy, never code**:
   against the slack the booking had. A real proportion, and the number every decision
   turns on. SHP-002 reads `100%+` in red.
 
-Two things worth keeping:
+Three things worth keeping:
 
+- **Global chrome above per-view content has to stay short.** The scenario switcher
+  and the Worker roster sit in one band above every view, so their height is
+  subtracted from every view's first screen. As a grid of thirteen 200px cards the
+  band ran ~400px, and `go()` scrolls back to the top — so on a 1280x720 laptop
+  clicking *TMS link* scrolled to an unchanged band and left **two pixels** of the
+  clicked view on screen. Nothing was broken; the nav simply had nothing visible to
+  change, which reads exactly like a dead button. The roster is now a wrapped strip
+  of pills (dot, name, mode tag; the ellipsised summary moved to the tooltip) and the
+  band is ~230px. Measure `innerHeight - .view.on.getBoundingClientRect().top` after a
+  nav click before adding anything to that band: if it approaches zero, the board looks
+  broken however well it works.
 - **The gauge figure is capped to its track.** SHP-002 is 5 days of delay against 1 of
   slack — literally 500%. A full arc labelled "500%" reads as a bug, so the headline caps
   at `100%+` and the exact days sit in the line beside it. Nothing is lost.
@@ -257,6 +310,51 @@ Two things worth keeping:
 Not ported, deliberately: kokonutui's decorative pieces (glitch-text, liquid-glass,
 background-paths) and anything needing teams or avatar stacks. The first fight a demo
 that has to read clearly in a room; the second would be invented data.
+
+### Made to be worked in, not just looked at
+
+The board renders the run correctly; a later pass made it a thing a person can
+actually operate. Four changes, each closing a hole that looked like polish and
+was really a workflow:
+
+- **Approvals is a queue, not a transcript.** Eighteen drafts rendered open ran
+  **5,452px** — five and a half screens to work a queue whose entire purpose is a
+  person working it, with no way to scan, select or act in bulk. It is now one row
+  per item (what it is, what it changes, its gate) opening to the full body on
+  demand: **1,382px**. Rows group **by booking, not by kind**, because a
+  write-back's `booking_ref` *is* the shipment id — so everything waiting on
+  SHP-001, both mails and all four queued changes, reads as one block. That is the
+  product's own claim ("every decision lands on the booking it came from") made
+  navigable instead of asserted. Bulk approve is **select-then-approve**, never a
+  blind "approve everything": the count is on the button so a person sees exactly
+  what they are signing off, and only unapproved rows are selectable so the count
+  can never claim work already done. It is still a browser state change with no
+  transport behind it, in bulk exactly as singly.
+- **Every view has an address.** `#/approvals`, `#/shipments/SHP-002`. Refresh
+  keeps you where you were, the back button walks the views, and a link to the
+  queue is a link someone can send. Before this every reload dropped you on
+  Overview and Back left the dashboard. The `hashchange` handler is idempotent by
+  construction — if we wrote the hash ourselves the state already matches it and
+  the handler returns — so no guard flag is needed to stop `go()` and the URL
+  bouncing off each other.
+- **The risk feed stopped being a dead end.** An event now names the bookings it
+  moved, and each one is a button through to the board. The link was *already in
+  the data* — `decision.triggering_events` carries the `event_id` — and the feed
+  simply never used it, leaving a person to work out by hand which bookings a
+  strike moved. That hand-work is the manual bridge this product exists to remove,
+  so leaving it in the UI was the demo arguing against itself.
+- **`g`-then-key navigation**, `/` to search, `?` for the sheet. Typing in a field
+  is never a shortcut and any modifier defers to the browser.
+
+Two traps worth remembering, both found in a browser and invisible to a unit test:
+
+- **A shared class name silently reparents a dialog.** The shortcut sheet reused
+  `.pal` for its geometry and took `keys` as its modifier — which collided with an
+  existing `.keys{display:flex}` legend rule and laid the dialog's header and body
+  out side by side. Grep the class before adding a modifier to a shared component.
+- **One body flag cannot open two dialogs.** `body.pal-on` showed both the palette
+  and the sheet at once; each needs its own flag, with the scrim listening for
+  either.
 
 ### The simulation loop — a week, not a snapshot
 
@@ -402,6 +500,14 @@ client, no credential and no endpoint: a write-back is a dict describing a chang
 stays a dict. Never present the connector as a live TMS link; it says `connected (demo)`
 everywhere it is surfaced, and a test asserts that.
 
+**`tests/test_signals_read_wide_and_fail_soft.py` holds what breadth costs.** Forty-two
+sources is forty-two things that can be down, slow or reshaped in front of an audience, so it
+asserts the three things that have actually gone wrong here before: a structured event matches
+the scripted event schema **key for key** (parity has broken three times, every time by adding
+a field to one producer and not the others); a reading far from every corridor is **dropped**
+rather than attached to a lane; and a `context` source **never emits an event**. Then it takes
+one host down mid-read and one host's response shape sideways, and checks the rest still read.
+
 **`tests/test_tms_is_the_system_of_record.py` holds the other half of the claim**, the one
 that is easy to lose by accident. Structurally: nothing except the connector may open
 `SHIPMENTS_FILE`, so there stays exactly one door to the book — a second door is how "the
@@ -514,10 +620,13 @@ here too, because this is what the next session reads to find its way around.
 │   └── geo.json              # coastlines and points for the map
 ├── src/
 │   ├── llm.py                # provider wrapper — the ONLY place AI is called
-│   ├── config.py             # keys, model names, source list, budgets
+│   ├── config.py             # keys, model names, every source list and threshold
+│   ├── httpget.py            # a GET that is guaranteed to end — shared plumbing
 │   ├── tms.py                # component 0: the system of record — the ONLY door to
 │   │                         #   the book, and every agent action as a queued change
-│   ├── risk_monitor.py       # component 1
+│   ├── risk_monitor.py       # component 1a — the prose half + the live pull
+│   ├── signals.py            # component 1b — the structured half: weather, sea
+│   │                         #   state, seismic, hazards, filings, FX
 │   ├── route_advisor.py      # component 2
 │   ├── comms_agent.py        # component 3
 │   ├── orchestrator.py       # component 4 (the loop)
@@ -572,16 +681,26 @@ Ausstand auf"*. The demo points at the **source language** — that *is* the dif
 
 ---
 
-## Data sources — wire CORE only
+## Data sources — wide, keyless, and none of them load-bearing
 
-Full rationale in `DATA-SOURCES.md`. **Every extra source is one more thing that can break live in
-front of an audience.** Three keyless sources carry the whole story:
+Full rationale, and which `public-apis` catalogue entry each one is, in `DATA-SOURCES.md`.
+**42 sources in six families, every one free and keyless.** The old rule was "wire CORE only";
+breadth is now the point, so what holds instead is the reason behind it — **no source may be
+load-bearing**. Each is its own small function inside a shared budget, families are read
+concurrently, and a source that is down, slow or reshaped is reported failed and skipped.
 
-| Source | Role | Key? |
-|---|---|---|
-| **GDELT DOC 2.0** | Global news backbone, ~15 min refresh, filter by keyword/language/country | No |
-| **RSS via `feedparser`** | Ten feeds in six languages — German (NDR / tagesschau / DW), Arabic (Al Jazeera), French (France Info / Le Monde), Dutch (NOS), Spanish (RTVE), English (gCaptain / Al Jazeera). This is where the earliness edge lives; the English feeds are kept so the lag *against* them is measurable | No |
-| **PEGELONLINE** | Rhine water levels → RHINE chokepoint. DACH-specific domain-depth signal | No |
+| Family | Sources | Count | Classified by |
+|---|---|---|---|
+| **News** | GDELT DOC 2.0 (one query per corridor, plus customs/tariffs/sanctions) and RSS via `feedparser` — regional broadcasters and papers on the corridors' doorsteps (NDR, tagesschau, DW, NOS, VRT, RTVE, El País, France Info, Le Monde, ANSA, NHK, Al Jazeera, France 24, Straits Times, Times of India) plus the narrow trade press (gCaptain, Splash 247, The Maritime Executive). The international feeds stay so the lead *against* them is measurable | 31 | the model |
+| **River gauges** | PEGELONLINE — Kaub, Duisburg-Ruhrort, Emmerich → RHINE | 3 | threshold |
+| **Weather & sea state** | Open-Meteo (gusts over HAM/RTM/ANR/FOS), Open-Meteo Marine (wave height at SUEZ/REDSEA/COGH), Hong Kong Observatory (warnings in force — *context*) | 3 | threshold |
+| **Natural hazards** | USGS Earthquake Hazards Program, NASA EONET — each reading mapped to the nearest chokepoint, **dropped if none is within reach** | 2 | threshold + proximity |
+| **Government & regulatory** | Federal Register (tariff / sanctions / customs / port-security filings — prose, so it goes to the model), US National Weather Service (*context*) | 2 | model / threshold |
+| **Markets** | Frankfurter — the ECB's own reference rates (*context*) | 1 | not classified |
+
+`data/geo.json` is the single source of truth for where a source looks: it already carries a
+real lat/lon for every chokepoint, so the watch lists in `config.py` are chokepoint ids. Never
+keep a second coordinate table.
 
 **Runtime LLM (pick one, key in `.env`):** Groq (recommended default) / Google Gemini / Ollama local.
 Note: Claude Code Max pays for *building*, not for the agents' *runtime* calls.
@@ -611,7 +730,7 @@ Full copy-paste prompts live in `BUILD-GUIDE.md`.
 | Phase | What | Checkpoint | Status |
 |---|---|---|---|
 | **0** | Orient: read the docs, confirm understanding, write no code | Summary matches the narrative + the components | ✅ (this file) |
-| **1** | `data/` JSON + `llm.py`, `config.py`, `risk_monitor.py` | Run the Risk Monitor alone from the terminal; see real current news classified; confirm ≥1 non-English source is actually read; injected event loadable | ✅ (live pull unverified — see below) |
+| **1** | `data/` JSON + `llm.py`, `config.py`, `risk_monitor.py`, `signals.py`, `httpget.py` | Run the Risk Monitor alone from the terminal; see real current news classified; confirm ≥1 non-English source is actually read and that all six families report; injected event loadable | ✅ (live pull unverified — see below) |
 | **2** | `route_advisor.py` | Run against the board with the strike active; the three expected outcomes appear with reasoning that reads *well* | ✅ (LLM wording unverified — see below) |
 | **3** | `comms_agent.py` | Drafts for SHP-001 (reroute) and SHP-002 (hold) read like something a person would actually send | ✅ (LLM wording unverified — see below) |
 | **4** | `orchestrator.py`, `app.py`, `static/index.html` | Open the URL, click the button, the whole narrative plays on screen. **This is the demo.** | ✅ (driven in a real browser) |
@@ -656,9 +775,12 @@ than as one rehearsed German trick:
 Live events carry the same two fields with a single-entry trail, so live and scripted events
 stay the same shape.
 
-The dashboard's source line — "N of 20 sources read" — **excludes the scripted scenario**,
-which reports itself as a source so the CLI can show where each event came from. Counting it
-would inflate both halves of the exact number an audience uses to check the live-news claim. **Schema parity between live and injected events has broken three times**
+The dashboard's source line — "N of 42 sources read", with the family strip under it —
+**excludes the scripted scenario**, which reports itself as a source so the CLI can show where
+each event came from. Counting it would inflate both halves of the exact number an audience
+uses to check the live claim. `risk_monitor.expected_sources()` is the one authority on that
+denominator: it lists every source *before* anything is read, so the count is of what was
+attempted, and three screens quoting it cannot disagree. **Schema parity between live and injected events has broken three times**
 — each time by adding a field to injected events only. Add it to both.
 
 ### Surviving a live audience
@@ -667,6 +789,14 @@ The failure mode that actually threatens a demo is not a *dead* source — that 
 but a *slow* one. The whole live pull has a hard **25-second budget**
 (`LIVE_PULL_BUDGET_SECONDS`) and each request an 8-second timeout. Whatever is not read by
 then is marked `skipped` and the cycle moves on.
+
+**The families are read concurrently, and that is what makes 42 sources fit.** Read in turn,
+the first family would spend the whole budget and the rest would be skipped — which is how a
+board that claims to watch the world quietly ends up watching one feed. `pull_everything()`
+runs RSS, GDELT, the gauges and the structured sources at once, each filling its own report,
+and merges them in a fixed order so the output is stable run to run even though the reads are
+not. Every source appears in that merged report whatever happened to it; a straggler is
+reported `skipped` against its own name, never silently dropped.
 
 There are **two** ways a source can be slow, and only the first is obvious:
 
@@ -678,9 +808,11 @@ There are **two** ways a source can be slow, and only the first is obvious:
    second never trips an eight-second timeout, so the call never returns and the thread
    running it never ends. A single such feed hung the whole run indefinitely.
 
-So every news fetch goes through `_get_capped()` in `risk_monitor.py`, which adds a total
-deadline and a size cap (`HTTP_MAX_BYTES`) on top of the timeout. Two details are load-bearing
-and easy to undo by accident:
+So every fetch — news and instrument alike — goes through `get_capped()` in `httpget.py`,
+which adds a total deadline and a size cap (`HTTP_MAX_BYTES`) on top of the timeout. It lives
+in its own file because both halves need it and neither should import the other;
+`risk_monitor._get_capped` is kept as an alias so the name still reads the same. Two details
+are load-bearing and easy to undo by accident:
 
 - Checking a deadline *between chunks* does not work — the read blocks until its chunk is
   full, so a trickle never reaches the check. A watchdog has to **shut the socket down** from
@@ -756,10 +888,21 @@ claims were written and tested but unwitnessed. Most are now confirmed.
   sources are not: nobody has confirmed a real GDELT or RSS item was fetched,
   prefiltered and classified. That is the credibility anchor — "the risk detection is
   real" is the demo's central honest claim, and the `LIVE` chip on the risk feed
-  asserts it. The dashboard's source line ("N of 20 sources read") settles it at a
-  glance; `python -m src.risk_monitor` on a real connection answers it in detail.
-  **If N is 3 — the gauges alone — the news half of the live claim is still
-  decoration.**
+  asserts it. The dashboard's source line ("N of 42 sources read") and the family
+  strip under it settle it at a glance; `python -m src.risk_monitor` on a real
+  connection answers it in detail, family by family, and `python -m src.signals`
+  does the structured half on its own. **If the news family reads 0, the news half
+  of the live claim is still decoration.**
+
+  The eight structured sources added on top — Open-Meteo, Open-Meteo Marine, USGS,
+  NASA EONET, the Federal Register, Frankfurter, the US NWS and the Hong Kong
+  Observatory — are in exactly the position PEGELONLINE was in before it was
+  confirmed in production: built to their published shapes, covered by stub tests,
+  and never once witnessed answering, because this sandbox's egress policy blocks
+  every third-party host with a 403 at the proxy. **Run `python -m src.signals` on a
+  real connection before presenting.** A source whose response shape has moved shows
+  as `failed` with a readable reason, which is the designed behaviour and not a
+  reason to panic mid-demo — but it is worth knowing which ones answer.
 - **The two reroute cards have never been read.** Every review so far has been
   SHP-002, the hold. SHP-001 and SHP-005 take the other branch in both the advisor
   and the comms prompts, so the reroute emails have never been seen by anyone.
@@ -805,6 +948,7 @@ network call beyond its own API — so flaky wifi cannot blank it.
 Each component still runs alone, which is how you debug one without the others:
 
 ```bash
+python -m src.signals                     # the instruments alone: what answered, and what it said
 python -m src.risk_monitor --list-scenarios
 python -m src.risk_monitor --scenario redsea
 python -m src.route_advisor --inject --shipment SHP-002
@@ -928,6 +1072,14 @@ Scope creep is the failure mode here. None of these are in this build:
 
 - **One file per job, one job per file.** If a file does two things, split it.
 - **`llm.py` is the only door to the AI provider.** Everything else calls `llm.py`.
+- **`httpget.py` is the only door to a third-party host.** Every source fetch goes through
+  `get_capped()`, so nothing we do not control can hold the run open.
+- **A new source is a function in `signals.py`, or a feed in `config.py`. Never more than
+  that.** Register it with a family and a tier, put its endpoint and thresholds in `config.py`,
+  and make sure it fails alone. If it is a `context` source it must never emit an event.
+- **Numbers do not go to the model.** A gust, a wave height, a magnitude, a water level and a
+  distance are classified by threshold. It is cheaper, it is repeatable, and it cannot
+  hallucinate a severity.
 - **`tms.py` is the only door to the book.** Every component that needs shipments calls
   `tms.read_bookings()` — never `shipments.json` directly. One door means the day the
   connector points at a real TMS, the whole board follows it; a second door is how that
@@ -958,7 +1110,9 @@ Six criteria — five from `PRD.md`, plus the one the product rests on. If these
 prototype is finished and nothing else is in scope:
 
 1. The demo narrative runs start to finish in under ~2 minutes, on command, without breaking.
-2. The Risk Monitor genuinely pulls live news — the credibility anchor.
+2. The Risk Monitor genuinely pulls live sources across all six families — the credibility
+   anchor. News is the half an audience checks; the instruments are the half that makes it a
+   terminal rather than a news reader.
 3. The injected strike produces three distinct, defensible decisions across the board, each
    with plain-English reasoning.
 4. Drafted emails read like something a human would actually send.
@@ -978,7 +1132,7 @@ prototype is finished and nothing else is in scope:
 | `PRD.md` | *What* and *why* — problem, success criteria, non-goals, differentiation |
 | `DESIGN.md` | *How* — architecture, stack, file structure, design principles |
 | `DATASET.md` | The screenplay — chokepoints, routes, the five shipments it was first authored around, the injected strike. Build-time; the pool is seven now |
-| `DATA-SOURCES.md` | Curated free APIs: which to wire (CORE) and which to skip |
+| `DATA-SOURCES.md` | Every source the desk reads: the six families, which `public-apis` entry each one is, and what was deliberately skipped |
 | `BUILD-GUIDE.md` | The copy-paste phase prompts — the spine of the build |
 | `README.md` | The front door — what it is, how to run it, the honest framing |
 | `trade-risk-agent-docs.zip` | Duplicate archive of the seven docs above; not a source of truth |

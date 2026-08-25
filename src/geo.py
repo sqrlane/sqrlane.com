@@ -14,6 +14,7 @@ fonts: an external asset is one more thing that can fail in front of an audience
 """
 
 import json
+import math
 
 from src import config
 
@@ -33,6 +34,50 @@ def project(lat: float, lon: float) -> tuple[float, float]:
     x = (lon - f["lon0"]) / (f["lon1"] - f["lon0"]) * f["width"]
     y = (f["lat1"] - lat) / (f["lat1"] - f["lat0"]) * f["height"]
     return round(x, 1), round(y, 1)
+
+
+def place(place_id: str) -> dict | None:
+    """One place, by chokepoint or port id. None if the board does not know it.
+
+    geo.json already carries a real lat/lon for every chokepoint, so the live
+    sources in signals.py read their watch coordinates from here rather than
+    keeping a second copy that could drift out of step with the map.
+    """
+    return _geo()["places"].get(place_id)
+
+
+def distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Great-circle distance. Used to ask whether an event is near a corridor.
+
+    Approximate, like everything else here: a spherical earth is off by a few
+    tenths of a percent, which is far inside the radius any of this is judged
+    against.
+    """
+    r = 6371.0
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dp, dl = math.radians(lat2 - lat1), math.radians(lon2 - lon1)
+    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    return 2 * r * math.asin(min(1.0, math.sqrt(a)))
+
+
+def nearest_place(lat: float, lon: float, candidates: list[str],
+                  within_km: float) -> tuple[str | None, float]:
+    """The closest of `candidates` to a point, if any is within `within_km`.
+
+    Returns (place_id, km) or (None, distance-to-the-closest) so a caller can
+    say how far away the thing it just read actually was.
+    """
+    best, best_km = None, float("inf")
+    for place_id in candidates:
+        spot = place(place_id)
+        if not spot:
+            continue
+        km = distance_km(lat, lon, spot["lat"], spot["lon"])
+        if km < best_km:
+            best, best_km = place_id, km
+    if best_km > within_km:
+        return None, best_km
+    return best, best_km
 
 
 def _pt(place_id: str) -> tuple[float, float]:
