@@ -683,6 +683,66 @@ h1,h2,h3,h4,p{margin:0}
 .cs .corridor .gauge{fill:var(--card); stroke:var(--gray-600); stroke-width:1.5}
 .cs .corridor .gauge.bind{stroke:var(--red); stroke-width:2}
 
+/* ---- the legs, in motion ----
+   The map assembles itself in the order the case reads: the reach that is
+   still navigable, then the reach that is payload-limited, then the alternate
+   the booking gets re-moded onto. Three beats rather than three lines landing
+   at once, which is the argument the caption underneath is making.
+
+   The draw rides the reveal the card already has (.rv -> .in), so nothing new
+   watches the scroll position. The two solid legs carry pathLength="1", so
+   every length below is a fraction of the line and the geometry can be
+   re-traced (tools/build_rhine_map.py) without the timings drifting with it.
+   The dashed leg deliberately has no pathLength: it would rescale the 5 4
+   pattern that is half of what tells that leg from the other two. */
+.cs .corridor .leg-ok,
+.cs .corridor .leg-alt{stroke-dasharray:1; transition:stroke-dashoffset 1.15s ease .15s}
+/* Negative, and that is the whole trick: this reach is traced from
+   Duisburg-Ruhrort down to Rotterdam, and a negative offset uncovers a line
+   from its far end - so it grows the way the barge sails, up from the sea. */
+.cs .corridor .leg-ok{stroke-dashoffset:-1}
+/* The alternate is the answer, so it draws last, and from Rotterdam, which is
+   the direction its own geometry already runs. */
+.cs .corridor .leg-alt{stroke-dashoffset:1; transition-duration:1.5s; transition-delay:.8s}
+/* Dashed, so it cannot be wiped on - a wipe wants the dash pattern for itself.
+   It arrives instead, in the beat between the two draws. */
+.cs .corridor .leg-sus{opacity:0; transition:opacity .55s var(--ease) .45s}
+.cs.in .corridor .leg-ok,
+.cs.in .corridor .leg-alt{stroke-dashoffset:0}
+.cs.in .corridor .leg-sus{opacity:1}
+
+/* The flow pulse: the alternate's line traced a second time, carrying one
+   short dash that runs Rotterdam to Basel on a loop. It is the only thing on
+   the map that keeps moving, and that is the point - above Duisburg-Ruhrort
+   the river is payload-limited, and the rail and road leg is what still moves
+   the box. It sits on top of the line it traces, wider and translucent, so
+   what travels reads as a swell in the leg rather than an object on the map.
+   .055 is the length of the pulse as a fraction of that leg. */
+.cs .corridor .leg-flow{stroke:var(--blue); stroke-width:7; fill:none;
+                        stroke-linecap:round; opacity:0;
+                        stroke-dasharray:.055 .945; stroke-dashoffset:1}
+.cs.in .corridor .leg-flow{animation:leg-flow 4.4s linear 2.5s infinite}
+/* It arrives at Basel and rests there before the next one leaves. A dash that
+   never stops reads as a barber's pole rather than a consignment. */
+@keyframes leg-flow{
+  0%  {stroke-dashoffset:1;    opacity:0}
+  7%  {opacity:.42}
+  56% {stroke-dashoffset:.055; opacity:.42}
+  66%,100%{stroke-dashoffset:.055; opacity:0}
+}
+
+/* Asked for no motion, the map is its finished self: three legs drawn, and
+   nothing travelling. The end state is the information; the order is only how
+   to read it. Set without .in as well, so a page whose reveal never ran still
+   shows the routes. */
+@media (prefers-reduced-motion:reduce){
+  .cs .corridor .leg-ok,
+  .cs .corridor .leg-alt{stroke-dasharray:none; stroke-dashoffset:0; transition:none}
+  .cs .corridor .leg-sus{opacity:1; transition:none}
+  .cs .corridor .leg-flow{display:none}
+  .cs.in .corridor .leg-flow{animation:none}
+}
+
 .cs .legend{margin-top:14px; display:flex; flex-wrap:wrap; gap:8px 18px}
 .cs .legend span{display:inline-flex; align-items:center; gap:7px; font-size:12px;
                  line-height:16px; color:var(--muted)}
@@ -863,11 +923,22 @@ h1,h2,h3,h4,p{margin:0}
                     border-color .18s var(--ease)}
 .wv-chip.tapped{background:var(--fg); border-color:var(--fg); color:#fff}
 
-/* The three cards are stretched to the tallest by the grid, so the window
-   is stretched to the card and all three line up - no magic height, and it
-   still holds when the copy rewraps at a narrower width. */
+/* The grid stretches all three cards to the tallest, and the window takes
+   whatever the caption beneath it leaves. That lines the windows up only while
+   the three captions are the same height - which they are not. They rewrap
+   independently, so across the three-column range the counts run 3/3/4, then
+   3/4/4, then 4/4/5, and each mismatched line drags one window 24px off its
+   neighbours.
+
+   So the caption gets a fixed slot and the window gets the rest. Five lines is
+   the measured worst case anywhere the cards sit side by side (at 900px, where
+   the column is narrowest before they stack), so a caption that fits five lines
+   leaves every window identical. Keep them inside that budget: a sixth line
+   pushes one window up again. The px value is a fallback for the lh below it,
+   which is the same number said properly - five lines of this element's text. */
 .wv-card .art-b{display:flex; flex-direction:column}
 .wv-card .wv{display:flex; flex-direction:column; flex:1}
+.wv-card .src{min-height:120px; min-height:5lh}
 .wv-b{flex:1; padding:9px; min-height:196px; font-size:11px; line-height:15px}
 .wv-s{opacity:0; transform:translateY(4px);
       transition:opacity .3s var(--ease), transform .3s var(--ease)}
@@ -1047,6 +1118,8 @@ h1,h2,h3,h4,p{margin:0}
   .h32{font-size:26px; line-height:32px; letter-spacing:-1px}
   .copy18{font-size:16px; line-height:25px}
   .g2,.g3,.g4{grid-template-columns:1fr}
+  /* One per row: nothing to align against, so the reserved slot is only padding. */
+  .wv-card .src{min-height:0}
   /* Two 38px figures side by side do not fit a phone. Stacked, the border
      between them has to move from the left edge to the top or the tinted
      panel loses its boundary. */
@@ -1264,10 +1337,15 @@ h1,h2,h3,h4,p{margin:0}
       <path d="M12 6.9V12l3.6 2.1"/>
     </symbol>
 
-    <!-- DW: a broadcast carried outward -->
-    <symbol id="mk-wave" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="8.6"/>
-      <path d="M6.4 12.6q1.85-3.7 3.7 0t3.7 0 3.7 0"/>
+    <!-- DW: Germany's service to the rest of the world - an uplink dish.
+         It used to be a wave inside a circle, which at 19px was the same dark
+         disc as tagesschau's clock two names along. A silhouette has to do the
+         work at this size; the detail inside it is never seen. -->
+    <symbol id="mk-dish" viewBox="0 0 24 24">
+      <path d="M4.1 19.6 14.4 9.3"/>
+      <path d="M3.2 12.6a9.1 9.1 0 0 0 8.2 8.2c1-.1 1.4-.9.7-1.7l-7.2-7.2c-.8-.7-1.6-.3-1.7.7Z"/>
+      <circle cx="16.9" cy="6.8" r="2.5"/>
+      <path d="M19.4 2.6a6.2 6.2 0 0 1 2 2"/>
     </symbol>
 
     <!-- NOS: a signal going out -->
@@ -1324,7 +1402,7 @@ h1,h2,h3,h4,p{margin:0}
         <span class="src"><svg class="mk"><use href="#mk-globe"/></svg>GDELT DOC 2.0</span>
         <span class="src"><svg class="mk"><use href="#mk-tower"/></svg>NDR Hamburg <span class="lg">de</span></span>
         <span class="src"><svg class="mk"><use href="#mk-clock"/></svg>tagesschau <span class="lg">de</span></span>
-        <span class="src"><svg class="mk"><use href="#mk-wave"/></svg>DW <span class="lg">de</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-dish"/></svg>DW <span class="lg">de</span></span>
         <span class="src"><svg class="mk"><use href="#mk-signal"/></svg>NOS Nieuws <span class="lg">nl</span></span>
         <span class="src"><svg class="mk"><use href="#mk-paper"/></svg>Le Monde <span class="lg">fr</span></span>
         <span class="src"><svg class="mk"><use href="#mk-hex"/></svg>France Info <span class="lg">fr</span></span>
@@ -1742,10 +1820,14 @@ h1,h2,h3,h4,p{margin:0}
           <path class="water" d="M117.6,37.3L119.6,37.7L122.1,40.6L123.7,40.6L126.7,43.8L128.3,47.6L126.2,49.6L125.7,52.5L128.7,58.0L130.4,57.6L131.1,66.1L127.8,68.1L127.8,69.6L129.0,69.5L128.7,70.9L126.7,71.9L125.2,71.4L120.7,74.3M124.3,79.0L118.7,72.5L108.7,75.0L102.4,72.5L97.3,74.0M97.3,74.0L94.4,73.0L91.3,73.7L88.6,71.6L72.3,77.9L65.7,76.7L59.3,78.0L55.3,76.7L49.9,72.4M158.5,310.2L156.0,310.8L154.5,313.3L152.8,313.6L149.8,310.0L146.4,309.2L146.4,305.8L140.6,301.7L138.2,292.8L133.0,287.0L135.1,283.5L133.2,279.2L123.8,272.2L119.8,272.4L119.0,270.9L120.9,270.2L123.2,266.3L128.3,264.9L127.7,262.0L126.3,261.2L126.6,258.7L125.2,257.5L124.2,251.7L126.3,246.4L130.9,241.8L130.6,234.9L129.0,230.0L136.4,224.2L136.6,217.4L139.2,213.0L138.6,212.0L142.7,208.6L146.6,208.3L147.3,205.7L149.8,204.4L150.3,202.1L154.0,203.7L155.9,203.7L155.6,200.9L157.7,202.2L157.7,198.4L159.1,199.6L160.3,197.0L163.8,196.1L161.4,193.4L161.9,192.8L164.2,193.3L165.4,192.4L166.3,194.2L166.1,188.4L168.3,190.0L165.9,185.3L168.8,186.5L168.8,185.3L170.6,184.9L170.4,182.4L168.4,183.2L168.1,182.0L175.4,180.4L176.3,178.6L178.8,177.5L179.3,173.0L181.9,172.3L183.4,169.3L184.9,169.7M300.7,191.9L295.8,189.4L291.3,190.6L287.7,188.2L285.7,189.0L283.7,191.9L284.2,197.1L283.2,198.6L285.3,200.0L283.5,200.0L285.1,203.2L283.0,204.2L283.1,206.8L281.6,209.9L282.7,210.7L281.4,211.4L278.9,210.9L274.8,204.7L272.1,202.6L269.7,195.6L268.2,194.5L265.6,189.2L263.5,189.1L261.0,190.8L260.0,193.3L261.7,199.1L260.8,202.4L261.9,203.6L259.9,204.7L257.3,203.7L251.5,204.4L248.0,209.1L245.6,206.8L245.3,204.0L243.8,202.7L244.5,198.3L242.6,194.3L243.9,193.0L241.1,192.4L239.5,188.8L237.8,188.5L238.1,186.9L234.2,183.6L230.1,183.2L229.3,184.7L221.1,185.7L216.2,191.1L211.2,191.9M111.2,145.5L110.8,138.5L114.0,134.0L112.4,134.0L114.5,130.2L114.3,128.1L115.3,127.9L115.6,125.8L117.1,125.4L116.4,123.8L117.7,122.6L119.2,121.3L121.0,121.6L120.5,120.1L122.3,119.6L123.4,115.6L126.9,113.1L129.3,109.4L130.0,101.2L125.1,97.5L121.5,89.0L118.8,88.0L117.8,86.2L113.8,86.0L109.3,82.3L103.9,81.7L100.0,82.7L96.8,86.9L77.9,88.9M53.0,90.6L56.9,92.8L60.5,91.3L61.7,89.2L67.1,90.0L74.6,88.2L78.1,89.0M73.4,205.4L73.1,205.4M107.9,311.0L105.3,310.8L105.0,309.5L106.7,299.6L109.0,295.0L110.0,294.8L110.9,284.1L112.7,280.0L110.5,277.9L111.7,272.5L111.1,271.8L112.5,270.3L111.1,268.5L109.0,269.0L109.8,267.2L104.5,260.9L105.8,259.5L103.7,259.1L105.1,256.7L103.9,255.4L104.1,253.1L100.5,249.2L100.4,243.3L98.4,240.4L98.9,238.2L96.3,237.8L97.6,236.1L94.7,231.6L91.9,229.9L92.2,222.7L91.0,219.0L87.3,217.7L88.3,215.1L82.3,210.3L81.0,207.0L80.5,209.5L77.2,209.7L75.9,206.5L72.1,205.4L74.4,205.4L74.9,201.2L76.3,200.9L74.2,198.0L73.5,198.4L72.1,195.1L71.5,195.8L70.2,194.7L71.8,192.4L73.6,192.1L74.7,185.7L76.1,184.4L77.5,185.4L77.0,183.6L78.7,182.2L78.1,178.7L79.7,179.3L81.8,176.7L81.0,173.0L79.2,170.5L80.4,167.0L80.0,163.6L83.0,162.3L84.6,163.1L86.2,161.6L94.9,159.0L96.6,159.6L100.5,156.4L106.2,154.9L111.1,148.7L111.2,145.5"/>
 
           <!-- the alternate first, so the river draws over it -->
-          <path class="leg-alt" d="M51.5,74.8L131.8,85.0L145.6,107.6L151.9,137.9L158.5,152.7L177.4,174.4L176.4,180.9L184.4,191.2L193.9,201.4L203.6,196.6L209.7,223.2L208.1,231.3L207.0,249.2L201.7,279.1L191.3,310.5L184.2,337.4"/>
+          <path class="leg-alt" pathLength="1" d="M51.5,74.8L131.8,85.0L145.6,107.6L151.9,137.9L158.5,152.7L177.4,174.4L176.4,180.9L184.4,191.2L193.9,201.4L203.6,196.6L209.7,223.2L208.1,231.3L207.0,249.2L201.7,279.1L191.3,310.5L184.2,337.4"/>
+          <!-- the same line once more, carrying the flow pulse. It is inert
+               anywhere the page does not style it: stroke="none" is a presentation
+               attribute, which any stylesheet rule outranks. -->
+          <path class="leg-flow" pathLength="1" fill="none" stroke="none" d="M51.5,74.8L131.8,85.0L145.6,107.6L151.9,137.9L158.5,152.7L177.4,174.4L176.4,180.9L184.4,191.2L193.9,201.4L203.6,196.6L209.7,223.2L208.1,231.3L207.0,249.2L201.7,279.1L191.3,310.5L184.2,337.4"/>
 
           <!-- the barge route is the river itself, drawn in its two reaches -->
-          <path class="leg-ok"  d="M150.5,104.7L150.7,103.5L149.4,102.9L150.7,101.3L149.0,98.8L149.5,97.8L145.8,97.1L146.2,93.3L145.6,92.2L142.0,91.6L139.0,88.5L138.7,86.5L136.2,85.8L133.8,82.5L126.3,80.5L123.6,78.7L122.1,80.3L120.4,79.2L117.7,80.7L112.3,78.1L105.5,77.7L102.4,78.3L99.0,82.7L97.6,83.2L96.3,82.0L91.6,82.8L88.1,82.0L84.1,82.3M84.1,82.3L81.1,82.0L79.6,83.3L76.5,83.6L72.1,88.6M61.7,89.2L58.6,88.0L49.1,81.1"/>
+          <path class="leg-ok"  pathLength="1" d="M150.5,104.7L150.7,103.5L149.4,102.9L150.7,101.3L149.0,98.8L149.5,97.8L145.8,97.1L146.2,93.3L145.6,92.2L142.0,91.6L139.0,88.5L138.7,86.5L136.2,85.8L133.8,82.5L126.3,80.5L123.6,78.7L122.1,80.3L120.4,79.2L117.7,80.7L112.3,78.1L105.5,77.7L102.4,78.3L99.0,82.7L97.6,83.2L96.3,82.0L91.6,82.8L88.1,82.0L84.1,82.3M84.1,82.3L81.1,82.0L79.6,83.3L76.5,83.6L72.1,88.6M61.7,89.2L58.6,88.0L49.1,81.1"/>
           <path class="leg-sus" d="M208.8,253.3L206.9,254.7L203.5,262.8L201.5,263.8L200.6,265.5L198.8,265.8L198.4,267.9L194.3,271.7L192.7,274.3L192.8,280.0L191.4,281.3L189.9,286.8L190.4,290.7L188.5,292.5L187.9,296.0L184.0,303.3L183.7,307.9L185.3,310.9L185.4,312.8L184.0,314.7L183.0,318.1L183.1,320.7L181.7,324.1L182.2,327.1L181.2,328.6L181.4,330.5L184.2,334.5L184.2,337.0M208.8,253.3L213.7,244.7L214.9,237.4L218.5,233.5L218.6,232.8L217.7,232.4L219.1,228.8L219.4,225.5L217.0,224.2L217.8,223.0L213.9,211.5L214.6,208.8L216.9,207.8L218.3,205.4L216.3,205.4L213.1,198.0L213.7,195.9L212.9,193.9L208.8,189.2L206.7,188.7L201.9,190.4L198.5,192.5L195.3,193.1L194.2,190.8L191.0,187.6L189.3,184.1L189.2,182.0L186.6,180.8L183.8,176.5L186.5,175.8L184.3,172.6L185.1,168.5L183.9,166.9L179.3,166.0L176.4,164.6L174.3,162.3L171.9,157.5L169.7,155.8L168.3,149.6L160.6,141.2L163.5,138.2L160.6,137.1L160.1,135.1L161.1,133.3L160.1,132.0L160.3,130.2L157.5,127.5L155.9,127.1L156.9,124.8L155.7,124.0L155.6,122.1L153.9,122.6L153.6,120.6L151.4,120.5L150.9,118.0L152.7,117.4L150.1,115.4L151.2,112.1L148.2,110.1L151.4,108.2L150.5,104.7"/>
 
           <circle class="node"  cx="51.5" cy="74.8" r="4.5"/>
@@ -2359,9 +2441,9 @@ firm revised ETA as soon as terminals restart.</p>
                       stroke-linejoin="round"/></svg></span>
             </div>
           </div>
-          <p class="src" style="margin-top:12px">No TMS is contacted at any point: no client,
-            no credential, no endpoint. Approving does not change that — the write-back stays a
-            described change, because there is nothing in the codebase to write it with.</p>
+          <p class="src" style="margin-top:12px">No TMS is contacted: no client, no credential,
+            no endpoint. Approving does not change that — there is nothing here to write it
+            with.</p>
         </div>
       </div>
     </div>

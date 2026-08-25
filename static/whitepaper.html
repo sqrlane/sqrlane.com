@@ -38,6 +38,13 @@
   --amber:#aa4d00;  --amber-100:#fff6de; --amber-400:#ffdc73;
   --red:#ea001d;    --red-100:#ffeeef;  --red-400:#ffd7d6;
 
+  /* Callout-label steps. Their own tokens, not --blue/--amber/--red, for the
+     same reason the dashboard's chart series have their own: those three are
+     picked for text contrast one at a time, and nothing about that makes them
+     separable *from each other*. Validated as a set against the #ffffff card.
+     Chips, tags and the corridor plate keep the originals. */
+  --lab-note:#006bff; --lab-caution:#ba5702; --lab-hard:#873041;
+
   --r-sm:6px; --r-md:12px; --r-lg:16px;
   --shadow-card:0 2px 2px rgba(0,0,0,.04);
   --ease:cubic-bezier(.175,.885,.32,1.1);
@@ -201,11 +208,23 @@ td.n{font-family:"Geist Mono",ui-monospace,monospace; font-variant-numeric:tabul
    3px coloured rule with the left corners squared off, which made the four
    quietest, most careful paragraphs in the document the loudest objects on it.
 
-   The three levels are still distinguishable, because the colour moved to the
-   label rather than being dropped: --blue / --amber / --red are the palette's
-   text-contrast steps, so they separate far better at 11px than the 400-steps
-   would as a 1px border. And the label already names the level in words, so
-   colour was never carrying it alone. */
+   The three levels read from the label's colour, which is why the labels use
+   --lab-* rather than --blue/--amber/--red. That earlier trio was asserted to
+   separate well and did not: run as a set, --amber against --red scored ΔE 2.2
+   under protanopia and - the real problem - 13.6 to *normal* vision, under a
+   floor of 15. Below that, full-colour readers cannot reliably tell the pair
+   apart either, so "the label also names the level" does not excuse it.
+
+   The steps now are blue #006bff, burnt orange #ba5702, claret #873041: ΔE 16.0
+   protan and 16.1 normal, with every label at or above 4.72:1 on the card. Both
+   stay in their conventional family - amber-ish warns, red-ish stops - which is
+   what makes this the chosen set. Rotating "hard" into magenta scores higher
+   still (ΔE ~21), and was rejected: red means stop.
+
+   The three constraints pull against each other, so re-derive rather than
+   nudge. Darkening the orange for more text contrast costs CVD separation
+   fast: at a 5.2:1 floor the best available set drops to ΔE 12.3. 4.72:1 is
+   the knee. Check any change with the palette validator, as a set, on white. */
 /* ---- the corridor plate ----
    The paper's first figure. Map beside caption at full width, stacked once the
    column narrows; the map keeps its own width rather than stretching, because
@@ -252,9 +271,9 @@ td.n{font-family:"Geist Mono",ui-monospace,monospace; font-variant-numeric:tabul
 
 .note{border:1px solid var(--border); background:var(--card); box-shadow:var(--shadow-card);
       border-radius:var(--r-md); padding:16px 20px; margin:24px 0}
-.note .lab{margin-bottom:8px; color:var(--blue)}
-.note.caution .lab{color:var(--amber)}
-.note.hard .lab{color:var(--red)}
+.note .lab{margin-bottom:8px; color:var(--lab-note)}
+.note.caution .lab{color:var(--lab-caution)}
+.note.hard .lab{color:var(--lab-hard)}
 .note p{margin:0 0 10px; font-size:15px; line-height:23px; color:var(--muted)}
 .note p:last-child{margin:0}
 .note b,.note strong{color:var(--fg); font-weight:500}
