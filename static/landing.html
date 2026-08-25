@@ -781,6 +781,41 @@ h1,h2,h3,h4,p{margin:0}
 .cs-tl li.call .t{color:var(--fg)}
 .cs-tl li.now::before{background:var(--red); box-shadow:0 0 0 3px var(--red-100)}
 
+/* ---- the reading line ----
+   The escalation is a sequence, and a scrolled page has a natural playhead:
+   whichever entry is sitting at the reader's eye line. That entry lights, and
+   it hands over to the next one as the card travels up the screen, so the
+   fifteen days advance at the speed the reader moves rather than on a timer
+   of ours.
+
+   The highlight only ever ADDS emphasis. The resting state below is exactly
+   what the card looked like before, so an entry that the line has not reached
+   is never harder to read than it was - which matters, because someone can
+   stop scrolling anywhere and read whatever is in front of them. */
+.cs-tl li::before{transition:background .32s var(--ease), box-shadow .32s var(--ease),
+                  transform .32s var(--ease)}
+.cs-tl .d,.cs-tl .t{transition:color .32s var(--ease)}
+.cs-tl li.on::before{background:var(--fg); box-shadow:0 0 0 3px var(--gray-200)}
+.cs-tl li.on .d{color:var(--muted)}
+.cs-tl li.on .t{color:var(--fg)}
+/* The call and the day the page stands in are marked whether the line has
+   reached them or not, so when it does they answer in their own colour and
+   with a wider ring than an ordinary entry gets. They stay the two strongest
+   points on the card at every moment of the scroll - the travelling highlight
+   is a playhead, not a promotion. */
+.cs-tl li.call.on::before{background:var(--blue); box-shadow:0 0 0 5px var(--blue-100);
+                          transform:scale(1.15)}
+.cs-tl li.now.on::before {background:var(--red);  box-shadow:0 0 0 5px var(--red-100);
+                          transform:scale(1.15)}
+.cs-tl li.now.on .t{color:var(--fg)}
+
+/* Asked for no motion, the card is what it was: the two marked entries, and
+   nothing following the scroll. The script bails out on the same query, so
+   .on is never set either. */
+@media (prefers-reduced-motion:reduce){
+  .cs-tl li::before,.cs-tl .d,.cs-tl .t{transition:none}
+}
+
 /* 03 - the verdict */
 .cs-odds{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
 .cs-odds .o{padding:12px 6px; border-radius:var(--r-sm); text-align:center}
@@ -2671,6 +2706,52 @@ firm revised ETA as soon as terminals restart.</p>
     });
   }, { rootMargin: "0px 0px -8% 0px", threshold: 0.05 });
   items.forEach(function (el) { io.observe(el); });
+})();
+
+/* The escalation timeline follows the scroll. Whichever entry is sitting at
+   the reading line - a little above the middle of the screen - is the one lit,
+   and it hands over as the card moves up, so each of the fifteen days is
+   highlighted in turn at the reader's own pace.
+
+   Three things this deliberately does not do: it does not dim anything (the
+   resting state is the card as it was, so an entry can be read whether or not
+   the line has reached it), it does not run on a timer, and it does not run at
+   all for a reader who has asked for reduced motion. It is also cheap: the
+   handler is passive and only measures inside a frame it asked for, and only
+   while the list is on screen. */
+(function () {
+  var ul = document.querySelector(".cs-tl");
+  if (!ul || !("IntersectionObserver" in window)) return;
+  if (window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  var items = Array.prototype.slice.call(ul.children);
+  if (!items.length) return;
+  var live = false, queued = false, cur = -1;
+
+  function mark() {
+    queued = false;
+    if (!live) return;
+    var line = window.innerHeight * 0.45, at = -1;
+    /* the last entry the line has passed the top of - so exactly one is lit
+       once the card is reached, including in the gaps between entries. */
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].getBoundingClientRect().top <= line) at = i;
+    }
+    if (at === cur) return;
+    if (cur > -1) items[cur].classList.remove("on");
+    cur = at;
+    if (cur > -1) items[cur].classList.add("on");
+  }
+  function queue() { if (!queued) { queued = true; requestAnimationFrame(mark); } }
+
+  new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) { live = e.isIntersecting; });
+    queue();
+  }, { threshold: 0 }).observe(ul);
+
+  window.addEventListener("scroll", queue, { passive: true });
+  window.addEventListener("resize", queue);
 })();
 
 /* The Rhine gauges - the one thing on this page that is actually read rather
