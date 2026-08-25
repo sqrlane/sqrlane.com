@@ -1,7 +1,15 @@
 """orchestrator.py - component 4: the loop that ties the other three together.
 
-    trigger -> refresh risk -> advise every shipment -> draft for the actioned
-            -> one result object the dashboard can render
+    trigger -> read the book from the TMS -> refresh risk -> advise every
+            booking -> draft for the actioned -> queue the write-back into the
+            TMS -> one result object the dashboard can render
+
+The loop starts and ends in the same place, and that is the point. Lanewatch
+does not hold a book of its own: the bookings come out of the forwarder's TMS
+through src/tms.py, and every action the Workers take on them - the routing
+change, the hold, the risk exception, the drafted emails - is queued straight
+back into it for a person to approve. Nothing the agents do is done beside the
+system of record.
 
 No agent framework. This is plain functions calling functions over shared JSON
 state, because that is genuinely all it needs to be, and because hiding this
@@ -36,11 +44,14 @@ STATE_FOR_DECISION = {"reroute": "rerouted", "hold": "hold", "no-action": "green
 # nothing here is illustrative.
 WORKERS = [
     {"id": "risk", "name": "Risk Worker",
-     "role": "Reads global news in several languages and tags what threatens a lane"},
+     "role": "Reads global news in several languages, tags what threatens a lane, "
+             "and flags the exception on the booking it threatens"},
     {"id": "routing", "name": "Routing Worker",
-     "role": "Weighs schedule slack against added transit and expected delay, then decides"},
+     "role": "Weighs schedule slack against added transit and expected delay, then "
+             "writes the booking change the call implies"},
     {"id": "comms", "name": "Comms Worker",
-     "role": "Drafts the carrier and customer emails. Sends nothing"},
+     "role": "Drafts the carrier and customer emails and files them against the "
+             "booking. Sends nothing"},
 ]
 
 
@@ -62,6 +73,10 @@ def _shipment_card(shipment: dict, routes: dict) -> dict:
     primary = routes.get(shipment["primary_route"], {})
     return {
         "id": shipment["id"],
+        # Where this record lives. The board is a view of the TMS's bookings, not
+        # a book of its own, and every card is allowed to say so.
+        "source_system": shipment.get("source_system"),
+        "record_status": shipment.get("record_status"),
         "cargo": shipment["cargo"],
         "cargo_detail": shipment.get("cargo_detail"),
         "origin": shipment["origin"],
@@ -87,7 +102,9 @@ def initial_state() -> dict:
     on load so the audience sees five calm green cards before anything happens.
     """
     routes = route_advisor.load_routes()
-    shipments = route_advisor.load_shipments()
+    # The board is the TMS's book. Even before the button is pressed, these
+    # records came in through the connector rather than out of this app.
+    shipments = tms.read_bookings()
     cards = [dict(_shipment_card(s, routes), state="green", decision=None, drafts=[])
              for s in shipments]
     return {
@@ -100,6 +117,9 @@ def initial_state() -> dict:
                       for sc in risk_monitor.load_scenarios()],
         "risk": {"events": [], "sources": [], "stats": {}},
         "shipments": cards,
+        # The link is up before anything happens: the bookings are synced and
+        # nothing is queued, because nothing has been decided yet.
+        "tms": tms.connection(cards),
         # The calm board on a map, with no risk on it yet - so the map is there
         # before the button is pressed rather than appearing with the disruption.
         "map": geo.build(cards, [], routes),
@@ -114,6 +134,12 @@ def run_cycle(*, live=True, inject=True, use_llm=True, verbose=False,
     started = time.monotonic()
     notes = []
     routes = route_advisor.load_routes()
+    # --- 0. Read the book out of the TMS ---------------------------------
+    # Every stage below works on these records, and everything it decides goes
+    # back to the same place at the end. The connector is the demo one, so this
+    # read is a JSON load - but it is the only door in, so the shape of the
+    # integration is real even where the system behind it is not.
+    bookings = tms.read_bookings()
     workers = {w["id"]: dict(w, mode="live", status="idle", summary="", detail=[], seconds=None)
                for w in WORKERS}
 
@@ -202,7 +228,7 @@ def run_cycle(*, live=True, inject=True, use_llm=True, verbose=False,
         drafts_by_shipment.setdefault(draft["shipment_id"], []).append(draft)
 
     # --- 4. Assemble one object ------------------------------------------
-    shipments = {s["id"]: s for s in route_advisor.load_shipments()}
+    shipments = {s["id"]: s for s in bookings}
     cards = []
     for decision in decisions:
         shipment = shipments[decision["shipment_id"]]
@@ -224,6 +250,20 @@ def run_cycle(*, live=True, inject=True, use_llm=True, verbose=False,
         card["roster"] = roster.build(shipment, card["decision"],
                                       (active_scenario or {}).get("id"), cards, active_scenario)
 
+    # --- 5. Queue the work back into the TMS ------------------------------
+    # Nothing here is a new decision: it is the same three Workers' output
+    # expressed as changes to the records they came from. Every one is queued
+    # behind a person - see tms.py.
+    link = tms.connection(cards)
+    queued = link["queued_by_agent"]
+    for worker_id, agent in (("risk", "Risk Worker"), ("routing", "Routing Worker"),
+                             ("comms", "Comms Worker")):
+        count = queued.get(agent, 0)
+        workers[worker_id]["tms_queued"] = count
+        workers[worker_id]["detail"].append(
+            f"{count} write-back{'' if count == 1 else 's'} queued to the TMS"
+            if count else "no TMS write-back needed")
+
     tally = {d: sum(1 for c in cards if c["decision"]["decision"] == d)
              for d in route_advisor.DECISIONS}
 
@@ -234,9 +274,16 @@ def run_cycle(*, live=True, inject=True, use_llm=True, verbose=False,
         "ran_at": _now_iso(),
         "state": "complete",
         "duration_seconds": round(time.monotonic() - started, 1),
-        "workers": [workers[w["id"]] for w in WORKERS] +
-                   [dict(w, status="ready", summary="scripted — replays authored data",
-                         detail=[], seconds=None) for w in roster.ROSTER],
+        "workers": [workers[w["id"]] for w in WORKERS] + [
+            # The link is the one roster entry that reports the run rather than a
+            # script: those counts are the bookings it read and the changes this
+            # cycle queued back against them.
+            dict(w, status="ready", detail=[], seconds=None,
+                 summary=(f"{link['bookings_read']} bookings in · "
+                          f"{link['queued']} changes queued back"
+                          if w["id"] == "tms" else
+                          "scripted — replays authored data"))
+            for w in roster.ROSTER],
         "scenario": active_scenario,
         "scenarios": [{k: sc[k] for k in ("id", "name", "kind", "summary",
                                           "decision_type", "expected")}
@@ -254,9 +301,9 @@ def run_cycle(*, live=True, inject=True, use_llm=True, verbose=False,
         },
         "risk": risk,
         "shipments": cards,
-        # The demo TMS connection, board-wide: what synced, and the booking
-        # changes each decision implies. Every one stays queued - see tms.py.
-        "tms": tms.connection(cards),
+        # The system of record, board-wide: what came in, and every change the
+        # run puts back against it. All of it queued - see tms.py.
+        "tms": link,
         # The board on a map: lanes drawn through what they actually transit,
         # and which chokepoints are carrying risk right now. Derived, not authored.
         "map": geo.build(cards, risk["events"], routes),
@@ -295,7 +342,14 @@ def main():
               f"{card['decision']['headline'][:44]}")
     summary = result["summary"]
     print(f"\n  {summary['reroute']} reroute   {summary['hold']} hold   "
-          f"{summary['no-action']} no-action   {summary['drafts']} drafts (none sent)\n")
+          f"{summary['no-action']} no-action   {summary['drafts']} drafts (none sent)")
+    link = result["tms"]
+    print(f"\n  {link['connector']} [{link['status']}]: "
+          f"{link['bookings_read']} bookings read in, {link['queued']} write-backs "
+          f"queued across {link['bookings_affected']} of them (none written)")
+    for agent, count in link["queued_by_agent"].items():
+        print(f"    {agent:<16} {count}")
+    print()
     return 0
 
 

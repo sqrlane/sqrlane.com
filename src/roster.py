@@ -10,6 +10,12 @@ scenario that is active and the shipment that is selected, so switching either
 visibly changes what they show. What is authored is the *content* - rate cards,
 milestones, document fields, canned answers - not the shape of the response.
 
+They all work on the same records as the live three: the booking each one shows
+came out of the TMS through src/tms.py, and anything a Worker would change on it
+- a booking amendment, an invoice query, an entry, a routing change - is a
+change to that record, held for a person. The TMS Link panel is where those
+changes are listed; the others are the desk functions that produce them.
+
 The honesty rule this file exists to keep: never present one of these as doing
 live AI reasoning. `mode` is "scripted" on all four, and the dashboard renders
 that tag from this data rather than hard-coding it.
@@ -23,7 +29,7 @@ ROSTER = [
     {"id": "rate", "name": "Rate Worker", "mode": "scripted",
      "role": "Quote and rate lookups across the carriers on a lane"},
     {"id": "milestones", "name": "Milestones Worker", "mode": "scripted",
-     "role": "Milestones and position for a booking"},
+     "role": "Milestones and position, against the TMS booking"},
     {"id": "docs", "name": "Docs Worker", "mode": "scripted",
      "role": "Field extraction from bills of lading and invoices"},
     {"id": "inbox", "name": "Inbox Worker", "mode": "scripted",
@@ -31,13 +37,18 @@ ROSTER = [
     {"id": "rfq", "name": "RFQ Worker", "mode": "scripted",
      "role": "Reads an inbound rate request and drafts the quote back"},
     {"id": "booking", "name": "Booking Worker", "mode": "scripted",
-     "role": "Holds the carrier booking, and the amendment a decision requires"},
+     "role": "Holds the carrier booking on the TMS record, and the amendment a "
+             "decision requires"},
     {"id": "invoice", "name": "Invoice Worker", "mode": "scripted",
      "role": "Reconciles the carrier invoice against the rate that was agreed"},
     {"id": "customs", "name": "Customs Worker", "mode": "scripted",
      "role": "Checks the entry for the discharge country, and escalates what needs a person"},
-    {"id": "tms", "name": "TMS Link", "mode": "scripted",
-     "role": "Booking sync, and the write-back a decision implies"},
+    # Not "scripted": nothing here is replayed. The write-backs are derived from
+    # the decisions the real advisor made this run. What makes it a demo is the
+    # far end - no TMS is contacted - so it carries its own tag rather than
+    # borrowing one that would be untrue in the other direction.
+    {"id": "tms", "name": "TMS Link", "mode": "demo",
+     "role": "The system of record: bookings in, and every Worker's action back out"},
     {"id": "assistant", "name": "Assistant", "mode": "scripted",
      "role": "Answers questions about what is on the board"},
 ]
@@ -539,16 +550,38 @@ def customs_panel(shipment, decision, scenario_id):
     }
 
 
-def tms_panel(shipment, decision, scenario_id):
-    """One booking's view of the connection. The board-wide view lives in tms.py."""
-    writeback = tms._writeback_for({"id": shipment["id"], "decision": decision})
+def tms_panel(shipment, decision, scenario_id, card=None):
+    """One booking's view of the system of record.
+
+    The board-wide view lives in tms.py; this is the same thing for the booking
+    on screen - the record it came from, and every operation this cycle queues
+    back against it, named by the Worker that produced it.
+    """
+    routes = route_advisor.load_routes()
+    booked = routes.get(shipment["primary_route"], {})
+    record = dict(card or {}, id=shipment["id"], decision=decision)
+    record.setdefault("discharge_port", booked.get("discharge_port"))
+    record.setdefault("route_id", shipment["primary_route"])
+    record.setdefault("eta", shipment.get("eta"))
+    operations = tms.writebacks_for(record)
+
     return {
-        "headline": f"Booking {shipment['id']} synced from {tms.CONNECTOR_NAME}",
+        "headline": f"Booking {shipment['id']} in {tms.CONNECTOR_NAME}",
         "connector": tms.CONNECTOR_NAME,
-        "status": "connected (demo)",
+        "status": tms.CONNECTOR_STATUS,
+        "role": "System of record",
+        "positioning": tms.POSITIONING,
+        "record": {
+            "booking_ref": shipment["id"],
+            "carrier_booking": shipment.get("booking_ref", "-"),
+            "record_status": shipment.get("record_status", "synced"),
+            "source_system": tms.CONNECTOR_NAME,
+        },
         "field_map": tms.FIELD_MAP,
-        "writeback": writeback,
-        "note": (tms.connection([])["honesty"]),
+        "agent_records": tms.AGENT_RECORDS,
+        "writebacks": operations,
+        "queued": len(operations),
+        "note": tms.HONESTY,
     }
 
 
@@ -564,6 +597,11 @@ def build(shipment, decision, scenario_id, board, scenario) -> dict:
         wid = worker["id"]
         if wid == "assistant":
             out[wid] = assistant_panel(shipment, decision, scenario_id, board, scenario)
+        elif wid == "tms" and shipment:
+            # The link needs the whole card, not just the decision: the drafted
+            # emails are filed against the booking too, and they live there.
+            card = next((c for c in (board or []) if c.get("id") == shipment["id"]), None)
+            out[wid] = tms_panel(shipment, decision, scenario_id, card)
         elif shipment:
             out[wid] = PANELS[wid](shipment, decision, scenario_id)
         else:
