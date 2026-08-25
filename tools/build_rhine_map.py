@@ -22,6 +22,9 @@ commented where it happens:
   * The corridor ends at Basel; the river does not.
   * The rail alternate is offset off the water so it can be seen, and tapered
     back to zero at the two ports it genuinely shares with the barge.
+  * The two solid legs are emitted with pathLength="1" and the alternate is
+    emitted twice, because the landing page draws them on and runs a flow
+    pulse down the alternate. Both are inert without that page's CSS.
 """
 
 import json, math, os, sys, urllib.request
@@ -267,10 +270,17 @@ svg = f'''<svg class="corridor" viewBox="0 0 {W:.0f} {H}" role="img" aria-label=
           <path class="water" d="{p['ctx']}"/>
 
           <!-- the alternate first, so the river draws over it -->
-          <path class="leg-alt" d="{p['rail']}"/>
+          <path class="leg-alt" pathLength="1" d="{p['rail']}"/>
+
+          <!-- the same line once more, carrying the flow pulse the landing page
+               runs along it. It is inert anywhere the page does not style it:
+               stroke="none" is a presentation attribute, and any stylesheet
+               rule outranks one. -->
+          <path class="leg-flow" pathLength="1" fill="none" stroke="none" d="{p['rail']}"/>
 
           <!-- the barge route is the river itself, drawn in its two reaches -->
-          <path class="leg-ok"  d="{p['nav_ok']}"/>
+          <path class="leg-ok"  pathLength="1" d="{p['nav_ok']}"/>
+          <!-- no pathLength on this one: it would rescale the dash pattern -->
           <path class="leg-sus" d="{p['nav_sus']}"/>
 
           <circle class="node"  cx="{pt['RTM'][0]:.1f}" cy="{pt['RTM'][1]:.1f}" r="4.5"/>
