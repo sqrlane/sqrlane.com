@@ -245,6 +245,27 @@ h1,h2,h3,h4,p{margin:0}
 .row .meta{font-size:11.5px; color:var(--faint); flex:none;
            font-variant-numeric:tabular-nums; display:none}
 .row .st{flex:none}
+
+/* ---- the playhead ----
+   The board is a list whose order is the point, so it is read the way the
+   escalation timeline further down the page is read: the row at the reader's
+   eye line is the one lit, and it hands over as the shot moves up the screen.
+   What that draws is the triage pass itself - the system going down the book
+   a booking at a time, which is what the orchestrator actually does on a run.
+
+   The mark is the one this mock already uses for an active item in its own
+   sidebar, a gray-100 fill: nothing invented for the occasion. The status
+   badges are left alone, because a row being read is not a row changing
+   state, and on this board colour means state.
+
+   The last two rows sit under the shot's bottom fade and light faintly or
+   not at all. That is the fade doing its job - those rows are the "the board
+   goes on below" gesture rather than something to read - and a highlight
+   that quietly runs out under it is better than one that fights it. */
+.row{transition:background .28s var(--ease)}
+.row .id,.row .meta{transition:color .28s var(--ease)}
+.row.on{background:var(--gray-100)}
+.row.on .id,.row.on .meta{color:var(--muted)}
 .st-badge{display:inline-flex; align-items:center; gap:5px; padding:2px 8px; border-radius:999px;
           font-size:11px; font-weight:500; line-height:18px}
 .st-badge i{width:5px; height:5px; border-radius:50%; background:currentColor; flex:none}
@@ -1131,6 +1152,7 @@ h1,h2,h3,h4,p{margin:0}
   html{scroll-behavior:auto}
   .rv{opacity:1; transform:none; transition:none}
   .btn:hover{transform:none}
+  .row,.row .id,.row .meta{transition:none}
 }
 
 /* ---------- responsive ---------- */
@@ -2750,16 +2772,17 @@ firm revised ETA as soon as terminals restart.</p>
   items.forEach(function (el) { io.observe(el); });
 })();
 
-/* ---------- the two blocks that follow the scroll ----------
-   The escalation timeline and the fall heatmap both put a playhead through a
-   sequence, driven by where the reader has scrolled to rather than by a timer
-   of ours. They share their plumbing and nothing else: what to measure, and
-   what to do with it, is each one's own business below.
+/* ---------- the blocks that follow the scroll ----------
+   Four of them - the board in the hero, the escalation timeline, the fall
+   heatmap and the sources band - put a playhead through a sequence, driven by
+   where the reader has scrolled to rather than by a timer of ours. They share
+   their plumbing and nothing else: what to measure, and what to do with it,
+   is each one's own business below.
 
-   Three things neither of them does. Neither dims anything - the resting state
-   of both blocks is exactly what it was before, so nothing is ever harder to
-   read for not having been reached yet. Neither runs on a clock. And neither
-   runs at all for a reader who has asked for reduced motion. */
+   Three things none of them does. None dims anything - the resting state of
+   every one of these blocks is exactly what it was before, so nothing is ever
+   harder to read for not having been reached yet. None runs on a clock. And
+   none runs at all for a reader who has asked for reduced motion. */
 (function () {
 
   /* Run update() while el is on screen and the reader is moving. The handler
@@ -2801,27 +2824,35 @@ firm revised ETA as soon as terminals restart.</p>
     return now;
   }
 
-  /* 1. The escalation timeline. Whichever entry is sitting at the reading
-     line - a little above the middle of the screen - is the one lit, and it
-     hands over as the card moves up, so each of the fifteen days is
-     highlighted in turn at the reader's own pace. */
-  (function () {
-    var ul = document.querySelector(".cs-tl");
-    if (!ul || !ul.children.length) return;
-    var items = Array.prototype.map.call(ul.children, function (li) { return [li]; });
+  /* A list read down at eye level: whichever entry the reading line - a little
+     above the middle of the screen - is sitting on is the one lit, and it
+     hands over as the block moves up. Two blocks are read this way, and both
+     are lists whose order is the point: the escalation timeline, and the
+     board in the hero. */
+  function readDown(list) {
+    if (!list || !list.children.length) return;
+    var items = Array.prototype.map.call(list.children, function (el) { return [el]; });
     var cur = -1;
-    follow(ul, function () {
+    follow(list, function () {
       var line = window.innerHeight * 0.45, at = -1;
       /* the last entry the line has passed the top of - so exactly one is lit
-         once the card is reached, including in the gaps between entries. */
+         once the block is reached, including in the gaps between entries. */
       for (var i = 0; i < items.length; i++) {
         if (items[i][0].getBoundingClientRect().top <= line) at = i;
       }
       cur = light(items, cur, at);
     });
-  })();
+  }
 
-  /* 2. The fall heatmap. Same playhead, turned on its side: the sequence here
+  /* 1. The escalation timeline: each of the fifteen days in turn, at the
+     reader's own pace. */
+  readDown(document.querySelector(".cs-tl"));
+
+  /* 2. The board in the hero: each booking in turn, which is the triage pass
+     the orchestrator makes on a run - down the book, one at a time. */
+  readDown(document.querySelector(".shot .rows"));
+
+  /* 3. The fall heatmap. The same playhead, turned on its side: the sequence here
      runs across the grid, so the block's travel up the screen sweeps one
      day-column at a time - all three gauges for that day together. The
      columns are read out of the DOM rather than hard-coded, so adding a day
@@ -2855,8 +2886,8 @@ firm revised ETA as soon as terminals restart.</p>
     });
   })();
 
-  /* 3. The sources band, where the band's own motion changes the shape of the
-     thing. The other two sequences stand still, so the scroll can pick an
+  /* 4. The sources band, where the band's own motion changes the shape of the
+     thing. The other three sequences stand still, so the scroll can pick an
      index into them. This one is sliding, and an index into a sliding list
      would spend a third of its time pointing at a source that is off screen.
 
@@ -2865,7 +2896,7 @@ firm revised ETA as soon as terminals restart.</p>
      always one the reader can see, and each is lit in turn twice over: as the
      reader scrolls the line across the band, and as the band carries the next
      source into it. That second half is why this block re-reads every frame
-     while it is on screen; the other two only move when the reader does.
+     while it is on screen; the others only move when the reader does.
 
      Asking the page what is at a point, rather than working it out from the
      track's offset, is what keeps this short: the band is transformed, cloned
