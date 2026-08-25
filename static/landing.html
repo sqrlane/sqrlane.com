@@ -296,9 +296,20 @@ h1,h2,h3,h4,p{margin:0}
 .strip .src .mk{width:19px; height:19px; flex:none; color:var(--faint);
                 fill:none; stroke:currentColor; stroke-width:1.7;
                 stroke-linecap:round; stroke-linejoin:round}
-.strip .src .lg{font-size:9px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+.strip .src .lg,
+.strip .src .kind{font-size:9px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
                 color:var(--faint); border:1px solid var(--border-strong); border-radius:3px;
                 padding:0 4px; line-height:14px}
+
+/* The second band: the systems the connector is built to point at, rather than
+   the sources it reads. It closes rather than opens a section, so it carries a
+   bottom rule too - and it says what it is under the band, because a row of
+   familiar names is exactly the thing a reader will take for an integration
+   list if nobody tells them otherwise. */
+.strip.targets{border-bottom:1px solid var(--border)}
+.strip .note{font-size:12px; line-height:18px; color:var(--faint); text-align:center;
+             margin:22px auto 0; max-width:78ch; padding:0 var(--gutter)}
+.strip .note b{color:var(--muted); font-weight:600}
 .strip .sprite{position:absolute; width:0; height:0; overflow:hidden}
 
 /* Asked for no motion, the band becomes what it was before: the same list,
@@ -2459,6 +2470,101 @@ firm revised ETA as soon as terminals restart.</p>
   </div>
 </section>
 
+<!-- ================== WHAT IT IS BUILT TO PLUG INTO ================== -->
+<!-- Deliberately NOT in the source strip above. That one lists what the Risk
+     Monitor reads, and none of these is read - putting them there would claim
+     an integration this build does not have. Same visual language, different
+     claim, and the claim is written under the band. -->
+<section class="strip targets">
+  <div class="wrap">
+    <p class="lead">Built to run on the systems the desk already has</p>
+  </div>
+
+  <!-- Pictograms of what each kind of system is - a container, a gantry, a
+       quay, a stamp - drawn here for the same reason as the source marks
+       above: no logo is reproduced and no trademark is used as a badge. -->
+  <svg class="sprite" aria-hidden="true" focusable="false"><defs>
+
+    <!-- a forwarding TMS: the box everything is booked against -->
+    <symbol id="tms-container" viewBox="0 0 24 24">
+      <rect x="2.8" y="7.4" width="18.4" height="9.2" rx="1.2"/>
+      <path d="M8.2 7.4v9.2M12 7.4v9.2M15.8 7.4v9.2"/>
+    </symbol>
+
+    <!-- a forwarding suite built around one view of the file -->
+    <symbol id="tms-scope" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="7.4"/>
+      <path d="M12 2.8v3.8M12 17.4v3.8M2.8 12h3.8M17.4 12h3.8"/>
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+    </symbol>
+
+    <!-- customs and trade compliance: cleared, and the check that says so -->
+    <symbol id="tms-shield" viewBox="0 0 24 24">
+      <path d="M12 2.9 20 5.6v6.1c0 4.4-3.2 7.6-8 9.4-4.8-1.8-8-5-8-9.4V5.6Z"/>
+      <path d="M8.7 11.9 11 14.3l4.5-4.7"/>
+    </symbol>
+
+    <!-- transport execution: the leg that actually moves -->
+    <symbol id="tms-truck" viewBox="0 0 24 24">
+      <path d="M2.8 6.8h11v9.6h-11z"/>
+      <path d="M13.8 10.2h3.7l3.7 3.9v2.3h-7.4"/>
+      <circle cx="7" cy="18.3" r="1.7"/>
+      <circle cx="17.4" cy="18.3" r="1.7"/>
+    </symbol>
+
+    <!-- a freight exchange: capacity going one way, loads the other -->
+    <symbol id="tms-exchange" viewBox="0 0 24 24">
+      <path d="M3.4 8.9h14.2M14.1 5.3l3.5 3.6-3.5 3.6"/>
+      <path d="M20.6 15.1H6.4M9.9 18.7l-3.5-3.6 3.5-3.6"/>
+    </symbol>
+
+    <!-- a logistics network: everyone on one set of messages -->
+    <symbol id="tms-network" viewBox="0 0 24 24">
+      <circle cx="12" cy="4.9" r="2"/>
+      <circle cx="5.3" cy="17.4" r="2"/>
+      <circle cx="18.7" cy="17.4" r="2"/>
+      <path d="M11 6.7 6.3 15.6M13 6.7l4.7 8.9M7.3 17.4h9.4"/>
+    </symbol>
+
+    <!-- a port community system: the quay it is all declared against -->
+    <symbol id="tms-crane" viewBox="0 0 24 24">
+      <path d="M3.4 20.6h17.2"/>
+      <path d="M7.2 20.6V5.4h13.4"/>
+      <path d="M7.2 5.4H3.6"/>
+      <path d="M14.8 5.4v4.9"/>
+      <rect x="12.4" y="10.3" width="4.9" height="3.4" rx=".8"/>
+    </symbol>
+
+    <!-- the other port system: the call the declarations hang off -->
+    <symbol id="tms-ship" viewBox="0 0 24 24">
+      <path d="M3.4 14.8h17.2l-2.6 5.2H6Z"/>
+      <path d="M7.8 14.8V9.6h8.4v5.2"/>
+      <path d="M12 9.6V5.4"/>
+    </symbol>
+
+  </defs></svg>
+
+  <div class="strip-view">
+    <div class="strip-track">
+      <div class="strip-row">
+        <span class="src"><svg class="mk"><use href="#tms-container"/></svg>CargoWise <span class="kind">tms</span></span>
+        <span class="src"><svg class="mk"><use href="#tms-scope"/></svg>Riege Scope <span class="kind">tms</span></span>
+        <span class="src"><svg class="mk"><use href="#tms-network"/></svg>Descartes <span class="kind">network</span></span>
+        <span class="src"><svg class="mk"><use href="#tms-truck"/></svg>Transporeon <span class="kind">execution</span></span>
+        <span class="src"><svg class="mk"><use href="#tms-exchange"/></svg>TIMOCOM <span class="kind">exchange</span></span>
+        <span class="src"><svg class="mk"><use href="#tms-shield"/></svg>AEB <span class="kind">customs</span></span>
+        <span class="src"><svg class="mk"><use href="#tms-crane"/></svg>DAKOSY <span class="kind">port system</span></span>
+        <span class="src"><svg class="mk"><use href="#tms-ship"/></svg>Portbase <span class="kind">port system</span></span>
+      </div>
+    </div>
+  </div>
+
+  <p class="note"><b>None of these is connected.</b> The link in this build is a demo
+    connector &mdash; no vendor, no credential, no endpoint, and nothing is ever written.
+    Naming them says where the one read path is pointed, not what it has reached. They are
+    other companies&rsquo; products, named rather than badged.</p>
+</section>
+
 <!-- ======================== SOURCES ======================== -->
 <section class="section" id="sources">
   <div class="wrap">
@@ -2915,16 +3021,19 @@ firm revised ETA as soon as terminals restart.</p>
    never runs, the strip stays a plain static list rather than a short band
    sliding off into empty space. */
 (function () {
-  var track = document.querySelector(".strip .strip-track");
-  var row = track && track.querySelector(".strip-row");
-  if (!row) return;
-  for (var i = 0; i < 2; i++) {
-    var copy = row.cloneNode(true);
-    copy.classList.add("dup");
-    copy.setAttribute("aria-hidden", "true");
-    track.appendChild(copy);
-  }
-  track.classList.add("go");
+  // Every strip on the page, not just the first: the sources band and the
+  // systems band below it both run on this.
+  document.querySelectorAll(".strip .strip-track").forEach(function (track) {
+    var row = track.querySelector(".strip-row");
+    if (!row) return;
+    for (var i = 0; i < 2; i++) {
+      var copy = row.cloneNode(true);
+      copy.classList.add("dup");
+      copy.setAttribute("aria-hidden", "true");
+      track.appendChild(copy);
+    }
+    track.classList.add("go");
+  });
 })();
 
 /* The subscribe button is the same gesture again: it rewrites the note under

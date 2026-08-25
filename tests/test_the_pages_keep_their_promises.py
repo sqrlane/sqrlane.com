@@ -15,6 +15,9 @@ are tests now, so `python -m unittest discover -s tests` covers all four.
     history to compare a run against, so that number would be fabricated - and a
     fabricated number is the one thing this project refuses to produce.
   * **The Worker names are ours.** Never the names the reference product ships.
+  * **Naming a system is not claiming one.** The page names the TMSs, port
+    systems and exchanges the connector is built to point at. None of them is
+    connected, and the band has to say so.
   * **Nothing loads from off-origin.** No CDN, no web font, no map tile. Flaky
     wifi in front of an audience must not be able to strip the typography or
     blank a page.
@@ -161,6 +164,74 @@ class TheWorkerNamesAreOurs(unittest.TestCase):
         ]))
         # Guard on the guard: an empty roster would pass every assertion above.
         self.assertGreater(len(roster.ROSTER), 5, "The roster is empty - this tests nothing.")
+
+
+# Third-party systems the connector is built to point at. Naming a target is
+# ordinary; letting it read as a live integration is the thing to prevent.
+NAMED_SYSTEMS = ["CargoWise", "Riege Scope", "Descartes", "Transporeon",
+                 "TIMOCOM", "AEB", "DAKOSY", "Portbase"]
+
+
+class NamingASystemIsNotClaimingOne(unittest.TestCase):
+    """The systems band names other companies' products. It must not imply more.
+
+    A row of familiar names in the page's own source-strip styling is exactly
+    what a reader takes for an integration list, so the disclaimer under the
+    band is load-bearing: no vendor is connected, and the read path is pointed
+    at a demo connector. If the names stay and the disclaimer goes, the page has
+    started claiming something this build cannot do.
+    """
+
+    @staticmethod
+    def _band(html):
+        """The systems band's own markup, or None if it is not on the page.
+
+        Scoped deliberately. An earlier version of this check looked at the
+        whole page and passed on the "TMS (demo connector)" further down, which
+        meant the disclaimer could be deleted from the band with the guard still
+        green. A claim has to be checked where it is made.
+        """
+        start = html.find('<section class="strip targets">')
+        if start < 0:
+            return None
+        return html[start:html.find("</section>", start)]
+
+    def test_the_systems_band_says_none_of_them_is_connected(self):
+        html = LANDING.read_text(encoding="utf-8")
+        band = self._band(html)
+        named = [n for n in NAMED_SYSTEMS if n in html]
+        if band is None:
+            self.assertEqual(named, [], "The landing page names " + ", ".join(named) +
+                             " but the systems band that disclaims them is gone.")
+            self.skipTest("The landing page names no third-party system.")
+
+        flat = " ".join(band.split())
+        self.assertTrue(named, "The band exists but names nothing - this tests nothing.")
+        for required in ("None of these is connected", "no vendor, no credential, no endpoint",
+                         "nothing is ever written"):
+            with self.subTest(phrase=required):
+                self.assertIn(required, flat,
+                              "The band names " + ", ".join(named) + " and has to say, in "
+                              "the band itself, that none of them is reached. Without that "
+                              "line a row of vendor names in the source strip's own styling "
+                              "is an integration claim this build cannot support.")
+
+    def test_no_named_system_appears_in_the_sources_band(self):
+        """The sources band is what the Risk Monitor reads. None of these is read."""
+        text = LANDING.read_text(encoding="utf-8")
+        start = text.find('<section class="strip">')
+        end = text.find("</section>", start)
+        self.assertGreater(start, 0, "The sources band moved - this check is now blind.")
+        band = text[start:end]
+        offences = [n for n in NAMED_SYSTEMS if n in band]
+        self.assertEqual(offences, [], "\n".join([
+            "",
+            "A system the connector only points at is listed in the sources band:",
+            *(f"    {o}" for o in offences),
+            "",
+            'That band is headed "Watching, keyless and in the open" and lists what the',
+            "Risk Monitor actually reads. None of these is read by anything.",
+        ]))
 
 
 class NothingLoadsFromOffOrigin(unittest.TestCase):
