@@ -640,7 +640,7 @@ here too, because this is what the next session reads to find its way around.
 │   ├── index.html            # the dashboard (HTML+CSS+JS in one file)
 │   ├── whitepaper.html       # the technical paper
 │   └── fonts/                # Geist Sans + Mono, self-hosted - never a CDN
-├── tests/                    # five suites, one per claim the demo makes out loud
+├── tests/                    # eight suites, one per claim the demo makes out loud
 ├── tools/build_rhine_map.py  # regenerates the landing page's corridor map
 ├── scratch/genheat.py        # one-off generator for the landing heatmap
 ├── docs/dashboard.png        # the README's screenshot
@@ -828,7 +828,7 @@ trickles still ends inside its budget with the scenario intact. It runs with the
 patched down so the suite stays fast, and asserts the documented 25s / 8s separately —
 the mechanism working and the numbers being what the pages quote are two claims.
 
-RSS feeds are read **concurrently** (`RSS_CONCURRENCY`). Sequentially, ten feeds at the
+RSS feeds are read **concurrently** (`RSS_CONCURRENCY`). Sequentially, twenty feeds at the
 per-source timeout cannot fit a serverless budget — only the first would be read and the
 language count the whole differentiation rests on would collapse to one. The pool is
 deliberately not a `with` block: its exit joins every worker, so one wedged feed would simply
@@ -885,7 +885,7 @@ claims were written and tested but unwitnessed. Most are now confirmed.
   robotic, tune `ADVISOR_SYSTEM` in `route_advisor.py` and `CARRIER_SYSTEM` /
   `CUSTOMER_SYSTEM` in `comms_agent.py` — the prompts, not the plumbing.
 - **Whether the live *news* sources return anything useful.** PEGELONLINE is
-  confirmed (above), which settles the gauge third of this. The other seventeen
+  confirmed (above), which settles the gauges. The other thirty-nine
   sources are not: nobody has confirmed a real GDELT or RSS item was fetched,
   prefiltered and classified. That is the credibility anchor — "the risk detection is
   real" is the demo's central honest claim, and the `LIVE` chip on the risk feed
@@ -1043,10 +1043,14 @@ file in `src/` and fails naming the file and line if a transport library ever ap
 (including via `__import__` or `importlib`). It also runs a full offline cycle and checks
 every draft it produces. Run the whole suite with
 `python -m unittest discover -s tests` — standard library, nothing to install, and it
-covers the other four claim-guards too: the TMS being the only door to the book, the
-pages naming no language and loading nothing external, the simulated week never
-sending a booking back to a route it left, and a trickling source being cut off
-rather than hanging the run. Note it is deliberately *not* a "no networking" rule: the
+covers the other seven claim-guards too: the TMS being the only door to the book; the
+pages naming no language, loading nothing external, carrying one product name and
+disclaiming the systems they name; the simulated week never sending a booking back to a
+route it left; a trickling source being cut off rather than hanging the run; the
+structured sources keeping schema parity with the scripted ones and failing alone; a
+reroute having to be worth what it costs, including the board outcomes that pricing must
+not quietly move; and the landing page's live gauges being banded exactly as the risk
+monitor bands them, so the two cannot disagree about the same number. Note it is deliberately *not* a "no networking" rule: the
 live news pull and the LLM calls are real HTTP and must stay that way. Every draft carries `status: "DRAFT - not sent"`
 in the data, not just in the UI. Say this out loud in the demo — it is the responsible
 design, not a missing feature.
