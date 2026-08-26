@@ -4,7 +4,7 @@
             booking -> draft for the actioned -> queue the write-back into the
             TMS -> one result object the dashboard can render
 
-The loop starts and ends in the same place, and that is the point. Lanewatch
+The loop starts and ends in the same place, and that is the point. SQRlane
 does not hold a book of its own: the bookings come out of the forwarder's TMS
 through src/tms.py, and every action the Workers take on them - the routing
 change, the hold, the risk exception, the drafted emails - is queued straight

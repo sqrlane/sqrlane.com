@@ -6,13 +6,13 @@ Guidance for Claude Code working in this repository.
 
 ## What this project is
 
-**Lanewatch** ("Trade-lane risk, decided") — a demo-grade AI-agent prototype for freight
+**SQRlane** ("Trade-lane risk, decided") — a demo-grade AI-agent prototype for freight
 forwarding. The product name and identity are our own: **never borrow 5U AI's name,
 colours, taglines or Worker names**, and never invent a metric — no traction, accuracy or
 percentage claims. Real reasoning on synthetic shipments is the honest pitch, and a
 sharp audience catches invented numbers.
 
-**Lanewatch works through the forwarder's TMS. That is the product, not a feature of it.**
+**SQRlane works through the forwarder's TMS. That is the product, not a feature of it.**
 It is not another book to keep: the bookings are read out of the system of record, the
 agents decide against those records, and every action they take is written back onto them.
 Risk → decision → communication → the system of record, closed. Nothing the agents do
@@ -50,7 +50,7 @@ the decision into the TMS is a real part of what eats the day.
 1. **Earlier signal, because the sources are closer to the event.** A disruption is known
    locally long before it is news globally: the union announces it, the regional broadcaster
    carries it, and only then does an international wire pick it up. A monitor watching the
-   wires is structurally late because it is reading *downstream*. Lanewatch reads ~20 sources
+   wires is structurally late because it is reading *downstream*. SQRlane reads ~20 sources
    across every corridor on the board, so somewhere one of them is publishing whatever the
    hour is here.
 
@@ -91,9 +91,10 @@ It is also **deployed on Vercel** and running against the live Groq key there.
 Three claims still need a human to judge them — see
 [What still needs a human](#what-still-needs-a-human) below. Everything else is verified.
 
-> **Path note:** `DESIGN.md` shows the tree rooted at `trade-risk-agent/`. This repo is checked out
-> as `Logistics-Freight-Forwarding`. Build at the **repo root** — `src/`, `data/`, `static/` go
-> directly here. Don't create a nested `trade-risk-agent/` folder.
+> **Path note:** `DESIGN.md` shows the tree rooted at `trade-risk-agent/`. The repo is
+> `sqrlane.com` on GitHub and may be checked out under an older directory name. Build at the
+> **repo root** — `src/`, `data/`, `static/` go directly here. Don't create a nested
+> `trade-risk-agent/` folder.
 
 ---
 
@@ -325,7 +326,7 @@ What was taken from the reference's layout:
 **Two things were deliberately not copied, and should not be added back:**
 
 - The reference's stat cards carry a **sparkline and a "+12% vs. previous 30 days" delta**.
-  Lanewatch has no history to compare a run against, so both would be invented — and an
+  SQRlane has no history to compare a run against, so both would be invented — and an
   invented metric is the one thing this project refuses to produce. The card keeps the
   same anatomy and puts a fact from the run in the pill instead.
   `tests/test_the_pages_keep_their_promises.py` fails if "vs. previous" — or any other
@@ -858,11 +859,21 @@ have a hard timeout, so the live pull drops to 10s and the classifier cap to 16 
 `GROQ_API_KEY` lives in Vercel's environment variables. **Adding it requires a redeploy** —
 Vercel bakes env vars in at deploy time, so an existing deployment will not pick it up.
 
-It is live at **https://logistics-freight-forwarding.vercel.app**, git-linked to this
-repo, so every push to `main` deploys itself. `GROQ_API_KEY` is already set there —
-`/api/health` reports `ai_provider: groq`, so the model decides rather than the rules.
-The `*-git-main-*` branch alias sits behind Vercel Authentication; the bare production
-domain above is the public one.
+**The deployment moved with the rename.** The old instance lived on the previous
+account at `logistics-freight-forwarding.vercel.app` and is not the product's home any
+more — do not quote that URL. The new one is being set up under the SQRlane account
+against the `sqrlane` repo; once it is git-linked, every push to `main` deploys itself.
+
+Two things a fresh project needs, and both have caused a 404 already:
+
+- **Vercel must be able to see the repo.** A fork of a private repo is itself private,
+  and Vercel's GitHub App has to be granted access to it explicitly. Without that there
+  is no git link, nothing builds, and every path 404s.
+- **`GROQ_API_KEY` must be set, then redeployed.** Vercel bakes env vars in at deploy
+  time, so an existing deployment will not pick one up.
+
+Check `Root Directory` is empty and the framework preset is `Other`; either one pointed
+elsewhere 404s every path. `/api/health` is the first thing to open once it answers.
 
 Deploy for sharing a link; run `uvicorn` locally for a demo you are presenting.
 

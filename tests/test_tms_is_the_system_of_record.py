@@ -1,4 +1,4 @@
-"""Lanewatch works through the TMS. This file holds that claim up.
+"""SQRlane works through the TMS. This file holds that claim up.
 
 The product statement is that the agents do not run beside the forwarder's
 system of record - they run on it: bookings are read out of the TMS, every

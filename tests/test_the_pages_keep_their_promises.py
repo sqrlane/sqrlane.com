@@ -11,10 +11,12 @@ are tests now, so `python -m unittest discover -s tests` covers all four.
     "international wires" instead. Real outlet names are fine - they identify a
     source, they do not claim an edge.
   * **No invented metric.** The reference admin this shell is modelled on puts a
-    "+12% vs. previous 30 days" delta on every stat card. Lanewatch has no
+    "+12% vs. previous 30 days" delta on every stat card. SQRlane has no
     history to compare a run against, so that number would be fabricated - and a
     fabricated number is the one thing this project refuses to produce.
   * **The Worker names are ours.** Never the names the reference product ships.
+  * **The product has one name.** SQRlane. A rename that leaves the old name in a
+    <title> or a mock's URL bar is worse than not renaming at all.
   * **Naming a system is not claiming one.** The landing page and the dashboard
     both name the TMSs, port systems and exchanges the connector is built to
     point at. None of them is connected, and each page has to say so in the same
@@ -171,6 +173,48 @@ class TheWorkerNamesAreOurs(unittest.TestCase):
 # ordinary; letting it read as a live integration is the thing to prevent.
 NAMED_SYSTEMS = ["CargoWise", "Riege Scope", "Descartes", "Transporeon",
                  "TIMOCOM", "AEB", "DAKOSY", "Portbase"]
+
+
+# What the product used to be called. A rename is only done when the old name
+# is gone from everything that is served, and half-renamed is worse than either.
+FORMER_PRODUCT_NAME = "Lanewatch"
+
+
+class TheProductHasOneName(unittest.TestCase):
+    """SQRlane. The old name must not survive anywhere a reader can reach it.
+
+    Renames rot in the places nobody looks: a <title>, a fake URL bar inside a
+    mock, an example address in a footer, a data key rendered as a table header.
+    This reads the served surfaces rather than the copy alone, for that reason.
+    """
+
+    def test_the_old_name_is_gone_from_everything_served(self):
+        from src import orchestrator
+
+        payload = orchestrator.run_cycle(live=False, inject=True, use_llm=False)
+        haystacks = {
+            "static/index.html": DASHBOARD.read_text(encoding="utf-8"),
+            "static/landing.html": LANDING.read_text(encoding="utf-8"),
+            "static/whitepaper.html": WHITEPAPER.read_text(encoding="utf-8"),
+            "README.md": (ROOT / "README.md").read_text(encoding="utf-8"),
+            "the run payload": repr(payload),
+        }
+        offences = [f"{where} still says {FORMER_PRODUCT_NAME!r}"
+                    for where, hay in haystacks.items()
+                    if FORMER_PRODUCT_NAME.lower() in hay.lower()]
+
+        self.assertEqual(offences, [], "\n".join([
+            "",
+            "The old product name is still being served:",
+            *(f"    {o}" for o in offences),
+            "",
+            "The product is SQRlane. Check the <title> tags, the hero mock's URL bar, the",
+            "footer address and the TMS field map's key names - those are where a rename",
+            "usually survives.",
+        ]))
+        # Guard on the guard: if the new name is not there either, something has
+        # gone wrong that "the old name is absent" would happily pass.
+        self.assertIn("SQRlane", haystacks["static/landing.html"])
 
 
 class NamingASystemIsNotClaimingOne(unittest.TestCase):

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Lanewatch — Technical whitepaper</title>
-<meta name="description" content="How Lanewatch closes the loop from disruption to decision to drafted comms and back into the TMS: the components, which open model suits each task, EU-hosted inference, and every way it has broken so far.">
+<title>SQRlane — Technical whitepaper</title>
+<meta name="description" content="How SQRlane closes the loop from disruption to decision to drafted comms and back into the TMS: the components, which open model suits each task, EU-hosted inference, and every way it has broken so far.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><rect width='20' height='20' rx='5' fill='%23171717'/><path d='M3.2 14h13.6M3.2 10h8.6M3.2 6h4.6' stroke='%23fff' stroke-width='2.1' stroke-linecap='round'/></svg>">
 
 <style>
@@ -304,7 +304,7 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
       <span class="mark"><svg width="16" height="16" viewBox="0 0 20 20" fill="none">
         <path d="M3.2 14h13.6M3.2 10h8.6M3.2 6h4.6" stroke="#fff" stroke-width="2.1"
               stroke-linecap="round"/></svg></span>
-      <span class="name">Lanewatch</span>
+      <span class="name">SQRlane</span>
     </a>
     <nav class="nav-links">
       <a href="/#loop">How it works</a>
@@ -325,7 +325,7 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
     <h1 class="d2">Trade-lane risk, decided.</h1>
     <p class="stand copy18">
       Freight forwarders find out about disruption late, and then handle it by hand.
-      Lanewatch closes the gap between knowing and doing — it watches the world for events
+      SQRlane closes the gap between knowing and doing — it watches the world for events
       that break trade lanes, works out which shipments are exposed, decides reroute or
       hold for each one, and drafts the emails a person would otherwise write. Every call
       keeps its reasoning.
@@ -362,7 +362,7 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
       <h2 class="h32">In one paragraph</h2>
       <p class="copy16">
         A disruption — a port strike, a river running low, a corridor closing — is known
-        locally long before it is news globally. Lanewatch runs on the bookings in a
+        locally long before it is news globally. SQRlane runs on the bookings in a
         forwarder's TMS: it reads around twenty sources close to those events, decides which
         of those bookings are affected, and produces three things for each one: a decision,
         the reasoning behind it, and the carrier and customer emails it implies. Each of those
@@ -503,7 +503,7 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
       <h2 class="h32">Where the model decides, and where it must not</h2>
       <p class="copy16">
         The most common way an AI logistics tool loses trust is by letting a language model do
-        arithmetic. Lanewatch splits the work along a hard line.
+        arithmetic. SQRlane splits the work along a hard line.
       </p>
       <p class="copy16">
         <b>Code computes the facts.</b> Which chokepoints a route passes through. Which of
@@ -646,7 +646,7 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
       <div class="scroller">
         <table>
           <caption>What makes it usable for this workload specifically.</caption>
-          <thead><tr><th>Property</th><th>Why it matters to Lanewatch</th></tr></thead>
+          <thead><tr><th>Property</th><th>Why it matters to SQRlane</th></tr></thead>
           <tbody>
             <tr>
               <td><b>EU data residency</b><span class="sub">default models run in eu-north1</span></td>
@@ -666,7 +666,7 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
             </tr>
             <tr>
               <td><b>Pay per token, no commitment</b></td>
-              <td>Lanewatch is bursty by design: idle until a disruption is detected or someone asks, then a short burst of calls. Reserved GPU capacity would be mostly paying for silence.</td>
+              <td>SQRlane is bursty by design: idle until a disruption is detected or someone asks, then a short burst of calls. Reserved GPU capacity would be mostly paying for silence.</td>
             </tr>
           </tbody>
         </table>
@@ -901,7 +901,7 @@ footer a{color:var(--blue); text-decoration:underline; text-underline-offset:2px
           Model prices and region information are taken from Lyceum's own inference deck
           (July–August 2026), which states that they are subject to change; re-verify before
           using them in a commercial document. Model capabilities are described by family and size class rather
-          than by version, deliberately. Every figure describing Lanewatch itself — source
+          than by version, deliberately. Every figure describing SQRlane itself — source
           counts, call counts, decision outcomes — is counted from the running system.
         </p>
       </div>
