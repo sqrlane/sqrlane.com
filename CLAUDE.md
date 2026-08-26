@@ -636,6 +636,8 @@ here too, because this is what the next session reads to find its way around.
 │   ├── geo.py                # the board on a map - derived from the run
 │   └── app.py                # FastAPI: serves the three pages + the API
 ├── static/
+│   ├── assets/
+│   │   └── sqrlane-loop.svg  # the loop, standalone and Figma-ready
 │   ├── landing.html          # the front page (HTML+CSS+JS in one file)
 │   ├── index.html            # the dashboard (HTML+CSS+JS in one file)
 │   ├── whitepaper.html       # the technical paper
