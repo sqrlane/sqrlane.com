@@ -186,6 +186,15 @@ def _template_draft(audience: str, decision: dict, shipment: dict, routes: dict)
             action = (f"Please amend the booking to discharge at {new_code} instead of "
                       f"{routes[decision['route_before']]['discharge_port']}, and confirm "
                       f"the revised discharge schedule.")
+            # A reroute moves the boxes to a port that was never checked against
+            # what the cargo needs to be lifted off the ship. For SHP-005 - a
+            # CNC machining centre on flatracks, out-of-gauge, heavy-lift - that
+            # IS the question, and asking it after the amendment is too late.
+            # The model path always had this via _shared_facts; only the
+            # fallback dropped it, and the fallback is what a keyless demo shows.
+            if shipment.get("special_requirements"):
+                action += (f"\n\nBefore amending, please confirm {new_code} can take this "
+                           f"cargo: {shipment['special_requirements']}")
         else:
             action = ("Please hold the containers rather than discharging into the current "
                       "disruption, and confirm where they will sit and the revised "
@@ -215,6 +224,14 @@ def _template_draft(audience: str, decision: dict, shipment: dict, routes: dict)
             because = (f"There is {_disruption_phrase(decision, ports)} that we expect to "
                        f"hold cargo there for several days. Routing through {new_port} costs "
                        f"less time than waiting for it to clear.")
+            # Say what is still open rather than implying the new port is
+            # settled. Promising the lift before the carrier has confirmed it
+            # would be inventing the one fact this shipment turns on.
+            if shipment.get("special_requirements"):
+                because += (f"\n\nOne thing we are confirming first: "
+                            f"{shipment['special_requirements']} We have asked the carrier "
+                            f"to confirm {new_port} can take it before the booking is "
+                            f"amended.")
         else:
             action = (f"we are holding it rather than rerouting, which puts arrival at "
                       f"{decision['revised_eta']}")
