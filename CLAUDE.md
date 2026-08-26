@@ -646,6 +646,7 @@ here too, because this is what the next session reads to find its way around.
 ├── scratch/genheat.py        # one-off generator for the landing heatmap
 ├── docs/
 │   ├── dashboard.png         # the README's screenshot
+│   ├── problem-brief.md      # the problem, with every figure graded by source
 │   └── replit-deck-prompt.md # the deck, as a prompt for a fresh Replit build
 └── risk_state.json           # written at runtime (gitignored)
 ```
@@ -1216,6 +1217,7 @@ prototype is finished and nothing else is in scope:
 | `DATA-SOURCES.md` | Every source the desk reads: the six families, which `public-apis` entry each one is, and what was deliberately skipped |
 | `BUILD-GUIDE.md` | The copy-paste phase prompts — the spine of the build |
 | `README.md` | The front door — what it is, how to run it, the honest framing |
+| `docs/problem-brief.md` | The problem the deck argues, with every figure graded A/B/C by how well it is sourced — and the rejected ones named so they do not creep back |
 | `trade-risk-agent-docs.zip` | Duplicate archive of the seven docs above; not a source of truth |
 
 ---
