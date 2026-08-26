@@ -638,7 +638,8 @@ here too, because this is what the next session reads to find its way around.
 ├── static/
 │   ├── assets/
 │   │   ├── sqrlane-loop.svg  # the loop, standalone and Figma-ready
-│   │   └── slide-problem.svg # the problem slide, editable, for Figma
+│   │   ├── slide-problem.svg # slide 01 - the problem, editable, for Figma
+│   │   └── slide-fix.svg     # slide 02 - the loop, editable, for Figma
 │   ├── landing.html          # the front page (HTML+CSS+JS in one file)
 │   ├── index.html            # the dashboard (HTML+CSS+JS in one file)
 │   ├── whitepaper.html       # the technical paper
@@ -649,11 +650,12 @@ here too, because this is what the next session reads to find its way around.
 ├── tools/
 │   ├── build_rhine_map.py    # regenerates the landing page's corridor map
 │   ├── build_pitch_pptx.js   # the deck as a PowerPoint, with layout checks
-│   └── build_problem_slide.py # the problem slide SVG, with a fit gate
+│   └── build_slides.py       # the deck's editable SVG slides, with a fit gate
 ├── scratch/genheat.py        # one-off generator for the landing heatmap
 ├── docs/
 │   ├── dashboard.png         # the README's screenshot
 │   ├── slide-problem.png     # what slide-problem.svg renders to
+│   ├── slide-fix.png         # what slide-fix.svg renders to
 │   ├── problem-brief.md      # the problem, with every figure graded by source
 │   └── replit-deck-prompt.md # the deck, as a prompt for a fresh Replit build
 └── risk_state.json           # written at runtime (gitignored)
@@ -1038,33 +1040,59 @@ one good question. The section now argues only from costs that land on the forwa
 accounts. Those four sources are gone from the deck entirely, including from its footer -
 a sources line that credits research the deck no longer shows is its own kind of untruth.
 
-### The problem slide, as an editable SVG
+### The deck's slides, as editable SVGs
 
-`static/assets/slide-problem.svg` is the What/problem slide as a 1920x1080 vector, built
-to be opened in Figma and edited by hand rather than regenerated. Every line is its own
-named text layer, every rule and panel a named rectangle, and there is **no `<style>`
-block** - Figma's importer is reliable with inline presentation attributes and is not with
-CSS classes. `tools/build_problem_slide.py` writes it.
+`tools/build_slides.py` writes `static/assets/slide-problem.svg` (01, the problem) and
+`static/assets/slide-fix.svg` (02, the loop) as 1920x1080 vectors, built to be opened in
+Figma and edited by hand rather than regenerated. Every line is its own named text layer,
+every rule and panel a named rectangle, and there is **no `<style>` block** - Figma's
+importer is reliable with inline presentation attributes and is not with CSS classes.
 
-Three things about it are load-bearing:
+Slide 01 argues from two columns, and the pairing is the argument: **what the work
+actually is** (quoting, track and trace, documents) against **what keeps moving the lane**
+(fuel and cost, tariffs and trade policy, geopolitics and labour, climate and weather).
+Manual work is only expensive because the world keeps re-triggering it. The right-hand
+column carries no numbers, because none of those four has a figure that survived
+`docs/problem-brief.md`'s grading - the mechanism is the claim.
+
+Four things about the pair are load-bearing:
 
 - **The font is named `Geist` alone, with no fallback stack.** Figma reads a
   comma-separated `font-family` as one literal font name and then reports it missing on
   every layer; a bare name resolves, and Geist is in Figma's Google Fonts library. This is
   the opposite of the rule for the web pages, where the stack is the safety net.
-- **The build measures every string and fails if one overruns its column.** SVG text does
-  not wrap - a line that outgrows its box does not reflow, it runs silently into the next
-  column, and nobody sees it until the file is open in Figma. So each string is measured
-  against the real Geist metrics in `static/fonts/` and the build stops, naming the line
-  and the overrun in pixels. Same discipline as `build_pitch_pptx.js`, for the same reason:
-  a layout fault no validator catches. Confirmed by lengthening a line and watching it fail.
+- **The build measures every string and fails if one overruns its box.** SVG text does
+  not wrap - a line that outgrows its column does not reflow, it runs silently into the
+  next column, and nobody sees it until the file is open in Figma. So each string is
+  measured against the real Geist metrics in `static/fonts/` and the build stops, naming
+  the line and the overrun in pixels. Same discipline as `build_pitch_pptx.js`, for the
+  same reason: a layout fault no validator catches. Confirmed by lengthening a line and
+  watching it fail - it caught a 6.8px overrun.
+- **The loop is read from `static/assets/sqrlane-loop.svg`, never copied into the
+  builder.** One source of truth: edit the asset and slide 02 moves with it. Only the
+  font is rewritten on the way in - the standalone asset stays Inter because it travels
+  on its own and Figma ships Inter, but a slide carrying two typefaces reads as a mistake.
+  It is placed on its **measured ink box, not its viewBox**: the diagram sits inside a
+  1200x360 frame with slack on every side, so centring on the frame leaves it visibly
+  off-centre. The ink box is computed from the asset's rects, paths and text so it
+  re-centres itself if the diagram is redrawn.
 - **The headline figure carries whose number it is.** The reference slide labels EUR 3.4bn
   only `PER YEAR`. Ours adds `SQRLANE ANALYSIS` under it, because that figure is our own
   estimate and not a third party's - the deck's rule is that every figure names its source,
   and an unattributed number in a sourced deck reads as though someone else produced it.
 
+**Why the loop is not on the problem slide.** It was asked for there, and it does not fit:
+the diagram is 3.3:1, so in that slide's free band it can only be ~230px tall, which
+scales its sub-labels ("42 sources, six families", "reroute · hold · on plan") to about
+10px - under the slide's own 12.4px floor and unreadable projected. On its own slide it
+runs the full 1824px measure and those labels land near 21px. **If a later slide tries to
+inline the loop again, check the resulting label size before anything else.**
+
 The geometry - 48px margins, two 884px columns, the baseline grid - is lifted from the
-reference deck the slide was modelled on. `docs/slide-problem.png` is what it renders to.
+reference deck the slides were modelled on. A short title pulls everything under it up by
+whole title lines, which is what the reference does (its two-line slides sit exactly 63.4px
+higher), so `masthead()` returns the divider's y rather than fixing it.
+`docs/slide-problem.png` and `docs/slide-fix.png` are what they render to.
 
 **`tools/build_pitch_pptx.js` builds the same deck as a PowerPoint file** - 18 slides, four
 dark section dividers between the light content, Arial and Courier New because the reader's

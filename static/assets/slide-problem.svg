@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none">
-  <!-- SQRlane - the problem slide, 1920x1080. Editable SVG: every line is a
-       live text layer, every rule a rectangle, every layer named. Set in
-       Geist, which Figma carries in its Google Fonts library. Regenerate
-       with: python3 tools/build_problem_slide.py -->
+  <!-- SQRlane - the problem, 1920x1080. Editable SVG: every line is a live
+       text layer, every rule a rectangle, every layer named. Set in Geist,
+       which Figma carries in its Google Fonts library. Regenerate with:
+       python3 tools/build_slides.py -->
   <rect id="background" x="0" y="0" width="1920" height="1080" fill="#FFFFFF"/>
  <g id="brand">
   <rect id="brand-mark" x="1714.88" y="36" width="38" height="38" rx="8" fill="#000000"/>
@@ -14,13 +14,13 @@
   <text id="title-line-2" x="48" y="151.4" font-family="Geist" font-size="58.9" font-weight="400" fill="#000000">still runs on people doing</text>
   <text id="title-line-3" x="48" y="214.8" font-family="Geist" font-size="58.9" font-weight="400" fill="#000000">the data work by hand</text>
  </g>
-  <text id="subtitle" x="48" y="264" font-family="Geist" font-size="24.6" font-weight="400" fill="#797972">The category has no product problem. It has a labour problem that nobody has priced.</text>
+  <text id="subtitle" x="48" y="264" font-family="Geist" font-size="24.6" font-weight="400" fill="#797972">The category has no product problem. It has a labour problem that nobody has priced — on a lane that will not sit still.</text>
   <rect id="divider" x="48" y="301" width="1824" height="1" fill="#000000"/>
  <g id="column-left">
   <text id="left-heading" x="48" y="355.5" font-family="Geist" font-size="24.6" font-weight="600" fill="#000000">What the work actually is</text>
   <rect id="left-heading-rule" x="48" y="373" width="884" height="2" fill="#000000"/>
-  <rect id="left-row-rule-482" x="48" y="482" width="884" height="1" fill="#DDDDD6"/>
-  <rect id="left-row-rule-570" x="48" y="570" width="884" height="1" fill="#DDDDD6"/>
+  <rect id="left-row-rule-1" x="48" y="482" width="884" height="1" fill="#DDDDD6"/>
+  <rect id="left-row-rule-2" x="48" y="570" width="884" height="1" fill="#DDDDD6"/>
  <g id="left-row-1">
   <text id="left-row-1-marker" x="48" y="431.4" font-family="Geist" font-size="21" font-weight="600" fill="#000000">01</text>
   <text id="left-row-1-title" x="115.5" y="431.4" font-family="Geist" font-size="21" font-weight="400" fill="#000000">Quoting</text>
@@ -38,38 +38,45 @@
  </g>
  </g>
  <g id="column-right">
-  <text id="right-heading" x="988" y="355.5" font-family="Geist" font-size="24.6" font-weight="600" fill="#000000">Who has it, and why it persists</text>
+  <text id="right-heading" x="988" y="355.5" font-family="Geist" font-size="24.6" font-weight="600" fill="#000000">What keeps moving the lane</text>
   <rect id="right-heading-rule" x="988" y="373" width="884" height="2" fill="#000000"/>
-  <rect id="right-row-rule-482" x="988" y="482" width="884" height="1" fill="#DDDDD6"/>
-  <rect id="right-row-rule-570" x="988" y="570" width="884" height="1" fill="#DDDDD6"/>
+  <rect id="right-row-rule-1" x="988" y="482" width="884" height="1" fill="#DDDDD6"/>
+  <rect id="right-row-rule-2" x="988" y="570" width="884" height="1" fill="#DDDDD6"/>
+  <rect id="right-row-rule-3" x="988" y="658" width="884" height="1" fill="#DDDDD6"/>
  <g id="right-row-1">
-  <text id="right-row-1-marker" x="988" y="431.4" font-family="Geist" font-size="21" font-weight="600" fill="#000000">·</text>
-  <text id="right-row-1-title" x="1055.8" y="431.4" font-family="Geist" font-size="21" font-weight="400" fill="#000000">Freight forwarders across DACH and Benelux</text>
-  <text id="right-row-1-body" x="1055.8" y="460.9" font-family="Geist" font-size="17.3" font-weight="400" fill="#797972">213 companies in the beachhead, 1,479 in the full ICP. A named, finite list.</text>
+  <text id="right-row-1-marker" x="988" y="431.4" font-family="Geist" font-size="21" font-weight="600" fill="#000000">01</text>
+  <text id="right-row-1-title" x="1055.8" y="431.4" font-family="Geist" font-size="21" font-weight="400" fill="#000000">Fuel and cost</text>
+  <text id="right-row-1-body" x="1055.8" y="460.9" font-family="Geist" font-size="17.3" font-weight="400" fill="#797972">Bunker and energy prices move what a reroute is worth, after the routing is already decided.</text>
  </g>
  <g id="right-row-2">
-  <text id="right-row-2-marker" x="988" y="519.4" font-family="Geist" font-size="21" font-weight="600" fill="#000000">·</text>
-  <text id="right-row-2-title" x="1055.8" y="519.4" font-family="Geist" font-size="21" font-weight="400" fill="#000000">The substitute is headcount, not software</text>
-  <text id="right-row-2-body" x="1055.8" y="548.9" font-family="Geist" font-size="17.3" font-weight="400" fill="#797972">They add people when volume grows, because there is nothing on the market that does the work.</text>
+  <text id="right-row-2-marker" x="988" y="519.4" font-family="Geist" font-size="21" font-weight="600" fill="#000000">02</text>
+  <text id="right-row-2-title" x="1055.8" y="519.4" font-family="Geist" font-size="21" font-weight="400" fill="#000000">Tariffs and trade policy</text>
+  <text id="right-row-2-body" x="1055.8" y="548.9" font-family="Geist" font-size="17.3" font-weight="400" fill="#797972">Filed on a government register, not announced on a wire. It moves the country of entry.</text>
  </g>
  <g id="right-row-3">
-  <text id="right-row-3-marker" x="988" y="607.4" font-family="Geist" font-size="21" font-weight="600" fill="#000000">·</text>
-  <text id="right-row-3-title" x="1055.8" y="607.4" font-family="Geist" font-size="21" font-weight="400" fill="#000000">So cost scales with volume</text>
-  <text id="right-row-3-body" x="1055.8" y="636.9" font-family="Geist" font-size="17.3" font-weight="400" fill="#797972">The margin problem gets worse exactly when the business gets better.</text>
+  <text id="right-row-3-marker" x="988" y="607.4" font-family="Geist" font-size="21" font-weight="600" fill="#000000">03</text>
+  <text id="right-row-3-title" x="1055.8" y="607.4" font-family="Geist" font-size="21" font-weight="400" fill="#000000">Geopolitics and labour</text>
+  <text id="right-row-3-body" x="1055.8" y="636.9" font-family="Geist" font-size="17.3" font-weight="400" fill="#797972">A strike closes a port for days, a corridor for months. The booking is already at sea.</text>
+ </g>
+ <g id="right-row-4">
+  <text id="right-row-4-marker" x="988" y="695.4" font-family="Geist" font-size="21" font-weight="600" fill="#000000">04</text>
+  <text id="right-row-4-title" x="1055.8" y="695.4" font-family="Geist" font-size="21" font-weight="400" fill="#000000">Climate and weather</text>
+  <text id="right-row-4-body" x="1055.8" y="724.9" font-family="Geist" font-size="17.3" font-weight="400" fill="#797972">A gale over the crane, a river too low to float a barge, a wildfire across a rail leg.</text>
  </g>
  </g>
  <g id="figure">
-  <text id="figure-value" x="48" y="956" font-family="Geist" font-size="56.5" font-weight="400" fill="#000000">€3.4bn</text>
-  <text id="figure-label-1" x="48" y="983.6" font-family="Geist" font-size="12.4" font-weight="400" fill="#797972" letter-spacing="0.049">PER YEAR</text>
-  <text id="figure-label-2" x="48" y="1001" font-family="Geist" font-size="12.4" font-weight="400" fill="#797972" letter-spacing="0.049">SQRLANE ANALYSIS</text>
+  <text id="figure-value" x="48" y="930" font-family="Geist" font-size="56.5" font-weight="400" fill="#000000">€3.4bn</text>
+  <text id="figure-label-1" x="48" y="958" font-family="Geist" font-size="12.4" font-weight="400" fill="#797972" letter-spacing="0.049">PER YEAR</text>
+  <text id="figure-label-2" x="48" y="975.4" font-family="Geist" font-size="12.4" font-weight="400" fill="#797972" letter-spacing="0.049">SQRLANE ANALYSIS</text>
  </g>
  <g id="panel">
-  <rect id="panel-fill" x="255" y="893" width="1617" height="112" fill="#EFEFED"/>
-  <text id="panel-lead" x="281.9" y="936.4" font-family="Geist" font-size="21" font-weight="600" fill="#000000">That is the annual labour value of the work being done by hand across the European market.</text>
-  <text id="panel-note" x="281.9" y="972.3" font-family="Geist" font-size="19" font-weight="400" fill="#797972">We are not displacing a competing tool. We are displacing spreadsheets and hours — a harder sale to start, and a far larger one to finish.</text>
+  <rect id="panel-fill" x="255" y="875" width="1617" height="130" fill="#EFEFED"/>
+  <text id="panel-lead" x="281.9" y="917" font-family="Geist" font-size="21" font-weight="600" fill="#000000">That is the annual labour value of the work being done by hand across the European market.</text>
+  <text id="panel-note-1-1" x="281.9" y="949" font-family="Geist" font-size="19" font-weight="400" fill="#797972">We are not displacing a competing tool. We are displacing spreadsheets and hours — a harder sale to start, and a far larger one to finish.</text>
+  <text id="panel-note-2-1" x="281.9" y="975" font-family="Geist" font-size="19" font-weight="400" fill="#797972">The substitute is headcount, not software — so every disruption is paid for in hours, and the margin gets worse as the business gets better.</text>
  </g>
  <g id="footer">
-  <text id="footer-kicker" x="48" y="1034.4" font-family="Geist" font-size="12.4" font-weight="400" fill="#797972" letter-spacing="0.223">THE STATUS QUO IS MANUAL, AND IT IS EXPENSIVE</text>
+  <text id="footer-kicker" x="48" y="1034.4" font-family="Geist" font-size="12.4" font-weight="400" fill="#797972" letter-spacing="0.376">MANUAL WORK, ON A LANE THAT WILL NOT SIT STILL</text>
   <text id="footer-page" x="1872" y="1034.4" font-family="Geist" font-size="13.1" font-weight="400" fill="#797972" letter-spacing="-0.064" text-anchor="end">01 / 08</text>
  </g>
 </svg>
