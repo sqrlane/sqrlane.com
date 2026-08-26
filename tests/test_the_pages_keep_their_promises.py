@@ -46,12 +46,13 @@ LANDING = STATIC / "landing.html"
 DASHBOARD = STATIC / "index.html"
 WHITEPAPER = STATIC / "whitepaper.html"
 DECK = STATIC / "deck.html"
+WHAT = STATIC / "what.html"
 # The deck is inside the off-origin and one-name rules and outside the rest: it
 # cites third-party market research by name, and it names the incumbents it is
 # positioned against, neither of which the product pages do. It is also the one
 # page guaranteed to be opened on somebody else's wifi, in a room, which is
 # exactly the failure the off-origin rule exists for.
-ALL_PAGES = (LANDING, DASHBOARD, WHITEPAPER, DECK)
+ALL_PAGES = (LANDING, DASHBOARD, WHITEPAPER, DECK, WHAT)
 
 # Named languages. "English" is on the list for the same reason as the rest: the
 # benchmark is "the international wires", not a language, and the data keys that
@@ -192,6 +193,7 @@ class TheWorkerNamesAreOurs(unittest.TestCase):
             "static/landing.html": LANDING.read_text(encoding="utf-8"),
             "static/whitepaper.html": WHITEPAPER.read_text(encoding="utf-8"),
             "static/deck.html": DECK.read_text(encoding="utf-8"),
+            "static/what.html": WHAT.read_text(encoding="utf-8"),
             "README.md": (ROOT / "README.md").read_text(encoding="utf-8"),
             "src/roster.py": (ROOT / "src" / "roster.py").read_text(encoding="utf-8"),
             "the served Worker names": " ".join(w["name"] for w in payload["workers"]),
@@ -241,6 +243,7 @@ class TheProductHasOneName(unittest.TestCase):
             "static/landing.html": LANDING.read_text(encoding="utf-8"),
             "static/whitepaper.html": WHITEPAPER.read_text(encoding="utf-8"),
             "static/deck.html": DECK.read_text(encoding="utf-8"),
+            "static/what.html": WHAT.read_text(encoding="utf-8"),
             "README.md": (ROOT / "README.md").read_text(encoding="utf-8"),
             "the run payload": repr(payload),
         }

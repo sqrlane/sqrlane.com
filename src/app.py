@@ -30,6 +30,7 @@ INDEX = STATIC_DIR / "index.html"        # the dashboard, served at /app
 LANDING = STATIC_DIR / "landing.html"    # the marketing page, served at /
 PAPER = STATIC_DIR / "whitepaper.html"   # the technical whitepaper, served at /whitepaper
 DECK = STATIC_DIR / "deck.html"          # the pitch deck, served at /deck
+WHAT = STATIC_DIR / "what.html"          # the What section on its own, served at /what
 FONTS_DIR = STATIC_DIR / "fonts"         # Geist, self-hosted: no CDN, ever
 
 app = FastAPI(title="SQRlane",
@@ -80,6 +81,16 @@ def deck():
     return _page(DECK, "Pitch deck")
 
 
+@app.get("/what")
+def what():
+    """The What section on its own: the problem, and what it costs.
+
+    Split out from /deck because the problem is the half that gets rebuilt most
+    often, and because it is the section that goes into Figma on its own.
+    """
+    return _page(WHAT, "What deck")
+
+
 @app.get("/app")
 def dashboard():
     """The demo itself. This is the page with the button."""
@@ -126,6 +137,7 @@ def health(request: Request):
         "landing_present": LANDING.exists(),
         "whitepaper_present": PAPER.exists(),
         "deck_present": DECK.exists(),
+        "what_present": WHAT.exists(),
         "fonts_present": sorted(f.name for f in FONTS_DIR.glob("*.woff2")),
         "data_files_present": {
             f.name: f.exists() for f in (

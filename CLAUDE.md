@@ -642,6 +642,7 @@ here too, because this is what the next session reads to find its way around.
 │   ├── index.html            # the dashboard (HTML+CSS+JS in one file)
 │   ├── whitepaper.html       # the technical paper
 │   ├── deck.html             # the pitch deck - what / why / how / team
+│   ├── what.html             # the What section on its own, 6 slides
 │   └── fonts/                # Geist Sans + Mono, self-hosted - never a CDN
 ├── tests/                    # eight suites, one per claim the demo makes out loud
 ├── tools/build_rhine_map.py  # regenerates the landing page's corridor map
@@ -957,7 +958,8 @@ uvicorn src.app:app --reload      # then open http://127.0.0.1:8000
 ```
 
 `/` is the landing page, `/whitepaper` is the technical whitepaper, `/app` is the
-dashboard and `/deck` is the pitch deck; all four are single self-contained files. `GET /api/initial` renders the calm five-green-cards board instantly; `POST /run`
+dashboard, `/deck` is the pitch deck and `/what` is the What section on its own; all
+five are single self-contained files. `GET /api/initial` renders the calm five-green-cards board instantly; `POST /run`
 is the button. `GET /api/gauges` reads the three Rhine gauges live from PEGELONLINE for
 the landing page's gauge panel — cached for `GAUGE_CACHE_SECONDS` because the page is
 public and the source refreshes about every fifteen minutes, and it answers 200 with
@@ -1014,6 +1016,16 @@ resolutions in a browser after touching the deck's CSS; no unit test sees this.
 Print gives exactly one page per slide (`@page { size: A4 landscape }`), so the deck exports
 to a 14-page PDF from the browser with nothing else installed. `docs/replit-deck-prompt.md`
 is the same deck written as a single prompt, for rebuilding it outside this repo.
+
+**`/what` is the What section on its own**, six slides, built from
+`docs/problem-brief.md` so every third-party figure on it is one that survived being
+checked. It exists separately because the problem is the half that gets rebuilt most
+often and the half that goes into Figma on its own, and it ends on the loop diagram as
+the handover into the How. Its CSS, its keyboard navigation and its loop SVG are lifted
+verbatim from `deck.html` rather than rewritten, so the two cannot drift apart on layout
+or on the diagram. **Change one, change both.** The main deck's own What section still
+argues from BASF and McKinsey - shipper figures - and reconciling the two is an open
+decision, not an oversight.
 
 **`tools/build_pitch_pptx.js` builds the same deck as a PowerPoint file** - 18 slides, four
 dark section dividers between the light content, Arial and Courier New because the reader's
