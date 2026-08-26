@@ -639,11 +639,14 @@ here too, because this is what the next session reads to find its way around.
 │   ├── landing.html          # the front page (HTML+CSS+JS in one file)
 │   ├── index.html            # the dashboard (HTML+CSS+JS in one file)
 │   ├── whitepaper.html       # the technical paper
+│   ├── deck.html             # the pitch deck - what / why / how / team
 │   └── fonts/                # Geist Sans + Mono, self-hosted - never a CDN
 ├── tests/                    # eight suites, one per claim the demo makes out loud
 ├── tools/build_rhine_map.py  # regenerates the landing page's corridor map
 ├── scratch/genheat.py        # one-off generator for the landing heatmap
-├── docs/dashboard.png        # the README's screenshot
+├── docs/
+│   ├── dashboard.png         # the README's screenshot
+│   └── replit-deck-prompt.md # the deck, as a prompt for a fresh Replit build
 └── risk_state.json           # written at runtime (gitignored)
 ```
 
@@ -950,8 +953,8 @@ days and ordering exactly as the screenplay authored them.
 uvicorn src.app:app --reload      # then open http://127.0.0.1:8000
 ```
 
-`/` is the landing page, `/whitepaper` is the technical whitepaper and `/app` is the
-dashboard; all three are single self-contained files. `GET /api/initial` renders the calm five-green-cards board instantly; `POST /run`
+`/` is the landing page, `/whitepaper` is the technical whitepaper, `/app` is the
+dashboard and `/deck` is the pitch deck; all four are single self-contained files. `GET /api/initial` renders the calm five-green-cards board instantly; `POST /run`
 is the button. `GET /api/gauges` reads the three Rhine gauges live from PEGELONLINE for
 the landing page's gauge panel — cached for `GAUGE_CACHE_SECONDS` because the page is
 public and the source refreshes about every fifteen minutes, and it answers 200 with
@@ -970,6 +973,42 @@ python -m src.route_advisor --inject --shipment SHP-002
 python -m src.comms_agent  --inject
 python -m src.orchestrator --no-live      # the whole loop, no network
 ```
+
+### The pitch deck
+
+`/deck` is the investor deck, served from `static/deck.html` and **deliberately not linked
+from the landing nav** - it is the thing you hand to a room, not a page for whoever wanders
+onto the site. Four sections: what the problem is, why it is worth solving, how the loop
+works, and who is building it.
+
+Three rules it holds, all of them the project's own:
+
+- **Every third-party figure carries its source on the slide.** Maersk's 2014 shipment trace,
+  CLECAT's membership scope, McKinsey's global-value-chains analysis, BASF's 2018 reporting,
+  the Kiel Institute, and Transport Intelligence's market sizing. No figure appears without
+  one, and **no figure about SQRlane appears at all** - there is no traction, accuracy or
+  performance claim in it, because none has been measured.
+- **Every placeholder looks like one.** Founder names, bios, the ACV and the ask are dashed
+  grey monospace slots (`.slot`), never plausible filler. A placeholder that reads like real
+  copy is how an invented founder ends up on screen.
+- **It is inside the off-origin rule.** The deck is the one page guaranteed to be opened on
+  somebody else's wifi, so it is in `ALL_PAGES` in
+  `tests/test_the_pages_keep_their_promises.py`. It stays outside the language and
+  named-systems rules: it cites research by name and names the incumbents it is positioned
+  against, neither of which the product pages do.
+
+**Spacing is sized against viewport height as well as width, and that is not cosmetic.**
+Sized against width alone, three slides overran a 1280x720 projector - the standard
+presenting resolution - while a 1920x1080 monitor had room to spare. Under
+`scroll-snap-type: y mandatory` an overrunning slide is not merely tall, it is *unreachable*:
+the snap pulls you off it before you reach the bottom. Every vertical measure now takes the
+smaller of a width- and a height-derived size (`clamp(24px, min(3.6vw, 5.2vh), 46px)`), and
+below 620px tall the deck stops snapping and becomes an ordinary document. Measure all three
+resolutions in a browser after touching the deck's CSS; no unit test sees this.
+
+Print gives exactly one page per slide (`@page { size: A4 landscape }`), so the deck exports
+to a 14-page PDF from the browser with nothing else installed. `docs/replit-deck-prompt.md`
+is the same deck written as a single prompt, for rebuilding it outside this repo.
 
 ### The whitepaper page
 

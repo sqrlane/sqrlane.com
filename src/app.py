@@ -29,6 +29,7 @@ STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 INDEX = STATIC_DIR / "index.html"        # the dashboard, served at /app
 LANDING = STATIC_DIR / "landing.html"    # the marketing page, served at /
 PAPER = STATIC_DIR / "whitepaper.html"   # the technical whitepaper, served at /whitepaper
+DECK = STATIC_DIR / "deck.html"          # the pitch deck, served at /deck
 FONTS_DIR = STATIC_DIR / "fonts"         # Geist, self-hosted: no CDN, ever
 
 app = FastAPI(title="SQRlane",
@@ -67,6 +68,16 @@ def landing():
 def whitepaper():
     """The technical whitepaper: how the loop works, and where it breaks."""
     return _page(PAPER, "Whitepaper")
+
+
+@app.get("/deck")
+def deck():
+    """The pitch deck: what, why, how, who.
+
+    Deliberately not linked from the landing nav. It is the deck you hand to a
+    room, not a page for whoever wanders onto the site.
+    """
+    return _page(DECK, "Pitch deck")
 
 
 @app.get("/app")
@@ -114,6 +125,7 @@ def health(request: Request):
         "dashboard_present": INDEX.exists(),
         "landing_present": LANDING.exists(),
         "whitepaper_present": PAPER.exists(),
+        "deck_present": DECK.exists(),
         "fonts_present": sorted(f.name for f in FONTS_DIR.glob("*.woff2")),
         "data_files_present": {
             f.name: f.exists() for f in (
