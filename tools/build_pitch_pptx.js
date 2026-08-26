@@ -108,7 +108,7 @@ function stat(s, o) {
   const pad = 0.18;
   s.addText(
     [{ text: o.n, options: { fontSize: o.nSize || 24, bold: true, color: o.dark ? WHITE : INK } },
-     // A word unit takes a space; a symbol unit does not — "3 of 14", but "45%".
+     // A word unit takes a space; a symbol unit does not — "~10 apps", but "60%".
      ...(o.unit ? [{ text: (/^[a-z]/i.test(o.unit) ? " " : "") + o.unit,
                      options: { fontSize: 11, color: o.dark ? ON_DARK_2 : INK3 } }] : [])],
     { x: o.x + pad, y: o.y + pad - 0.02, w: o.w - pad * 2, h: 0.42,
@@ -223,93 +223,103 @@ function divider(n, name, line) {
 /* ============================== 01 · WHAT ============================== */
 divider("01", "The What", "The problem, and what it costs.");
 
-{ // the problem
+{ // the claim
   const s = newSlide(); bg(s);
-  eyebrow(s, "01 WHAT", "THE PROBLEM");
-  title(s, "Forwarders move information between systems all day — and the risk still goes unaccounted for.", { size: 23, w: 8.4 });
-  s.addText([
-    { text: "About 80% of world trade by volume moves by sea", options: { bold: true, color: INK } },
-    { text: ", much of it through roughly a dozen chokepoints. A forwarder's entire book runs through a handful of places that can close.", options: { color: INK2 } }],
-    { x: M, y: 1.62, w: 7.4, h: 0.42, fontFace: SANS, fontSize: 10,
-      lineSpacingMultiple: 1.2, isTextBox: true, margin: 0, valign: "top" });
-  s.addText("BOSTON CONSULTING GROUP", { x: M, y: 2.06, w: 4, h: 0.2, fontFace: MONO,
-    fontSize: 6.5, charSpacing: 0.8, color: INK3, isTextBox: true, margin: 0, valign: "middle" });
-  block(s, { x: M, y: 2.36, w: 4.32, h: 1.95, tag: "THE HALF THAT IS MEASURED",
-    head: "Re-keying is the job",
-    body: "A booking lives in the TMS. The rate lives in a mail. The exception lives in a carrier notice. Every one of those hops is a person retyping something a system already knew." });
-  block(s, { x: M + 4.58, y: 2.36, w: 4.32, h: 1.95, tag: "THE HALF THAT IS NOT",
-    head: "Nobody owns the lane",
-    body: "A drop in Rhine water levels or a strike at the Port of Hamburg does not arrive as an alert on the booking it affects. It arrives as a margin that came in short, one quarter later." });
-  s.addText([{ text: "Both halves have one root: ", options: { color: INK2 } },
-             { text: "the decision and the system of record are in different places", options: { bold: true, color: INK } },
-             { text: ", and a person is the bridge.", options: { color: INK2 } }],
-    { x: M, y: 4.52, w: 8.4, h: 0.34, fontFace: SANS, fontSize: 10.5,
-      isTextBox: true, margin: 0, valign: "middle" });
+  eyebrow(s, "01 WHAT", "THE STATUS QUO IS MANUAL, AND IT IS EXPENSIVE");
+  const top = title(s, "European freight forwarding still runs on people doing the data work by hand.", { size: 23, w: 8.4 });
+  const w = 2.83, g = 0.21;
+  stat(s, { x: M, y: top, w, h: 1.95, n: "€3.4bn", unit: "a year", dark: true, nSize: 24,
+    label: "the annual labour value of the work being done by hand across the European market.",
+    src: "SQRLANE ANALYSIS" });
+  block(s, { x: M + w + g, y: top, w, h: 1.95, head: "No product problem",
+    body: "The software to run a forwarding desk exists. Buying more of it does not remove the hours, because the hours are not going into the software. They are going into moving information towards it." });
+  block(s, { x: M + (w + g) * 2, y: top, w, h: 1.95, head: "A labour problem nobody priced",
+    body: "We are not displacing a competing tool. We are displacing spreadsheets and hours — a harder sale to start, and a far larger one to finish." });
+  s.addText([{ text: "Every hour on the next four slides is someone ", options: { color: INK2 } },
+             { text: "carrying information towards a record", options: { bold: true, color: INK } },
+             { text: ", by hand, because nothing else will.", options: { color: INK2 } }],
+    { x: M, y: top + 2.14, w: 8.4, h: 0.4, fontFace: SANS, fontSize: 10.5,
+      lineSpacingMultiple: 1.25, isTextBox: true, margin: 0, valign: "top" });
 }
 
-{ // proof one
+{ // what the work actually is
   const s = newSlide(); bg(s);
-  eyebrow(s, "01 WHAT", "PROOF ONE — THE INFORMATION COSTS MORE TO MOVE THAN THE BOX");
-  title(s, "One shipment. Thirty parties. Two hundred conversations.", { size: 25 });
+  eyebrow(s, "01 WHAT", "WHAT THE WORK ACTUALLY IS");
+  const top = title(s, "Three jobs, done by hand, on every single shipment.");
   const w = 2.83, g = 0.21;
-  stat(s, { x: M, y: 1.72, w, h: 1.90, n: "~30", dark: true, nSize: 26,
-    label: "people and organisations touched by a single refrigerated shipment from East Africa to Europe.",
+  block(s, { x: M, y: top, w, h: 1.55, tag: "01", head: "Quoting",
+    body: "Rates rebuilt by hand for every enquiry, across carriers that publish nothing in a common format." });
+  block(s, { x: M + w + g, y: top, w, h: 1.55, tag: "02", head: "Track and trace",
+    body: "Status chased by email and phone, then retyped into the system so the customer can be told." });
+  block(s, { x: M + (w + g) * 2, y: top, w, h: 1.55, tag: "03", head: "Documents and exceptions",
+    body: "Every mismatch escalates to a person, because the system that spots it cannot resolve it." });
+  stat(s, { x: M, y: top + 1.75, w: 4.32, h: 1.45, n: "~30 parties", unit: "· 200+ interactions", nSize: 19,
+    label: "for one refrigerated shipment from East Africa to Europe.",
     src: "MAERSK SHIPMENT TRACE, 2014" });
-  stat(s, { x: M + w + g, y: 1.72, w, h: 1.90, n: "200+", nSize: 26,
-    label: "separate interactions and communications between them, for that one container.",
-    src: "MAERSK SHIPMENT TRACE, 2014" });
-  stat(s, { x: M + (w + g) * 2, y: 1.72, w, h: 1.90, n: "1,000,000+", nSize: 20,
-    label: "staff employed across 19,000+ European forwarding, logistics and customs companies.",
-    src: "CLECAT" });
-  s.addText([{ text: "The substitute is headcount, not software.", options: { bold: true, color: INK } },
-             { text: "  Forwarders add people when volume grows, because nothing on the market does the work. So cost scales with volume — and the margin problem gets worse exactly when the business gets better.", options: { color: INK2 } }],
-    { x: M, y: 3.80, w: 8.4, h: 0.78, fontFace: SANS, fontSize: 10.5,
-      lineSpacingMultiple: 1.25, isTextBox: true, margin: 0, valign: "top" });
-  note(s, "The bridge between systems is not software. It is a million people, typing — and it is the industry's largest controllable cost base.", 4.72);
+  block(s, { x: M + 4.58, y: top + 1.75, w: 4.32, h: 1.45, head: "And that was 2014",
+    body: "Before team chat and messaging apps became operational infrastructure in freight. The interactions have not reduced. The channels carrying them have multiplied." });
 }
 
-{ // proof two
+{ // where the hours go
   const s = newSlide(); bg(s);
-  eyebrow(s, "01 WHAT", "PROOF TWO — DISRUPTION IS ROUTINE, AND OFTEN THERE IS NO GOOD ANSWER");
-  title(s, "A month-long disruption every 3.7 years — and, at some chokepoints, nowhere better to go.", { size: 23, w: 8.4 });
-  const w = 2.83, g = 0.21;
-  stat(s, { x: M, y: 1.66, w, h: 1.95, n: "3.7", unit: "yrs", dark: true, nSize: 26,
-    label: "the average interval between supply-chain disruptions lasting a month or longer.",
-    src: "MCKINSEY & COMPANY, 2020" });
-  stat(s, { x: M + w + g, y: 1.66, w, h: 1.95, n: "45", unit: "%", nSize: 26,
-    label: "of one year's profit — the average cost of those disruptions across a decade.",
-    src: "MCKINSEY & COMPANY, SAME ANALYSIS" });
-  stat(s, { x: M + (w + g) * 2, y: 1.66, w, h: 1.95, n: "3", unit: "of 14", nSize: 26,
-    label: "of the world's main maritime chokepoints have no viable alternative route. At others, rerouting adds more than 40% to the distance.",
-    src: "BCG — REROUTING AROUND MARITIME CHOKEPOINTS" });
-  s.addText([{ text: "Frequency is only half of it. When a disruption lands on a chokepoint with no viable alternative, ", options: { color: INK2 } },
-             { text: "there is no obvious right answer", options: { bold: true, color: INK } },
-             { text: ". Someone has to make the call, per booking, and be able to defend it. ", options: { color: INK2 } },
-             { text: "That is why an alert is not enough.", options: { bold: true, color: INK } }],
-    { x: M, y: 3.82, w: 8.4, h: 0.78, fontFace: SANS, fontSize: 10.5,
+  eyebrow(s, "01 WHAT", "WHERE THE HOURS ACTUALLY GO");
+  const top = title(s, "Sixty percent of the day is spent carrying information, not deciding anything.", { size: 23, w: 8.4 });
+  stat(s, { x: M, y: top, w: 4.32, h: 2.05, n: "60", unit: "%", dark: true, nSize: 26,
+    label: "of the working day goes to coordination — chasing status, searching for information, switching between apps. Only 40% goes to the skilled work.",
+    src: "ASANA, ANATOMY OF WORK INDEX 2022" });
+  block(s, { x: M + 4.58, y: top, w: 4.32, h: 2.05, head: "The five things that eat it",
+    bullets: ["Finding it. Which app, whose thread, which version.",
+              "Retyping it. Into the system, by hand.",
+              "Deciding what is true. Three places, three versions.",
+              "Switching. Around 25 times a day, across ten apps.",
+              "One person holding it. They take leave and the shipment stalls."] });
+  s.addText([{ text: "Coordination that needs ", options: { color: INK2 } },
+             { text: "judgement", options: { bold: true, color: INK } },
+             { text: " — negotiating a rate, deciding a reroute — is what the forwarder sells. Coordination that only ", options: { color: INK2 } },
+             { text: "carries information", options: { bold: true, color: INK } },
+             { text: " from one place to another is not. We take the second.", options: { color: INK2 } }],
+    { x: M, y: top + 2.24, w: 8.4, h: 0.62, fontFace: SANS, fontSize: 10.5,
       lineSpacingMultiple: 1.25, isTextBox: true, margin: 0, valign: "top" });
-  note(s, "The 45% is the cost to the shippers whose cargo the forwarder moves; the forwarder absorbs it as demurrage, re-bookings and surcharges billed but never quoted. Chokepoint exposure is likewise mapped for shippers — but the forwarder is who they call when one closes, and who has to decide.");
+  note(s, "The third one is the only one that costs money rather than time. A surcharge agreed in a chat that never reaches the invoice is paid by the forwarder.", 4.94);
 }
 
-{ // proof three
+{ // why the record is never right
   const s = newSlide(); bg(s);
-  eyebrow(s, "01 WHAT", "PROOF THREE — ONE LANE, ONE AUTUMN, REAL MONEY");
-  title(s, "The Rhine fell in 2018. The gauge readings were public, free and daily the entire time.", { size: 23, w: 8.4 });
+  eyebrow(s, "01 WHAT", "WHY THE RECORD IS NEVER RIGHT");
+  const top = title(s, "A booking's true state is assembled in someone's head. The system holds an old, partial copy.", { size: 23, w: 8.4 });
   const w = 2.83, g = 0.21;
-  stat(s, { x: M, y: 1.66, w, h: 1.95, n: "€250m", nSize: 24,
-    label: "additional costs BASF attributed to the supply disruption caused by low Rhine water levels.",
-    src: "BASF REPORTING, 2018" });
-  stat(s, { x: M + w + g, y: 1.66, w, h: 1.95, n: "−1.5", unit: "%", nSize: 26,
-    label: "the fall in German industrial production in November 2018 attributed to the low-water period.",
-    src: "KIEL INSTITUTE FOR THE WORLD ECONOMY" });
-  stat(s, { x: M + (w + g) * 2, y: 1.66, w, h: 1.95, n: "−0.4", unit: "%", nSize: 26,
-    label: "the corresponding drag on German gross domestic product.",
-    src: "KIEL INSTITUTE FOR THE WORLD ECONOMY" });
-  s.addText([{ text: "The information was never missing.", options: { bold: true, color: INK } },
-             { text: "  The Kaub gauge posts a water level every few minutes, for free, to anyone. What was missing was anything reading it against a book of bookings and deciding, per booking, what to do.", options: { color: INK2 } }],
-    { x: M, y: 3.82, w: 8.4, h: 0.78, fontFace: SANS, fontSize: 10.5,
+  stat(s, { x: M, y: top, w, h: 1.95, n: "under 40", unit: "%", nSize: 22,
+    label: "of freight forwarders use a forwarding management system at all. Only 23% have digitised three quarters of their processes.",
+    src: "MAGAYA 2025 — 71 FORWARDERS, NOV 2024" });
+  stat(s, { x: M + w + g, y: top, w, h: 1.95, n: "1,300", unit: "+ a day", nSize: 24,
+    label: "emails filed by hand by one chartering desk, before they changed how it worked.",
+    src: "VITERRA, VIA SEDNA" });
+  stat(s, { x: M + (w + g) * 2, y: top, w, h: 1.95, n: "~10", unit: "apps", nSize: 24,
+    label: "and about 25 switches between them, per person per day — costing four hours a week just re-orienting.",
+    src: "ASANA, ANATOMY OF WORK INDEX 2022" });
+  s.addText([{ text: "The booking is agreed over email. The rate is amended in a chat. The carrier sends an exception notice somewhere else again. ", options: { color: INK2 } },
+             { text: "None of it reaches the record on its own.", options: { bold: true, color: INK } },
+             { text: " A person carries it across, one message at a time.", options: { color: INK2 } }],
+    { x: M, y: top + 2.14, w: 8.4, h: 0.62, fontFace: SANS, fontSize: 10.5,
       lineSpacingMultiple: 1.25, isTextBox: true, margin: 0, valign: "top" });
-  note(s, "That is the sentence the whole company is built on.");
+}
+
+{ // why it persists
+  const s = newSlide(); bg(s);
+  eyebrow(s, "01 WHAT", "WHO HAS IT, AND WHY IT PERSISTS");
+  const top = title(s, "Nobody has fixed it because hiring works.");
+  const w = 2.83, g = 0.21;
+  block(s, { x: M, y: top, w, h: 1.85, tag: "01", head: "The substitute is headcount",
+    body: "They add people when volume grows, because there is nothing on the market that does the work." });
+  block(s, { x: M + w + g, y: top, w, h: 1.85, tag: "02", head: "Nothing to integrate with",
+    body: "Most forwarders have no system of record to connect to. And the channels the work lives in are conversations, not systems — so nobody connected them." });
+  block(s, { x: M + (w + g) * 2, y: top, w, h: 1.85, dark: true, tag: "03", head: "So cost scales with volume",
+    body: "Winning a bigger customer means hiring against it. The margin problem gets worse exactly when the business gets better." });
+  s.addText([{ text: "That last line is the whole problem. It is not an efficiency story — ", options: { color: INK2 } },
+             { text: "it is a ceiling on the business", options: { bold: true, color: INK } },
+             { text: ", and it is the version a finance director acts on.", options: { color: INK2 } }],
+    { x: M, y: top + 2.04, w: 8.4, h: 0.62, fontFace: SANS, fontSize: 10.5,
+      lineSpacingMultiple: 1.25, isTextBox: true, margin: 0, valign: "top" });
 }
 
 /* =============================== 02 · WHY =============================== */
@@ -542,7 +552,7 @@ divider("04", "The Team", "Who is building it.");
         color: invert ? INK2 : ON_DARK, lineSpacingMultiple: 1.3,
         isTextBox: true, margin: 0, valign: "top" });
     });
-  s.addText("SOURCES  ·  Maersk shipment trace, 2014  ·  CLECAT  ·  McKinsey & Company, \"Risk, resilience, and rebalancing in global value chains\", 2020  ·  Boston Consulting Group  ·  BASF reporting, 2018  ·  Kiel Institute for the World Economy  ·  Transport Intelligence, 2025.  No performance, accuracy or traction figure about SQRlane appears in this deck, because none has been measured.",
+  s.addText("SOURCES  ·  Maersk shipment trace, 2014  ·  CLECAT  ·  Asana, Anatomy of Work Index 2022  ·  Magaya, State of Digitization in Freight Forwarding 2025  ·  Viterra via Sedna  ·  Transport Intelligence, 2025  ·  SQRlane analysis.  No performance, accuracy or traction figure about SQRlane appears in this deck, because none has been measured.",
     { x: M, y: H - 1.05, w: CW, h: 0.62, fontFace: MONO, fontSize: 6.2, color: ON_DARK_2,
       lineSpacingMultiple: 1.3, isTextBox: true, margin: 0, valign: "bottom" });
 }

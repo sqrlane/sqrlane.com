@@ -68,61 +68,50 @@ The one-line positioning: **risk → decision → communication → the system o
 One paragraph of positioning. Four small cards previewing the four sections. Footer:
 Confidential, date slot, contact slot.
 
-**2 — What: the problem.** Headline: *Forwarders spend the day moving information between
-systems — and the risk still goes unaccounted for.* Under it, a framing line: about **80% of
-world trade by volume moves by sea**, much of it through roughly a dozen chokepoints — a
-forwarder's entire book runs through a handful of places that can close. *Source: Boston
-Consulting Group.* Then two cards: "Re-keying is the job" (the
-booking is in the TMS, the rate is in a mail, the exception is in a carrier notice — every hop
-is a person retyping what a system already knew) and "Nobody owns the lane" (a disruption
-doesn't arrive as an alert on the booking it affects; it arrives as a short margin a quarter
-later). Close: both halves have one root — the decision and the system of record are in
-different places, and a person is the bridge.
+**2 — What: the claim.** Headline: *European freight forwarding still runs on people doing
+the data work by hand.* Three cards: `€3.4bn a year` — the annual labour value of the work
+being done by hand across the European market (*source: SQRlane analysis*); "No product
+problem" — the software exists, buying more of it does not remove the hours, because the
+hours are going into moving information *towards* the software; "A labour problem nobody has
+priced" — we are not displacing a competing tool, we are displacing spreadsheets and hours.
 
-**3 — What, proof one: the information costs more to move than the box.**
-Three figures, each with its source printed under it:
-- `~30` — people and organisations touched by a single refrigerated shipment from East Africa
-  to Europe. *Source: Maersk shipment trace, 2014.*
-- `200+` — separate interactions between them, for that one container. *Same source.*
-- `1,000,000+` — staff across 19,000+ European forwarding, logistics and customs companies.
-  *Source: CLECAT.*
+**3 — What: what the work actually is.** Three cards — **Quoting** (rates rebuilt by hand for
+every enquiry, across carriers that publish nothing in a common format), **Track and trace**
+(status chased by email and phone, then retyped into the system so the customer can be told),
+**Documents and exceptions** (every mismatch escalates to a person, because the system that
+spots it cannot resolve it). Below, two wider cards: `~30 parties · 200+ interactions` for one
+refrigerated shipment East Africa to Europe (*Maersk shipment trace, 2014*), and "And that was
+2014" — before chat and messaging apps became operational infrastructure in freight; the
+interactions have not reduced, the channels carrying them have multiplied.
 
-Close: the bridge between systems isn't software, it's a million people typing — and it's the
-industry's largest controllable cost base.
+**4 — What: where the hours go.** Headline: *Sixty percent of the day is spent carrying
+information, not deciding anything.* A dark card with `60%` — of the working day goes to
+coordination: chasing status, searching for information, switching apps; only 40% goes to the
+skilled work (*Asana, Anatomy of Work Index 2022*). Beside it, "The five things that eat it":
+finding it, retyping it, deciding what is true, switching, one person holding it.
 
-**4 — What, proof two: disruption is routine, and there is often no good answer.** Headline:
-*A month-long disruption every 3.7 years — and, at some chokepoints, nowhere better to go.*
-Three figures:
-- `3.7 yrs` — average interval between supply-chain disruptions lasting a month or longer.
-  *Source: McKinsey & Company, "Risk, resilience, and rebalancing in global value chains", 2020.*
-- `45%` — of one year's profit: the average cost of those disruptions across a decade.
-  *Same source.*
-- `3 of 14` — of the world's main maritime chokepoints have **no viable alternative route**;
-  at others, rerouting adds **more than 40%** to the distance. *Source: Boston Consulting
-  Group, "Rerouting around maritime chokepoints can add significant time and cost".*
+**Then the sentence that makes the figure safe, and do not drop it:** coordination that needs
+*judgement* — negotiating a rate, deciding a reroute — is what the forwarder sells;
+coordination that only *carries information* from one place to another is not; we take the
+second. Without it, a reader says "coordination is literally the job" and the figure argues
+against you.
 
-Close, and make this the argument of the slide: frequency is only half of it. When a
-disruption lands on a chokepoint with no viable alternative — or one whose detour costs weeks
-— **there is no obvious right answer**. Someone has to make the call, per booking, and be able
-to defend it. **That is why an alert is not enough.**
+**5 — What: why the record is never right.** Headline: *A booking's true state is assembled in
+someone's head. The system holds an old, partial copy.* Three figures: `under 40%` of freight
+forwarders use a forwarding management system at all, and only 23% have digitised three
+quarters of their processes (*Magaya, State of Digitization in Freight Forwarding 2025 — survey
+of 71 forwarders, November 2024*); `1,300+ a day` emails filed by hand by one chartering desk
+(*Viterra, via Sedna*); `~10 apps` and about 25 switches between them per person per day
+(*Asana, 2022*). Close: the booking is agreed over email, the rate amended in a chat, the
+carrier's exception notice arrives somewhere else again — none of it reaches the record on its
+own.
 
-Footnote: the 45% is the cost to the *shippers* whose cargo the forwarder moves, and
-chokepoint exposure is likewise mapped for shippers — but the forwarder is who they call when
-one closes, and the forwarder is who has to decide. Naming that bridge matters; without it a
-reader asks why shipper-facing statistics are in a forwarder-facing deck.
-
-**5 — What, proof three: one lane, one autumn, real money.** Headline: *The Rhine fell in 2018.
-The gauge readings were public, free and daily the entire time.*
-- `€250m` — additional costs BASF attributed to the supply disruption from low Rhine water
-  levels. *Source: BASF reporting, 2018.*
-- `−1.5%` — fall in German industrial production in November 2018 attributed to the low-water
-  period. *Source: Kiel Institute for the World Economy.*
-- `−0.4%` — the corresponding drag on German GDP. *Same source.*
-
-Close, and make this the emphasised line of the whole deck: **the information was never
-missing.** The Kaub gauge posts a water level every few minutes, free, to anyone. What was
-missing was anything reading it *against a book of bookings* and deciding, per booking, what
-to do.
+**5b — What: why it persists.** Headline: *Nobody has fixed it because hiring works.* Three
+cards: the substitute is headcount, not software; there is often nothing to integrate with
+(most forwarders have no system of record, and the channels are conversations not systems); and
+the dark one — **so cost scales with volume**, winning a bigger customer means hiring against
+it, and the margin problem gets worse exactly when the business gets better. Close on that:
+it is not an efficiency story, it is a ceiling on the business.
 
 **6 — Why: the gap.** Three columns. Left: supply-chain risk platforms (Everstream Analytics,
 Interos, Resilinc, Prewave) — they stop at the alert, never touch a booking, mostly read the

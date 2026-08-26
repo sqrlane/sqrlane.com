@@ -988,10 +988,10 @@ works, and who is building it.
 
 Three rules it holds, all of them the project's own:
 
-- **Every third-party figure carries its source on the slide.** Maersk's 2014 shipment trace,
-  CLECAT's membership scope, McKinsey's global-value-chains analysis, BCG on maritime
-  chokepoints, BASF's 2018 reporting, the Kiel Institute, and Transport Intelligence's
-  market sizing. No figure appears without
+- **Every third-party figure carries its source on the slide,** and every one of them comes
+  from `docs/problem-brief.md` rather than from a search: Maersk's 2014 shipment trace,
+  CLECAT's membership scope, Asana's Anatomy of Work Index, Magaya's 2024 survey of 71
+  forwarders, Viterra via Sedna, and Transport Intelligence's market sizing. No figure appears without
   one - and where a figure has not been confirmed against its publication it stays a
   visible slot rather than a plausible guess. **No figure about SQRlane appears at all** - there is no traction, accuracy or
   performance claim in it, because none has been measured.
@@ -1023,9 +1023,15 @@ checked. It exists separately because the problem is the half that gets rebuilt 
 often and the half that goes into Figma on its own, and it ends on the loop diagram as
 the handover into the How. Its CSS, its keyboard navigation and its loop SVG are lifted
 verbatim from `deck.html` rather than rewritten, so the two cannot drift apart on layout
-or on the diagram. **Change one, change both.** The main deck's own What section still
-argues from BASF and McKinsey - shipper figures - and reconciling the two is an open
-decision, not an oversight.
+or on the diagram. **Change one, change both** - the deck's own What slides are the same
+five, transplanted.
+
+**The What section was rebuilt once, and the reason is worth keeping.** It used to argue
+from BASF's EUR 250m and McKinsey's "45% of a year's profit". Both are the *cargo owner's*
+loss, and using a shipper's pain to argue a forwarder's pain is a joint that breaks under
+one good question. The section now argues only from costs that land on the forwarder's own
+accounts. Those four sources are gone from the deck entirely, including from its footer -
+a sources line that credits research the deck no longer shows is its own kind of untruth.
 
 **`tools/build_pitch_pptx.js` builds the same deck as a PowerPoint file** - 18 slides, four
 dark section dividers between the light content, Arial and Courier New because the reader's
