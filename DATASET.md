@@ -83,6 +83,6 @@ english_wire_lag: ~1 day
 
 ## Making the live half real (so "is this real?" has a true answer)
 
-While the strike above is injected, the Risk Monitor should be **genuinely pulling live data** in parallel, including at least one non-English feed. The exact sources live in **DATA-SOURCES.md** — use the CORE set (GDELT, multilingual RSS, and PEGELONLINE for Rhine levels) so this file and the source list never drift apart.
+While the strike above is injected, the Risk Monitor should be **genuinely pulling live data** in parallel, across all six families and including at least one non-English feed. The exact sources live in **DATA-SOURCES.md**, so this file and the source list never drift apart.
 
 The live pull is what earns credibility. The injected strike is what makes the demo happen on command. Both are honest as long as you say which is which.

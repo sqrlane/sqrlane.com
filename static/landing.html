@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SQRlane — trade-lane risk, decided</title>
-<meta name="description" content="SQRlane reads news from sources worldwide, works out which shipments are exposed, decides reroute or hold, and drafts the emails. The reasoning is recorded for every call.">
+<meta name="description" content="SQRlane reads 42 free sources — news, river gauges, weather, sea state, hazards, government notices and rates — works out which bookings in your TMS are exposed, decides reroute or hold, drafts the emails, and writes every change back onto the booking for a person to approve.">
 <meta name="color-scheme" content="light">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3.5' fill='%23171717'/%3E%3Cpath d='M3 11.2h10M3 8h6.5M3 4.8h3.5' stroke='%23fff' stroke-width='1.7' stroke-linecap='round'/%3E%3C/svg%3E">
 
@@ -187,10 +187,12 @@ h1,h2,h3,h4,p{margin:0}
 .brand .name{font-size:16px; font-weight:600; letter-spacing:-.32px}
 .nav-links{display:flex; align-items:center; gap:4px; margin-left:8px}
 .nav-links a{padding:6px 10px; border-radius:var(--r-sm); font-size:14px; line-height:20px;
+             white-space:nowrap;
              color:var(--muted); transition:background .15s var(--ease), color .15s var(--ease)}
 .nav-links a:hover{background:var(--gray-100); color:var(--fg)}
 .nav .right{margin-left:auto; display:flex; align-items:center; gap:10px}
-.nav .ghost{font-size:14px; color:var(--muted); padding:6px 10px; border-radius:var(--r-sm)}
+.nav .ghost{font-size:14px; color:var(--muted); padding:6px 10px; border-radius:var(--r-sm);
+            white-space:nowrap}
 .nav .ghost:hover{background:var(--gray-100); color:var(--fg)}
 
 /* ---------- hero ---------- */
@@ -1063,6 +1065,28 @@ h1,h2,h3,h4,p{margin:0}
 .not .k{font-size:14px; font-weight:500; letter-spacing:-.2px}
 .not .v{font-size:13px; line-height:19px; color:var(--muted); margin-top:3px}
 
+/* ---------- weighed options ----------
+   Two rows, one number each, and the winner marked. The point of the block is a
+   comparison, so the figures are the only thing set large and they share a
+   column: two euro amounts that do not line up cannot be compared at a glance. */
+.wgh{display:flex; flex-direction:column; gap:8px}
+.wgh-r{display:grid; grid-template-columns:minmax(0,1fr) 122px; gap:2px 14px;
+       align-items:baseline; padding:11px 13px; border-radius:var(--r);
+       border:1px solid var(--border); background:var(--card-muted)}
+.wgh-r.win{border-color:var(--green-400); background:var(--green-100)}
+.wgh-r.lose{border-color:var(--border-strong)}
+.wgh-k{font-size:13.5px; font-weight:500; letter-spacing:-.2px}
+.wgh-b{grid-column:1; font-size:12px; line-height:17px; color:var(--muted)}
+/* Explicit column, not auto-placement, which put the figure in column 1 and
+   right-aligned the option name. A fixed track rather than `auto` so the two
+   amounts share an edge - the comparison is the whole point of the block, and
+   two euro figures that do not line up cannot be compared at a glance. */
+.wgh-v{grid-column:2; grid-row:1 / span 2; align-self:center; text-align:right;
+       font-size:21px; font-weight:600;
+       letter-spacing:-.7px; font-variant-numeric:tabular-nums; white-space:nowrap}
+.wgh-r.win .wgh-v{color:var(--green)}
+.wgh-r.lose .wgh-v{color:var(--muted)}
+
 /* ---------- honest band ----------
    The same card rule as everything else on the page - hairline border, 12px
    radius, --shadow-card - which is bklit-ui's anatomy, it being a shadcn
@@ -1126,19 +1150,26 @@ h1,h2,h3,h4,p{margin:0}
    612px, and 257px of actions. The old rule kept every one of them until
    860px and then dropped the links all at once, so the page scrolled
    sideways across the whole band between - and every link added since made
-   that band wider. Two links have been added since the breakpoint was set.
+   that band wider.
 
    So: tighten first - close the gaps and drop the ghost link, which the
    footer carries anyway - and only hide the links once tightening is not
    enough. Anything added to this nav shifts both numbers; the fix is to
-   re-measure, not to nudge them. */
+   re-measure, not to nudge them.
+
+   Re-measured after the TMS link was added: tightened, the bar holds one row
+   down to 928px and overflows at 926, so the links are hidden below 940. The
+   `nowrap` above is part of that measurement and not decoration - without it
+   flex does not overflow, it wraps "How it works" onto two lines inside its
+   own pill, which is worse than a scrollbar and invisible to a width probe
+   looking only at scrollWidth. */
 @media (max-width:1180px){
   .nav .wrap{gap:18px}
   .nav-links{gap:0; margin-left:0}
   .nav-links a{padding:6px 8px}
   .nav .ghost{display:none}
 }
-@media (max-width:900px){
+@media (max-width:940px){
   .nav-links{display:none}
 }
 
@@ -1222,11 +1253,12 @@ h1,h2,h3,h4,p{margin:0}
     </a>
     <nav class="nav-links">
       <a href="#loop">How it works</a>
-      <a href="#edge">The edge</a>
+      <a href="#edge">Signals</a>
+      <a href="#desk">TMS</a>
       <a href="#case">Case study</a>
       <a href="#reasoning">Reasoning</a>
       <a href="#sources">Sources</a>
-      <a href="#scope">Scope</a>
+      <a href="#cost">Cost</a>
       <a href="/whitepaper">Whitepaper</a>
     </nav>
     <div class="right">
@@ -1242,7 +1274,7 @@ h1,h2,h3,h4,p{margin:0}
 <!-- ======================== HERO ======================== -->
 <section class="hero">
   <div class="wrap">
-    <span class="pill"><span class="dot"></span>20 live sources worldwide, no API keys</span>
+    <span class="pill"><span class="dot"></span>42 live sources across six families, no API keys</span>
 
     <h1 class="d1">Trade-lane risk, decided.</h1>
 
@@ -1353,7 +1385,7 @@ h1,h2,h3,h4,p{margin:0}
 <!-- ======================== SOURCE STRIP ======================== -->
 <section class="strip">
   <div class="wrap">
-    <p class="lead">Watching, keyless and in the open</p>
+    <p class="lead">Forty-two sources, keyless and in the open</p>
   </div>
 
   <!-- The marks, defined once and referenced by every copy of the row. They
@@ -1441,6 +1473,48 @@ h1,h2,h3,h4,p{margin:0}
       <path d="M5.4 20.5q2.2-1.8 4.4 0t4.4 0t4.4 0"/>
     </symbol>
 
+
+    <!-- Open-Meteo: wind over a port -->
+    <symbol id="mk-wind" viewBox="0 0 24 24">
+      <path d="M3 8.5h9.4a2.6 2.6 0 1 0-2.6-2.6"/>
+      <path d="M3 12.5h13a2.8 2.8 0 1 1-2.8 2.8"/>
+      <path d="M3 16.6h6.4"/>
+    </symbol>
+
+    <!-- Open-Meteo Marine: sea state on the open leg -->
+    <symbol id="mk-wave" viewBox="0 0 24 24">
+      <path d="M2.6 9.4c1.9 0 1.9 2.1 3.8 2.1s1.9-2.1 3.8-2.1 1.9 2.1 3.8 2.1
+               1.9-2.1 3.8-2.1 1.9 2.1 3.8 2.1"/>
+      <path d="M2.6 14.6c1.9 0 1.9 2.1 3.8 2.1s1.9-2.1 3.8-2.1 1.9 2.1 3.8 2.1
+               1.9-2.1 3.8-2.1 1.9 2.1 3.8 2.1"/>
+    </symbol>
+
+    <!-- USGS: a seismograph trace -->
+    <symbol id="mk-seismic" viewBox="0 0 24 24">
+      <path d="M2.4 12h3.1l2-6.4 3 12.8 2.4-8.3 1.7 4.3 1.5-2.4h5.5"/>
+    </symbol>
+
+    <!-- NASA EONET: watching from above -->
+    <symbol id="mk-sat" viewBox="0 0 24 24">
+      <path d="M6.6 12.4 12 7l5 5-5.4 5.4z"/>
+      <path d="M4.1 9.9 6.6 7.4M17 12l2.6-2.6M9.1 19.9a6.9 6.9 0 0 0 6.9-6.9"/>
+      <path d="M8.6 4.3 11 6.7M13.4 19.7 11 17.3"/>
+    </symbol>
+
+    <!-- Federal Register: a filing, sealed -->
+    <symbol id="mk-doc" viewBox="0 0 24 24">
+      <path d="M6 3.2h8.2L18.4 7v13.8H6z"/>
+      <path d="M14 3.2V7h4.4"/>
+      <circle cx="12.2" cy="14.4" r="2.6"/>
+      <path d="M8.9 10.4h3"/>
+    </symbol>
+
+    <!-- Frankfurter: the ECB's own reference rates -->
+    <symbol id="mk-fx" viewBox="0 0 24 24">
+      <path d="M3.4 8.2h15.2M15.4 4.9l3.2 3.3-3.2 3.3"/>
+      <path d="M20.6 15.8H5.4M8.6 12.5l-3.2 3.3 3.2 3.3"/>
+    </symbol>
+
   </defs></svg>
 
   <div class="strip-view">
@@ -1457,7 +1531,17 @@ h1,h2,h3,h4,p{margin:0}
         <span class="src"><svg class="mk"><use href="#mk-drop"/></svg>الجزيرة <span class="lg">ar</span></span>
         <span class="src"><svg class="mk"><use href="#mk-drop"/></svg>Al Jazeera <span class="lg">en</span></span>
         <span class="src"><svg class="mk"><use href="#mk-anchor"/></svg>gCaptain <span class="lg">en</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-anchor"/></svg>Splash 247 <span class="lg">en</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-signal"/></svg>VRT NWS <span class="lg">nl</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-paper"/></svg>ANSA <span class="lg">it</span></span>
+        <span class="src"><svg class="mk"><use href="#mk-tv"/></svg>NHK <span class="lg">ja</span></span>
         <span class="src"><svg class="mk"><use href="#mk-gauge"/></svg>PEGELONLINE</span>
+        <span class="src"><svg class="mk"><use href="#mk-wind"/></svg>Open-Meteo</span>
+        <span class="src"><svg class="mk"><use href="#mk-wave"/></svg>Open-Meteo Marine</span>
+        <span class="src"><svg class="mk"><use href="#mk-seismic"/></svg>USGS</span>
+        <span class="src"><svg class="mk"><use href="#mk-sat"/></svg>NASA EONET</span>
+        <span class="src"><svg class="mk"><use href="#mk-doc"/></svg>Federal Register</span>
+        <span class="src"><svg class="mk"><use href="#mk-fx"/></svg>Frankfurter <span class="lg">ecb</span></span>
       </div>
     </div>
   </div>
@@ -1503,6 +1587,27 @@ h1,h2,h3,h4,p{margin:0}
       Both halves are priced for enterprise. The desk this is modelled on — a mid-size
       DACH or Benelux forwarder — sits below that line and joins them by hand.
     </p>
+
+    <div class="grid g2 rv" style="margin-top:34px">
+      <div class="not">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round"><path d="M4 12l5.5 5.5L20 7"/></svg>
+        <div><p class="k">It watches everything that moves a lane</p>
+          <p class="v">Not only headlines. Forty-two free sources in six families — the wires
+            and the press next to the port, river gauges, weather and sea state, natural
+            hazards, government filings and the rate a reroute is billed at — read together on
+            every run, because a lane is not moved by news alone.</p></div>
+      </div>
+      <div class="not">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round"><path d="M4 12l5.5 5.5L20 7"/></svg>
+        <div><p class="k">And then it does the TMS work — this is the big one</p>
+          <p class="v">Every decision comes back as the change it implies on the booking it
+            came from: the exception, the discharge port, the routing code, the revised ETA,
+            each drafted mail on the communication log. Queued against the record, named by
+            the agent that made it, waiting on one click. The desk stops re-typing.</p></div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -1537,14 +1642,18 @@ h1,h2,h3,h4,p{margin:0}
         <div class="num">01</div>
         <div class="body">
           <h3 class="h24">Risk Monitor <span class="chip live">Live</span></h3>
-          <p class="copy16">Pulls GDELT, ten RSS feeds and three Rhine gauges, then has the
-            model classify each item — chokepoint, disruption type, severity. Gauges are read
-            by threshold, not by the model. Anything that has not answered inside the budget
-            is skipped and the cycle moves on.</p>
+          <p class="copy16">Reads all forty-two sources at once — GDELT, twenty feeds,
+            three Rhine gauges, port weather, sea state, seismic activity, natural events,
+            government filings and the ECB's rates. Prose goes to the model, which calls
+            chokepoint, disruption type and severity. Numbers do not: a gust, a wave height,
+            a magnitude and a water level are read by threshold, which costs nothing and
+            cannot hallucinate. Whatever has not answered inside the budget is marked
+            skipped and the cycle moves on.</p>
           <div class="facts">
+            <span class="fact"><b>42</b> sources, <b>6</b> families, <b>0</b> API keys</span>
             <span class="fact"><b>25s</b> hard budget for the whole pull</span>
             <span class="fact"><b>8s</b> per-request timeout</span>
-            <span class="fact">Seven chokepoints: <b>HAM · RTM · ANR · SUEZ · REDSEA · COGH · RHINE</b></span>
+            <span class="fact">Nine chokepoints: <b>HAM · RTM · ANR · FOS · SUEZ · REDSEA · COGH · RHINE · FRINL</b></span>
           </div>
         </div>
       </div>
@@ -1604,19 +1713,26 @@ h1,h2,h3,h4,p{margin:0}
   <div class="wrap">
     <div class="feature">
       <div class="txt rv">
-        <span class="eyebrow">Differentiator one</span>
-        <h2 class="d2" style="margin-top:14px">The wires are not first.</h2>
-        <p class="copy18">A disruption is known locally long before it is news globally.
-          The union announces the walkout, the regional broadcaster carries it, and a wire
-          picks it up the better part of a day later. A monitor watching the wires is late
-          because it is reading downstream.</p>
-        <p class="copy16" style="margin-top:16px">SQRlane reads those sources directly —
-          local outlets, regional broadcasters, trade press, government gauges — across
-          every region its lanes cross. Whatever the hour, one of them is publishing.</p>
+        <span class="eyebrow">The signal layer</span>
+        <h2 class="d2" style="margin-top:14px">A lane is not moved by news alone.</h2>
+        <p class="copy18">It is moved by a walkout, a gale over the crane, a river that has
+          dropped, a swell off the Cape, a wildfire across the rail leg, a tariff filed in
+          Washington — and, when the invoice lands, by an exchange rate. Those arrive in
+          different formats from different institutions, and a monitor that only reads
+          headlines is reading a summary of some of them, late.</p>
+        <p class="copy16" style="margin-top:16px">So SQRlane reads all of it on every run:
+          forty-two free, keyless sources in six families, from GDELT and the broadcasters
+          next to the port through to the gauges, the weather models, USGS, NASA and the
+          federal register. Prose goes to the model. Numbers go to a threshold. Everything
+          lands on one screen before anything is decided.</p>
         <ul class="claims">
+          <li><span class="k">Breadth</span>
+            <span class="v">News · river gauges · weather &amp; sea state · natural hazards ·
+            government filings · rates — <b>42 sources, no API keys</b></span></li>
           <li><span class="k">At source</span>
-            <span class="v">Local sources are read <b>directly</b>, not second-hand from
-            a wire</span></li>
+            <span class="v">The press closest to a corridor is read <b>directly</b>, not
+            picked up second-hand from a wire — which is why an event often lands here
+            first</span></li>
           <li><span class="k">Coverage</span>
             <span class="v">The North Range, the Low Countries, the Red Sea and Gulf, the
             Western Mediterranean — every corridor on the board</span></li>
@@ -1979,7 +2095,7 @@ h1,h2,h3,h4,p{margin:0}
   <div class="wrap">
     <div class="feature flip">
       <div class="txt rv">
-        <span class="eyebrow">Differentiator two</span>
+        <span class="eyebrow">The judgement</span>
         <h2 class="d2" style="margin-top:14px">The hard one is the interesting one.</h2>
         <p class="copy18">Two of the seven reroute cleanly and four are never touched. The
           one worth reading is SHP-002, where there is no good option and the job is to pick
@@ -2258,12 +2374,17 @@ firm revised ETA as soon as terminals restart.</p>
 <section class="section" id="desk">
   <div class="wrap">
     <div class="head rv">
-      <span class="eyebrow">The rest of the desk</span>
-      <h2 class="d2">A disruption is not one email. It is a day of them.</h2>
+      <span class="eyebrow">The biggest value</span>
+      <h2 class="d2">The decision is the easy half. The TMS work is the day.</h2>
       <p class="copy18">The carrier sends a notice. The customer asks where their box is.
         A rate request lands on the lane you are re-planning. And until someone types it in,
-        the TMS still says the old discharge port. Deciding is the interesting half. This is
-        the half that eats the day — all of it on the same booking record.</p>
+        the TMS still says the old discharge port — so nothing that was decided has
+        actually happened yet.</p>
+      <p class="copy16" style="margin-top:14px;max-width:74ch">This is the half SQRlane
+        automates. Every agent works <i>in</i> the system of record rather than beside it:
+        the booking comes out of it, and the exception, the new discharge port, the routing
+        code, the revised ETA and each drafted mail go back onto it as queued changes, named
+        by the agent that made them. One person approves. Nobody re-keys.</p>
     </div>
 
     <div class="grid g3 rv" style="margin-top:40px">
@@ -2586,33 +2707,69 @@ firm revised ETA as soon as terminals restart.</p>
   <div class="wrap">
     <div class="head rv">
       <span class="eyebrow">What it reads</span>
-      <h2 class="d2">Free, keyless, and few on purpose.</h2>
-      <p class="copy18">Every extra source is one more thing that can break in front of an
-        audience. Three families carry the whole story, each behind its own function so one
-        can be pulled without touching the others.</p>
+      <h2 class="d2">Forty-two sources. Not one of them load-bearing.</h2>
+      <p class="copy18">Breadth is the point, and it is only safe because nothing depends on
+        any single source: each one sits behind its own small function, inside a shared time
+        budget, and a source that is down, slow or has quietly reshaped its response is
+        reported as failed and skipped while the rest of the run carries on. Every one is
+        free, keyless, and in the open catalogue.</p>
     </div>
 
     <div class="tbl rv">
       <div class="tr th"><span>Source</span><span>Role</span><span>Key</span></div>
       <div class="tr">
-        <span class="nm">GDELT DOC 2.0 <span class="chip plain">7 queries</span></span>
+        <span class="nm">GDELT DOC 2.0 <span class="chip plain">11 queries</span></span>
         <span class="ds">Global news backbone, refreshing about every 15 minutes. One query
-          per corridor — North Range, Low Countries, Red Sea and Gulf, Western
-          Mediterranean — each watching the regional press for that lane.</span>
+          pinned per corridor — North Range, Low Countries, Western Mediterranean and the
+          Rhone, Red Sea and Gulf, Asian gateway ports, the Turkish straits, Panama and the
+          Americas — plus one on customs, tariffs and sanctions.</span>
         <span class="kx chip">None</span>
       </div>
       <div class="tr">
-        <span class="nm">RSS <span class="chip plain">10 feeds</span></span>
-        <span class="ds">Regional broadcasters and trade press close to the lanes — NDR
-          Hamburg, tagesschau, DW, NOS, RTVE, France Info, Le Monde, Al Jazeera, gCaptain.
-          This is where the earliness edge lives. The wire feeds stay so the lead over them
-          is measurable, not asserted.</span>
+        <span class="nm">RSS <span class="chip plain">20 feeds</span></span>
+        <span class="ds">Broadcasters and papers on the corridors' doorsteps — NDR Hamburg,
+          tagesschau, DW, NOS, VRT, RTVE, El País, France Info, Le Monde, ANSA, NHK,
+          Al Jazeera, France 24, The Straits Times, Times of India — plus the narrow trade
+          press where nearly every item is on topic: gCaptain, Splash 247, The Maritime
+          Executive. Reading close to the event is why one of them is usually first; the
+          international feeds stay so the lead over them is measurable rather than asserted.</span>
         <span class="kx chip">None</span>
       </div>
       <div class="tr">
         <span class="nm">PEGELONLINE <span class="chip plain">3 gauges</span></span>
         <span class="ds">Rhine water levels at Kaub, Duisburg-Ruhrort and Emmerich, mapped to
           the RHINE chokepoint. Read by threshold, not by the model — numbers, not prose.</span>
+        <span class="kx chip">None</span>
+      </div>
+      <div class="tr">
+        <span class="nm">Open-Meteo <span class="chip plain">wind + sea</span></span>
+        <span class="ds">Gusts over Hamburg, Rotterdam, Antwerp and Fos-sur-Mer, and
+          significant wave height at the Suez approaches, Bab-el-Mandeb and the Cape of Good
+          Hope. A terminal loses crane hours around gale force 8 and stops near force 10, so
+          the bands are the thresholds an operator would use.</span>
+        <span class="kx chip">None</span>
+      </div>
+      <div class="tr">
+        <span class="nm">USGS · NASA EONET <span class="chip plain">hazards</span></span>
+        <span class="ds">Real-time seismic activity, and NASA's tracker for open wildfires,
+          severe storms, floods and volcanoes. Each reading carries a coordinate, so it is
+          mapped to the nearest corridor and <b>dropped if none is within reach</b> — a
+          magnitude 7 in the South Pacific is real and is not this board's problem.</span>
+        <span class="kx chip">None</span>
+      </div>
+      <div class="tr">
+        <span class="nm">Federal Register <span class="chip plain">filings</span></span>
+        <span class="ds">Tariff, sanctions, customs and port-security filings, which land as
+          a government document days before a trade paper writes them up. Prose, so this one
+          goes to the model rather than to a threshold.</span>
+        <span class="kx chip">None</span>
+      </div>
+      <div class="tr">
+        <span class="nm">Frankfurter · NWS · HK Observatory <span class="chip plain">context</span></span>
+        <span class="ds">The ECB's own reference rates, active US government weather alerts,
+          and the warnings in force over the Pearl River Delta. Real, read live, and they
+          move nothing on this board — so they sit in their own panel saying exactly that,
+          rather than being promoted to look like risk.</span>
         <span class="kx chip">None</span>
       </div>
       <div class="tr">
@@ -2625,56 +2782,100 @@ firm revised ETA as soon as terminals restart.</p>
     </div>
 
     <p class="copy14 rv" style="margin-top:20px;max-width:74ch">
-      Not wired, deliberately: anything paid, anything optional. Reuters retired its public
-      RSS feeds, so it is out — a dead feed is a live failure.
+      Not wired, deliberately: anything paid, anything that needs a key. Reuters retired
+      its public RSS feeds, so it is out — a dead feed is a live failure. OpenSanctions now
+      gates its hosted API behind a key, and "no API keys" has to stay true.
     </p>
   </div>
 </section>
 
 <!-- ======================== SCOPE ======================== -->
-<section class="section" id="scope">
+<section class="section" id="cost">
   <div class="wrap">
     <div class="head rv">
-      <span class="eyebrow">Scope</span>
-      <h2 class="d2">What it deliberately does not do.</h2>
-      <p class="copy18">Scope creep is the failure mode for a prototype. These are not
-        roadmap items being coy — they are out, by decision.</p>
+      <span class="eyebrow">What a delay costs</span>
+      <h2 class="d2">The cheap option is not the cheap option.</h2>
+      <p class="copy18">A rate is what an option costs to take. It is not what the decision
+        costs. Price both and the answer stops being obvious — one strike, two bookings, and
+        the premium is the bargain on one of them and the trap on the other.</p>
     </div>
 
-    <div class="grid g2 nots rv">
+    <!-- The board's own arithmetic, not an illustration. Every figure here is
+         computed by cost_of() from the terms on the booking. -->
+    <div class="grid g2 rv" style="margin-top:40px">
+      <div class="card">
+        <div class="art-h"><span class="ttl">SHP-001 · Automotive parts · Shanghai → Munich</span>
+          <span class="r chip blue">Reroute</span></div>
+        <div class="art-b">
+          <p class="copy14" style="margin-bottom:14px">Four days of slack against five days of
+            strike. One day spills past the date the line needs it.</p>
+          <div class="wgh">
+            <div class="wgh-r lose">
+              <span class="wgh-k">Stay on the booked routing</span>
+              <span class="wgh-b">no premium · 1 day late</span>
+              <span class="wgh-v">€31,500</span>
+            </div>
+            <div class="wgh-r win">
+              <span class="wgh-k">Reroute via Rotterdam</span>
+              <span class="wgh-b">€2,304 premium · nothing late</span>
+              <span class="wgh-v">€2,304</span>
+            </div>
+          </div>
+          <p class="src" style="margin-top:13px">That day is a stopped assembly line and the parts
+            flown in to restart it. The premium is thirteen times cheaper than the delay it
+            avoids.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="art-h"><span class="ttl">SHP-002 · Reefer pharma · Ningbo → Hamburg</span>
+          <span class="r chip synth">Hold</span></div>
+        <div class="art-b">
+          <p class="copy14" style="margin-bottom:14px">One day of slack, a customer who is
+            <i>in Hamburg</i>, and only the Cape on file.</p>
+          <div class="wgh">
+            <div class="wgh-r win">
+              <span class="wgh-k">Hold at origin and notify</span>
+              <span class="wgh-b">no premium · 4 days late</span>
+              <span class="wgh-v">€91,000</span>
+            </div>
+            <div class="wgh-r lose">
+              <span class="wgh-k">Reroute via the Cape</span>
+              <span class="wgh-b">€3,420 premium · 14 days late</span>
+              <span class="wgh-v">€234,420</span>
+            </div>
+          </div>
+          <p class="src" style="margin-top:13px">Holding is not the good answer. It is the
+            €143,000 cheaper one, and the drafted mail says the date is at risk rather than
+            pretending otherwise.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout rv" style="margin-top:24px">
+      <p class="copy16"><b style="color:var(--fg);font-weight:500">A reroute has to beat staying
+        put in money, not just in days.</b> Slack absorbs the first days, so what is priced is
+        days <i>late</i>. Anything that costs more than the delay it avoids is refused, and the
+        record says why in euros.</p>
+    </div>
+
+    <div class="grid g2 nots rv" style="margin-top:16px">
       <div class="not">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/>
           <path d="M5.6 5.6l12.8 12.8"/></svg>
-        <div><p class="k">No route optimisation</p>
-          <p class="v">Routes are pre-authored candidates. The agent chooses among them and
-            justifies the choice; it never computes a route.</p></div>
+        <div><p class="k">The commercial terms are authored</p>
+          <p class="v">What a day late costs each customer is written into the booking. No rate
+            card is read and no probability is applied anywhere: the arithmetic is exact, its
+            inputs are synthetic.</p></div>
       </div>
       <div class="not">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/>
           <path d="M5.6 5.6l12.8 12.8"/></svg>
-        <div><p class="k">No sending</p>
-          <p class="v">Emails are drafted and displayed. No transport of any kind is
-            imported anywhere in the codebase, and a test enforces it.</p></div>
-      </div>
-      <div class="not">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/>
-          <path d="M5.6 5.6l12.8 12.8"/></svg>
-        <div><p class="k">No live TMS connection — yet</p>
-          <p class="v">Working through the TMS is the design, and the connector models both
-            directions. What is missing is the far end: no vendor, no credential, no endpoint.
-            The bookings behind it are synthetic, authored so one disruption yields three
-            different decisions.</p></div>
-      </div>
-      <div class="not">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/>
-          <path d="M5.6 5.6l12.8 12.8"/></svg>
-        <div><p class="k">No scheduler, no database</p>
-          <p class="v">Button-triggered, JSON files, in memory. For a demo, magic on command
-            beats a background job.</p></div>
+        <div><p class="k">It prices the options on file</p>
+          <p class="v">Routes are pre-authored candidates. The agent weighs what each would cost
+            and justifies the choice; it never computes a route.</p></div>
       </div>
     </div>
   </div>
@@ -2763,17 +2964,17 @@ firm revised ETA as soon as terminals restart.</p>
         <h4>Product</h4>
         <ul>
           <li><a href="#loop">How it works</a></li>
-          <li><a href="#edge">The source edge</a></li>
+          <li><a href="#edge">The signal layer</a></li>
           <li><a href="#reasoning">Recorded reasoning</a></li>
           <li><a href="#drafts">Drafts &amp; approval</a></li>
-          <li><a href="#desk">The workflow layer</a></li>
+          <li><a href="#desk">The TMS work, automated</a></li>
         </ul>
       </div>
       <div>
         <h4>Detail</h4>
         <ul>
           <li><a href="#sources">Data sources</a></li>
-          <li><a href="#scope">Scope &amp; non-goals</a></li>
+          <li><a href="#cost">What a delay costs</a></li>
           <li><a href="#honest">What's real</a></li>
         </ul>
       </div>

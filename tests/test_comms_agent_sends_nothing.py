@@ -14,7 +14,8 @@ Two kinds of check:
 
 An important distinction, because it is easy to get wrong later: this is NOT a
 "no networking" rule. The app makes real HTTP calls on purpose - GDELT,
-PEGELONLINE, six RSS feeds and the LLM provider all go out over `requests`, and
+PEGELONLINE, the news feeds, the public data APIs and the LLM provider all go
+out over `requests`, and
 the live news pull is the demo's credibility anchor. What must not exist is a
 way to send a *message* to a carrier or a customer. So `requests` is fine and
 `smtplib` is not.

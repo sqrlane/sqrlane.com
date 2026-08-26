@@ -6,12 +6,15 @@
 the shipments are read out of the system of record, the Workers decide against those
 records, and every action they take is written back onto them.
 
-Three AI Workers watch global news — in several languages — for events that disrupt
-shipping. When one hits, they work out which bookings are affected, decide whether to
-**reroute** or **hold** each one, explain *why*, draft the carrier and customer emails a
-person would otherwise have to write, and queue the change each decision implies back into
-the TMS: the exception on the booking, the new discharge port, routing code and ETA, the
-drafted mail on the communication log.
+Three AI Workers watch **everything that moves a trade lane** — 42 free, keyless sources
+across six families: news and trade press in several languages, river gauges, port weather
+and sea state, seismic and natural-hazard feeds, government filings, and the reference rate
+a reroute is billed at. When something hits, they work out which bookings are affected,
+decide whether to **reroute** or **hold** each one, explain *why*, draft the carrier and
+customer emails a person would otherwise have to write, and — the part that actually eats
+the day — queue the change each decision implies back into the TMS: the exception on the
+booking, the new discharge port, routing code and ETA, the drafted mail on the
+communication log.
 
 Risk → decision → communication → the system of record, as one closed loop, with the
 reasoning recorded, and every message and every write held for human approval.
@@ -23,7 +26,7 @@ reasoning recorded, and every message and every write held for human approval.
 
 | Worker | Does | |
 |---|---|---|
-| **Risk Worker** | Reads global news in several languages, tags what threatens a lane, and flags the exception on the booking | `LIVE` |
+| **Risk Worker** | Reads the wires, the press next to the port, the instruments and the government notices, tags what threatens a lane, and flags the exception on the booking | `LIVE` |
 | **Routing Worker** | Weighs schedule slack against added transit and expected delay, then writes the booking change | `LIVE` |
 | **Comms Worker** | Drafts the carrier and customer emails and files them against the booking. Sends nothing | `LIVE` |
 | **Rate Worker** | Quote and rate lookups across the carriers on a lane | `SCRIPTED` |
@@ -131,7 +134,8 @@ and every card that used one is badged `rule` so you can see it.
 2. **A strike hits the Port of Hamburg.** One click.
 3. **It was caught from a German-language source first** — the feed shows the original
    headline (*"Warnstreik im Hamburger Hafen…"*) next to the English one, roughly a day
-   before the English wires carried it.
+   before the English wires carried it. Beside it, the family strip shows what else was
+   read on the same run: gauges, weather, hazards, filings and rates.
 4. **The whole board is triaged in seconds** — two reroute, one holds, four stay green.
    It doesn't cry wolf.
 5. **Each decision opens up** into plain-English reasoning, the routes it rejected and
@@ -157,12 +161,13 @@ oversight is the responsible design, not a missing feature.
 
 ---
 
-## The five components
+## The components
 
 | | | |
 |---|---|---|
 | **TMS link** | `src/tms.py` | The system of record. Reads the book in, and turns each Worker's action into the booking change it implies — queued, never written. Imports nothing but `json`, `datetime` and the config. |
-| **Risk Monitor** | `src/risk_monitor.py` | Pulls GDELT, multilingual RSS and Rhine gauges. An LLM classifies each item for logistics relevance → chokepoint, type, severity. |
+| **Risk Monitor** | `src/risk_monitor.py` | The news half: 11 GDELT queries and 20 multilingual feeds, plus the Rhine gauges. An LLM classifies each item for logistics relevance → chokepoint, type, severity. |
+| **Signal layer** | `src/signals.py` | The structured half: port weather and sea state (Open-Meteo), seismic (USGS), natural events (NASA EONET), trade filings (Federal Register), and the ECB's rates (Frankfurter). Numbers are classified by threshold — no model call, and nothing to hallucinate. |
 | **Route Advisor** | `src/route_advisor.py` | Weighs schedule slack against added transit against expected disruption delay. Decides reroute / hold / no-action, and records the trail. |
 | **Comms Agent** | `src/comms_agent.py` | Drafts a carrier email and a customer email, in two deliberately different voices. Sends nothing. |
 | **Orchestrator** | `src/orchestrator.py` | The loop, plus `src/app.py` (FastAPI), `static/index.html` (the dashboard) and `static/landing.html` (the front page). |
@@ -223,7 +228,11 @@ Serverless changes two things, both handled automatically:
 - **A dead source is skipped, not fatal.** Each one is read in its own function and its
   failure is recorded and shown.
 - **A slow source cannot stall the demo.** The whole live pull has a hard 25-second
-  budget; whatever isn't read by then is skipped and the cycle moves on.
+  budget shared across every family, and the families are read concurrently — 42 sources
+  cost about what the slowest one costs. Whatever isn't read by then is skipped and the
+  cycle moves on.
+- **No source is load-bearing.** That is what makes breadth safe: any one of the 42 can
+  be down, slow or reshaped without the cycle failing, and a test holds it.
 - **No provider, no problem.** Decisions and drafts fall back to deterministic logic,
   clearly badged.
 - **The page is self-contained.** No CDN, no external font, no request beyond its own
@@ -236,9 +245,11 @@ Serverless changes two things, both handled automatically:
 
 The demo runs itself; these are the things only a person can check.
 
-1. **Open the risk feed and read the source line** — "N of 14 sources read". If N is
-   0 or 1, the live news pull is not working and the `LIVE` chip is overclaiming.
-   `python -m src.risk_monitor` says which sources failed and why.
+1. **Open the risk feed and read the source line** — "N of 42 sources read", and the
+   family strip under it. If the news family is at 0, the live news pull is not working
+   and the `LIVE` chip is overclaiming. `python -m src.risk_monitor` says which sources
+   failed and why, family by family; `python -m src.signals` does the structured half
+   on its own.
 2. **Open all three actioned cards**, not just one. SHP-001 and SHP-005 reroute;
    SHP-002 holds. They take different branches and read differently.
 3. **Check the decision-engine strip** at the top of the board — it names the model
@@ -273,7 +284,7 @@ python -m unittest discover -s tests
 ```
 
 No test framework to install — `unittest` from the standard library, plus the
-`requests` the app already depends on. Five files, each holding up a claim the demo makes
+`requests` the app already depends on. Six files, each holding up a claim the demo makes
 out loud. A claim nobody checks is a claim that has already stopped being true.
 
 `tests/test_comms_agent_sends_nothing.py` — **the Comms Agent drafts emails and never
@@ -287,6 +298,12 @@ fails if anything except the connector opens the shipments file, so there stays 
 one door to the book. Then it runs a cycle and checks that all three live Workers wrote
 something back, that every actioned booking has a write-back and every on-plan booking has
 none, and that every one of them is `QUEUED - not written` behind the approval gate.
+
+`tests/test_signals_read_wide_and_fail_soft.py` — **breadth without fragility.** It checks
+that a structured event matches the scripted schema key for key, that a reading far from
+every corridor is dropped rather than attached to a lane, that a `context` source never
+emits an event, and that a source which is down or has reshaped its response fails alone
+while the rest still read.
 
 `tests/test_the_pages_keep_their_promises.py` — **the pages say what they should and
 nothing they should not.** No language is named on the landing page or the dashboard (the
@@ -304,16 +321,17 @@ demo.** Against real sockets: a source that hangs and a source that trickles one
 time are both cut off, and a run whose every source trickles still ends inside its budget
 with the scenario intact.
 
-It is deliberately *not* a "no networking" rule. The app makes real HTTP calls on purpose
-— GDELT, PEGELONLINE, six RSS feeds and the LLM provider — and the live news pull is the
-credibility anchor. What must not exist is a way to send a *message*. So `requests` is
-fine and `smtplib` is not.
+None of these is a "no networking" rule. The app makes real HTTP calls on purpose — all 42
+sources and the LLM provider — and the live pull is the credibility anchor. What must not
+exist is a way to send a *message*. So `requests` is fine and `smtplib` is not.
 
 ## Where things are
 
 ```
 data/     the screenplay - chokepoints, routes, 7 bookings, four scenarios
-src/      the five components + llm.py (the only door to the AI provider) + config.py
+src/      the components + llm.py (the only door to the AI provider) + config.py
+          risk_monitor.py reads the prose, signals.py reads the instruments,
+          httpget.py is the capped GET both of them share,
           tms.py is the only door to the book of bookings
 static/   landing.html - the front page  ·  index.html - the dashboard
           fonts/ - Geist Sans + Mono, self-hosted (no CDN, ever)
