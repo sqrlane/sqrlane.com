@@ -1,6 +1,6 @@
 """tms.py - the TMS link. The system of record every agent works through.
 
-Lanewatch is not a system of record and is not trying to become one. A
+SQRlane is not a system of record and is not trying to become one. A
 forwarder's bookings live in their TMS, and that is where the work has to land:
 the agents read the book out of it, decide against those records, and put every
 action they take back into it as a change a person approves.
@@ -45,7 +45,7 @@ CONNECTOR_STATUS = "connected (demo)"
 
 # Where this sits, in one line. The dashboard, the run payload and the roster all
 # render this rather than each writing their own version of it.
-POSITIONING = ("Lanewatch runs on top of the TMS the desk already uses. Bookings are read "
+POSITIONING = ("SQRlane runs on top of the TMS the desk already uses. Bookings are read "
                "out of it, every decision the agents make is written back into it, and a "
                "person approves the write.")
 
@@ -69,27 +69,27 @@ AGENT_RECORDS = [
 # look like a real mapping table because that is the thing an ops lead
 # recognises. Nothing is mapped at runtime; the read below is a JSON load.
 FIELD_MAP = [
-    {"tms_field": "booking_ref",        "lanewatch_field": "id",
+    {"tms_field": "booking_ref",        "sqrlane_field": "id",
      "direction": "in",   "written_by": None},
-    {"tms_field": "commodity",          "lanewatch_field": "cargo",
+    {"tms_field": "commodity",          "sqrlane_field": "cargo",
      "direction": "in",   "written_by": None},
-    {"tms_field": "port_of_loading",    "lanewatch_field": "origin",
+    {"tms_field": "port_of_loading",    "sqrlane_field": "origin",
      "direction": "in",   "written_by": None},
-    {"tms_field": "port_of_discharge",  "lanewatch_field": "discharge_port",
+    {"tms_field": "port_of_discharge",  "sqrlane_field": "discharge_port",
      "direction": "both", "written_by": "Routing Worker"},
-    {"tms_field": "routing_code",       "lanewatch_field": "primary_route",
+    {"tms_field": "routing_code",       "sqrlane_field": "primary_route",
      "direction": "both", "written_by": "Routing Worker"},
-    {"tms_field": "eta",                "lanewatch_field": "eta",
+    {"tms_field": "eta",                "sqrlane_field": "eta",
      "direction": "both", "written_by": "Routing Worker"},
-    {"tms_field": "booking_status",     "lanewatch_field": "state",
+    {"tms_field": "booking_status",     "sqrlane_field": "state",
      "direction": "both", "written_by": "Routing Worker"},
-    {"tms_field": "required_by",        "lanewatch_field": "required_by",
+    {"tms_field": "required_by",        "sqrlane_field": "required_by",
      "direction": "in",   "written_by": None},
-    {"tms_field": "temperature_regime", "lanewatch_field": "cold_chain",
+    {"tms_field": "temperature_regime", "sqrlane_field": "cold_chain",
      "direction": "in",   "written_by": None},
-    {"tms_field": "exception_flag",     "lanewatch_field": "triggering_events",
+    {"tms_field": "exception_flag",     "sqrlane_field": "triggering_events",
      "direction": "out",  "written_by": "Risk Worker"},
-    {"tms_field": "communication_log",  "lanewatch_field": "drafts",
+    {"tms_field": "communication_log",  "sqrlane_field": "drafts",
      "direction": "out",  "written_by": "Comms Worker"},
 ]
 

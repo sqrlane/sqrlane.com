@@ -1,8 +1,8 @@
-# Lanewatch
+# SQRlane
 
 **Trade-lane risk, decided.**
 
-**Lanewatch runs on the bookings in a forwarder's TMS.** It is not another book to keep:
+**SQRlane runs on the bookings in a forwarder's TMS.** It is not another book to keep:
 the shipments are read out of the system of record, the Workers decide against those
 records, and every action they take is written back onto them.
 

@@ -31,7 +31,7 @@ LANDING = STATIC_DIR / "landing.html"    # the marketing page, served at /
 PAPER = STATIC_DIR / "whitepaper.html"   # the technical whitepaper, served at /whitepaper
 FONTS_DIR = STATIC_DIR / "fonts"         # Geist, self-hosted: no CDN, ever
 
-app = FastAPI(title="Trade-Lane Risk & Reroute Agent",
+app = FastAPI(title="SQRlane",
               description="Demo prototype. Drafts emails; sends nothing.")
 
 
@@ -59,7 +59,7 @@ def _page(path: Path, what: str):
 
 @app.get("/")
 def landing():
-    """The front door: what Lanewatch is, and what is real about it."""
+    """The front door: what SQRlane is, and what is real about it."""
     return _page(LANDING, "Landing page")
 
 

@@ -8,7 +8,7 @@ it tells a forwarder**, and **how it is classified** once it arrives.
 **The shape of it.** A trade lane is not moved by news alone. It is moved by a strike, a
 gale, a river, an earthquake, a tariff notice and — when the invoice lands — an exchange
 rate. Those arrive in different formats from different institutions, and a desk that only
-watches headlines is reading a summary of some of them, late. So Lanewatch reads **42
+watches headlines is reading a summary of some of them, late. So SQRlane reads **42
 sources across six families**, all of them free and keyless, and puts the whole picture on
 one screen before deciding anything.
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lanewatch — trade-lane risk, decided</title>
+<title>SQRlane — trade-lane risk, decided</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3.5' fill='%23171717'/%3E%3Cpath d='M3 11.2h10M3 8h6.5M3 4.8h3.5' stroke='%23fff' stroke-width='1.7' stroke-linecap='round'/%3E%3C/svg%3E">
 <style>
 /* Geist, self-hosted from static/fonts/ - the same faces the landing page is
@@ -22,7 +22,7 @@
   font-weight:100 900; font-style:normal; font-display:swap;
 }
 /* ------------------------------------------------------------------
-   Lanewatch, on the Geist design language: near-monochrome surfaces,
+   SQRlane, on the Geist design language: near-monochrome surfaces,
    hairline alpha borders, 6px radii, shadows you have to look for.
    Colour is spent only on state, never on decoration.
    ------------------------------------------------------------------ */
@@ -746,11 +746,11 @@ table.q tr.pick td{background:var(--surface)}
 <body>
 <div class="shell">
   <aside class="side">
-    <a class="side-h" href="/" title="Back to the Lanewatch overview page"
+    <a class="side-h" href="/" title="Back to the SQRlane overview page"
        style="text-decoration:none;color:inherit">
       <div class="mark"><svg width="15" height="15" viewBox="0 0 20 20" fill="none">
         <path d="M3.2 14h13.6M3.2 10h8.6M3.2 6h4.6" stroke="var(--card)" stroke-width="2.1" stroke-linecap="round"/></svg></div>
-      <div><div class="wordmark">Lanewatch</div><div class="tagline">Trade-lane risk, decided</div></div>
+      <div><div class="wordmark">SQRlane</div><div class="tagline">Trade-lane risk, decided</div></div>
     </a>
     <button class="sidesearch" id="sidesearch" title="Search  Ctrl-K">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -769,7 +769,7 @@ table.q tr.pick td{background:var(--surface)}
     <div class="top">
       <button class="icon-btn" id="collapse" title="Toggle sidebar  ⌘B"
               aria-label="Toggle sidebar"></button>
-      <div class="crumb"><span>Lanewatch</span> / <span id="crumb">Overview</span></div>
+      <div class="crumb"><span>SQRlane</span> / <span id="crumb">Overview</span></div>
       <div class="right">
         <button class="icon-btn bell" id="bell" title="Drafts awaiting your approval"
                 aria-label="Drafts awaiting your approval"></button>
@@ -888,9 +888,9 @@ let view = "overview", openId = null;
 
 /* ---------- theme ---------- */
 function theme(next){
-  const t = next || localStorage.getItem("lw:theme") || "light";
+  const t = next || localStorage.getItem("sqr:theme") || "light";
   document.documentElement.setAttribute("data-theme", t);
-  try{ localStorage.setItem("lw:theme", t); }catch(e){}
+  try{ localStorage.setItem("sqr:theme", t); }catch(e){}
   $("theme").innerHTML = t === "dark" ? ICON.sun : ICON.moon;
 }
 $("theme").onclick = () => theme(document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark");
@@ -938,7 +938,7 @@ function paintCollapse(){
 
 function toggleSide(){
   sideCollapsed = !sideCollapsed;
-  try { localStorage.setItem("lanewatch:sidebar", sideCollapsed ? "1" : "0"); } catch (e) {}
+  try { localStorage.setItem("sqrlane:sidebar", sideCollapsed ? "1" : "0"); } catch (e) {}
   paintCollapse();
 }
 
@@ -947,7 +947,7 @@ let collapseReady = false;
 function initCollapse(){
   if (collapseReady) return;      // render() calls this; bind the listener once
   collapseReady = true;
-  try { sideCollapsed = localStorage.getItem("lanewatch:sidebar") === "1"; } catch (e) {}
+  try { sideCollapsed = localStorage.getItem("sqrlane:sidebar") === "1"; } catch (e) {}
   paintCollapse();
   requestAnimationFrame(() => document.body.classList.add("side-ready"));
   $("collapse").onclick = toggleSide;
@@ -1232,10 +1232,10 @@ function connectionsView(){
     <div class="conn-h"><div><h2>Field mapping</h2>
       <p>Where each booking field lands, which way it moves, and who writes it</p></div></div>
     <table class="q" style="margin-top:14px">
-      <thead><tr><th>TMS field</th><th>Lanewatch field</th><th>Direction</th><th>Written by</th></tr></thead>
+      <thead><tr><th>TMS field</th><th>SQRlane field</th><th>Direction</th><th>Written by</th></tr></thead>
       <tbody>${(t.field_map||[]).map(f=>`<tr>
         <td class="mono">${esc(f.tms_field)}</td>
-        <td class="mono">${esc(f.lanewatch_field)}</td>
+        <td class="mono">${esc(f.sqrlane_field)}</td>
         <td><span class="qtag">${esc(f.direction)}</span></td>
         <td>${f.written_by?esc(f.written_by):"<span class=\"wb-f\">read only</span>"}</td></tr>`).join("")}
       </tbody></table>
@@ -1547,7 +1547,7 @@ function go(id, fromRoute){
   document.querySelectorAll(".view").forEach(v => v.classList.remove("on"));
   $("v-"+id).classList.add("on");
   $("crumb").textContent = VIEW_TITLES[id];
-  document.title = `${VIEW_TITLES[id]} · Lanewatch`;
+  document.title = `${VIEW_TITLES[id]} · SQRlane`;
   $("scroll").scrollTop = 0;
   if (!fromRoute) writeRoute();
   render();
