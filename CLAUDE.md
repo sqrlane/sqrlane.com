@@ -784,6 +784,20 @@ denominator: it lists every source *before* anything is read, so the count is of
 attempted, and three screens quoting it cannot disagree. **Schema parity between live and injected events has broken three times**
 — each time by adding a field to injected events only. Add it to both.
 
+**"Live" is earned per run, and the risk feed used not to check.** Its card header
+hard-coded a green `live` chip and its source line printed `✓ ${ok} of ${total}` — so a
+run that reached nothing rendered a green **live** and a **tick against a zero**. The stat
+card had always got this right (`read ? "live" : "no live source"`); the feed contradicted
+it two panels away. That is not cosmetic: on any network that blocks the sources — every
+build sandbox so far, and a conference wifi — the board asserted the live read it had just
+failed to make, which is precisely the invented metric this project refuses to produce.
+Both claims are now computed from the run: the chip falls to an amber `no live source` and
+the tick becomes `!`. `tests/test_the_pages_keep_their_promises.py` holds both, and the
+guards were confirmed by reverting the fix and watching them fail. `instrumentCard` and
+`contextCard` were already honest — they return `""` when they have no readings, so their
+chips cannot outlive their data. **Any new panel wearing a `live` chip owes the same
+check.**
+
 ### Surviving a live audience
 
 The failure mode that actually threatens a demo is not a *dead* source — that fails fast —

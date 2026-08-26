@@ -142,6 +142,9 @@ body.side-collapsed .side > *{opacity:0; pointer-events:none}
       padding:2px 6px;border-radius:4px;background:var(--surface);color:var(--muted)}
 .chip.live{background:var(--green-bg);color:var(--green)}
 .chip.synth{background:var(--amber-bg);color:var(--amber)}
+/* Worn when a live read was attempted and nothing answered. Distinct from
+   .synth, which marks authored data - a source that is down is not a fiction. */
+.chip.off{background:var(--amber-bg);color:var(--amber)}
 .chip.blue{background:var(--blue-bg);color:var(--blue)}
 .chip.red{background:var(--red-bg);color:var(--red)}
 .sec-t{font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;
@@ -1979,8 +1982,16 @@ function riskCard(compact){
   const srcs = (risk.sources||[]).filter(s=>!/^scenario:/.test(s.name||""));
   const ok = risk.live_sources_read||0, total = risk.live_sources_total||srcs.length;
   const bad = srcs.filter(s=>s.status==="failed");
+  /* The chip and the tick are claims about THIS run, so both are computed from
+     it. A board that read nothing must never wear a green "live" or a ✓ against
+     a zero - that is the one claim this demo cannot afford to fake, and a
+     blocked network is exactly when it would. Said the same way as the stat
+     card, which has always got this right. */
+  const anyRead = ok > 0;
   return `<div class="card">
-    <div class="card-h"><h2>Risk feed</h2><span class="chip live">live</span><span class="n">${ev.length}</span></div>
+    <div class="card-h"><h2>Risk feed</h2>${anyRead
+      ? `<span class="chip live">live</span>`
+      : `<span class="chip off">no live source</span>`}<span class="n">${ev.length}</span></div>
     ${ev.length ? ev.map(e=>`<div class="event">
       <div class="tags">
         <span class="tag ${e.origin==="injected"?"inj":"livesrc"}">${e.origin==="injected"?"scripted":"live"}</span>
@@ -1997,7 +2008,7 @@ function riskCard(compact){
       ${affectedBy(e)}
     </div>`).join("") : `<div class="empty">No active events.<br>Press <b>Inject Hamburg strike</b> to start.</div>`}
     ${srcs.length?`<div class="srcline">
-      <div class="r">✓ ${ok} of ${total} sources read</div>
+      <div class="r">${anyRead?"✓":"!"} ${ok} of ${total} sources read</div>
       ${familyStrip()}
       ${bad.length?`<div class="r">! unavailable: ${esc(bad.slice(0,4).map(s=>s.name.replace(/^(RSS|GDELT|PEGELONLINE): /,"").replace(/\s*\[\w{2}\]$/,"")).join(", "))}${bad.length>4?` +${bad.length-4} more`:""}</div>`:""}
     </div>`:""}</div>`;

@@ -137,6 +137,43 @@ class NoInventedMetric(unittest.TestCase):
                          "emptyState(), which names the next action.")
 
 
+class TheLiveClaimIsMadeOnlyWhenItIsTrue(unittest.TestCase):
+    """"Live" is the demo's central honest claim, so it is earned per run.
+
+    The risk feed used to hard-code a green `live` chip and to print
+    "✓ 0 of 42 sources read" - a tick against a zero. On a network that blocks
+    the sources, or a machine with no route out, the board therefore asserted a
+    live read it had not made. That is the one failure this project cannot
+    afford: it turns the honest differentiator into the invented metric
+    everything else here refuses to produce.
+
+    Both claims are now computed from the run. This guards the shape of that,
+    not the wording: the chip and the tick must sit downstream of the count.
+    """
+
+    def test_the_risk_feed_never_hard_codes_a_live_chip(self):
+        text = DASHBOARD.read_text(encoding="utf-8")
+        feed = text[text.index("function riskCard("):text.index("function instrumentCard(")]
+
+        self.assertNotIn('<h2>Risk feed</h2><span class="chip live">', feed, "\n".join([
+            "",
+            "The risk feed's `live` chip is hard-coded again.",
+            "It must be conditional on live_sources_read, or a board that read",
+            "nothing wears a green `live` and claims a read it never made.",
+        ]))
+
+    def test_the_tick_is_never_printed_against_a_zero(self):
+        text = DASHBOARD.read_text(encoding="utf-8")
+        feed = text[text.index("function riskCard("):text.index("function instrumentCard(")]
+
+        self.assertNotIn("✓ ${ok}", feed, "\n".join([
+            "",
+            'The source line prints an unconditional ✓ before the count, so a run',
+            'that read nothing renders "✓ 0 of 42 sources read".',
+            "The marker must follow the count, not precede it unconditionally.",
+        ]))
+
+
 class TheWorkerNamesAreOurs(unittest.TestCase):
     """Never the reference product's names - not even in a comment."""
 
