@@ -153,11 +153,15 @@ per account and doesn't transfer); the reasoning trail compounds; breadth is har
 cheaply. Footnote: we don't claim to be first to alerting — the claim is first to carry the
 decision all the way back onto the booking.
 
-**9 — How: the loop.** An inline SVG, monochrome: five boxes left to right — **TMS** (the book)
-→ **Watch** (42 sources) → **Decide** (reroute · hold · on plan) → **Draft** (carrier ·
-customer) → **Queue back** (onto the booking) — with a return arrow curving from the last box
-back under to the first. Fill the first and last box solid black: they are the same system,
-and that is the entire point of the diagram. Under it: `exception flag · discharge port ·
+**9 — How: the loop.** An inline SVG, monochrome: five boxes left to right — **TMS** (read the
+book) → **Watch** (42 sources, six families) → **Decide** (reroute · hold · on plan) →
+**Draft** (carrier · customer) → **TMS** (queued, not written) — with a return line curving
+from the last box back under to the first. **Both end boxes are filled solid black and both
+say TMS**: the loop closes where it opened, and calling the last one anything else makes it
+read as a second system. Draw the return line in ink at full weight, not grey — it is the
+claim the diagram makes, not a connector. Label it `every action, back onto the same
+booking`, and put that label in a *gap* in the line rather than on an opaque rectangle laid
+over it, so it works on any background colour. Under it: `exception flag · discharge port ·
 routing code · revised ETA · communication log`, then `QUEUED — not written. Waiting on a
 person.`
 

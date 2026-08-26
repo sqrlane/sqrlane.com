@@ -381,9 +381,11 @@ divider("03", "The How", "The loop, and what we sell.");
   const s = newSlide(); bg(s);
   eyebrow(s, "03 HOW", "THE LOOP");
   title(s, "It opens and closes in the same place: the booking.");
-  const boxes = [["TMS", "the book", true], ["Watch", "42 sources", false],
-                 ["Decide", "reroute · hold", false], ["Draft", "carrier · customer", false],
-                 ["Queue back", "onto the booking", true]];
+  // Both ends say TMS on purpose: the loop closes where it opened, and calling
+  // the last node something else made it read as a second system.
+  const boxes = [["TMS", "read the book", true], ["Watch", "42 sources, six families", false],
+                 ["Decide", "reroute · hold · on plan", false], ["Draft", "carrier · customer", false],
+                 ["TMS", "queued, not written", true]];
   const bw = 1.62, bg2 = 0.21, by = 1.70, bh = 1.00;
   boxes.forEach(([head, sub, dark], i) => {
     const x = M + i * (bw + bg2);
@@ -398,19 +400,27 @@ divider("03", "The How", "The loop, and what we sell.");
   });
   // The return leg: down from the last box, back along, and up into the TMS.
   const lastCx = M + 4 * (bw + bg2) + bw / 2, firstCx = M + bw / 2, ry = by + bh + 0.45;
-  s.addShape(pres.ShapeType.line, { x: lastCx, y: by + bh, w: 0, h: 0.45, line: { color: INK3, width: 1 } });
-  s.addShape(pres.ShapeType.line, { x: firstCx, y: ry, w: lastCx - firstCx, h: 0, line: { color: INK3, width: 1 } });
+  // Drawn in ink at full weight: the return leg is the claim, not a connector.
+  // The horizontal run is split so its label sits in a gap rather than on an
+  // opaque box that would have to match the slide colour.
+  const GAP_L = 3.85, GAP_R = 6.20;
+  s.addShape(pres.ShapeType.line, { x: lastCx, y: by + bh, w: 0, h: 0.45, line: { color: INK, width: 1.25 } });
+  s.addShape(pres.ShapeType.line, { x: GAP_R, y: ry, w: lastCx - GAP_R, h: 0, line: { color: INK, width: 1.25 } });
+  s.addShape(pres.ShapeType.line, { x: firstCx, y: ry, w: GAP_L - firstCx, h: 0, line: { color: INK, width: 1.25 } });
   s.addShape(pres.ShapeType.line, { x: firstCx, y: by + bh, w: 0, h: 0.45,
-    line: { color: INK3, width: 1, beginArrowType: "triangle" } });
+    line: { color: INK, width: 1.25, beginArrowType: "triangle" } });
+  s.addText("every action, back onto the same booking",
+    { x: GAP_L, y: ry - 0.10, w: GAP_R - GAP_L, h: 0.20, fontFace: SANS, fontSize: 8,
+      bold: true, color: INK, align: "center", isTextBox: true, margin: 0, valign: "middle" });
   s.addText("exception flag  ·  discharge port  ·  routing code  ·  revised ETA  ·  communication log",
-    { x: M, y: ry + 0.10, w: CW, h: 0.22, fontFace: MONO, fontSize: 7.5, color: INK3,
+    { x: M, y: ry + 0.24, w: CW, h: 0.22, fontFace: MONO, fontSize: 7.5, color: INK3,
       align: "center", isTextBox: true, margin: 0, valign: "middle" });
   s.addText("QUEUED — not written.  Waiting on a person.",
-    { x: M, y: ry + 0.32, w: CW, h: 0.22, fontFace: MONO, fontSize: 7.5, bold: true, color: INK,
+    { x: M, y: ry + 0.46, w: CW, h: 0.22, fontFace: MONO, fontSize: 7.5, bold: true, color: INK,
       align: "center", isTextBox: true, margin: 0, valign: "middle" });
   s.addText([{ text: "Connect, don't migrate.", options: { bold: true, color: INK } },
              { text: "  The bookings are read out of the system of record, the agents decide against those records, and every action is written back onto them. The forwarder keeps their TMS, their data and their process — nothing to rip out.", options: { color: INK2 } }],
-    { x: M, y: 4.02, w: 8.4, h: 0.72, fontFace: SANS, fontSize: 10,
+    { x: M, y: 4.14, w: 8.4, h: 0.72, fontFace: SANS, fontSize: 10,
       lineSpacingMultiple: 1.25, isTextBox: true, margin: 0, valign: "top" });
 }
 

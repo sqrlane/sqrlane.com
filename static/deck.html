@@ -571,7 +571,7 @@ ul.ticks li strong{color:var(--ink); font-weight:550}
     <!-- Both ends are filled dark because they are the same system. That is the
          whole diagram: a decision that never reaches the TMS is a decision
          nobody acts on. -->
-    <svg viewBox="0 0 980 232" role="img" aria-labelledby="loopttl"
+    <svg viewBox="0 0 980 244" role="img" aria-labelledby="loopttl"
          style="width:100%; height:auto; display:block; margin:36px 0 8px">
       <title id="loopttl">Read the booking out of the TMS, watch the lane, decide, draft the mail,
         and queue the change back onto the same booking for a person to approve.</title>
@@ -579,16 +579,19 @@ ul.ticks li strong{color:var(--ink); font-weight:550}
         <marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
           <path d="M0 0 L8 4 L0 8 z" fill="#8f8f8f"/>
         </marker>
+        <marker id="ahd" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L8 4 L0 8 z" fill="#171717"/>
+        </marker>
       </defs>
 
       <g font-family="Geist, sans-serif">
         <rect x="6"   y="34" width="168" height="72" rx="8" fill="#171717"/>
         <text x="90"  y="66" text-anchor="middle" font-size="15" font-weight="550" fill="#ffffff">TMS</text>
-        <text x="90"  y="86" text-anchor="middle" font-size="11" font-family="Geist Mono, monospace" fill="#a8a8a8">the book</text>
+        <text x="90"  y="86" text-anchor="middle" font-size="11" font-family="Geist Mono, monospace" fill="#a8a8a8">read the book</text>
 
         <rect x="206" y="34" width="168" height="72" rx="8" fill="#ffffff" stroke="#00000024"/>
         <text x="290" y="66" text-anchor="middle" font-size="15" font-weight="550" fill="#171717">Watch</text>
-        <text x="290" y="86" text-anchor="middle" font-size="11" font-family="Geist Mono, monospace" fill="#8f8f8f">42 sources</text>
+        <text x="290" y="86" text-anchor="middle" font-size="11" font-family="Geist Mono, monospace" fill="#8f8f8f">42 sources, six families</text>
 
         <rect x="406" y="34" width="168" height="72" rx="8" fill="#ffffff" stroke="#00000024"/>
         <text x="490" y="66" text-anchor="middle" font-size="15" font-weight="550" fill="#171717">Decide</text>
@@ -599,21 +602,28 @@ ul.ticks li strong{color:var(--ink); font-weight:550}
         <text x="690" y="86" text-anchor="middle" font-size="11" font-family="Geist Mono, monospace" fill="#8f8f8f">carrier · customer</text>
 
         <rect x="806" y="34" width="168" height="72" rx="8" fill="#171717"/>
-        <text x="890" y="66" text-anchor="middle" font-size="15" font-weight="550" fill="#ffffff">Queue back</text>
-        <text x="890" y="86" text-anchor="middle" font-size="11" font-family="Geist Mono, monospace" fill="#a8a8a8">onto the booking</text>
+        <text x="890" y="66" text-anchor="middle" font-size="15" font-weight="550" fill="#ffffff">TMS</text>
+        <text x="890" y="86" text-anchor="middle" font-size="11" font-family="Geist Mono, monospace" fill="#a8a8a8">queued, not written</text>
 
         <g stroke="#8f8f8f" stroke-width="1.25" fill="none" marker-end="url(#ah)">
           <path d="M180 70 L196 70"/>
           <path d="M380 70 L396 70"/>
           <path d="M580 70 L596 70"/>
           <path d="M780 70 L796 70"/>
-          <path d="M890 110 L890 162 Q890 172 880 172 L100 172 Q90 172 90 162 L90 118"/>
         </g>
 
-        <text x="490" y="200" text-anchor="middle" font-size="11.5" font-family="Geist Mono, monospace" fill="#8f8f8f">
+        <g stroke="#171717" stroke-width="1.5" fill="none">
+          <path d="M890 110 L890 162 Q890 172 880 172 L615 172"/>
+          <path d="M365 172 L100 172 Q90 172 90 162 L90 118" marker-end="url(#ahd)"/>
+        </g>
+        <text x="490" y="176" text-anchor="middle" font-size="11.5" font-weight="500" fill="#171717">
+          every action, back onto the same booking
+        </text>
+
+        <text x="490" y="210" text-anchor="middle" font-size="11.5" font-family="Geist Mono, monospace" fill="#8f8f8f">
           exception flag · discharge port · routing code · revised ETA · communication log
         </text>
-        <text x="490" y="220" text-anchor="middle" font-size="11.5" font-family="Geist Mono, monospace" fill="#171717">
+        <text x="490" y="232" text-anchor="middle" font-size="11.5" font-family="Geist Mono, monospace" fill="#171717">
           QUEUED — not written. Waiting on a person.
         </text>
       </g>
