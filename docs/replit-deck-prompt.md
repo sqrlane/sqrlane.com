@@ -97,9 +97,9 @@ Three figures:
   *Source: McKinsey & Company, "Risk, resilience, and rebalancing in global value chains", 2020.*
 - `45%` — of one year's profit: the average cost of those disruptions across a decade.
   *Same source.*
-- `[n] of ~12` — of the world's main maritime chokepoints have **no viable alternative
-  route**; detours around the rest add up to `[n]`% distance. *Source: Boston Consulting
-  Group* — **leave both numbers as placeholders**, to be confirmed against the publication.
+- `3 of 14` — of the world's main maritime chokepoints have **no viable alternative route**;
+  at others, rerouting adds **more than 40%** to the distance. *Source: Boston Consulting
+  Group, "Rerouting around maritime chokepoints can add significant time and cost".*
 
 Close, and make this the argument of the slide: frequency is only half of it. When a
 disruption lands on a chokepoint with no viable alternative — or one whose detour costs weeks

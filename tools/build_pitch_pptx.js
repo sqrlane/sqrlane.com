@@ -108,7 +108,9 @@ function stat(s, o) {
   const pad = 0.18;
   s.addText(
     [{ text: o.n, options: { fontSize: o.nSize || 24, bold: true, color: o.dark ? WHITE : INK } },
-     ...(o.unit ? [{ text: " " + o.unit, options: { fontSize: 11, color: o.dark ? ON_DARK_2 : INK3 } }] : [])],
+     // A word unit takes a space; a symbol unit does not — "3 of 14", but "45%".
+     ...(o.unit ? [{ text: (/^[a-z]/i.test(o.unit) ? " " : "") + o.unit,
+                     options: { fontSize: 11, color: o.dark ? ON_DARK_2 : INK3 } }] : [])],
     { x: o.x + pad, y: o.y + pad - 0.02, w: o.w - pad * 2, h: 0.42,
       fontFace: SANS, isTextBox: true, margin: 0, valign: "middle" });
   const labelAvail = o.h - pad * 2 - 0.46 - (o.src ? 0.30 : 0);
@@ -277,9 +279,9 @@ divider("01", "The What", "The problem, and what it costs.");
   stat(s, { x: M + w + g, y: 1.66, w, h: 1.95, n: "45", unit: "%", nSize: 26,
     label: "of one year's profit — the average cost of those disruptions across a decade.",
     src: "MCKINSEY & COMPANY, SAME ANALYSIS" });
-  stat(s, { x: M + (w + g) * 2, y: 1.66, w, h: 1.95, n: "[ n ]", unit: "of ~12", nSize: 22,
-    label: "of the world's main maritime chokepoints have no viable alternative route.",
-    src: "BCG — CONFIRM AGAINST THE PUBLICATION" });
+  stat(s, { x: M + (w + g) * 2, y: 1.66, w, h: 1.95, n: "3", unit: "of 14", nSize: 26,
+    label: "of the world's main maritime chokepoints have no viable alternative route. At others, rerouting adds more than 40% to the distance.",
+    src: "BCG — REROUTING AROUND MARITIME CHOKEPOINTS" });
   s.addText([{ text: "Frequency is only half of it. When a disruption lands on a chokepoint with no viable alternative, ", options: { color: INK2 } },
              { text: "there is no obvious right answer", options: { bold: true, color: INK } },
              { text: ". Someone has to make the call, per booking, and be able to defend it. ", options: { color: INK2 } },
