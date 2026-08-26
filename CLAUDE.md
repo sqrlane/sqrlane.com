@@ -637,7 +637,8 @@ here too, because this is what the next session reads to find its way around.
 │   └── app.py                # FastAPI: serves the three pages + the API
 ├── static/
 │   ├── assets/
-│   │   └── sqrlane-loop.svg  # the loop, standalone and Figma-ready
+│   │   ├── sqrlane-loop.svg  # the loop, standalone and Figma-ready
+│   │   └── slide-problem.svg # the problem slide, editable, for Figma
 │   ├── landing.html          # the front page (HTML+CSS+JS in one file)
 │   ├── index.html            # the dashboard (HTML+CSS+JS in one file)
 │   ├── whitepaper.html       # the technical paper
@@ -645,10 +646,14 @@ here too, because this is what the next session reads to find its way around.
 │   ├── what.html             # the What section on its own, 6 slides
 │   └── fonts/                # Geist Sans + Mono, self-hosted - never a CDN
 ├── tests/                    # eight suites, one per claim the demo makes out loud
-├── tools/build_rhine_map.py  # regenerates the landing page's corridor map
+├── tools/
+│   ├── build_rhine_map.py    # regenerates the landing page's corridor map
+│   ├── build_pitch_pptx.js   # the deck as a PowerPoint, with layout checks
+│   └── build_problem_slide.py # the problem slide SVG, with a fit gate
 ├── scratch/genheat.py        # one-off generator for the landing heatmap
 ├── docs/
 │   ├── dashboard.png         # the README's screenshot
+│   ├── slide-problem.png     # what slide-problem.svg renders to
 │   ├── problem-brief.md      # the problem, with every figure graded by source
 │   └── replit-deck-prompt.md # the deck, as a prompt for a fresh Replit build
 └── risk_state.json           # written at runtime (gitignored)
@@ -1032,6 +1037,34 @@ loss, and using a shipper's pain to argue a forwarder's pain is a joint that bre
 one good question. The section now argues only from costs that land on the forwarder's own
 accounts. Those four sources are gone from the deck entirely, including from its footer -
 a sources line that credits research the deck no longer shows is its own kind of untruth.
+
+### The problem slide, as an editable SVG
+
+`static/assets/slide-problem.svg` is the What/problem slide as a 1920x1080 vector, built
+to be opened in Figma and edited by hand rather than regenerated. Every line is its own
+named text layer, every rule and panel a named rectangle, and there is **no `<style>`
+block** - Figma's importer is reliable with inline presentation attributes and is not with
+CSS classes. `tools/build_problem_slide.py` writes it.
+
+Three things about it are load-bearing:
+
+- **The font is named `Geist` alone, with no fallback stack.** Figma reads a
+  comma-separated `font-family` as one literal font name and then reports it missing on
+  every layer; a bare name resolves, and Geist is in Figma's Google Fonts library. This is
+  the opposite of the rule for the web pages, where the stack is the safety net.
+- **The build measures every string and fails if one overruns its column.** SVG text does
+  not wrap - a line that outgrows its box does not reflow, it runs silently into the next
+  column, and nobody sees it until the file is open in Figma. So each string is measured
+  against the real Geist metrics in `static/fonts/` and the build stops, naming the line
+  and the overrun in pixels. Same discipline as `build_pitch_pptx.js`, for the same reason:
+  a layout fault no validator catches. Confirmed by lengthening a line and watching it fail.
+- **The headline figure carries whose number it is.** The reference slide labels EUR 3.4bn
+  only `PER YEAR`. Ours adds `SQRLANE ANALYSIS` under it, because that figure is our own
+  estimate and not a third party's - the deck's rule is that every figure names its source,
+  and an unattributed number in a sourced deck reads as though someone else produced it.
+
+The geometry - 48px margins, two 884px columns, the baseline grid - is lifted from the
+reference deck the slide was modelled on. `docs/slide-problem.png` is what it renders to.
 
 **`tools/build_pitch_pptx.js` builds the same deck as a PowerPoint file** - 18 slides, four
 dark section dividers between the light content, Arial and Courier New because the reader's
