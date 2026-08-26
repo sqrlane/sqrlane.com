@@ -98,6 +98,7 @@ h3{font-size:clamp(13.5px,1.7vh,15px); font-weight:550; letter-spacing:-.01em;
   max-width:64ch;
 }
 .lead + .lead{margin-top:14px}
+.lead .src{display:block; margin-top:6px}
 .lead strong{color:var(--ink); font-weight:550}
 p.small{font-size:clamp(12.5px,1.6vh,14px); line-height:1.55; color:var(--ink-2)}
 
@@ -264,6 +265,12 @@ ul.ticks li strong{color:var(--ink); font-weight:550}
   <div>
     <div class="eyebrow"><b>01 &nbsp;What</b> <span>The problem</span></div>
     <h2 class="wide">Forwarders spend the day moving information between systems &mdash; and the risk still goes unaccounted for.</h2>
+    <p class="lead">
+      About <strong>80% of world trade by volume moves by sea</strong>, much of it through
+      roughly a dozen chokepoints. A forwarder&rsquo;s entire book runs through a handful of
+      places that can close.
+      <span class="src">Boston Consulting Group</span>
+    </p>
     <div class="grid g2">
       <div class="card">
         <div class="tag">The half that is measured</div>
@@ -323,9 +330,9 @@ ul.ticks li strong{color:var(--ink); font-weight:550}
 <!-- ==================== 04 · WHAT — proof two ==================== -->
 <section class="slide">
   <div>
-    <div class="eyebrow"><b>01 &nbsp;What</b> <span>Proof two &mdash; disruption is routine, and it is priced in profit</span></div>
-    <h2>A month-long disruption every 3.7 years. Nearly half a year&rsquo;s profit per decade.</h2>
-    <div class="grid g2">
+    <div class="eyebrow"><b>01 &nbsp;What</b> <span>Proof two &mdash; disruption is routine, and there is often no good answer</span></div>
+    <h2 class="wide">A month-long disruption every 3.7 years &mdash; and, at some chokepoints, nowhere better to go.</h2>
+    <div class="grid g3">
       <div class="card fill">
         <div class="n">3.7<small>yrs</small></div>
         <div class="l">the average interval between supply-chain disruptions lasting a month or longer.</div>
@@ -333,19 +340,31 @@ ul.ticks li strong{color:var(--ink); font-weight:550}
       </div>
       <div class="card">
         <div class="n">45<small>%</small></div>
-        <div class="l">of one year&rsquo;s profit &mdash; the average cost of those disruptions across a decade &mdash; roughly one year&rsquo;s earnings, lost in ten.</div>
+        <div class="l">of one year&rsquo;s profit &mdash; the average cost of those disruptions across a decade.</div>
         <div class="src">McKinsey &amp; Company, same analysis</div>
       </div>
+      <div class="card">
+        <div class="n"><span class="slot">n</span><small>of ~12</small></div>
+        <div class="l">
+          of the world&rsquo;s main maritime chokepoints have <strong>no viable alternative
+          route</strong>. Detours around the rest add up to <span class="slot">n</span>%
+          distance.
+        </div>
+        <div class="src">Boston Consulting Group &mdash; <span class="slot">confirm both figures against the publication, not the social post</span></div>
+      </div>
     </div>
-    <p class="lead" style="margin-top:32px">
-      This is not tail risk to be insured against once a decade. It is an
-      <strong>operating condition</strong> &mdash; and on a forwarder&rsquo;s desk it has no owner, no
-      queue and no system.
+    <p class="lead" style="margin-top:28px">
+      Frequency is only half of it. When a disruption lands on a chokepoint with no viable
+      alternative &mdash; or one whose detour costs weeks &mdash; <strong>there is no obvious right
+      answer</strong>. Someone has to make the call, per booking, and be able to defend it.
+      <strong>That is why an alert is not enough.</strong>
     </p>
     <p class="note">
-      The figure is the cost to the shippers whose cargo the forwarder moves. The forwarder
+      The 45% is the cost to the shippers whose cargo the forwarder moves; the forwarder
       absorbs it as demurrage, re-bookings, surcharges billed but never quoted, and the
-      accounts they lose for handling it badly.
+      accounts lost for handling it badly. Chokepoint exposure is likewise mapped for
+      shippers &mdash; but the forwarder is who they call when one closes, and the forwarder is
+      who has to decide.
     </p>
   </div>
 </section>
@@ -829,7 +848,8 @@ ul.ticks li strong{color:var(--ink); font-weight:550}
     </div>
     <p class="note">
       Sources: Maersk shipment trace, 2014 &middot; CLECAT &middot; McKinsey &amp; Company,
-      &ldquo;Risk, resilience, and rebalancing in global value chains&rdquo;, 2020 &middot; BASF
+      &ldquo;Risk, resilience, and rebalancing in global value chains&rdquo;, 2020 &middot;
+      Boston Consulting Group &middot; BASF
       reporting, 2018 &middot; Kiel Institute for the World Economy &middot; Transport
       Intelligence, Global Freight Forwarding Market Size &amp; Forecasts 2025&ndash;2030.
       No performance, accuracy or traction figure appears in this deck, because none has

@@ -984,9 +984,11 @@ works, and who is building it.
 Three rules it holds, all of them the project's own:
 
 - **Every third-party figure carries its source on the slide.** Maersk's 2014 shipment trace,
-  CLECAT's membership scope, McKinsey's global-value-chains analysis, BASF's 2018 reporting,
-  the Kiel Institute, and Transport Intelligence's market sizing. No figure appears without
-  one, and **no figure about SQRlane appears at all** - there is no traction, accuracy or
+  CLECAT's membership scope, McKinsey's global-value-chains analysis, BCG on maritime
+  chokepoints, BASF's 2018 reporting, the Kiel Institute, and Transport Intelligence's
+  market sizing. No figure appears without
+  one - and where a figure has not been confirmed against its publication it stays a
+  visible slot rather than a plausible guess. **No figure about SQRlane appears at all** - there is no traction, accuracy or
   performance claim in it, because none has been measured.
 - **Every placeholder looks like one.** Founder names, bios, the ACV and the ask are dashed
   grey monospace slots (`.slot`), never plausible filler. A placeholder that reads like real

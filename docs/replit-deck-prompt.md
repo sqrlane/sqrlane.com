@@ -69,7 +69,10 @@ One paragraph of positioning. Four small cards previewing the four sections. Foo
 Confidential, date slot, contact slot.
 
 **2 — What: the problem.** Headline: *Forwarders spend the day moving information between
-systems — and the risk still goes unaccounted for.* Two cards: "Re-keying is the job" (the
+systems — and the risk still goes unaccounted for.* Under it, a framing line: about **80% of
+world trade by volume moves by sea**, much of it through roughly a dozen chokepoints — a
+forwarder's entire book runs through a handful of places that can close. *Source: Boston
+Consulting Group.* Then two cards: "Re-keying is the job" (the
 booking is in the TMS, the rate is in a mail, the exception is in a carrier notice — every hop
 is a person retyping what a system already knew) and "Nobody owns the lane" (a disruption
 doesn't arrive as an alert on the booking it affects; it arrives as a short margin a quarter
@@ -87,13 +90,26 @@ Three figures, each with its source printed under it:
 Close: the bridge between systems isn't software, it's a million people typing — and it's the
 industry's largest controllable cost base.
 
-**4 — What, proof two: disruption is routine and priced in profit.**
+**4 — What, proof two: disruption is routine, and there is often no good answer.** Headline:
+*A month-long disruption every 3.7 years — and, at some chokepoints, nowhere better to go.*
+Three figures:
 - `3.7 yrs` — average interval between supply-chain disruptions lasting a month or longer.
+  *Source: McKinsey & Company, "Risk, resilience, and rebalancing in global value chains", 2020.*
 - `45%` — of one year's profit: the average cost of those disruptions across a decade.
+  *Same source.*
+- `[n] of ~12` — of the world's main maritime chokepoints have **no viable alternative
+  route**; detours around the rest add up to `[n]`% distance. *Source: Boston Consulting
+  Group* — **leave both numbers as placeholders**, to be confirmed against the publication.
 
-*Source for both: McKinsey & Company, "Risk, resilience, and rebalancing in global value
-chains", 2020.* Close: not tail risk — an operating condition, with no owner, no queue and no
-system on a forwarder's desk.
+Close, and make this the argument of the slide: frequency is only half of it. When a
+disruption lands on a chokepoint with no viable alternative — or one whose detour costs weeks
+— **there is no obvious right answer**. Someone has to make the call, per booking, and be able
+to defend it. **That is why an alert is not enough.**
+
+Footnote: the 45% is the cost to the *shippers* whose cargo the forwarder moves, and
+chokepoint exposure is likewise mapped for shippers — but the forwarder is who they call when
+one closes, and the forwarder is who has to decide. Naming that bridge matters; without it a
+reader asks why shipper-facing statistics are in a forwarder-facing deck.
 
 **5 — What, proof three: one lane, one autumn, real money.** Headline: *The Rhine fell in 2018.
 The gauge readings were public, free and daily the entire time.*
@@ -176,7 +192,8 @@ bullets), and contact. Footer: the full source list for every figure in the deck
 
 1. **Never invent a number.** Every statistic in this deck is supplied above with its source.
    Print the source under the figure. If you want to add a figure I have not given you, don't
-   — leave a placeholder instead.
+   — leave a placeholder instead. Where I have marked a figure as unconfirmed, keep it as a
+   visible placeholder; do not fill it with a plausible guess.
 2. **No performance, accuracy or traction claims about SQRlane**, and no period-over-period
    deltas ("+12% vs. last quarter"). There is no history to compare against, so any such
    number would be fabricated.
