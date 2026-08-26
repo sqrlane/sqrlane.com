@@ -1012,6 +1012,17 @@ Print gives exactly one page per slide (`@page { size: A4 landscape }`), so the 
 to a 14-page PDF from the browser with nothing else installed. `docs/replit-deck-prompt.md`
 is the same deck written as a single prompt, for rebuilding it outside this repo.
 
+**`tools/build_pitch_pptx.js` builds the same deck as a PowerPoint file** - 18 slides, four
+dark section dividers between the light content, Arial and Courier New because the reader's
+PowerPoint renders the fonts and those two ship everywhere. It carries its own layout
+checks, and they are the point: it estimates every text box's wrapped height and fails the
+build if the text cannot fit its shape, or if content is placed above a wrapped title's
+bottom. **Both faults shipped in the first render and neither is visible to the OOXML
+validator** - `validate.py` passed a deck whose title ran underneath the cards and whose
+card bodies spilled past their borders. The estimator is deliberately conservative: it
+over-counts a line rather than under-counts, so its errors cost a little white space
+instead of clipping a sentence.
+
 ### The whitepaper page
 
 `/whitepaper` is the technical paper, served from `static/whitepaper.html` and linked
