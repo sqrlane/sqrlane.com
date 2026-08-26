@@ -47,12 +47,15 @@ DASHBOARD = STATIC / "index.html"
 WHITEPAPER = STATIC / "whitepaper.html"
 DECK = STATIC / "deck.html"
 WHAT = STATIC / "what.html"
+PITCH = STATIC / "pitch.html"
 # The deck is inside the off-origin and one-name rules and outside the rest: it
 # cites third-party market research by name, and it names the incumbents it is
 # positioned against, neither of which the product pages do. It is also the one
 # page guaranteed to be opened on somebody else's wifi, in a room, which is
 # exactly the failure the off-origin rule exists for.
-ALL_PAGES = (LANDING, DASHBOARD, WHITEPAPER, DECK, WHAT)
+# /pitch is generated (tools/build_slides.py) but guarded like any other
+# page: a generated file is exactly the kind that quietly grows a CDN link.
+ALL_PAGES = (LANDING, DASHBOARD, WHITEPAPER, DECK, WHAT, PITCH)
 
 # Named languages. "English" is on the list for the same reason as the rest: the
 # benchmark is "the international wires", not a language, and the data keys that

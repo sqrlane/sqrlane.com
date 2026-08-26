@@ -14,7 +14,10 @@ measured against the reference it sits within ~2% at weight 400.
 
     python3 tools/build_slides.py
 
-Writes static/assets/slide-problem.svg and static/assets/slide-fix.svg.
+Writes one editable SVG per slide into static/assets/, and static/pitch.html -
+the same slides inlined into a browsable deck. The page is generated from these
+objects rather than hand-written so the deck and the Figma files cannot drift:
+change the copy here and both move together.
 """
 
 import re
@@ -29,6 +32,7 @@ ROOT = Path(__file__).resolve().parent.parent
 FONT = ROOT / "static" / "fonts" / "Geist-Variable.woff2"
 ASSETS = ROOT / "static" / "assets"
 LOOP_SRC = ASSETS / "sqrlane-loop.svg"
+PAGE = ROOT / "static" / "pitch.html"
 
 # ---------------------------------------------------------------- type metrics
 
@@ -223,7 +227,14 @@ class Slide:
                     self.check(f"{side} row {i + 1} body", body,
                                ROW_BODY_SIZE, 400, ind_x, right)
 
-    def footer(self, kicker, page):
+    def footer(self, kicker, index: int, total: int):
+        """The kicker and the page number.
+
+        The number is derived from the deck, never typed: a hard-coded "01 / 08"
+        on a two-slide deck is wrong the moment a slide is added or dropped, and
+        it is the kind of wrong nobody notices until it is on a projector.
+        """
+        page = f"{index:02d} / {total:02d}"
         with self.group("footer"):
             self.text("footer-kicker", kicker, ML, FOOT_BASE, MICRO_SIZE, 400, MUTED,
                       tracking_for(kicker, MICRO_SIZE, 400,
@@ -232,7 +243,8 @@ class Slide:
                       PAGE_TRACK, anchor="end")
 
     # -- emit ---------------------------------------------------------------
-    def write(self, path: Path) -> None:
+    def validate(self) -> None:
+        """Fail the build if any string runs past the box it was placed in."""
         failures = []
         for label, s, size, weight, x, right, tracking in self.checks:
             end = x + measure(s, size, weight, tracking)
@@ -244,12 +256,16 @@ class Slide:
             print("Text does not fit its box:\n" + "\n".join(failures), file=sys.stderr)
             raise SystemExit(1)
 
+    def body(self) -> str:
+        """Everything inside the <svg>, background first."""
+        return (f'  <rect id="background" x="0" y="0" width="{W}" height="{H}" '
+                f'fill="{PAPER}"/>\n' + "\n".join(self.parts))
+
+    def write(self, path: Path) -> None:
+        self.validate()
         head = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" '
-                f'viewBox="0 0 {W} {H}" fill="none">\n  <!-- {self.note} -->\n'
-                f'  <rect id="background" x="0" y="0" width="{W}" height="{H}" '
-                f'fill="{PAPER}"/>')
-        path.write_text(head + "\n" + "\n".join(self.parts) + "\n</svg>\n",
-                        encoding="utf-8")
+                f'viewBox="0 0 {W} {H}" fill="none">\n  <!-- {self.note} -->')
+        path.write_text(head + "\n" + self.body() + "\n</svg>\n", encoding="utf-8")
         print(f"  {path.relative_to(ROOT)}  ({path.stat().st_size:,} bytes, "
               f"{len(self.checks)} strings measured, all inside their boxes)")
 
@@ -349,7 +365,7 @@ def loop_markup(ink_x: float, ink_y: float, ink_width: float) -> str:
 
 # ------------------------------------------------------------------ slide 01
 
-def build_problem() -> Slide:
+def build_problem(index: int, total: int) -> Slide:
     s = Slide("slide-problem", (
         "SQRlane - the problem, 1920x1080. Editable SVG: every line is a live\n"
         "       text layer, every rule a rectangle, every layer named. Set in Geist,\n"
@@ -431,13 +447,13 @@ def build_problem() -> Slide:
                 s.check(f"panel note {i + 1}.{j + 1}", line, 19.0, 400, tx, right)
                 y += 26.0
 
-    s.footer("MANUAL WORK, ON A LANE THAT WILL NOT SIT STILL", "01 / 08")
+    s.footer("MANUAL WORK, ON A LANE THAT WILL NOT SIT STILL", index, total)
     return s
 
 
 # ------------------------------------------------------------------ slide 02
 
-def build_fix() -> Slide:
+def build_fix(index: int, total: int) -> Slide:
     s = Slide("slide-fix", (
         "SQRlane - the shape of the fix, 1920x1080. The loop is placed from\n"
         "       static/assets/sqrlane-loop.svg and re-set in Geist; edit the asset,\n"
@@ -468,13 +484,209 @@ def build_fix() -> Slide:
         s.text(f"tail-{j + 1}", line, ML, y, 19.0, 400, MUTED)
         s.check(f"tail {j + 1}", line, 19.0, 400, ML, MR)
 
-    s.footer("THE LOOP OPENS AND CLOSES IN THE SAME PLACE", "02 / 08")
+    s.footer("THE LOOP OPENS AND CLOSES IN THE SAME PLACE", index, total)
     return s
 
 
 # ---------------------------------------------------------------------- main
 
+# ---------------------------------------------------------------- the web deck
+
+_ID = re.compile(r'id="([^"]*)"')
+
+
+def _scope_ids(markup: str, prefix: str) -> str:
+    """Namespace a slide's ids so several can share one HTML document.
+
+    Duplicate ids across slides are invalid HTML and break getElementById; the
+    loop asset also carries ids with spaces in them, which an SVG file tolerates
+    and an HTML document does not. Only done on the way into the page - the
+    standalone SVGs keep their short ids, because those become the Figma layer
+    names and `slide-problem--title-line-1` is a worse name than `title-line-1`.
+    """
+    if "url(#" in markup or 'href="#' in markup:
+        raise SystemExit(
+            f"{prefix}: markup references an id (a gradient, mask or marker). "
+            "Rewrite those references here too, or the page will render blank.")
+    return _ID.sub(lambda m: f'id="{prefix}--{"-".join(m.group(1).split())}"', markup)
+
+
+PAGE_TEMPLATE = """<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SQRlane \u2014 Pitch</title>
+<meta name="description" content="The problem SQRlane solves, and the shape of the fix.">
+
+<!-- GENERATED by tools/build_slides.py - edit that, not this file.
+
+     The slides are the same SVGs that go to Figma, inlined verbatim. They are
+     not re-implemented in HTML, so the deck and the design files cannot drift:
+     there is one description of each slide and both outputs come from it.
+
+     Geist is self-hosted from static/fonts/. Never a CDN - an external font
+     request is one more thing that can fail in a room, and a deck that loses
+     its type looks broken. Same rule the other pages hold. -->
+<style>
+@font-face{
+  font-family:"Geist";
+  src:url("/fonts/Geist-Variable.woff2") format("woff2-variations"),
+      url("/fonts/Geist-Variable.woff2") format("woff2");
+  font-weight:100 900; font-style:normal; font-display:swap;
+}
+
+:root{
+  --paper:#e8e8e5;
+  --ink:#000000;
+  --muted:#797972;
+  --gap:clamp(10px, 2.4vh, 30px);
+}
+
+*{box-sizing:border-box; margin:0; padding:0}
+
+body{
+  font-family:"Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  background:var(--paper); color:var(--ink);
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+
+/* One slide per screen, snapping. */
+.deck{
+  height:100svh; overflow-y:scroll; scroll-snap-type:y mandatory;
+  scroll-behavior:smooth;
+}
+.slide{
+  height:100svh; scroll-snap-align:start;
+  display:flex; align-items:center; justify-content:center;
+  padding:var(--gap);
+}
+
+/* The artboard is 16:9 and fixed, so it is sized against viewport HEIGHT as
+   well as width. Sized against width alone it overruns a 1280x720 projector -
+   and under mandatory snapping an overrunning slide is not merely tall, it is
+   unreachable, because the snap pulls you off it before you reach the bottom. */
+.stage{
+  width:min(100%, calc((100svh - var(--gap) * 2) * 16 / 9));
+  aspect-ratio:16 / 9;
+  background:#fff;
+  box-shadow:0 2px 2px rgba(0,0,0,.04), 0 0 0 1px rgba(0,0,0,.07);
+}
+.stage svg{display:block; width:100%; height:100%}
+
+/* Below a short viewport the deck stops snapping and becomes a document. */
+@media (max-height:620px){
+  .deck{scroll-snap-type:none; height:auto; overflow:visible}
+  .slide{height:auto; min-height:0}
+  .stage{width:100%}
+}
+
+.bar{
+  position:fixed; top:0; left:0; height:2px; background:var(--ink);
+  z-index:30; transition:width .25s ease;
+}
+/* No fixed counter or brand chrome. Each artboard already carries the product
+   mark and its own page number, and at 16:9 the stage fills the viewport far
+   enough that fixed corners land on top of them. The bar is the only chrome
+   that has somewhere to live. */
+@media (max-height:620px), (max-width:820px){ .bar{display:none} }
+
+/* Print: one slide per page, chrome off. */
+@page{size:A4 landscape; margin:0}
+@media print{
+  body{background:#fff}
+  .deck{height:auto; overflow:visible; scroll-snap-type:none}
+  .slide{
+    height:100vh; min-height:0; padding:0;
+    break-after:page; page-break-after:always;
+  }
+  .slide:last-child{break-after:auto; page-break-after:auto}
+  .stage{width:100%; box-shadow:none}
+  .bar{display:none !important}
+}
+</style>
+</head>
+<body>
+
+<div class="bar" id="bar"></div>
+
+<main class="deck" id="deck">
+__SLIDES__
+</main>
+
+<script>
+(function () {
+  var slides = Array.prototype.slice.call(document.querySelectorAll(".slide"));
+  var bar = document.getElementById("bar");
+  var i = 0;
+
+  function paint() {
+    bar.style.width = ((i + 1) / slides.length * 100) + "%";
+  }
+
+  function goTo(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides[i].scrollIntoView({ behavior: "smooth", block: "start" });
+    paint();
+  }
+
+  /* Which slide is on screen, so scrolling by hand keeps the counter honest.
+     Half the viewport is the threshold - a slide is "current" once most of it
+     is showing, which is what a reader would say too. */
+  if ("IntersectionObserver" in window) {
+    var seen = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { i = slides.indexOf(e.target); paint(); }
+      });
+    }, { threshold: 0.5 });
+    slides.forEach(function (s) { seen.observe(s); });
+  }
+
+  document.addEventListener("keydown", function (e) {
+    /* Any modifier is the browser's, not ours. */
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    var k = e.key;
+    if (k === "ArrowRight" || k === "ArrowDown" || k === "PageDown" || k === " ") {
+      e.preventDefault(); goTo(i + 1);
+    } else if (k === "ArrowLeft" || k === "ArrowUp" || k === "PageUp") {
+      e.preventDefault(); goTo(i - 1);
+    } else if (k === "Home") {
+      e.preventDefault(); goTo(0);
+    } else if (k === "End") {
+      e.preventDefault(); goTo(slides.length - 1);
+    }
+  });
+
+  paint();
+})();
+</script>
+</body>
+</html>
+"""
+
+
+def write_page(slides: list[Slide], path: Path) -> None:
+    """The same slides, inlined into one browsable deck."""
+    blocks = []
+    for slide in slides:
+        slide.validate()
+        art = _scope_ids(slide.body(), slide.name)
+        blocks.append(
+            f'  <section class="slide" aria-label="{slide.name}">\n'
+            f'    <div class="stage">\n'
+            f'      <svg viewBox="0 0 {W} {H}" role="img" fill="none" '
+            f'xmlns="http://www.w3.org/2000/svg">\n{art}\n      </svg>\n'
+            f"    </div>\n  </section>")
+    path.write_text(PAGE_TEMPLATE.replace("__SLIDES__", "\n".join(blocks)),
+                    encoding="utf-8")
+    print(f"  {path.relative_to(ROOT)}  ({path.stat().st_size:,} bytes, "
+          f"{len(slides)} slides inlined)")
+
+
 if __name__ == "__main__":
     print("Building deck slides:")
-    build_problem().write(ASSETS / "slide-problem.svg")
-    build_fix().write(ASSETS / "slide-fix.svg")
+    builders = [build_problem, build_fix]
+    slides = [b(i + 1, len(builders)) for i, b in enumerate(builders)]
+    for slide in slides:
+        slide.write(ASSETS / f"{slide.name}.svg")
+    write_page(slides, PAGE)
