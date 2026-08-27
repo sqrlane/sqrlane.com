@@ -108,8 +108,8 @@ fold(F2, "02", "Nothing watches the route.",
      "So the desk finds out afterwards, with no backup route ready.",
      [("26,225", "disruption alerts in 2025",
        "Resilinc EventWatchAI", "up from 22,522 in 2024"),
-      ("~€950", "average surcharge, per container",
-       "€415 Panama · €925 Red Sea", "€1,000 Rhine · €1,480 peak · per 40ft")],
+      ("€120M", "a month, on one river",
+       "2.3M TEU/yr ÷ 12 ÷ 1.6 = 120k boxes", "× €1,000 surcharge · containers only")],
      "By the time anyone knows, the delay has already happened.")
 
 CW_, CH_, CG = 140, 46, 19
@@ -140,7 +140,7 @@ s.text(F2 + PAD + IW / 2, FY + 369, "Nothing reads these continuously, or per bo
 # =========================================================================
 s.text(M, 952, "Both jobs land on the same desk. Neither of them has a system.",
        24, 600, FG, ls=-0.5)
-s.text(W - M, 952, "Money figures are derived from cited sources, not measured. The inputs are shown above.",
+s.text(W - M, 952, "Money figures are derived from cited sources. Containers and surcharges only, so both are floors.",
        12, 400, FAINT, anchor="end")
 s.footer("02 / THE WHAT")
 s.write("slide-02-the-what.svg")
