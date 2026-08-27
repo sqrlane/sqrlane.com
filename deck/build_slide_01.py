@@ -73,136 +73,140 @@ def band_label(x, y, s):
 # =========================================================================
 # HEADER - the story opens here
 # =========================================================================
-txt(M, 78, "INTRODUCTION", 12, 600, FAINT, ls=2.2)
-txt(M, 142, "A freight forwarder's product is a date.", 52, 600, FG, ls=-1.4)
-txt(M, 184, "They own no ships, no trucks, no planes. They sell one promise: this box, there, by then.",
-    17, 400, MUTED)
-add(f'<line x1="{M}" y1="216" x2="{W-M}" y2="216" stroke="{BORDER_STRONG}"/>')
+txt(M, 74, "INTRODUCTION", 12, 600, FAINT, ls=2.2)
+txt(M, 136, "A freight forwarder's product is a date.", 52, 600, FG, ls=-1.4)
+txt(M, 176, "No ships, no trucks, no planes. Just one promise: this box, there, by then.", 17, 400, MUTED)
+add(f'<line x1="{M}" y1="200" x2="{W-M}" y2="200" stroke="{BORDER_STRONG}"/>')
 
 # =========================================================================
 # BEAT 1 - what can take the date
 # =========================================================================
-band_label(M, 258, "FOUR THINGS CAN TAKE THAT DATE")
+band_label(M, 238, "FOUR THINGS CAN TAKE THAT DATE")
 
-CY, CH, CWd, GAP = 276, 220, 408, 32
+CY, CH, CWd, GAP = 254, 296, 408, 32
 
-def force(i, cat, big, big_sub, unit, ctx1, ctx2, src, micro):
+def force(i, cat, big, big_sub, line, src, micro):
+    """One card: a headline number, one plain line, and a graphic that carries
+    the detail. Anything that would have been a third sentence belongs in the
+    graphic instead."""
     x = M + i * (CWd + GAP)
     card(x, CY, CWd, CH)
-    tx = x + 24
-    txt(tx, CY + 34, cat, 11, 600, FAINT, ls=1.4)
-    add(f'<text x="{tx}" y="{CY+92}" font-size="42" font-weight="600" fill="{FG}" '
-        f'letter-spacing="-1.4" class="num">{esc(big)}'
-        + (f'<tspan font-size="19" font-weight="500" fill="{FAINT}" letter-spacing="0"> {esc(big_sub)}</tspan>' if big_sub else "")
+    tx = x + 26
+    txt(tx, CY + 36, cat, 11, 600, FAINT, ls=1.4)
+    add(f'<text x="{tx}" y="{CY+104}" font-size="48" font-weight="600" fill="{FG}" '
+        f'letter-spacing="-1.8" class="num">{esc(big)}'
+        + (f'<tspan font-size="21" font-weight="500" fill="{FAINT}" letter-spacing="0"> {esc(big_sub)}</tspan>' if big_sub else "")
         + '</text>')
-    txt(tx, CY + 118, unit, 13.5, 500, FG)
-    txt(tx, CY + 140, ctx1, 12.5, 400, MUTED)
-    txt(tx, CY + 158, ctx2, 12.5, 400, MUTED)
-    micro(tx, CY + 184)
-    txt(tx, CY + 210, src, 10.5, 400, FAINT, cls="mono")
+    txt(tx, CY + 134, line, 14.5, 500, FG)
+    micro(tx, CY + 160)
+    txt(tx, CY + 272, src, 10.5, 400, FAINT, cls="mono")
 
 def m_choke(x, y):
-    for i in range(14):
-        cx = x + 4 + i * 13.5
-        if i < 3:
-            add(f'<circle cx="{cx:.1f}" cy="{y}" r="4" fill="{RED}"/>')
-        else:
-            add(f'<circle cx="{cx:.1f}" cy="{y}" r="3.4" fill="none" stroke="{GRAY400}" stroke-width="1.3"/>')
+    """14 chokepoints. The 3 with no alternative are split off by a gap, so the
+    ratio reads on its own - the headline above already names it."""
+    for i in range(3):
+        add(f'<circle cx="{x+12+i*23}" cy="{y+40}" r="8" fill="{RED}"/>')
+    for i in range(11):
+        add(f'<circle cx="{x+97+i*23}" cy="{y+40}" r="6.5" fill="none" '
+            f'stroke="{GRAY400}" stroke-width="1.7"/>')
 
 def m_water(x, y):
-    add(f'<rect x="{x}" y="{y-4}" width="186" height="8" rx="4" fill="{SURFACE}"/>')
-    add(f'<rect x="{x+108}" y="{y-4}" width="78" height="8" rx="4" fill="{GRAY400}"/>')
-    add(f'<rect x="{x+8}" y="{y-8}" width="3" height="16" rx="1.5" fill="{RED}"/>')
-    txt(x + 194, y + 4, "normal", 10, 400, FAINT)
+    """A depth scale: where the Rhine sits now against where it normally sits."""
+    add(f'<rect x="{x+2}" y="{y+30}" width="340" height="14" rx="7" fill="{SURFACE}"/>')
+    add(f'<rect x="{x+192}" y="{y+30}" width="150" height="14" rx="7" fill="{GRAY400}"/>')
+    add(f'<rect x="{x+12}" y="{y+22}" width="4" height="30" rx="2" fill="{RED}"/>')
+    txt(x + 14, y + 16, "now", 11.5, 600, RED, anchor="middle")
+    txt(x + 267, y + 16, "normal", 11.5, 400, FAINT, anchor="middle")
+    txt(x + 2, y + 70, "record low", 11.5, 500, FG)
 
 def m_bars(x, y):
-    for i, (lab, v) in enumerate((("geo", 123), ("reg", 128))):
-        by = y - 6 + i * 11
-        add(f'<rect x="{x+26}" y="{by}" width="{v*0.92:.0f}" height="7" rx="3.5" fill="{AMBER if i else GRAY400}"/>')
-        txt(x, by + 6.4, lab, 9.5, 500, FAINT, cls="mono")
+    """Two alert categories, drawn to the same scale so they compare."""
+    for i, (lab, v, hot) in enumerate((("rules", 128, True), ("politics", 123, False))):
+        by = y + 24 + i * 34
+        add(f'<rect x="{x+66}" y="{by}" width="{v*1.72:.0f}" height="18" rx="{R}" '
+            f'fill="{AMBER if hot else GRAY400}"/>')
+        txt(x, by + 13.5, lab, 11.5, 500, FAINT)
+        txt(x + 66 + v * 1.72 + 10, by + 13.5, f"+{v}%", 12, 600, FG)
 
 def m_spark(x, y):
-    pts = [(0, -2), (24, 4), (52, 9), (74, 6), (96, 8), (120, 0), (146, -6), (172, -12)]
-    d = " ".join(f"{'M' if i==0 else 'L'}{x+px},{y+py}" for i, (px, py) in enumerate(pts))
-    add(f'<path d="{d}" fill="none" stroke="{AMBER}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>')
-    add(f'<circle cx="{x+172}" cy="{y-12}" r="3" fill="{AMBER}"/>')
+    """The swing itself, with only the two endpoints labelled."""
+    x0, w, y0, h = x + 12, 224, y + 14, 40
+    pts = [(0, .45), (.12, .62), (.25, .95), (.4, .78), (.55, .84), (.7, .5), (.85, .24), (1, .04)]
+    d = " ".join(f"{'M' if i==0 else 'L'}{x0+px*w:.0f},{y0+py*h:.0f}" for i, (px, py) in enumerate(pts))
+    add(f'<path d="{d}" fill="none" stroke="{AMBER}" stroke-width="2.2" '
+        f'stroke-linejoin="round" stroke-linecap="round"/>')
+    lx, ly = x0 + .25 * w, y0 + .95 * h
+    add(f'<circle cx="{lx:.0f}" cy="{ly:.0f}" r="3.6" fill="{GRAY400}"/>')
+    txt(lx, ly + 20, "$1,913", 12, 500, FAINT, anchor="middle")
+    add(f'<circle cx="{x0+w}" cy="{y0+.04*h:.0f}" r="4" fill="{AMBER}"/>')
+    txt(x0 + w + 12, y0 + .04 * h + 4, "$4,526", 13, 600, FG)
+    txt(x + 2, y + 90, "Sep 2025 to Aug 2026", 11.5, 400, FAINT)
 
-force(0, "CHOKEPOINTS", "3", "of 14", "with no viable alternative route",
-      "~80% of world trade moves by sea, most of it",
-      "through about a dozen chokepoints.", "BCG · 2026", m_choke)
-force(1, "CLIMATE", "1880", "", "Rhine at Kaub, lowest since records began",
-      "Surcharges past €1,000 a container, and up to",
-      "~0.35pp off German GDP this quarter if it holds.", "gCaptain · ING · Aug 2026", m_water)
-force(2, "POLICY", "+128%", "", "regulatory-change alerts, year on year",
-      "Geopolitical alerts over the same period: +123%.",
-      "A tariff filing now reprices a lane on its own.", "Resilinc EventWatchAI", m_bars)
-force(3, "PRICE", "2.4×", "", "spot-rate swing in eleven months",
-      "Drewry WCI, per 40ft: $1,913 in Sep 2025 to",
-      "$4,526 in Aug 2026.", "Drewry World Container Index", m_spark)
+force(0, "CHOKEPOINTS", "3", "of 14", "have no way around", "BCG · 2026", m_choke)
+force(1, "CLIMATE", "1880", "", "Rhine lowest since records began", "gCaptain · ING · Aug 2026", m_water)
+force(2, "POLICY", "+128%", "", "more rule changes to track", "Resilinc EventWatchAI", m_bars)
+force(3, "PRICE", "2.4×", "", "rate swing in eleven months", "Drewry World Container Index", m_spark)
 
 for i in range(4):
     cx = M + i * (CWd + GAP) + CWd / 2
-    add(f'<line x1="{cx}" y1="504" x2="{cx}" y2="550" stroke="{AMBER}" stroke-width="1.6" marker-end="url(#ahA)"/>')
+    add(f'<line x1="{cx}" y1="558" x2="{cx}" y2="602" stroke="{AMBER}" stroke-width="1.6" marker-end="url(#ahA)"/>')
 
 # =========================================================================
 # BEAT 2 - the promise itself
 # =========================================================================
-LY, LH = 558, 96
+LY, LH = 610, 88
 card(M, LY, CW, LH, stroke=BORDER_STRONG)
-txt(M + 26, LY + 42, "SHP-001", 14, 600, FG, cls="mono")
-txt(M + 26, LY + 64, "Automotive parts · Shanghai → Munich", 11.5, 400, FAINT)
+txt(M + 26, LY + 38, "SHP-001", 14, 600, FG, cls="mono")
+txt(M + 26, LY + 60, "Automotive parts · Shanghai → Munich", 11.5, 400, FAINT)
 
 NODES = [("SHANGHAI", 470, False), ("SUEZ", 757, True), ("HAMBURG", 1044, True), ("MUNICH", 1331, False)]
-add(f'<line x1="470" y1="{LY+52}" x2="1331" y2="{LY+52}" stroke="{GRAY400}" stroke-width="1.4"/>')
+add(f'<line x1="470" y1="{LY+48}" x2="1331" y2="{LY+48}" stroke="{GRAY400}" stroke-width="1.4"/>')
 for name, nx, hot in NODES:
     if hot:
-        add(f'<circle cx="{nx}" cy="{LY+52}" r="9" fill="none" stroke="{AMBER}" stroke-width="1.6"/>')
-        add(f'<circle cx="{nx}" cy="{LY+52}" r="4" fill="{AMBER}"/>')
+        add(f'<circle cx="{nx}" cy="{LY+48}" r="9" fill="none" stroke="{AMBER}" stroke-width="1.6"/>')
+        add(f'<circle cx="{nx}" cy="{LY+48}" r="4" fill="{AMBER}"/>')
     else:
-        add(f'<circle cx="{nx}" cy="{LY+52}" r="4.5" fill="{CARD}" stroke="{FAINT}" stroke-width="1.6"/>')
-    txt(nx, LY + 34, name, 10.5, 500, AMBER if hot else FAINT, anchor="middle", ls=0.8, cls="mono")
+        add(f'<circle cx="{nx}" cy="{LY+48}" r="4.5" fill="{CARD}" stroke="{FAINT}" stroke-width="1.6"/>')
+    txt(nx, LY + 30, name, 10.5, 500, AMBER if hot else FAINT, anchor="middle", ls=0.8, cls="mono")
 
 # the date is the product, so it is set as the hero of this row
 add(f'<line x1="{W-M-262}" y1="{LY+18}" x2="{W-M-262}" y2="{LY+LH-18}" stroke="{BORDER_STRONG}"/>')
-txt(W - M - 26, LY + 32, "THE DATE", 10, 600, FAINT, anchor="end", ls=1.4)
-txt(W - M - 26, LY + 64, "14 Oct", 30, 600, FG, anchor="end", ls=-0.8, cls="num")
-txt(W - M - 26, LY + 84, "4 days of margin", 12, 500, MUTED, anchor="end")
+txt(W - M - 26, LY + 30, "THE DATE", 10, 600, FAINT, anchor="end", ls=1.4)
+txt(W - M - 26, LY + 60, "14 Oct", 30, 600, FG, anchor="end", ls=-0.8, cls="num")
+txt(W - M - 26, LY + 78, "4 days of margin", 12, 500, MUTED, anchor="end")
 
-txt(M, 690, "One booking, one date, four days of margin. Any one of the four above can eat all of it.",
-    14, 400, MUTED)
+txt(M, 730, "Four days of margin. Any one of the four above can eat all of it.", 14, 400, MUTED)
 
 # =========================================================================
 # BEAT 3 - and nobody is watching, because the desk is doing data entry
 # =========================================================================
-band_label(M, 738, "AND THE PERSON WHO OWNS THAT DATE")
+band_label(M, 772, "AND THE PERSON WHO OWNS IT")
 
-DY, DH = 756, 172
+DY, DH = 788, 158
 card(M, DY, CW, DH)
 bx, bw = M + 26, CW - 52
-txt(bx, DY + 36, "A working day on a forwarding desk", 14.5, 600, FG)
+txt(bx, DY + 34, "A working day on the desk", 14.5, 600, FG)
 
-BARY, BARH = DY + 62, 38
+BARY, BARH = DY + 54, 38
 admin = bw * 0.40
 add(f'<rect x="{bx}" y="{BARY}" width="{bw}" height="{BARH}" rx="{R}" fill="{CARD_MUTED}" stroke="{BORDER_STRONG}"/>')
 add(f'<rect x="{bx}" y="{BARY}" width="{admin:.0f}" height="{BARH}" rx="{R}" fill="{SURFACE_2}" stroke="{BORDER_STRONG}"/>')
 add(f'<line x1="{bx+admin:.0f}" y1="{BARY}" x2="{bx+admin:.0f}" y2="{BARY+BARH}" stroke="{BORDER_STRONG}"/>')
-txt(bx + 16, BARY + 24, "up to 40% of the day", 13.5, 600, FG)
-txt(bx + admin + 16, BARY + 24, "customer work, exceptions, everything else", 13, 400, MUTED)
+txt(bx + 16, BARY + 24, "40% repetitive admin", 13.5, 600, FG)
+txt(bx + admin + 16, BARY + 24, "everything else", 13, 400, MUTED)
 
-txt(bx, BARY + BARH + 26, "Quotes · rate requests · data entry · documents · tracking · invoice checks · customs entries",
-    12.5, 400, FAINT)
+txt(bx, BARY + BARH + 24, "Quotes · data entry · documents · invoices · customs", 12.5, 400, FAINT)
 
 add(f'<circle cx="{bx+4}" cy="{DY+DH-24}" r="3.5" fill="{AMBER}"/>')
 txt(bx + 16, DY + DH - 20,
-    "Watching the world that moves the cargo has no slot on this bar. It happens between other calls, or it does not happen.",
-    13, 500, AMBER)
+    "Watching the world that moves the cargo has no slot on this bar.", 13, 500, AMBER)
 
 # =========================================================================
 # THE TURN
 # =========================================================================
-txt(M, 972, "The one person who could protect the date is doing data entry.", 24, 600, FG, ls=-0.5)
+txt(M, 980, "The one person who could protect the date is doing data entry.", 24, 600, FG, ls=-0.5)
 
-add(f'<line x1="{M}" y1="1006" x2="{W-M}" y2="1006" stroke="{BORDER}"/>')
+add(f'<line x1="{M}" y1="1008" x2="{W-M}" y2="1008" stroke="{BORDER}"/>')
 add(f'<rect x="{M}" y="1022" width="18" height="18" rx="5" fill="{FG}"/>')
 add(f'<path d="M{M+4.5} 1035h9 M{M+4.5} 1031h6 M{M+4.5} 1027h3.5" stroke="{CARD}" '
     f'stroke-width="1.5" stroke-linecap="round"/>')
