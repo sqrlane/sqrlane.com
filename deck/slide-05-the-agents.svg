@@ -14,92 +14,74 @@ text{font-family:"Geist",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-se
 </defs>
 <rect width="1920" height="1080" fill="#fafafa"/>
 <text x="96" y="74" font-size="12" font-weight="600" fill="#8f8f8f" letter-spacing="2.2">05 — THE HOW</text>
-<text x="96" y="136" font-size="52" font-weight="600" fill="#171717" letter-spacing="-1.4">Deciding takes a second. The paperwork takes the day.</text>
-<text x="96" y="176" font-size="17" font-weight="400" fill="#4d4d4d">The model reads and judges. Everything else is computed, and every consequence is queued.</text>
+<text x="96" y="136" font-size="52" font-weight="600" fill="#171717" letter-spacing="-1.4">The answer is ready before the risk lands.</text>
+<text x="96" y="176" font-size="17" font-weight="400" fill="#4d4d4d">One decision goes to a person. Everything else is already being written.</text>
 <line x1="96" y1="200" x2="1824" y2="200" stroke="#00000024" stroke-width="1"/>
-<rect x="96" y="222" width="408" height="310" rx="12" fill="#ffffff" stroke="#00000014"/>
-<text x="122" y="264" font-size="18" font-weight="600" fill="#171717" letter-spacing="-0.2">Risk Monitor</text>
-<rect x="416" y="248" width="62" height="22" rx="6" fill="#e7f5ec" stroke="none"/>
-<text x="447.0" y="262.42" font-size="9.5" font-weight="700" fill="#0f7b3f" text-anchor="middle">LIVE</text>
-<text x="122" y="290" font-size="14" font-weight="500" fill="#4d4d4d">Reads 42 sources.</text>
-<line x1="122" y1="314" x2="478" y2="314" stroke="#00000014" stroke-width="1"/>
-<text x="122" y="344" font-size="9.5" font-weight="700" fill="#8f8f8f" letter-spacing="1.3">MODEL</text>
-<text x="122" y="366" font-size="13" font-weight="400" fill="#4d4d4d">Classifies prose.</text>
-<text x="122" y="402" font-size="9.5" font-weight="700" fill="#8f8f8f" letter-spacing="1.3">CODE</text>
-<text x="122" y="424" font-size="13" font-weight="400" fill="#4d4d4d">Thresholds every number.</text>
-<text x="122" y="460" font-size="9.5" font-weight="700" fill="#96580a" letter-spacing="1.3">GUARD RAIL</text>
-<text x="122" y="482" font-size="13" font-weight="500" fill="#171717">No source is load-bearing.</text>
-<rect x="536" y="222" width="408" height="310" rx="12" fill="#ffffff" stroke="#00000014"/>
-<text x="562" y="264" font-size="18" font-weight="600" fill="#171717" letter-spacing="-0.2">Route Advisor</text>
-<rect x="856" y="248" width="62" height="22" rx="6" fill="#e7f5ec" stroke="none"/>
-<text x="887.0" y="262.42" font-size="9.5" font-weight="700" fill="#0f7b3f" text-anchor="middle">LIVE</text>
-<text x="562" y="290" font-size="14" font-weight="500" fill="#4d4d4d">Decides each booking.</text>
-<line x1="562" y1="314" x2="918" y2="314" stroke="#00000014" stroke-width="1"/>
-<text x="562" y="344" font-size="9.5" font-weight="700" fill="#8f8f8f" letter-spacing="1.3">MODEL</text>
-<text x="562" y="366" font-size="13" font-weight="400" fill="#4d4d4d">Picks, and explains.</text>
-<text x="562" y="402" font-size="9.5" font-weight="700" fill="#8f8f8f" letter-spacing="1.3">CODE</text>
-<text x="562" y="424" font-size="13" font-weight="400" fill="#4d4d4d">Prices every option.</text>
-<text x="562" y="460" font-size="9.5" font-weight="700" fill="#96580a" letter-spacing="1.3">GUARD RAIL</text>
-<text x="562" y="482" font-size="13" font-weight="500" fill="#171717">Refuses a route it was not offered.</text>
-<rect x="976" y="222" width="408" height="310" rx="12" fill="#ffffff" stroke="#00000014"/>
-<text x="1002" y="264" font-size="18" font-weight="600" fill="#171717" letter-spacing="-0.2">Comms Agent</text>
-<rect x="1296" y="248" width="62" height="22" rx="6" fill="#e7f5ec" stroke="none"/>
-<text x="1327.0" y="262.42" font-size="9.5" font-weight="700" fill="#0f7b3f" text-anchor="middle">LIVE</text>
-<text x="1002" y="290" font-size="14" font-weight="500" fill="#4d4d4d">Writes the mail.</text>
-<line x1="1002" y1="314" x2="1358" y2="314" stroke="#00000014" stroke-width="1"/>
-<text x="1002" y="344" font-size="9.5" font-weight="700" fill="#8f8f8f" letter-spacing="1.3">MODEL</text>
-<text x="1002" y="366" font-size="13" font-weight="400" fill="#4d4d4d">Two voices, two calls.</text>
-<text x="1002" y="402" font-size="9.5" font-weight="700" fill="#8f8f8f" letter-spacing="1.3">CODE</text>
-<text x="1002" y="424" font-size="13" font-weight="400" fill="#4d4d4d">Builds the facts.</text>
-<text x="1002" y="460" font-size="9.5" font-weight="700" fill="#96580a" letter-spacing="1.3">GUARD RAIL</text>
-<text x="1002" y="482" font-size="13" font-weight="500" fill="#171717">Flags internal codes to a human.</text>
-<rect x="1416" y="222" width="408" height="310" rx="12" fill="#ffffff" stroke="#00000014"/>
-<text x="1442" y="264" font-size="18" font-weight="600" fill="#171717" letter-spacing="-0.2">TMS Link</text>
-<rect x="1736" y="248" width="62" height="22" rx="6" fill="#f2f2f2" stroke="none"/>
-<text x="1767.0" y="262.42" font-size="9.5" font-weight="700" fill="#4d4d4d" text-anchor="middle">DEMO</text>
-<text x="1442" y="290" font-size="14" font-weight="500" fill="#4d4d4d">Puts it all back.</text>
-<line x1="1442" y1="314" x2="1798" y2="314" stroke="#00000014" stroke-width="1"/>
-<text x="1442" y="344" font-size="9.5" font-weight="700" fill="#8f8f8f" letter-spacing="1.3">MODEL</text>
-<text x="1442" y="366" font-size="13" font-weight="400" fill="#4d4d4d">Nothing. No model call.</text>
-<text x="1442" y="402" font-size="9.5" font-weight="700" fill="#8f8f8f" letter-spacing="1.3">CODE</text>
-<text x="1442" y="424" font-size="13" font-weight="400" fill="#4d4d4d">Field changes on the record.</text>
-<text x="1442" y="460" font-size="9.5" font-weight="700" fill="#96580a" letter-spacing="1.3">GUARD RAIL</text>
-<text x="1442" y="482" font-size="13" font-weight="500" fill="#171717">One gate. Nothing bypasses it.</text>
-<rect x="96" y="566" width="1728" height="290" rx="12" fill="#ffffff" stroke="#00000024"/>
-<text x="124" y="600" font-size="10" font-weight="700" fill="#8f8f8f" letter-spacing="1.4">ONE DECISION, AND EVERYTHING IT MOVES</text>
-<text x="124" y="662" font-size="36" font-weight="600" fill="#171717" letter-spacing="-1.1">Reroute</text>
-<text x="124" y="692" font-size="16" font-weight="600" fill="#96580a" class="mono">HAM → RTM</text>
-<text x="124" y="720" font-size="12.5" font-weight="400" fill="#8f8f8f">SHP-001 · automotive parts</text>
-<line x1="124" y1="746" x2="476" y2="746" stroke="#00000014" stroke-width="1"/>
-<text x="124" y="776" font-size="20" font-weight="600" fill="#171717">8 consequences</text>
-<text x="124" y="800" font-size="12.5" font-weight="400" fill="#4d4d4d">none of them typed by a person</text>
-<line x1="506" y1="711" x2="546" y2="711" stroke="#96580a" stroke-width="2" marker-end="url(#ahA)"/>
-<text x="576" y="656" font-size="12.5" font-weight="400" fill="#8f8f8f" class="mono">exception_flag</text>
-<text x="776" y="656" font-size="13" font-weight="500" fill="#171717" class="mono">EVT-HAM-STRIKE</text>
-<line x1="576" y1="672" x2="1116" y2="672" stroke="#00000014" stroke-width="1"/>
-<text x="576" y="700" font-size="12.5" font-weight="400" fill="#8f8f8f" class="mono">port_of_discharge</text>
-<text x="776" y="700" font-size="13" font-weight="500" fill="#171717" class="mono">HAM → RTM</text>
-<line x1="576" y1="716" x2="1116" y2="716" stroke="#00000014" stroke-width="1"/>
-<text x="576" y="744" font-size="12.5" font-weight="400" fill="#8f8f8f" class="mono">routing_code</text>
-<text x="776" y="744" font-size="13" font-weight="500" fill="#171717" class="mono">R-HAM-STD → R-RTM-ALT</text>
-<line x1="576" y1="760" x2="1116" y2="760" stroke="#00000014" stroke-width="1"/>
-<text x="576" y="788" font-size="12.5" font-weight="400" fill="#8f8f8f" class="mono">eta</text>
-<text x="776" y="788" font-size="13" font-weight="500" fill="#171717" class="mono">+2 days</text>
-<line x1="576" y1="804" x2="1116" y2="804" stroke="#00000014" stroke-width="1"/>
-<text x="1186" y="656" font-size="12.5" font-weight="400" fill="#8f8f8f" class="mono">booking_status</text>
-<text x="1386" y="656" font-size="13" font-weight="500" fill="#171717" class="mono">rerouted</text>
-<line x1="1186" y1="672" x2="1726" y2="672" stroke="#00000014" stroke-width="1"/>
-<text x="1186" y="700" font-size="12.5" font-weight="400" fill="#8f8f8f" class="mono">communication_log</text>
-<text x="1386" y="700" font-size="13" font-weight="500" fill="#171717" class="mono">carrier draft</text>
-<line x1="1186" y1="716" x2="1726" y2="716" stroke="#00000014" stroke-width="1"/>
-<text x="1186" y="744" font-size="12.5" font-weight="400" fill="#8f8f8f" class="mono">communication_log</text>
-<text x="1386" y="744" font-size="13" font-weight="500" fill="#171717" class="mono">customer draft</text>
-<line x1="1186" y1="760" x2="1726" y2="760" stroke="#00000014" stroke-width="1"/>
-<text x="1186" y="788" font-size="12.5" font-weight="400" fill="#8f8f8f" class="mono">customs entry</text>
-<text x="1386" y="788" font-size="13" font-weight="500" fill="#171717" class="mono">DE → NL · B/L reissue</text>
-<line x1="1186" y1="804" x2="1726" y2="804" stroke="#00000014" stroke-width="1"/>
-<text x="96" y="904" font-size="24" font-weight="600" fill="#171717" letter-spacing="-0.5">When two options are close, this is what actually decides it.</text>
-<text x="1824" y="904" font-size="11.5" font-weight="400" fill="#8f8f8f" text-anchor="end">One real run. Nine more Workers are tagged SCRIPTED on screen.</text>
+<rect x="96" y="230" width="430" height="470" rx="12" fill="#ffffff" stroke="#00000014"/>
+<text x="124" y="270" font-size="10" font-weight="700" fill="#8f8f8f" letter-spacing="1.4">ALWAYS ON</text>
+<text x="124" y="342" font-size="34" font-weight="600" fill="#171717" letter-spacing="-1" class="num">42 sources</text>
+<text x="124" y="368" font-size="13.5" font-weight="400" fill="#4d4d4d">watched continuously</text>
+<line x1="124" y1="402" x2="498" y2="402" stroke="#00000014" stroke-width="1"/>
+<text x="124" y="462" font-size="34" font-weight="600" fill="#171717" letter-spacing="-1">Every booking</text>
+<text x="124" y="488" font-size="13.5" font-weight="400" fill="#4d4d4d">alternatives already priced</text>
+<line x1="124" y1="522" x2="498" y2="522" stroke="#00000014" stroke-width="1"/>
+<text x="124" y="560" font-size="13" font-weight="500" fill="#171717">None of this waits for an event.</text>
+<text x="124" y="584" font-size="13" font-weight="400" fill="#4d4d4d">When one lands, the options exist.</text>
+<text x="671.0" y="270" font-size="10" font-weight="700" fill="#96580a" text-anchor="middle" letter-spacing="1.4">THRESHOLD</text>
+<line x1="671.0" y1="292" x2="671.0" y2="680" stroke="#96580a" stroke-width="1.6" stroke-dasharray="5 5"/>
+<rect x="574" y="380" width="194" height="96" rx="12" fill="#fdf3e3" stroke="#96580a"/>
+<text x="671.0" y="414" font-size="15" font-weight="600" fill="#171717" text-anchor="middle">Hamburg strike</text>
+<text x="671.0" y="438" font-size="12.5" font-weight="400" fill="#96580a" text-anchor="middle" class="mono">high · 3–5 days</text>
+<text x="671.0" y="462" font-size="11.5" font-weight="400" fill="#4d4d4d" text-anchor="middle">crosses the line</text>
+<line x1="772" y1="428" x2="812" y2="428" stroke="#96580a" stroke-width="2" marker-end="url(#ahA)"/>
+<text x="816" y="270" font-size="10" font-weight="700" fill="#8f8f8f" letter-spacing="1.4">THE SAME MOMENT</text>
+<rect x="816" y="292" width="1008" height="148" rx="12" fill="#171717" stroke="none"/>
+<text x="844" y="326" font-size="10" font-weight="700" fill="#8f8f8f" letter-spacing="1.4">TO THE PERSON</text>
+<text x="844" y="368" font-size="30" font-weight="600" fill="#ffffff" letter-spacing="-0.8">Reroute</text>
+<text x="966" y="368" font-size="20" font-weight="600" fill="#f5a623" class="mono">HAM → RTM</text>
+<text x="844" y="402" font-size="13" font-weight="400" fill="#a1a1a1">One call to make. The reasoning is attached.</text>
+<rect x="1586" y="348" width="100" height="34" rx="6" fill="#ffffff" stroke="none"/>
+<text x="1636.0" y="369.68" font-size="13" font-weight="600" fill="#171717" text-anchor="middle">Approve</text>
+<rect x="1696" y="348" width="100" height="34" rx="6" fill="#333" stroke="none"/>
+<text x="1746.0" y="369.68" font-size="13" font-weight="600" fill="#ffffff" text-anchor="middle">Reject</text>
+<rect x="816" y="464" width="1008" height="236" rx="12" fill="#ffffff" stroke="#00000024"/>
+<text x="844" y="498" font-size="10" font-weight="700" fill="#8f8f8f" letter-spacing="1.4">DRAFTED IN PARALLEL</text>
+<text x="1056" y="498" font-size="11.5" font-weight="400" fill="#8f8f8f">already written, waiting behind the same approval</text>
+<circle cx="850" cy="536" r="3.5" fill="#0f7b3f"/>
+<text x="866" y="540" font-size="13.5" font-weight="500" fill="#171717">Carrier mail</text>
+<text x="1236" y="540" font-size="12" font-weight="400" fill="#8f8f8f" class="mono">Comms</text>
+<rect x="1356" y="524" width="74" height="22" rx="6" fill="#e7f5ec" stroke="none"/>
+<text x="1393.0" y="538.24" font-size="9" font-weight="700" fill="#0f7b3f" text-anchor="middle">LIVE</text>
+<circle cx="850" cy="570" r="3.5" fill="#0f7b3f"/>
+<text x="866" y="574" font-size="13.5" font-weight="500" fill="#171717">Customer mail</text>
+<text x="1236" y="574" font-size="12" font-weight="400" fill="#8f8f8f" class="mono">Comms</text>
+<rect x="1356" y="558" width="74" height="22" rx="6" fill="#e7f5ec" stroke="none"/>
+<text x="1393.0" y="572.24" font-size="9" font-weight="700" fill="#0f7b3f" text-anchor="middle">LIVE</text>
+<circle cx="850" cy="604" r="3.5" fill="#0f7b3f"/>
+<text x="866" y="608" font-size="13.5" font-weight="500" fill="#171717">Exception flag</text>
+<text x="1236" y="608" font-size="12" font-weight="400" fill="#8f8f8f" class="mono">Risk</text>
+<rect x="1356" y="592" width="74" height="22" rx="6" fill="#e7f5ec" stroke="none"/>
+<text x="1393.0" y="606.24" font-size="9" font-weight="700" fill="#0f7b3f" text-anchor="middle">LIVE</text>
+<circle cx="850" cy="638" r="3.5" fill="#0f7b3f"/>
+<text x="866" y="642" font-size="13.5" font-weight="500" fill="#171717">Discharge · routing · ETA</text>
+<text x="1236" y="642" font-size="12" font-weight="400" fill="#8f8f8f" class="mono">Routing</text>
+<rect x="1356" y="626" width="74" height="22" rx="6" fill="#e7f5ec" stroke="none"/>
+<text x="1393.0" y="640.24" font-size="9" font-weight="700" fill="#0f7b3f" text-anchor="middle">LIVE</text>
+<circle cx="850" cy="672" r="3.5" fill="#dbdbdb"/>
+<text x="866" y="676" font-size="13.5" font-weight="500" fill="#171717">Customs entry, DE → NL</text>
+<text x="1236" y="676" font-size="12" font-weight="400" fill="#8f8f8f" class="mono">Customs</text>
+<rect x="1356" y="660" width="74" height="22" rx="6" fill="#f2f2f2" stroke="none"/>
+<text x="1393.0" y="674.24" font-size="9" font-weight="700" fill="#4d4d4d" text-anchor="middle">SCRIPTED</text>
+<rect x="96.0" y="744" width="552.0" height="128" rx="12" fill="#ffffff" stroke="#00000014"/>
+<text x="122.0" y="796" font-size="24" font-weight="600" fill="#171717" letter-spacing="-0.5">Speed</text>
+<text x="122.0" y="826" font-size="13.5" font-weight="400" fill="#4d4d4d">The option existed before the event did.</text>
+<rect x="672.0" y="744" width="552.0" height="128" rx="12" fill="#ffffff" stroke="#00000014"/>
+<text x="698.0" y="796" font-size="24" font-weight="600" fill="#171717" letter-spacing="-0.5">Coverage</text>
+<text x="698.0" y="826" font-size="13.5" font-weight="400" fill="#4d4d4d">Every booking, not the one someone remembered.</text>
+<rect x="1248.0" y="744" width="552.0" height="128" rx="12" fill="#ffffff" stroke="#00000014"/>
+<text x="1274.0" y="796" font-size="24" font-weight="600" fill="#171717" letter-spacing="-0.5">Reassurance</text>
+<text x="1274.0" y="826" font-size="13.5" font-weight="400" fill="#4d4d4d">The reasoning is recorded. A person still approves.</text>
+<text x="96" y="938" font-size="24" font-weight="600" fill="#171717" letter-spacing="-0.5">One decision to make. Everything else is already done.</text>
 <line x1="96" y1="1008" x2="1824" y2="1008" stroke="#00000014" stroke-width="1"/>
 <rect x="96" y="1022" width="18" height="18" rx="5" fill="#171717"/>
 <path d="M100.5 1035h9 M100.5 1031h6 M100.5 1027h3.5" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
