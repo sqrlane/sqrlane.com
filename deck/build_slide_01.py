@@ -1,29 +1,36 @@
 #!/usr/bin/env python3
 """
-Slide 01 - THE WHAT.  Emits deck/slide-01-the-what.svg at 1920x1080.
+Slide 01 - INTRODUCTION.  Emits deck/slide-01-introduction.svg at 1920x1080.
 
-Design system is SQRlane's own (static/index.html): near-monochrome Geist surfaces,
-hairline alpha borders, 6/12px radii. Colour is spent only on state - here amber
-means exactly one thing, "this is where the pressure lands", and nothing else is
-tinted. Geist Sans + Mono are embedded so the file is self-contained.
+The story, in three beats: a forwarder sells a date -> four things can take it
+-> the one person who could protect it is doing data entry. The competitive
+frame (risk platforms vs TMS) deliberately does NOT live here; an introduction
+needs a protagonist, not a positioning grid.
+
+Design system is SQRlane's own (static/index.html): near-monochrome Geist
+surfaces, hairline alpha borders, 6/12px radii. Colour is spent only on state -
+amber means "this is where the pressure lands" and nothing else is tinted.
+Geist Sans + Mono are embedded so the file is self-contained.
 """
 import base64, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-OUT  = ROOT / "deck" / "slide-01-the-what.svg"
+OUT  = ROOT / "deck" / "slide-01-introduction.svg"
 
 def font(name):
     return base64.b64encode((ROOT / "static" / "fonts" / name).read_bytes()).decode()
 
 # ---- tokens (verbatim from static/index.html) ----------------------------
 BG, CARD      = "#fafafa", "#ffffff"
+CARD_MUTED    = "#fafafa"
 FG, MUTED     = "#171717", "#4d4d4d"
 FAINT         = "#8f8f8f"
 BORDER        = "#00000014"
 BORDER_STRONG = "#00000024"
 SURFACE       = "#f2f2f2"
+SURFACE_2     = "#ebebeb"
 GRAY400       = "#dbdbdb"
-AMBER, AMBER_BG = "#96580a", "#fdf3e3"
+AMBER         = "#96580a"
 RED           = "#ea001d"
 R, RMD        = 6, 12
 
@@ -36,7 +43,6 @@ def esc(s):
 p = []
 add = p.append
 
-# ---- head ---------------------------------------------------------------
 add(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" font-family="Geist">')
 add(f'''<defs>
 <style>
@@ -48,8 +54,6 @@ text{{font-family:"Geist",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-s
 </style>
 <marker id="ahA" viewBox="0 0 8 8" refX="7.2" refY="4" markerWidth="5.4" markerHeight="5.4" orient="auto">
   <path d="M0,0.4 L8,4 L0,7.6 Z" fill="{AMBER}"/></marker>
-<marker id="ahN" viewBox="0 0 8 8" refX="7.2" refY="4" markerWidth="5.4" markerHeight="5.4" orient="auto">
-  <path d="M0,0.4 L8,4 L0,7.6 Z" fill="{FAINT}"/></marker>
 </defs>''')
 add(f'<rect width="{W}" height="{H}" fill="{BG}"/>')
 
@@ -59,35 +63,28 @@ def txt(x, y, s, size=13, weight=400, fill=FG, anchor="start", ls=0, cls=""):
     a = f' text-anchor="{anchor}"' if anchor != "start" else ""
     add(f'<text x="{x}" y="{y}" font-size="{size}" font-weight="{weight}" fill="{fill}"{a}{l}{c}>{esc(s)}</text>')
 
-def card(x, y, w, h, fill=CARD, stroke=BORDER, rx=RMD, dash=None):
-    d = f' stroke-dasharray="{dash}"' if dash else ""
-    add(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{rx}" fill="{fill}" stroke="{stroke}"{d}/>')
+def card(x, y, w, h, fill=CARD, stroke=BORDER, rx=RMD):
+    add(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{rx}" fill="{fill}" stroke="{stroke}"/>')
 
 def band_label(x, y, s):
     add(f'<rect x="{x}" y="{y-8}" width="8" height="8" rx="2" fill="{FG}"/>')
     txt(x + 18, y, s, 11, 600, FAINT, ls=1.5)
 
-def chip(x, y, label, w=None, fs=11.5, fill=SURFACE, stroke="none", col=MUTED, h=24, weight=500):
-    w = w or (len(label) * fs * 0.58 + 22)
-    add(f'<rect x="{x}" y="{y}" width="{w:.1f}" height="{h}" rx="{R}" fill="{fill}" stroke="{stroke}"/>')
-    txt(x + w / 2, y + h / 2 + fs * 0.36, label, fs, weight, col, anchor="middle")
-    return w
+# =========================================================================
+# HEADER - the story opens here
+# =========================================================================
+txt(M, 78, "INTRODUCTION", 12, 600, FAINT, ls=2.2)
+txt(M, 142, "A freight forwarder's product is a date.", 52, 600, FG, ls=-1.4)
+txt(M, 184, "They own no ships, no trucks, no planes. They sell one promise: this box, there, by then.",
+    17, 400, MUTED)
+add(f'<line x1="{M}" y1="216" x2="{W-M}" y2="216" stroke="{BORDER_STRONG}"/>')
 
 # =========================================================================
-# HEADER
+# BEAT 1 - what can take the date
 # =========================================================================
-txt(M, 78, "01 — THE WHAT", 12, 600, FAINT, ls=2.2)
-txt(M, 138, "Everything moves the lane. Nothing moves the booking.", 50, 600, FG, ls=-1.2)
-txt(M, 180, "Four forces converge on one booking. The software that sees them cannot act. "
-            "The software that acts cannot see.", 17, 400, MUTED)
-add(f'<line x1="{M}" y1="212" x2="{W-M}" y2="212" stroke="{BORDER_STRONG}"/>')
+band_label(M, 258, "FOUR THINGS CAN TAKE THAT DATE")
 
-# =========================================================================
-# BAND A - what moves the lane
-# =========================================================================
-band_label(M, 254, "WHAT MOVES THE LANE")
-
-CY, CH, CWd, GAP = 270, 220, 408, 32
+CY, CH, CWd, GAP = 276, 220, 408, 32
 
 def force(i, cat, big, big_sub, unit, ctx1, ctx2, src, micro):
     x = M + i * (CWd + GAP)
@@ -104,7 +101,6 @@ def force(i, cat, big, big_sub, unit, ctx1, ctx2, src, micro):
     micro(tx, CY + 184)
     txt(tx, CY + 210, src, 10.5, 400, FAINT, cls="mono")
 
-# -- micro 1: 14 chokepoints, 3 with no viable alternative
 def m_choke(x, y):
     for i in range(14):
         cx = x + 4 + i * 13.5
@@ -113,21 +109,18 @@ def m_choke(x, y):
         else:
             add(f'<circle cx="{cx:.1f}" cy="{y}" r="3.4" fill="none" stroke="{GRAY400}" stroke-width="1.3"/>')
 
-# -- micro 2: water level, marker at record low
 def m_water(x, y):
     add(f'<rect x="{x}" y="{y-4}" width="186" height="8" rx="4" fill="{SURFACE}"/>')
     add(f'<rect x="{x+108}" y="{y-4}" width="78" height="8" rx="4" fill="{GRAY400}"/>')
     add(f'<rect x="{x+8}" y="{y-8}" width="3" height="16" rx="1.5" fill="{RED}"/>')
     txt(x + 194, y + 4, "normal", 10, 400, FAINT)
 
-# -- micro 3: two bars, +123 / +128
 def m_bars(x, y):
     for i, (lab, v) in enumerate((("geo", 123), ("reg", 128))):
         by = y - 6 + i * 11
         add(f'<rect x="{x+26}" y="{by}" width="{v*0.92:.0f}" height="7" rx="3.5" fill="{AMBER if i else GRAY400}"/>')
         txt(x, by + 6.4, lab, 9.5, 500, FAINT, cls="mono")
 
-# -- micro 4: sparkline, down then sharply up
 def m_spark(x, y):
     pts = [(0, -2), (24, 4), (52, 9), (74, 6), (96, 8), (120, 0), (146, -6), (172, -12)]
     d = " ".join(f"{'M' if i==0 else 'L'}{x+px},{y+py}" for i, (px, py) in enumerate(pts))
@@ -147,113 +140,75 @@ force(3, "PRICE", "2.4×", "", "spot-rate swing in eleven months",
       "Drewry WCI, per 40ft: $1,913 in Sep 2025 to",
       "$4,526 in Aug 2026.", "Drewry World Container Index", m_spark)
 
-# -- convergence arrows ----------------------------------------------------
 for i in range(4):
     cx = M + i * (CWd + GAP) + CWd / 2
-    add(f'<line x1="{cx}" y1="498" x2="{cx}" y2="546" stroke="{AMBER}" stroke-width="1.6" marker-end="url(#ahA)"/>')
+    add(f'<line x1="{cx}" y1="504" x2="{cx}" y2="550" stroke="{AMBER}" stroke-width="1.6" marker-end="url(#ahA)"/>')
 
 # =========================================================================
-# THE BOOKING - everything lands here
+# BEAT 2 - the promise itself
 # =========================================================================
-LY, LH = 550, 86
+LY, LH = 558, 96
 card(M, LY, CW, LH, stroke=BORDER_STRONG)
-txt(M + 26, LY + 40, "SHP-001", 14, 600, FG, cls="mono")
-txt(M + 26, LY + 62, "Automotive parts · 32d transit", 11.5, 400, FAINT)
+txt(M + 26, LY + 42, "SHP-001", 14, 600, FG, cls="mono")
+txt(M + 26, LY + 64, "Automotive parts · Shanghai → Munich", 11.5, 400, FAINT)
 
-NODES = [("SHANGHAI", 470, False), ("SUEZ", 767, True), ("HAMBURG", 1064, True), ("MUNICH", 1361, False)]
-add(f'<line x1="470" y1="{LY+46}" x2="1361" y2="{LY+46}" stroke="{GRAY400}" stroke-width="1.4"/>')
+NODES = [("SHANGHAI", 470, False), ("SUEZ", 757, True), ("HAMBURG", 1044, True), ("MUNICH", 1331, False)]
+add(f'<line x1="470" y1="{LY+52}" x2="1331" y2="{LY+52}" stroke="{GRAY400}" stroke-width="1.4"/>')
 for name, nx, hot in NODES:
     if hot:
-        add(f'<circle cx="{nx}" cy="{LY+46}" r="9" fill="none" stroke="{AMBER}" stroke-width="1.6"/>')
-        add(f'<circle cx="{nx}" cy="{LY+46}" r="4" fill="{AMBER}"/>')
+        add(f'<circle cx="{nx}" cy="{LY+52}" r="9" fill="none" stroke="{AMBER}" stroke-width="1.6"/>')
+        add(f'<circle cx="{nx}" cy="{LY+52}" r="4" fill="{AMBER}"/>')
     else:
-        add(f'<circle cx="{nx}" cy="{LY+46}" r="4.5" fill="{CARD}" stroke="{FAINT}" stroke-width="1.6"/>')
-    txt(nx, LY + 28, name, 10.5, 500, AMBER if hot else FAINT, anchor="middle", ls=0.8, cls="mono")
-add(f'<line x1="{W-M-232}" y1="{LY+16}" x2="{W-M-232}" y2="{LY+LH-16}" stroke="{BORDER_STRONG}"/>')
-txt(W - M - 26, LY + 40, "ETA 14 Oct", 14, 600, FG, anchor="end", cls="mono")
-txt(W - M - 26, LY + 62, "on plan · 4d slack", 11.5, 400, FAINT, anchor="end")
+        add(f'<circle cx="{nx}" cy="{LY+52}" r="4.5" fill="{CARD}" stroke="{FAINT}" stroke-width="1.6"/>')
+    txt(nx, LY + 34, name, 10.5, 500, AMBER if hot else FAINT, anchor="middle", ls=0.8, cls="mono")
 
-txt(M, 668, "One booking. Each of those four rewrites its route, its ETA, or its cost — "
-            "and the rewrite has to reach the record before anyone acts on it.", 13.5, 400, MUTED)
+# the date is the product, so it is set as the hero of this row
+add(f'<line x1="{W-M-262}" y1="{LY+18}" x2="{W-M-262}" y2="{LY+LH-18}" stroke="{BORDER_STRONG}"/>')
+txt(W - M - 26, LY + 32, "THE DATE", 10, 600, FAINT, anchor="end", ls=1.4)
+txt(W - M - 26, LY + 64, "14 Oct", 30, 600, FG, anchor="end", ls=-0.8, cls="num")
+txt(W - M - 26, LY + 84, "4 days of margin", 12, 500, MUTED, anchor="end")
 
-# =========================================================================
-# BAND B - what the desk has
-# =========================================================================
-band_label(M, 710, "WHAT THE DESK HAS")
-
-BY, BH = 728, 248
-C1X, C1W = M, 520
-C2X, C2W = 660, 600
-C3X, C3W = 1304, 520
-
-def capability(x, y, states):
-    """three segments: watch / decide / act - filled means the layer does it."""
-    seg, gap = 88, 10
-    for i, (lab, on) in enumerate(states):
-        sx = x + i * (seg + gap)
-        add(f'<rect x="{sx}" y="{y}" width="{seg}" height="6" rx="3" fill="{FG if on else GRAY400}"/>')
-        txt(sx, y + 22, lab, 10, 500, FG if on else FAINT, ls=0.6, cls="mono")
-
-def side(x, w, label, verb, desc, vendors, states, status):
-    card(x, BY, w, BH)
-    tx = x + 26
-    txt(tx, BY + 34, label, 11, 600, FAINT, ls=1.4)
-    txt(tx, BY + 78, verb, 30, 600, FG, ls=-0.8)
-    txt(tx, BY + 104, desc, 13, 400, MUTED)
-    capability(tx, BY + 132, states)
-    cx = tx
-    for v in vendors:
-        cx += chip(cx, BY + 178, v) + 8
-    add(f'<circle cx="{tx+4}" cy="{BY+224}" r="3.5" fill="{AMBER}"/>')
-    txt(tx + 16, BY + 228, status, 12, 500, MUTED)
-
-side(C1X, C1W, "RISK PLATFORMS", "See it.", "Alert, score, map exposure.",
-     ["Everstream", "Interos", "Resilinc"],
-     [("WATCH", True), ("DECIDE", False), ("ACT", False)], "stops at the alert")
-
-side(C3X, C3W, "TMS & EXECUTION", "Do it.", "Book, amend, update, file.",
-     ["CargoWise", "Riege", "Descartes", "Transporeon"],
-     [("WATCH", False), ("DECIDE", False), ("ACT", True)], "moves only after a person decides")
-
-# -- the centre: the only part that is not software ------------------------
-card(C2X, BY, C2W, BH, fill=AMBER_BG, stroke="#96580a3d")
-tx = C2X + 26
-txt(tx, BY + 34, "THE DESK", 11, 600, AMBER, ls=1.4)
-txt(C2X + C2W - 26, BY + 34, "the only part that is not software", 11, 500, AMBER, anchor="end")
-txt(tx, BY + 78, "Joins them. By hand.", 30, 600, FG, ls=-0.8)
-txt(tx, BY + 104, "The same four steps, once per booking, every time.", 13, 400, MUTED)
-
-STEPS, SW, SG = ["READ", "DECIDE", "WRITE", "RE-KEY"], 120, 22
-for i, s in enumerate(STEPS):
-    sx = tx + i * (SW + SG)
-    last = i == len(STEPS) - 1
-    add(f'<rect x="{sx}" y="{BY+130}" width="{SW}" height="34" rx="{R}" '
-        f'fill="{AMBER if last else CARD}" stroke="{"none" if last else BORDER_STRONG}"/>')
-    txt(sx + SW / 2, BY + 152, s, 12, 600, CARD if last else FG, anchor="middle", ls=0.8, cls="mono")
-    if not last:
-        add(f'<line x1="{sx+SW+5}" y1="{BY+147}" x2="{sx+SW+SG-5}" y2="{BY+147}" '
-            f'stroke="{FAINT}" stroke-width="1.3" marker-end="url(#ahN)"/>')
-txt(tx, BY + 194, "× every booking on the board", 12.5, 500, MUTED)
-txt(tx + 4, BY + 228, "Re-key is the step that eats the day — and the only one that counts.",
-    12, 500, AMBER)
-
-# -- flow arrows between the three columns ---------------------------------
-for x1, x2 in ((C1X + C1W + 8, C2X - 8), (C2X + C2W + 8, C3X - 8)):
-    add(f'<line x1="{x1}" y1="{BY+BH/2}" x2="{x2}" y2="{BY+BH/2}" stroke="{FAINT}" '
-        f'stroke-width="1.4" marker-end="url(#ahN)"/>')
+txt(M, 690, "One booking, one date, four days of margin. Any one of the four above can eat all of it.",
+    14, 400, MUTED)
 
 # =========================================================================
-# FOOTER
+# BEAT 3 - and nobody is watching, because the desk is doing data entry
 # =========================================================================
-txt(M, 996, "Named systems are integration targets, not integrations. None of them is connected.",
-    11, 400, FAINT)
-add(f'<line x1="{M}" y1="1012" x2="{W-M}" y2="1012" stroke="{BORDER}"/>')
-add(f'<rect x="{M}" y="1026" width="18" height="18" rx="5" fill="{FG}"/>')
-add(f'<path d="M{M+4.5} 1039h9 M{M+4.5} 1035h6 M{M+4.5} 1031h3.5" stroke="{CARD}" '
+band_label(M, 738, "AND THE PERSON WHO OWNS THAT DATE")
+
+DY, DH = 756, 172
+card(M, DY, CW, DH)
+bx, bw = M + 26, CW - 52
+txt(bx, DY + 36, "A working day on a forwarding desk", 14.5, 600, FG)
+
+BARY, BARH = DY + 62, 38
+admin = bw * 0.40
+add(f'<rect x="{bx}" y="{BARY}" width="{bw}" height="{BARH}" rx="{R}" fill="{CARD_MUTED}" stroke="{BORDER_STRONG}"/>')
+add(f'<rect x="{bx}" y="{BARY}" width="{admin:.0f}" height="{BARH}" rx="{R}" fill="{SURFACE_2}" stroke="{BORDER_STRONG}"/>')
+add(f'<line x1="{bx+admin:.0f}" y1="{BARY}" x2="{bx+admin:.0f}" y2="{BARY+BARH}" stroke="{BORDER_STRONG}"/>')
+txt(bx + 16, BARY + 24, "up to 40% of the day", 13.5, 600, FG)
+txt(bx + admin + 16, BARY + 24, "customer work, exceptions, everything else", 13, 400, MUTED)
+
+txt(bx, BARY + BARH + 26, "Quotes · rate requests · data entry · documents · tracking · invoice checks · customs entries",
+    12.5, 400, FAINT)
+
+add(f'<circle cx="{bx+4}" cy="{DY+DH-24}" r="3.5" fill="{AMBER}"/>')
+txt(bx + 16, DY + DH - 20,
+    "Watching the world that moves the cargo has no slot on this bar. It happens between other calls, or it does not happen.",
+    13, 500, AMBER)
+
+# =========================================================================
+# THE TURN
+# =========================================================================
+txt(M, 972, "The one person who could protect the date is doing data entry.", 24, 600, FG, ls=-0.5)
+
+add(f'<line x1="{M}" y1="1006" x2="{W-M}" y2="1006" stroke="{BORDER}"/>')
+add(f'<rect x="{M}" y="1022" width="18" height="18" rx="5" fill="{FG}"/>')
+add(f'<path d="M{M+4.5} 1035h9 M{M+4.5} 1031h6 M{M+4.5} 1027h3.5" stroke="{CARD}" '
     f'stroke-width="1.5" stroke-linecap="round"/>')
-txt(M + 28, 1040, "SQRlane", 13, 600, FG)
-txt(M + 92, 1040, "Trade-lane risk, decided.", 12, 400, FAINT)
-txt(W - M, 1040, "01 / THE WHAT", 11.5, 500, FAINT, anchor="end", ls=1.2, cls="mono")
+txt(M + 28, 1036, "SQRlane", 13, 600, FG)
+txt(M + 92, 1036, "Trade-lane risk, decided.", 12, 400, FAINT)
+txt(W - M, 1036, "01 / INTRODUCTION", 11.5, 500, FAINT, anchor="end", ls=1.2, cls="mono")
 
 add("</svg>")
 OUT.write_text("\n".join(p), encoding="utf-8")
