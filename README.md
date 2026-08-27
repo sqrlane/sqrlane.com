@@ -108,11 +108,18 @@ For the AI key, pick one free provider and put it in `.env`:
 | Provider | Where | `.env` |
 |---|---|---|
 | **Groq** (recommended) | https://console.groq.com | `GROQ_API_KEY=…` (provider defaults to groq) |
+| Hugging Face | https://huggingface.co/settings/tokens | `LLM_PROVIDER=hf`, `HF_TOKEN=…` |
 | Google Gemini | https://aistudio.google.com/apikey | `LLM_PROVIDER=gemini`, `GEMINI_API_KEY=…` |
 | Ollama (local, no key) | https://ollama.com | `LLM_PROVIDER=ollama` |
 
-You do **not** set a model name. On Groq the app asks your key which models it can
-actually run and picks the best available one, because Groq retires and renames
+Hugging Face is worth knowing about for one reason: its router puts several upstream
+backends behind a single token, so the rate limit that makes the last drafts of a cycle
+fall back to a template becomes a routing choice instead of a wall. It is a sibling to
+Groq, not a replacement — and it is a US company too, so it does not change where the
+inference happens.
+
+You do **not** set a model name. On Groq and Hugging Face the app asks your key which
+models it can actually run and picks the best available one, because providers retire and rename
 models and a hard-coded name that has been retired fails with a 404 that looks
 exactly like a broken key. To see what your key offers:
 

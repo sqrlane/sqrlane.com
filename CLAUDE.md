@@ -640,7 +640,7 @@ here too, because this is what the next session reads to find its way around.
 │   ├── index.html            # the dashboard (HTML+CSS+JS in one file)
 │   ├── whitepaper.html       # the technical paper
 │   └── fonts/                # Geist Sans + Mono, self-hosted - never a CDN
-├── tests/                    # eight suites, one per claim the demo makes out loud
+├── tests/                    # nine suites, one per claim the demo makes out loud
 ├── tools/build_rhine_map.py  # regenerates the landing page's corridor map
 ├── scratch/genheat.py        # one-off generator for the landing heatmap
 ├── docs/dashboard.png        # the README's screenshot
@@ -703,17 +703,35 @@ concurrently, and a source that is down, slow or reshaped is reported failed and
 real lat/lon for every chokepoint, so the watch lists in `config.py` are chokepoint ids. Never
 keep a second coordinate table.
 
-**Runtime LLM (pick one, key in `.env`):** Groq (recommended default) / Google Gemini / Ollama local.
+**Runtime LLM (pick one, key in `.env`):** Groq (recommended default) / Hugging Face
+Inference Providers / Google Gemini / Ollama local.
 Note: Claude Code Max pays for *building*, not for the agents' *runtime* calls.
 
-**Never hard-code a Groq model name.** Groq retires and renames models, and a retired
+**Never hard-code a model name.** Providers retire and rename models, and a retired
 name fails with a 404 that looks exactly like a broken key — the whole demo drops
 silently to the deterministic fallback. `llm.py` resolves the model at runtime against
-`/openai/v1/models`: it asks the key what it can run and picks the best available,
-preferring `GROQ_MODEL_PREFERENCES` in `config.py` but falling back to a sensible choice
-from a lineup it has never seen. A model that 404s mid-run triggers one re-resolve and
-retry. `python -m src.llm --models` shows what a key offers; `/api/health` names the
-model actually in use.
+`/v1/models`: it asks the key what it can run and picks the best available,
+preferring `GROQ_MODEL_PREFERENCES` / `HF_MODEL_PREFERENCES` in `config.py` but falling
+back to a sensible choice from a lineup it has never seen. A model that 404s mid-run
+triggers one re-resolve and retry. `python -m src.llm --models` shows what a key offers;
+`/api/health` names the model actually in use.
+
+**Hugging Face is a sibling to Groq, not a replacement.** Its router
+(`router.huggingface.co/v1`) is OpenAI-compatible and fronts several upstream backends
+(Groq, Together, Fireworks, Cerebras and others) behind one token, so Groq and Hugging
+Face share one implementation in `llm.py` and differ only in a base URL, a token and a
+preference list. The reason it is wired at all is the rate limit below: on the free tier
+the last drafts of a cycle reliably 429 and fall back to a template, and a router turns
+that into a routing choice rather than a wall. Two things are worth knowing before
+leaning on it. **It does not change the whitepaper's "calls a US inference provider
+today" line** — Hugging Face is US-headquartered and its router mostly fronts US
+backends, so that sentence stays true and must not be softened. And **the router lists
+image, video and audio models in the same call as chat ones**, which Groq's listing never
+did, so discovery filters on the stated task as well as the name — a model whose listing
+says `text-to-image` is dropped, one that states no task at all is kept, because Groq
+states none. `HF_MODEL_PREFERENCES` has **never been checked against the live catalogue**
+(this sandbox blocks the host, same 403 that PEGELONLINE hit before production witnessed
+it); it is a preference, and discovery does the real work.
 
 **Skip:** everything marked OPTIONAL (Open-Meteo, NewsAPI, World News API, AISstream, Nominatim)
 until the core demo works end to end. **Never** wire MarineTraffic / VesselFinder / Datalastic /
@@ -1057,14 +1075,16 @@ file in `src/` and fails naming the file and line if a transport library ever ap
 (including via `__import__` or `importlib`). It also runs a full offline cycle and checks
 every draft it produces. Run the whole suite with
 `python -m unittest discover -s tests` — standard library, nothing to install, and it
-covers the other seven claim-guards too: the TMS being the only door to the book; the
+covers the other eight claim-guards too: the TMS being the only door to the book; the
 pages naming no language, loading nothing external, carrying one product name and
 disclaiming the systems they name; the simulated week never sending a booking back to a
 route it left; a trickling source being cut off rather than hanging the run; the
 structured sources keeping schema parity with the scripted ones and failing alone; a
 reroute having to be worth what it costs, including the board outcomes that pricing must
 not quietly move; and the landing page's live gauges being banded exactly as the risk
-monitor bands them, so the two cannot disagree about the same number. Note it is deliberately *not* a "no networking" rule: the
+monitor bands them, so the two cannot disagree about the same number; and `llm.py` staying
+the only door to a provider, with every one of the four wired end to end rather than
+half-wired — a name `is_configured()` accepts but `complete()` has no branch for. Note it is deliberately *not* a "no networking" rule: the
 live news pull and the LLM calls are real HTTP and must stay that way. Every draft carries `status: "DRAFT - not sent"`
 in the data, not just in the UI. Say this out loud in the demo — it is the responsible
 design, not a missing feature.

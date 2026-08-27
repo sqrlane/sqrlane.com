@@ -2,11 +2,17 @@
 
 Every agent (risk_monitor, route_advisor, comms_agent) calls the functions here.
 Nothing else imports a provider SDK or builds an inference request. That is the
-whole point: to switch from Groq to Gemini to a local Ollama model you change
-LLM_PROVIDER in .env and touch no other file.
+whole point: to switch from Groq to Hugging Face to Gemini to a local Ollama
+model you change LLM_PROVIDER in .env and touch no other file.
 
-All three providers are spoken to over plain HTTP with `requests`, so there is
-no extra SDK to install and no third way for things to break.
+All four providers are spoken to over plain HTTP with `requests`, so there is
+no extra SDK to install and no fourth way for things to break.
+
+Groq and Hugging Face are both OpenAI-compatible - same chat body, same /models
+listing, same bearer header - so they share one implementation here and differ
+only in a base URL, a token and a preference list. Hugging Face is a sibling to
+Groq rather than a replacement: its router fronts several upstream backends, so a
+rate limit on one becomes a routing choice instead of a wall.
 
 Public API
 ----------
@@ -49,6 +55,8 @@ def is_configured() -> bool:
     provider = config.LLM_PROVIDER
     if provider == "groq":
         return bool(config.GROQ_API_KEY)
+    if provider == "hf":
+        return bool(config.HF_API_TOKEN)
     if provider == "gemini":
         return bool(config.GEMINI_API_KEY)
     if provider == "ollama":
@@ -56,39 +64,111 @@ def is_configured() -> bool:
     return False
 
 
-# Resolved once per process. Serverless gives each cold start its own process,
-# so this is at most one extra request per container, not per run.
-_resolved_groq_model: str | None = None
+# The providers that speak the OpenAI chat API. They share everything below.
+OPENAI_COMPATIBLE = ("groq", "hf")
+
+PROVIDER_NAMES = {"groq": "Groq", "hf": "Hugging Face",
+                  "gemini": "Gemini", "ollama": "Ollama"}
+
+# Where a human goes to check the key, per provider. Used in error messages,
+# which is the only moment anyone needs it.
+_CONSOLES = {"groq": "https://console.groq.com",
+             "hf": "https://huggingface.co/settings/tokens"}
+
+# Resolved once per process, per provider. Serverless gives each cold start its
+# own process, so this is at most one extra request per container, not per run.
+_resolved: dict[str, str] = {}
 _resolution_note: str = ""
 
 
-def list_groq_models() -> list[str]:
-    """Ask Groq what this key can actually run. Read-only."""
+def _endpoint(provider: str) -> tuple[str, str]:
+    """(base url, bearer token) for an OpenAI-compatible provider."""
+    if provider == "groq":
+        return "https://api.groq.com/openai/v1", config.GROQ_API_KEY
+    if provider == "hf":
+        return config.HF_BASE_URL, config.HF_API_TOKEN
+    raise LLMNotConfigured(f"{provider!r} does not speak the OpenAI-compatible API")
+
+
+# Named one by one rather than "groq or else HF", so that adding a fifth
+# provider fails here loudly instead of silently inheriting HF's lists.
+def _preferences(provider: str) -> list[str]:
+    if provider == "groq":
+        return config.GROQ_MODEL_PREFERENCES
+    if provider == "hf":
+        return config.HF_MODEL_PREFERENCES
+    raise LLMNotConfigured(f"{provider!r} has no model preference list")
+
+
+def _exclusions(provider: str) -> tuple:
+    if provider == "groq":
+        return config.GROQ_MODEL_EXCLUDE
+    if provider == "hf":
+        return config.HF_MODEL_EXCLUDE
+    raise LLMNotConfigured(f"{provider!r} has no model exclusion list")
+
+
+# Task names that mean "this model answers with text". The Hugging Face router
+# lists image, video and audio models in the same call as chat ones, and a name
+# check alone does not catch them all.
+_TEXT_TASKS = {"conversational", "text-generation", "text2text-generation", "chat"}
+
+
+def _serves_text(entry: dict) -> bool:
+    """True unless the listing positively says this model does something else.
+
+    A STATED task that is not a text task is dropped. An ABSENT one is kept, so a
+    provider that does not report tasks at all - Groq does not - loses nothing.
+    """
+    for key in ("task", "pipeline_tag"):
+        stated = entry.get(key)
+        if isinstance(stated, str) and stated.strip():
+            return stated.strip().lower() in _TEXT_TASKS
+    return True
+
+
+def _list_model_entries(provider: str) -> list[dict]:
+    """Ask the provider what this key can actually run. Read-only."""
+    base, token = _endpoint(provider)
     response = requests.get(
-        "https://api.groq.com/openai/v1/models",
-        headers={"Authorization": f"Bearer {config.GROQ_API_KEY}"},
+        f"{base}/models",
+        headers={"Authorization": f"Bearer {token}"},
         timeout=config.LLM_TIMEOUT_SECONDS,
     )
     if response.status_code != 200:
         raise LLMError(f"could not list models: HTTP {response.status_code} "
                        f"{response.text[:200]}")
-    return [m["id"] for m in response.json().get("data", []) if m.get("id")]
+    return [m for m in response.json().get("data", [])
+            if isinstance(m, dict) and m.get("id")]
 
 
-def _usable(model_id: str) -> bool:
-    """Chat models only - not audio, safety classifiers or embeddings."""
+def list_models(provider: str | None = None) -> list[str]:
+    """Every model id this key is offered, unfiltered."""
+    return [m["id"] for m in _list_model_entries(provider or config.LLM_PROVIDER)]
+
+
+def list_groq_models() -> list[str]:
+    """Kept under its own name because the README and .env.example use it."""
+    return list_models("groq")
+
+
+def _usable(model_id: str, provider: str | None = None) -> bool:
+    """Chat models only - not audio, safety classifiers, embeddings or images."""
     lowered = model_id.lower()
-    return not any(bad in lowered for bad in config.GROQ_MODEL_EXCLUDE)
+    return not any(bad in lowered
+                   for bad in _exclusions(provider or config.LLM_PROVIDER))
 
 
-def _rank(model_id: str) -> tuple:
+def _rank(model_id: str, preferences: list[str] | None = None) -> tuple:
     """Sort key: preferred models first, then bigger/instruct-looking ones.
 
     The fallback half matters - it is what picks a sensible model from a lineup
     this code has never heard of.
     """
     lowered = model_id.lower()
-    for position, preferred in enumerate(config.GROQ_MODEL_PREFERENCES):
+    if preferences is None:
+        preferences = _preferences(config.LLM_PROVIDER)
+    for position, preferred in enumerate(preferences):
         if lowered == preferred.lower():
             return (0, position, 0)
     # Unknown model: prefer something that looks like a general instruct model,
@@ -101,51 +181,70 @@ def _rank(model_id: str) -> tuple:
     return (1, -size, 0 if looks_general else 1)
 
 
-def resolve_groq_model(*, force: bool = False, exclude: frozenset = frozenset()) -> str:
-    """Decide which Groq model to call, asking Groq if we do not already know.
+def resolve_model(provider: str | None = None, *, force: bool = False,
+                  exclude: frozenset = frozenset()) -> str:
+    """Decide which model to call, asking the provider if we do not already know.
 
     An explicit LLM_MODEL in .env wins, but is not a hard pin: if it turns out
     to be retired, discovery still rescues the run rather than failing it.
-    """
-    global _resolved_groq_model, _resolution_note
 
-    if not force and _resolved_groq_model and _resolved_groq_model not in exclude:
-        return _resolved_groq_model
+    On Hugging Face the id may carry an upstream backend - "...-Instruct:groq" -
+    which is passed through untouched, because pinning the backend is the whole
+    reason someone would set it.
+    """
+    global _resolution_note
+    provider = provider or config.LLM_PROVIDER
+    preferences = _preferences(provider)
+
+    already = _resolved.get(provider)
+    if not force and already and already not in exclude:
+        return already
 
     if config.LLM_MODEL and config.LLM_MODEL not in exclude:
-        _resolved_groq_model = config.LLM_MODEL
+        _resolved[provider] = config.LLM_MODEL
         _resolution_note = "pinned by LLM_MODEL in .env"
-        return _resolved_groq_model
+        return config.LLM_MODEL
 
     try:
-        available = [m for m in list_groq_models() if _usable(m) and m not in exclude]
+        entries = _list_model_entries(provider)
     except (LLMError, requests.RequestException) as exc:
         # Could not ask. Fall back to the first preference and let the call fail
         # loudly if that is wrong, rather than guessing silently.
-        _resolved_groq_model = next(
-            (m for m in config.GROQ_MODEL_PREFERENCES if m not in exclude),
-            config.GROQ_MODEL_PREFERENCES[0])
+        chosen = next((m for m in preferences if m not in exclude), preferences[0])
+        _resolved[provider] = chosen
         _resolution_note = f"could not reach the model list ({exc}); using a default"
-        return _resolved_groq_model
+        return chosen
+
+    available = [m["id"] for m in entries
+                 if _serves_text(m) and _usable(m["id"], provider)
+                 and m["id"] not in exclude]
 
     if not available:
         raise ModelNotAvailable(
-            "This Groq key exposes no usable chat model. Check the key at "
-            "https://console.groq.com, or pin one with LLM_MODEL in .env.")
+            f"This {PROVIDER_NAMES.get(provider, provider)} key exposes no usable "
+            f"chat model. Check the key at {_CONSOLES.get(provider, 'the provider')}, "
+            f"or pin one with LLM_MODEL in .env.")
 
-    available.sort(key=_rank)
-    _resolved_groq_model = available[0]
-    known = _resolved_groq_model.lower() in {p.lower() for p in config.GROQ_MODEL_PREFERENCES}
+    available.sort(key=lambda model_id: _rank(model_id, preferences))
+    chosen = available[0]
+    _resolved[provider] = chosen
+    known = chosen.lower() in {p.lower() for p in preferences}
     _resolution_note = ("chosen from the models this key offers" if known else
                         f"chosen from the models this key offers "
                         f"(not in the preference list; {len(available)} available)")
-    return _resolved_groq_model
+    return chosen
+
+
+def resolve_groq_model(*, force: bool = False, exclude: frozenset = frozenset()) -> str:
+    """Kept under its own name because the README and .env.example use it."""
+    return resolve_model("groq", force=force, exclude=exclude)
 
 
 def active_model() -> str:
     """The model that will be used, without forcing a lookup."""
-    if config.LLM_PROVIDER == "groq":
-        return _resolved_groq_model or config.LLM_MODEL or "(resolved on first call)"
+    if config.LLM_PROVIDER in OPENAI_COMPATIBLE:
+        return (_resolved.get(config.LLM_PROVIDER) or config.LLM_MODEL
+                or "(resolved on first call)")
     return config.LLM_MODEL or config.DEFAULT_MODELS.get(config.LLM_PROVIDER, "")
 
 
@@ -163,6 +262,8 @@ def configuration_hint() -> str:
         f"No usable AI provider. LLM_PROVIDER={config.LLM_PROVIDER!r}.\n"
         "  - Copy .env.example to .env and paste a key in.\n"
         "  - Groq (free):   https://console.groq.com     -> GROQ_API_KEY\n"
+        "  - Hugging Face:  https://huggingface.co/settings/tokens -> HF_TOKEN\n"
+        "                   (one token, several upstream backends; LLM_PROVIDER=hf)\n"
         "  - Gemini (free): https://aistudio.google.com/apikey -> GEMINI_API_KEY\n"
         "  - Ollama (local, no key): run `ollama serve` and set LLM_PROVIDER=ollama"
     )
@@ -180,13 +281,14 @@ def complete(prompt: str, *, system: str | None = None,
     temperature = config.LLM_TEMPERATURE if temperature is None else temperature
     provider = config.LLM_PROVIDER
 
-    if provider == "groq":
-        return _call_groq(prompt, system, temperature, max_tokens)
+    if provider in OPENAI_COMPATIBLE:
+        return _call_openai_compatible(provider, prompt, system, temperature, max_tokens)
     if provider == "gemini":
         return _call_gemini(prompt, system, temperature, max_tokens)
     if provider == "ollama":
         return _call_ollama(prompt, system, temperature, max_tokens)
-    raise LLMNotConfigured(f"Unknown LLM_PROVIDER {provider!r}. Use groq, gemini or ollama.")
+    raise LLMNotConfigured(f"Unknown LLM_PROVIDER {provider!r}. "
+                           f"Use groq, hf, gemini or ollama.")
 
 
 def complete_json(prompt: str, *, system: str | None = None,
@@ -278,11 +380,16 @@ def _balanced_spans(text: str) -> list[str]:
 
 def _looks_like_missing_model(body: str) -> bool:
     lowered = (body or "").lower()
+    # The second half deliberately requires the word "model" as well, so a
+    # generic "not supported" from somewhere else cannot be mistaken for a
+    # retired model and send us round the re-resolve loop for nothing.
     return ("model_not_found" in lowered
             or ("model" in lowered and ("does not exist" in lowered
                                         or "not found" in lowered
                                         or "decommission" in lowered
-                                        or "no longer supported" in lowered)))
+                                        or "no longer supported" in lowered
+                                        or "not supported" in lowered
+                                        or "no inference provider" in lowered)))
 
 
 def _post_with_retries(url: str, *, headers=None, json_body=None, params=None) -> dict:
@@ -349,12 +456,13 @@ def _retry_after_seconds(response) -> float | None:
     return None
 
 
-def _groq_chat(model, prompt, system, temperature, max_tokens) -> str:
+def _openai_chat(provider, model, prompt, system, temperature, max_tokens) -> str:
+    base, token = _endpoint(provider)
     messages = ([{"role": "system", "content": system}] if system else []) + \
                [{"role": "user", "content": prompt}]
     data = _post_with_retries(
-        "https://api.groq.com/openai/v1/chat/completions",
-        headers={"Authorization": f"Bearer {config.GROQ_API_KEY}",
+        f"{base}/chat/completions",
+        headers={"Authorization": f"Bearer {token}",
                  "Content-Type": "application/json"},
         json_body={"model": model, "messages": messages,
                    "temperature": temperature, "max_tokens": max_tokens},
@@ -363,7 +471,8 @@ def _groq_chat(model, prompt, system, temperature, max_tokens) -> str:
         choice = data["choices"][0]
         content = choice["message"]["content"]
     except (KeyError, IndexError) as exc:
-        raise LLMError(f"unexpected Groq response shape: {str(data)[:300]}") from exc
+        raise LLMError(f"unexpected {PROVIDER_NAMES.get(provider, provider)} response "
+                       f"shape: {str(data)[:300]}") from exc
 
     # A reply cut off at the token limit is not malformed JSON, it is an
     # incomplete one - and reasoning models spend part of this budget thinking
@@ -375,18 +484,19 @@ def _groq_chat(model, prompt, system, temperature, max_tokens) -> str:
     return content
 
 
-def _call_groq(prompt, system, temperature, max_tokens) -> str:
-    model = resolve_groq_model()
+def _call_openai_compatible(provider, prompt, system, temperature, max_tokens) -> str:
+    model = resolve_model(provider)
     try:
-        return _groq_chat(model, prompt, system, temperature, max_tokens)
+        return _openai_chat(provider, model, prompt, system, temperature, max_tokens)
     except ModelNotAvailable:
-        # The model was retired, renamed, or is not on this key. Ask Groq what it
-        # does offer and try once more, rather than dropping the whole run to the
-        # deterministic fallback over a stale name.
-        replacement = resolve_groq_model(force=True, exclude=frozenset({model}))
+        # The model was retired, renamed, or is not on this key. Ask the provider
+        # what it does offer and try once more, rather than dropping the whole run
+        # to the deterministic fallback over a stale name.
+        replacement = resolve_model(provider, force=True, exclude=frozenset({model}))
         if replacement == model:
             raise
-        return _groq_chat(replacement, prompt, system, temperature, max_tokens)
+        return _openai_chat(provider, replacement, prompt, system, temperature,
+                            max_tokens)
 
 
 def _call_gemini(prompt, system, temperature, max_tokens) -> str:
@@ -433,16 +543,21 @@ if __name__ == "__main__":
         raise SystemExit(1)
 
     if "--models" in sys.argv:
-        if config.LLM_PROVIDER != "groq":
-            print(f"--models only applies to Groq. Provider is {config.LLM_PROVIDER}.")
+        provider = config.LLM_PROVIDER
+        if provider not in OPENAI_COMPATIBLE:
+            print(f"--models applies to groq and hf, which publish a model list. "
+                  f"Provider is {provider}.")
             raise SystemExit(1)
         try:
-            models = list_groq_models()
+            entries = _list_model_entries(provider)
         except (LLMError, requests.RequestException) as exc:
             print(f"Could not list models: {exc}")
             raise SystemExit(1)
-        usable = sorted((m for m in models if _usable(m)), key=_rank)
-        print(f"{len(models)} models on this key, {len(usable)} usable for this project:\n")
+        preferences = _preferences(provider)
+        usable = sorted((m["id"] for m in entries
+                         if _serves_text(m) and _usable(m["id"], provider)),
+                        key=lambda model_id: _rank(model_id, preferences))
+        print(f"{len(entries)} models on this key, {len(usable)} usable for this project:\n")
         for index, model in enumerate(usable):
             print(f"  {'-> ' if index == 0 else '   '}{model}")
         print(f"\nWould use: {usable[0] if usable else '(none)'}")
