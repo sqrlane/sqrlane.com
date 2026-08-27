@@ -45,12 +45,13 @@ def fold(x, n, title, line, caption, stats, payoff):
     s.text(tx, FY + 98, line, 15, 400, MUTED)
     s.text(tx, FY + 424, caption, 13, 400, MUTED)
     s.line(tx, FY + 456, x + FW - PAD, FY + 456, BORDER)
-    for i, (big, label, src) in enumerate(stats):
+    for i, (big, label, src1, src2) in enumerate(stats):
         sx = tx + i * (IW / 2)
-        s.raw(f'<text x="{sx}" y="{FY+508}" font-size="40" font-weight="600" fill="{FG}" '
+        s.raw(f'<text x="{sx}" y="{FY+506}" font-size="40" font-weight="600" fill="{FG}" '
               f'letter-spacing="-1.2" class="num">{esc(big)}</text>')
-        s.text(sx, FY + 534, label, 13, 500, FG)
-        s.text(sx, FY + 555, src, 10.5, 400, FAINT, cls="mono")
+        s.text(sx, FY + 532, label, 13, 500, FG)
+        s.text(sx, FY + 553, src1, 10.5, 400, FAINT, cls="mono")
+        s.text(sx, FY + 570, src2, 10.5, 400, FAINT, cls="mono")
     s.raw(f'<circle cx="{tx+4}" cy="{FY+608}" r="3.5" fill="{AMBER}"/>')
     s.text(tx + 16, FY + 612, payoff, 14, 500, AMBER)
 
@@ -61,8 +62,10 @@ def fold(x, n, title, line, caption, stats, payoff):
 fold(F1, "01", "The work is manual.",
      "The same three fields, re-typed into every system the booking touches.",
      "Six systems. One set of facts. Nobody adds anything on the way through.",
-     [("40%", "of the day on repetitive admin", "logistics surveys · upper estimate"),
-      ("€13,600", "per desk, per year", "€34k avg salary × 40% · SalaryExpert")],
+     [("40%", "of the day on repetitive admin",
+       "logistics industry surveys", "upper estimate, not a measurement"),
+      ("€13,600", "per desk, per year",
+       "€34k avg salary × 40%", "SalaryExpert 2025 · DE and NL")],
      "Hours a day, and none of it is judgement.")
 
 BW, BH2, BG_ = 240, 92, 28
@@ -103,8 +106,10 @@ s.line(turn_x, r1y + BH2 + 6, turn_x, r2y - 6, AMBER, 1.6, "ahA")
 fold(F2, "02", "Nothing watches the route.",
      "The environment is enormous, and no one is reading it on your bookings.",
      "So the desk finds out afterwards, with no backup route ready.",
-     [("26,225", "disruption alerts in 2025", "Resilinc EventWatchAI"),
-      ("€1,000+", "surcharge, per container", "Rhine low water · Aug 2026")],
+     [("26,225", "disruption alerts in 2025",
+       "Resilinc EventWatchAI", "up from 22,522 in 2024"),
+      ("~€950", "average surcharge, per container",
+       "€415 Panama · €925 Red Sea", "€1,000 Rhine · €1,480 peak · per 40ft")],
      "By the time anyone knows, the delay has already happened.")
 
 CW_, CH_, CG = 140, 46, 19
@@ -135,7 +140,7 @@ s.text(F2 + PAD + IW / 2, FY + 369, "Nothing reads these continuously, or per bo
 # =========================================================================
 s.text(M, 952, "Both jobs land on the same desk. Neither of them has a system.",
        24, 600, FG, ls=-0.5)
-s.text(W - M, 952, "Money figures are derived, not measured. The arithmetic is shown above.",
+s.text(W - M, 952, "Money figures are derived from cited sources, not measured. The inputs are shown above.",
        12, 400, FAINT, anchor="end")
 s.footer("02 / THE WHAT")
 s.write("slide-02-the-what.svg")
