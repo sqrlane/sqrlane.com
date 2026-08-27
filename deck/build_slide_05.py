@@ -27,7 +27,7 @@ s.header("05 — THE HOW",
          "The answer is ready before the risk lands.",
          "One decision goes to a person. Everything else is already being written.")
 
-BY, BH = 230, 470
+BY, BH = 226, 486
 
 # =========================================================================
 # ALWAYS ON - the work that happens before anything happens
@@ -67,34 +67,45 @@ CX, CW2 = 816, W - M - 816
 s.text(CX, BY + 40, "THE SAME MOMENT", 10, 700, FAINT, ls=1.4)
 
 # -- to the person
-s.card(CX, BY + 62, CW2, 148, fill=FG, stroke="none")
-s.text(CX + 28, BY + 96, "TO THE PERSON", 10, 700, "#8f8f8f", ls=1.4)
-s.text(CX + 28, BY + 138, "Reroute", 30, 600, CARD, ls=-0.8)
-s.text(CX + 150, BY + 138, "HAM → RTM", 20, 600, "#f5a623", cls="mono")
-s.text(CX + 28, BY + 172, "One call to make. The reasoning is attached.", 13, 400, "#a1a1a1")
-s.chip(CX + CW2 - 28 - 210, BY + 118, 100, 34, "Approve", fs=13, fill=CARD, col=FG, weight=600)
-s.chip(CX + CW2 - 28 - 100, BY + 118, 100, 34, "Reject", fs=13, fill="#333", col=CARD, weight=600)
+s.card(CX, BY + 56, CW2, 132, fill=FG, stroke="none")
+s.text(CX + 28, BY + 88, "TO THE PERSON", 10, 700, "#8f8f8f", ls=1.4)
+s.text(CX + 28, BY + 128, "Reroute", 30, 600, CARD, ls=-0.8)
+s.text(CX + 150, BY + 128, "HAM → RTM", 20, 600, "#f5a623", cls="mono")
+s.text(CX + 28, BY + 160, "One call to make. The reasoning is attached.", 13, 400, "#a1a1a1")
+s.chip(CX + CW2 - 28 - 210, BY + 106, 100, 34, "Approve", fs=13, fill=CARD, col=FG, weight=600)
+s.chip(CX + CW2 - 28 - 100, BY + 106, 100, 34, "Reject", fs=13, fill="#333", col=CARD, weight=600)
 
-# -- drafted in parallel
-s.card(CX, BY + 234, CW2, BH - 234, stroke=BORDER_STRONG)
-s.text(CX + 28, BY + 268, "DRAFTED IN PARALLEL", 10, 700, FAINT, ls=1.4)
-s.text(CX + 240, BY + 268, "already written, waiting behind the same approval", 11.5, 400, FAINT)
+# -- drafted in parallel: who writes what, and how
+s.card(CX, BY + 210, CW2, BH - 210, stroke=BORDER_STRONG)
+s.text(CX + 28, BY + 244, "DRAFTED IN PARALLEL", 10, 700, FAINT, ls=1.4)
+s.text(CX + 240, BY + 244, "already written, waiting behind the same approval", 11.5, 400, FAINT)
 
-ITEMS = [("Carrier mail", "Comms", True), ("Customer mail", "Comms", True),
-         ("Exception flag", "Risk", True), ("Discharge · routing · ETA", "Routing", True),
-         ("Customs entry, DE → NL", "Customs", False)]
-for j, (what, who, live) in enumerate(ITEMS):
-    y = BY + 296 + j * 34
-    s.raw(f'<circle cx="{CX+34}" cy="{y+10}" r="3.5" fill="{GREEN if live else GRAY400}"/>')
-    s.text(CX + 50, y + 14, what, 13.5, 500, FG)
-    s.text(CX + 420, y + 14, who, 12, 400, FAINT, cls="mono")
-    s.chip(CX + 540, y - 2, 74, 22, "LIVE" if live else "SCRIPTED",
-           fs=9, fill=GREEN_BG if live else SURFACE, col=GREEN if live else MUTED, weight=700)
+COL_A, COL_W, COL_H, COL_T = CX + 28, CX + 208, CX + 468, CX + 848
+for lab, cx_ in (("AGENT", COL_A), ("WRITES", COL_W), ("HOW", COL_H)):
+    s.text(cx_, BY + 278, lab, 9, 700, FAINT, ls=1.2)
+s.line(CX + 28, BY + 290, CX + CW2 - 28, BY + 290, BORDER)
+
+AGENTS = [
+    ("Risk Monitor",  "The exception on the booking",      "42 sources. Prose to the model, numbers to a threshold.", "LIVE"),
+    ("Route Advisor", "Discharge port, routing code, ETA", "Prices every option. Refuses one it was not offered.",    "LIVE"),
+    ("Comms Agent",   "Carrier and customer mail",         "Two voices, two calls. Flags internal codes.",            "LIVE"),
+    ("Customs",       "Entry for the new country",         "Escalates rather than files.",                            "SCRIPTED"),
+    ("TMS Link",      "All of it, onto the record",        "One gate. Nothing bypasses it.",                          "DEMO"),
+]
+for j, (name, writes, how, tag) in enumerate(AGENTS):
+    y = BY + 318 + j * 34
+    live = tag == "LIVE"
+    s.raw(f'<circle cx="{COL_A+4}" cy="{y-4}" r="3.5" fill="{GREEN if live else GRAY400}"/>')
+    s.text(COL_A + 18, y, name, 13.5, 600, FG)
+    s.text(COL_W, y, writes, 12.5, 400, MUTED)
+    s.text(COL_H, y, how, 12, 400, FAINT)
+    s.chip(COL_T, y - 15, 76, 21, tag, fs=8.5,
+           fill=GREEN_BG if live else SURFACE, col=GREEN if live else MUTED, weight=700)
 
 # =========================================================================
 # WHAT THAT BUYS
 # =========================================================================
-OY, OH = 744, 128
+OY, OH = 744, 120
 for i, (head, line) in enumerate((
         ("Speed", "The option existed before the event did."),
         ("Coverage", "Every booking, not the one someone remembered."),
@@ -104,6 +115,6 @@ for i, (head, line) in enumerate((
     s.text(ox + 26, OY + 52, head, 24, 600, FG, ls=-0.5)
     s.text(ox + 26, OY + 82, line, 13.5, 400, MUTED)
 
-s.text(M, 938, "One decision to make. Everything else is already done.", 24, 600, FG, ls=-0.5)
+s.text(M, 908, "One decision to make. Everything else is already done.", 24, 600, FG, ls=-0.5)
 s.footer("05 / THE AGENTS")
 s.write("slide-05-the-agents.svg")
