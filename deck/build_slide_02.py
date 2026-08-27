@@ -108,8 +108,9 @@ fold(F2, "02", "Nothing watches the route.",
      "So the desk finds out afterwards, with no backup route ready.",
      [("26,225", "disruption alerts in 2025",
        "Resilinc EventWatchAI", "up from 22,522 in 2024"),
-      ("€120M", "a month, on one river",
-       "2.3M TEU/yr ÷ 12 ÷ 1.6 = 120k boxes", "× €1,000 surcharge · containers only")],
+      ("€120M", "a month, on the Rhine alone",
+       "Rhine: 2.3M TEU/yr ÷ 12 ÷ 1.6 = 120k boxes",
+       "× €1,000 low-water surcharge · containers only")],
      "By the time anyone knows, the delay has already happened.")
 
 CW_, CH_, CG = 140, 46, 19

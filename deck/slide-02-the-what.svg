@@ -104,9 +104,9 @@ text{font-family:"Geist",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-se
 <text x="1012.0" y="781" font-size="10.5" font-weight="400" fill="#8f8f8f" class="mono">Resilinc EventWatchAI</text>
 <text x="1012.0" y="798" font-size="10.5" font-weight="400" fill="#8f8f8f" class="mono">up from 22,522 in 2024</text>
 <text x="1400.0" y="734" font-size="40" font-weight="600" fill="#171717" letter-spacing="-1.2" class="num">€120M</text>
-<text x="1400.0" y="760" font-size="13" font-weight="500" fill="#171717">a month, on one river</text>
-<text x="1400.0" y="781" font-size="10.5" font-weight="400" fill="#8f8f8f" class="mono">2.3M TEU/yr ÷ 12 ÷ 1.6 = 120k boxes</text>
-<text x="1400.0" y="798" font-size="10.5" font-weight="400" fill="#8f8f8f" class="mono">× €1,000 surcharge · containers only</text>
+<text x="1400.0" y="760" font-size="13" font-weight="500" fill="#171717">a month, on the Rhine alone</text>
+<text x="1400.0" y="781" font-size="10.5" font-weight="400" fill="#8f8f8f" class="mono">Rhine: 2.3M TEU/yr ÷ 12 ÷ 1.6 = 120k boxes</text>
+<text x="1400.0" y="798" font-size="10.5" font-weight="400" fill="#8f8f8f" class="mono">× €1,000 low-water surcharge · containers only</text>
 <circle cx="1016" cy="836" r="3.5" fill="#96580a"/>
 <text x="1028" y="840" font-size="14" font-weight="500" fill="#96580a">By the time anyone knows, the delay has already happened.</text>
 <rect x="1012" y="338" width="140" height="46" rx="6" fill="#f2f2f2" stroke="none"/>
