@@ -16,7 +16,7 @@ from deckkit import *
 
 s = Slide()
 s.header("03 — THE WHY",
-         "The work is worth €4bn. Nobody does all of it.",
+         "€4bn a year of desk work. Nobody does all of it.",
          "Risk platforms watch and stop. Execution AI starts after the decision. Both are funded.")
 
 TY, TH = 232, 580
@@ -52,7 +52,7 @@ s.line(lx, TY + 340, LX + LW - 36, TY + 340, BORDER_STRONG)
 
 s.raw(f'<text x="{lx}" y="{TY+424}" font-size="58" font-weight="600" fill="{FG}" '
       f'letter-spacing="-2" class="num">€4.36bn</text>')
-s.text(lx, TY + 454, "a year, typed", 16, 500, FG)
+s.text(lx, TY + 454, "a year in wages, spent on data entry", 16, 500, FG)
 s.text(lx, TY + 512, "UK 66,187 staff / 6,737 firms, scaled to 163,000 EU firms", 10.5, 400, FAINT, cls="mono")
 s.text(lx, TY + 530, "€34k salary × 40% admin · IBISWorld · SalaryExpert", 10.5, 400, FAINT, cls="mono")
 
@@ -102,11 +102,11 @@ s.card(C2, TY, W2, TH, fill=AMBER_BG, stroke="#96580a3d")
 tx = C2 + 24
 s.text(tx, TY + 40, "THE SEAM", 11, 600, AMBER, ls=1.4)
 s.raw(f'<text x="{tx}" y="{TY+100}" font-size="46" font-weight="600" fill="{FG}" '
-      f'letter-spacing="-1.6" class="num">€4.36bn</text>')
-s.text(tx, TY + 126, "unclaimed", 14, 500, AMBER)
+      f'letter-spacing="-1.6">DECIDE</text>')
+s.text(tx, TY + 126, "empty on both sides", 14, 500, AMBER)
 strip(C2, W2, [1, 1, 1, 1], on=AMBER)
-s.text(tx, TY + 244, "One loop, on the booking.", 17, 600, FG)
-s.text(tx, TY + 272, "Decide is empty on both sides.", 13, 400, MUTED)
+s.text(tx, TY + 244, "One loop, one record.", 17, 600, FG)
+s.text(tx, TY + 272, "Watch and act are sold. The step between is not.", 13, 400, MUTED)
 s.line(tx, TY + 400, C2 + W2 - 24, TY + 400, "#96580a3d")
 s.raw(f'<rect x="{tx}" y="{TY+430}" width="22" height="22" rx="6" fill="{FG}"/>')
 s.raw(f'<path d="M{tx+5.5} {TY+446}h11 M{tx+5.5} {TY+441}h7.5 M{tx+5.5} {TY+436}h4" '

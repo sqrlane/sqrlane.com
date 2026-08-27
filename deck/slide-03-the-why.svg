@@ -14,7 +14,7 @@ text{font-family:"Geist",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-se
 </defs>
 <rect width="1920" height="1080" fill="#fafafa"/>
 <text x="96" y="74" font-size="12" font-weight="600" fill="#8f8f8f" letter-spacing="2.2">03 — THE WHY</text>
-<text x="96" y="136" font-size="52" font-weight="600" fill="#171717" letter-spacing="-1.4">The work is worth €4bn. Nobody does all of it.</text>
+<text x="96" y="136" font-size="52" font-weight="600" fill="#171717" letter-spacing="-1.4">€4bn a year of desk work. Nobody does all of it.</text>
 <text x="96" y="176" font-size="17" font-weight="400" fill="#4d4d4d">Risk platforms watch and stop. Execution AI starts after the decision. Both are funded.</text>
 <line x1="96" y1="200" x2="1824" y2="200" stroke="#00000024" stroke-width="1"/>
 <rect x="96" y="232" width="560" height="580" rx="12" fill="#ffffff" stroke="#00000014"/>
@@ -32,7 +32,7 @@ text{font-family:"Geist",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-se
 <text x="256" y="532" font-size="12.5" font-weight="400" fill="#8f8f8f">admin cost each, per year</text>
 <line x1="132" y1="572" x2="620" y2="572" stroke="#00000024" stroke-width="1"/>
 <text x="132" y="656" font-size="58" font-weight="600" fill="#171717" letter-spacing="-2" class="num">€4.36bn</text>
-<text x="132" y="686" font-size="16" font-weight="500" fill="#171717">a year, typed</text>
+<text x="132" y="686" font-size="16" font-weight="500" fill="#171717">a year in wages, spent on data entry</text>
 <text x="132" y="744" font-size="10.5" font-weight="400" fill="#8f8f8f" class="mono">UK 66,187 staff / 6,737 firms, scaled to 163,000 EU firms</text>
 <text x="132" y="762" font-size="10.5" font-weight="400" fill="#8f8f8f" class="mono">€34k salary × 40% admin · IBISWorld · SalaryExpert</text>
 <rect x="688" y="232" width="340" height="580" rx="12" fill="#ffffff" stroke="#00000014"/>
@@ -79,8 +79,8 @@ text{font-family:"Geist",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-se
 <text x="1508" y="708" font-size="12" font-weight="400" fill="#8f8f8f">raised in the last 12 months</text>
 <rect x="1066" y="232" width="380" height="580" rx="12" fill="#fdf3e3" stroke="#96580a3d"/>
 <text x="1090" y="272" font-size="11" font-weight="600" fill="#96580a" letter-spacing="1.4">THE SEAM</text>
-<text x="1090" y="332" font-size="46" font-weight="600" fill="#171717" letter-spacing="-1.6" class="num">€4.36bn</text>
-<text x="1090" y="358" font-size="14" font-weight="500" fill="#96580a">unclaimed</text>
+<text x="1090" y="332" font-size="46" font-weight="600" fill="#171717" letter-spacing="-1.6">DECIDE</text>
+<text x="1090" y="358" font-size="14" font-weight="500" fill="#96580a">empty on both sides</text>
 <rect x="1090.0" y="382" width="74.0" height="10" rx="5" fill="#96580a" stroke="none"/>
 <text x="1090.0" y="410" font-size="9.5" font-weight="600" fill="#96580a" letter-spacing="0.4" class="mono">WATCH</text>
 <rect x="1176.0" y="382" width="74.0" height="10" rx="5" fill="#96580a" stroke="none"/>
@@ -89,8 +89,8 @@ text{font-family:"Geist",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-se
 <text x="1262.0" y="410" font-size="9.5" font-weight="600" fill="#96580a" letter-spacing="0.4" class="mono">ACT</text>
 <rect x="1348.0" y="382" width="74.0" height="10" rx="5" fill="#96580a" stroke="none"/>
 <text x="1348.0" y="410" font-size="9.5" font-weight="600" fill="#96580a" letter-spacing="0.4" class="mono">RECORD</text>
-<text x="1090" y="476" font-size="17" font-weight="600" fill="#171717">One loop, on the booking.</text>
-<text x="1090" y="504" font-size="13" font-weight="400" fill="#4d4d4d">Decide is empty on both sides.</text>
+<text x="1090" y="476" font-size="17" font-weight="600" fill="#171717">One loop, one record.</text>
+<text x="1090" y="504" font-size="13" font-weight="400" fill="#4d4d4d">Watch and act are sold. The step between is not.</text>
 <line x1="1090" y1="632" x2="1422" y2="632" stroke="#96580a3d" stroke-width="1"/>
 <rect x="1090" y="662" width="22" height="22" rx="6" fill="#171717"/>
 <path d="M1095.5 678h11 M1095.5 673h7.5 M1095.5 668h4" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
