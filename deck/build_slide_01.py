@@ -83,12 +83,13 @@ add(f'<line x1="{M}" y1="200" x2="{W-M}" y2="200" stroke="{BORDER_STRONG}"/>')
 # =========================================================================
 band_label(M, 238, "FOUR THINGS CAN TAKE THAT DATE")
 
-CY, CH, CWd, GAP = 254, 296, 408, 32
+CY, CH, CWd, GAP = 254, 304, 408, 32
 
-def force(i, cat, big, big_sub, line, src, micro):
-    """One card: a headline number, one plain line, and a graphic that carries
-    the detail. Anything that would have been a third sentence belongs in the
-    graphic instead."""
+def force(i, cat, big, big_sub, line, summary, src, micro):
+    """One card. The number and `line` read as a single phrase ("146 years since
+    the Rhine was this low"); `summary` is the plain-language payoff - why this
+    threatens the date - and the graphic carries the detail that used to be
+    prose."""
     x = M + i * (CWd + GAP)
     card(x, CY, CWd, CH)
     tx = x + 26
@@ -97,9 +98,11 @@ def force(i, cat, big, big_sub, line, src, micro):
         f'letter-spacing="-1.8" class="num">{esc(big)}'
         + (f'<tspan font-size="21" font-weight="500" fill="{FAINT}" letter-spacing="0"> {esc(big_sub)}</tspan>' if big_sub else "")
         + '</text>')
-    txt(tx, CY + 134, line, 14.5, 500, FG)
-    micro(tx, CY + 160)
-    txt(tx, CY + 272, src, 10.5, 400, FAINT, cls="mono")
+    txt(tx, CY + 132, line, 14.5, 500, FG)
+    micro(tx, CY + 152)
+    add(f'<line x1="{tx}" y1="{CY+238}" x2="{x+CWd-26}" y2="{CY+238}" stroke="{BORDER}"/>')
+    txt(tx, CY + 262, summary, 12.5, 400, MUTED)
+    txt(tx, CY + 286, src, 10.5, 400, FAINT, cls="mono")
 
 def m_choke(x, y):
     """14 chokepoints. The 3 with no alternative are split off by a gap, so the
@@ -130,7 +133,7 @@ def m_bars(x, y):
 
 def m_spark(x, y):
     """The swing itself, with only the two endpoints labelled."""
-    x0, w, y0, h = x + 12, 224, y + 14, 40
+    x0, w, y0, h = x + 12, 224, y + 16, 42
     pts = [(0, .45), (.12, .62), (.25, .95), (.4, .78), (.55, .84), (.7, .5), (.85, .24), (1, .04)]
     d = " ".join(f"{'M' if i==0 else 'L'}{x0+px*w:.0f},{y0+py*h:.0f}" for i, (px, py) in enumerate(pts))
     add(f'<path d="{d}" fill="none" stroke="{AMBER}" stroke-width="2.2" '
@@ -140,21 +143,24 @@ def m_spark(x, y):
     txt(lx, ly + 20, "$1,913", 12, 500, FAINT, anchor="middle")
     add(f'<circle cx="{x0+w}" cy="{y0+.04*h:.0f}" r="4" fill="{AMBER}"/>')
     txt(x0 + w + 12, y0 + .04 * h + 4, "$4,526", 13, 600, FG)
-    txt(x + 2, y + 90, "Sep 2025 to Aug 2026", 11.5, 400, FAINT)
 
-force(0, "CHOKEPOINTS", "3", "of 14", "have no way around", "BCG · 2026", m_choke)
-force(1, "CLIMATE", "1880", "", "Rhine lowest since records began", "gCaptain · ING · Aug 2026", m_water)
-force(2, "POLICY", "+128%", "", "more rule changes to track", "Resilinc EventWatchAI", m_bars)
-force(3, "PRICE", "2.4×", "", "rate swing in eleven months", "Drewry World Container Index", m_spark)
+force(0, "CHOKEPOINTS", "3", "of 14", "have no way around",
+      "If one closes, there is no second route.", "BCG · 2026", m_choke)
+force(1, "CLIMATE", "146", "years", "since the Rhine was this low",
+      "Less cargo per barge, and surcharges on top.", "gCaptain · ING · Aug 2026", m_water)
+force(2, "POLICY", "+128%", "", "more rule changes to track",
+      "One tariff filing can reprice a lane overnight.", "Resilinc EventWatchAI", m_bars)
+force(3, "PRICE", "2.4×", "", "swing in what a container costs",
+      "The same box, twice the price, months apart.", "Drewry · $1,913 to $4,526 per 40ft", m_spark)
 
 for i in range(4):
     cx = M + i * (CWd + GAP) + CWd / 2
-    add(f'<line x1="{cx}" y1="558" x2="{cx}" y2="602" stroke="{AMBER}" stroke-width="1.6" marker-end="url(#ahA)"/>')
+    add(f'<line x1="{cx}" y1="566" x2="{cx}" y2="606" stroke="{AMBER}" stroke-width="1.6" marker-end="url(#ahA)"/>')
 
 # =========================================================================
 # BEAT 2 - the promise itself
 # =========================================================================
-LY, LH = 610, 88
+LY, LH = 614, 88
 card(M, LY, CW, LH, stroke=BORDER_STRONG)
 txt(M + 26, LY + 38, "SHP-001", 14, 600, FG, cls="mono")
 txt(M + 26, LY + 60, "Automotive parts · Shanghai → Munich", 11.5, 400, FAINT)
@@ -175,14 +181,14 @@ txt(W - M - 26, LY + 30, "THE DATE", 10, 600, FAINT, anchor="end", ls=1.4)
 txt(W - M - 26, LY + 60, "14 Oct", 30, 600, FG, anchor="end", ls=-0.8, cls="num")
 txt(W - M - 26, LY + 78, "4 days of margin", 12, 500, MUTED, anchor="end")
 
-txt(M, 730, "Four days of margin. Any one of the four above can eat all of it.", 14, 400, MUTED)
+txt(M, 732, "Four days of margin. Any one of the four above can eat all of it.", 14, 400, MUTED)
 
 # =========================================================================
 # BEAT 3 - and nobody is watching, because the desk is doing data entry
 # =========================================================================
-band_label(M, 772, "AND THE PERSON WHO OWNS IT")
+band_label(M, 774, "AND THE PERSON WHO OWNS IT")
 
-DY, DH = 788, 158
+DY, DH = 788, 156
 card(M, DY, CW, DH)
 bx, bw = M + 26, CW - 52
 txt(bx, DY + 34, "A working day on the desk", 14.5, 600, FG)

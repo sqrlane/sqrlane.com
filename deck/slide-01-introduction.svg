@@ -17,84 +17,91 @@ text{font-family:"Geist",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-se
 <line x1="96" y1="200" x2="1824" y2="200" stroke="#00000024"/>
 <rect x="96" y="230" width="8" height="8" rx="2" fill="#171717"/>
 <text x="114" y="238" font-size="11" font-weight="600" fill="#8f8f8f" letter-spacing="1.5">FOUR THINGS CAN TAKE THAT DATE</text>
-<rect x="96" y="254" width="408" height="296" rx="12" fill="#ffffff" stroke="#00000014"/>
+<rect x="96" y="254" width="408" height="304" rx="12" fill="#ffffff" stroke="#00000014"/>
 <text x="122" y="290" font-size="11" font-weight="600" fill="#8f8f8f" letter-spacing="1.4">CHOKEPOINTS</text>
 <text x="122" y="358" font-size="48" font-weight="600" fill="#171717" letter-spacing="-1.8" class="num">3<tspan font-size="21" font-weight="500" fill="#8f8f8f" letter-spacing="0"> of 14</tspan></text>
-<text x="122" y="388" font-size="14.5" font-weight="500" fill="#171717">have no way around</text>
-<circle cx="134" cy="454" r="8" fill="#ea001d"/>
-<circle cx="157" cy="454" r="8" fill="#ea001d"/>
-<circle cx="180" cy="454" r="8" fill="#ea001d"/>
-<circle cx="219" cy="454" r="6.5" fill="none" stroke="#dbdbdb" stroke-width="1.7"/>
-<circle cx="242" cy="454" r="6.5" fill="none" stroke="#dbdbdb" stroke-width="1.7"/>
-<circle cx="265" cy="454" r="6.5" fill="none" stroke="#dbdbdb" stroke-width="1.7"/>
-<circle cx="288" cy="454" r="6.5" fill="none" stroke="#dbdbdb" stroke-width="1.7"/>
-<circle cx="311" cy="454" r="6.5" fill="none" stroke="#dbdbdb" stroke-width="1.7"/>
-<circle cx="334" cy="454" r="6.5" fill="none" stroke="#dbdbdb" stroke-width="1.7"/>
-<circle cx="357" cy="454" r="6.5" fill="none" stroke="#dbdbdb" stroke-width="1.7"/>
-<circle cx="380" cy="454" r="6.5" fill="none" stroke="#dbdbdb" stroke-width="1.7"/>
-<circle cx="403" cy="454" r="6.5" fill="none" stroke="#dbdbdb" stroke-width="1.7"/>
-<circle cx="426" cy="454" r="6.5" fill="none" stroke="#dbdbdb" stroke-width="1.7"/>
-<circle cx="449" cy="454" r="6.5" fill="none" stroke="#dbdbdb" stroke-width="1.7"/>
-<text x="122" y="526" font-size="10.5" font-weight="400" fill="#8f8f8f" class="mono">BCG · 2026</text>
-<rect x="536" y="254" width="408" height="296" rx="12" fill="#ffffff" stroke="#00000014"/>
+<text x="122" y="386" font-size="14.5" font-weight="500" fill="#171717">have no way around</text>
+<circle cx="134" cy="446" r="8" fill="#ea001d"/>
+<circle cx="157" cy="446" r="8" fill="#ea001d"/>
+<circle cx="180" cy="446" r="8" fill="#ea001d"/>
+<circle cx="219" cy="446" r="6.5" fill="none" stroke="#dbdbdb" stroke-width="1.7"/>
+<circle cx="242" cy="446" r="6.5" fill="none" stroke="#dbdbdb" stroke-width="1.7"/>
+<circle cx="265" cy="446" r="6.5" fill="none" stroke="#dbdbdb" stroke-width="1.7"/>
+<circle cx="288" cy="446" r="6.5" fill="none" stroke="#dbdbdb" stroke-width="1.7"/>
+<circle cx="311" cy="446" r="6.5" fill="none" stroke="#dbdbdb" stroke-width="1.7"/>
+<circle cx="334" cy="446" r="6.5" fill="none" stroke="#dbdbdb" stroke-width="1.7"/>
+<circle cx="357" cy="446" r="6.5" fill="none" stroke="#dbdbdb" stroke-width="1.7"/>
+<circle cx="380" cy="446" r="6.5" fill="none" stroke="#dbdbdb" stroke-width="1.7"/>
+<circle cx="403" cy="446" r="6.5" fill="none" stroke="#dbdbdb" stroke-width="1.7"/>
+<circle cx="426" cy="446" r="6.5" fill="none" stroke="#dbdbdb" stroke-width="1.7"/>
+<circle cx="449" cy="446" r="6.5" fill="none" stroke="#dbdbdb" stroke-width="1.7"/>
+<line x1="122" y1="492" x2="478" y2="492" stroke="#00000014"/>
+<text x="122" y="516" font-size="12.5" font-weight="400" fill="#4d4d4d">If one closes, there is no second route.</text>
+<text x="122" y="540" font-size="10.5" font-weight="400" fill="#8f8f8f" class="mono">BCG · 2026</text>
+<rect x="536" y="254" width="408" height="304" rx="12" fill="#ffffff" stroke="#00000014"/>
 <text x="562" y="290" font-size="11" font-weight="600" fill="#8f8f8f" letter-spacing="1.4">CLIMATE</text>
-<text x="562" y="358" font-size="48" font-weight="600" fill="#171717" letter-spacing="-1.8" class="num">1880</text>
-<text x="562" y="388" font-size="14.5" font-weight="500" fill="#171717">Rhine lowest since records began</text>
-<rect x="564" y="444" width="340" height="14" rx="7" fill="#f2f2f2"/>
-<rect x="754" y="444" width="150" height="14" rx="7" fill="#dbdbdb"/>
-<rect x="574" y="436" width="4" height="30" rx="2" fill="#ea001d"/>
-<text x="576" y="430" font-size="11.5" font-weight="600" fill="#ea001d" text-anchor="middle">now</text>
-<text x="829" y="430" font-size="11.5" font-weight="400" fill="#8f8f8f" text-anchor="middle">normal</text>
-<text x="564" y="484" font-size="11.5" font-weight="500" fill="#171717">record low</text>
-<text x="562" y="526" font-size="10.5" font-weight="400" fill="#8f8f8f" class="mono">gCaptain · ING · Aug 2026</text>
-<rect x="976" y="254" width="408" height="296" rx="12" fill="#ffffff" stroke="#00000014"/>
+<text x="562" y="358" font-size="48" font-weight="600" fill="#171717" letter-spacing="-1.8" class="num">146<tspan font-size="21" font-weight="500" fill="#8f8f8f" letter-spacing="0"> years</tspan></text>
+<text x="562" y="386" font-size="14.5" font-weight="500" fill="#171717">since the Rhine was this low</text>
+<rect x="564" y="436" width="340" height="14" rx="7" fill="#f2f2f2"/>
+<rect x="754" y="436" width="150" height="14" rx="7" fill="#dbdbdb"/>
+<rect x="574" y="428" width="4" height="30" rx="2" fill="#ea001d"/>
+<text x="576" y="422" font-size="11.5" font-weight="600" fill="#ea001d" text-anchor="middle">now</text>
+<text x="829" y="422" font-size="11.5" font-weight="400" fill="#8f8f8f" text-anchor="middle">normal</text>
+<text x="564" y="476" font-size="11.5" font-weight="500" fill="#171717">record low</text>
+<line x1="562" y1="492" x2="918" y2="492" stroke="#00000014"/>
+<text x="562" y="516" font-size="12.5" font-weight="400" fill="#4d4d4d">Less cargo per barge, and surcharges on top.</text>
+<text x="562" y="540" font-size="10.5" font-weight="400" fill="#8f8f8f" class="mono">gCaptain · ING · Aug 2026</text>
+<rect x="976" y="254" width="408" height="304" rx="12" fill="#ffffff" stroke="#00000014"/>
 <text x="1002" y="290" font-size="11" font-weight="600" fill="#8f8f8f" letter-spacing="1.4">POLICY</text>
 <text x="1002" y="358" font-size="48" font-weight="600" fill="#171717" letter-spacing="-1.8" class="num">+128%</text>
-<text x="1002" y="388" font-size="14.5" font-weight="500" fill="#171717">more rule changes to track</text>
-<rect x="1068" y="438" width="220" height="18" rx="6" fill="#96580a"/>
-<text x="1002" y="451.5" font-size="11.5" font-weight="500" fill="#8f8f8f">rules</text>
-<text x="1298.16" y="451.5" font-size="12" font-weight="600" fill="#171717">+128%</text>
-<rect x="1068" y="472" width="212" height="18" rx="6" fill="#dbdbdb"/>
-<text x="1002" y="485.5" font-size="11.5" font-weight="500" fill="#8f8f8f">politics</text>
-<text x="1289.56" y="485.5" font-size="12" font-weight="600" fill="#171717">+123%</text>
-<text x="1002" y="526" font-size="10.5" font-weight="400" fill="#8f8f8f" class="mono">Resilinc EventWatchAI</text>
-<rect x="1416" y="254" width="408" height="296" rx="12" fill="#ffffff" stroke="#00000014"/>
+<text x="1002" y="386" font-size="14.5" font-weight="500" fill="#171717">more rule changes to track</text>
+<rect x="1068" y="430" width="220" height="18" rx="6" fill="#96580a"/>
+<text x="1002" y="443.5" font-size="11.5" font-weight="500" fill="#8f8f8f">rules</text>
+<text x="1298.16" y="443.5" font-size="12" font-weight="600" fill="#171717">+128%</text>
+<rect x="1068" y="464" width="212" height="18" rx="6" fill="#dbdbdb"/>
+<text x="1002" y="477.5" font-size="11.5" font-weight="500" fill="#8f8f8f">politics</text>
+<text x="1289.56" y="477.5" font-size="12" font-weight="600" fill="#171717">+123%</text>
+<line x1="1002" y1="492" x2="1358" y2="492" stroke="#00000014"/>
+<text x="1002" y="516" font-size="12.5" font-weight="400" fill="#4d4d4d">One tariff filing can reprice a lane overnight.</text>
+<text x="1002" y="540" font-size="10.5" font-weight="400" fill="#8f8f8f" class="mono">Resilinc EventWatchAI</text>
+<rect x="1416" y="254" width="408" height="304" rx="12" fill="#ffffff" stroke="#00000014"/>
 <text x="1442" y="290" font-size="11" font-weight="600" fill="#8f8f8f" letter-spacing="1.4">PRICE</text>
 <text x="1442" y="358" font-size="48" font-weight="600" fill="#171717" letter-spacing="-1.8" class="num">2.4×</text>
-<text x="1442" y="388" font-size="14.5" font-weight="500" fill="#171717">rate swing in eleven months</text>
-<path d="M1454,446 L1481,453 L1510,466 L1544,459 L1577,462 L1611,448 L1644,438 L1678,430" fill="none" stroke="#96580a" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="1510" cy="466" r="3.6" fill="#dbdbdb"/>
-<text x="1510.0" y="486.0" font-size="12" font-weight="500" fill="#8f8f8f" text-anchor="middle">$1,913</text>
-<circle cx="1678" cy="430" r="4" fill="#96580a"/>
-<text x="1690" y="433.6" font-size="13" font-weight="600" fill="#171717">$4,526</text>
-<text x="1444" y="504" font-size="11.5" font-weight="400" fill="#8f8f8f">Sep 2025 to Aug 2026</text>
-<text x="1442" y="526" font-size="10.5" font-weight="400" fill="#8f8f8f" class="mono">Drewry World Container Index</text>
-<line x1="300.0" y1="558" x2="300.0" y2="602" stroke="#96580a" stroke-width="1.6" marker-end="url(#ahA)"/>
-<line x1="740.0" y1="558" x2="740.0" y2="602" stroke="#96580a" stroke-width="1.6" marker-end="url(#ahA)"/>
-<line x1="1180.0" y1="558" x2="1180.0" y2="602" stroke="#96580a" stroke-width="1.6" marker-end="url(#ahA)"/>
-<line x1="1620.0" y1="558" x2="1620.0" y2="602" stroke="#96580a" stroke-width="1.6" marker-end="url(#ahA)"/>
-<rect x="96" y="610" width="1728" height="88" rx="12" fill="#ffffff" stroke="#00000024"/>
-<text x="122" y="648" font-size="14" font-weight="600" fill="#171717" class="mono">SHP-001</text>
-<text x="122" y="670" font-size="11.5" font-weight="400" fill="#8f8f8f">Automotive parts · Shanghai → Munich</text>
-<line x1="470" y1="658" x2="1331" y2="658" stroke="#dbdbdb" stroke-width="1.4"/>
-<circle cx="470" cy="658" r="4.5" fill="#ffffff" stroke="#8f8f8f" stroke-width="1.6"/>
-<text x="470" y="640" font-size="10.5" font-weight="500" fill="#8f8f8f" text-anchor="middle" letter-spacing="0.8" class="mono">SHANGHAI</text>
-<circle cx="757" cy="658" r="9" fill="none" stroke="#96580a" stroke-width="1.6"/>
-<circle cx="757" cy="658" r="4" fill="#96580a"/>
-<text x="757" y="640" font-size="10.5" font-weight="500" fill="#96580a" text-anchor="middle" letter-spacing="0.8" class="mono">SUEZ</text>
-<circle cx="1044" cy="658" r="9" fill="none" stroke="#96580a" stroke-width="1.6"/>
-<circle cx="1044" cy="658" r="4" fill="#96580a"/>
-<text x="1044" y="640" font-size="10.5" font-weight="500" fill="#96580a" text-anchor="middle" letter-spacing="0.8" class="mono">HAMBURG</text>
-<circle cx="1331" cy="658" r="4.5" fill="#ffffff" stroke="#8f8f8f" stroke-width="1.6"/>
-<text x="1331" y="640" font-size="10.5" font-weight="500" fill="#8f8f8f" text-anchor="middle" letter-spacing="0.8" class="mono">MUNICH</text>
-<line x1="1562" y1="628" x2="1562" y2="680" stroke="#00000024"/>
-<text x="1798" y="640" font-size="10" font-weight="600" fill="#8f8f8f" text-anchor="end" letter-spacing="1.4">THE DATE</text>
-<text x="1798" y="670" font-size="30" font-weight="600" fill="#171717" text-anchor="end" letter-spacing="-0.8" class="num">14 Oct</text>
-<text x="1798" y="688" font-size="12" font-weight="500" fill="#4d4d4d" text-anchor="end">4 days of margin</text>
-<text x="96" y="730" font-size="14" font-weight="400" fill="#4d4d4d">Four days of margin. Any one of the four above can eat all of it.</text>
-<rect x="96" y="764" width="8" height="8" rx="2" fill="#171717"/>
-<text x="114" y="772" font-size="11" font-weight="600" fill="#8f8f8f" letter-spacing="1.5">AND THE PERSON WHO OWNS IT</text>
-<rect x="96" y="788" width="1728" height="158" rx="12" fill="#ffffff" stroke="#00000014"/>
+<text x="1442" y="386" font-size="14.5" font-weight="500" fill="#171717">swing in what a container costs</text>
+<path d="M1454,441 L1481,448 L1510,462 L1544,455 L1577,457 L1611,443 L1644,432 L1678,424" fill="none" stroke="#96580a" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="1510" cy="462" r="3.6" fill="#dbdbdb"/>
+<text x="1510.0" y="481.9" font-size="12" font-weight="500" fill="#8f8f8f" text-anchor="middle">$1,913</text>
+<circle cx="1678" cy="424" r="4" fill="#96580a"/>
+<text x="1690" y="427.68" font-size="13" font-weight="600" fill="#171717">$4,526</text>
+<line x1="1442" y1="492" x2="1798" y2="492" stroke="#00000014"/>
+<text x="1442" y="516" font-size="12.5" font-weight="400" fill="#4d4d4d">The same box, twice the price, months apart.</text>
+<text x="1442" y="540" font-size="10.5" font-weight="400" fill="#8f8f8f" class="mono">Drewry · $1,913 to $4,526 per 40ft</text>
+<line x1="300.0" y1="566" x2="300.0" y2="606" stroke="#96580a" stroke-width="1.6" marker-end="url(#ahA)"/>
+<line x1="740.0" y1="566" x2="740.0" y2="606" stroke="#96580a" stroke-width="1.6" marker-end="url(#ahA)"/>
+<line x1="1180.0" y1="566" x2="1180.0" y2="606" stroke="#96580a" stroke-width="1.6" marker-end="url(#ahA)"/>
+<line x1="1620.0" y1="566" x2="1620.0" y2="606" stroke="#96580a" stroke-width="1.6" marker-end="url(#ahA)"/>
+<rect x="96" y="614" width="1728" height="88" rx="12" fill="#ffffff" stroke="#00000024"/>
+<text x="122" y="652" font-size="14" font-weight="600" fill="#171717" class="mono">SHP-001</text>
+<text x="122" y="674" font-size="11.5" font-weight="400" fill="#8f8f8f">Automotive parts · Shanghai → Munich</text>
+<line x1="470" y1="662" x2="1331" y2="662" stroke="#dbdbdb" stroke-width="1.4"/>
+<circle cx="470" cy="662" r="4.5" fill="#ffffff" stroke="#8f8f8f" stroke-width="1.6"/>
+<text x="470" y="644" font-size="10.5" font-weight="500" fill="#8f8f8f" text-anchor="middle" letter-spacing="0.8" class="mono">SHANGHAI</text>
+<circle cx="757" cy="662" r="9" fill="none" stroke="#96580a" stroke-width="1.6"/>
+<circle cx="757" cy="662" r="4" fill="#96580a"/>
+<text x="757" y="644" font-size="10.5" font-weight="500" fill="#96580a" text-anchor="middle" letter-spacing="0.8" class="mono">SUEZ</text>
+<circle cx="1044" cy="662" r="9" fill="none" stroke="#96580a" stroke-width="1.6"/>
+<circle cx="1044" cy="662" r="4" fill="#96580a"/>
+<text x="1044" y="644" font-size="10.5" font-weight="500" fill="#96580a" text-anchor="middle" letter-spacing="0.8" class="mono">HAMBURG</text>
+<circle cx="1331" cy="662" r="4.5" fill="#ffffff" stroke="#8f8f8f" stroke-width="1.6"/>
+<text x="1331" y="644" font-size="10.5" font-weight="500" fill="#8f8f8f" text-anchor="middle" letter-spacing="0.8" class="mono">MUNICH</text>
+<line x1="1562" y1="632" x2="1562" y2="684" stroke="#00000024"/>
+<text x="1798" y="644" font-size="10" font-weight="600" fill="#8f8f8f" text-anchor="end" letter-spacing="1.4">THE DATE</text>
+<text x="1798" y="674" font-size="30" font-weight="600" fill="#171717" text-anchor="end" letter-spacing="-0.8" class="num">14 Oct</text>
+<text x="1798" y="692" font-size="12" font-weight="500" fill="#4d4d4d" text-anchor="end">4 days of margin</text>
+<text x="96" y="732" font-size="14" font-weight="400" fill="#4d4d4d">Four days of margin. Any one of the four above can eat all of it.</text>
+<rect x="96" y="766" width="8" height="8" rx="2" fill="#171717"/>
+<text x="114" y="774" font-size="11" font-weight="600" fill="#8f8f8f" letter-spacing="1.5">AND THE PERSON WHO OWNS IT</text>
+<rect x="96" y="788" width="1728" height="156" rx="12" fill="#ffffff" stroke="#00000014"/>
 <text x="122" y="822" font-size="14.5" font-weight="600" fill="#171717">A working day on the desk</text>
 <rect x="122" y="842" width="1676" height="38" rx="6" fill="#fafafa" stroke="#00000024"/>
 <rect x="122" y="842" width="670" height="38" rx="6" fill="#ebebeb" stroke="#00000024"/>
@@ -102,8 +109,8 @@ text{font-family:"Geist",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-se
 <text x="138" y="866" font-size="13.5" font-weight="600" fill="#171717">40% repetitive admin</text>
 <text x="808.4000000000001" y="866" font-size="13" font-weight="400" fill="#4d4d4d">everything else</text>
 <text x="122" y="904" font-size="12.5" font-weight="400" fill="#8f8f8f">Quotes · data entry · documents · invoices · customs</text>
-<circle cx="126" cy="922" r="3.5" fill="#96580a"/>
-<text x="138" y="926" font-size="13" font-weight="500" fill="#96580a">Watching the world that moves the cargo has no slot on this bar.</text>
+<circle cx="126" cy="920" r="3.5" fill="#96580a"/>
+<text x="138" y="924" font-size="13" font-weight="500" fill="#96580a">Watching the world that moves the cargo has no slot on this bar.</text>
 <text x="96" y="980" font-size="24" font-weight="600" fill="#171717" letter-spacing="-0.5">The one person who could protect the date is doing data entry.</text>
 <line x1="96" y1="1008" x2="1824" y2="1008" stroke="#00000014"/>
 <rect x="96" y="1022" width="18" height="18" rx="5" fill="#171717"/>
