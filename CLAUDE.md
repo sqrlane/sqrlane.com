@@ -1259,6 +1259,7 @@ prototype is finished and nothing else is in scope:
 | `DATA-SOURCES.md` | Every source the desk reads: the six families, which `public-apis` entry each one is, and what was deliberately skipped |
 | `BUILD-GUIDE.md` | The copy-paste phase prompts — the spine of the build |
 | `README.md` | The front door — what it is, how to run it, the honest framing |
+| `LAB-NOTES-2026-08-28.md` | The witnessing day: TabPFN evaluated and won, 42→60, the timing question, what every live run found |
 | `trade-risk-agent-docs.zip` | Duplicate archive of the seven docs above; not a source of truth |
 
 ---
