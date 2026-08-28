@@ -126,6 +126,13 @@ so the weights cache. The version pin was learned by witnessing: a plain
 `pip install tabpfn` ships the newer gated 2.5/3 weights, whose mandatory
 Prior Labs account login crashes outright on Windows (`WinError 10038`) —
 the 2.0.x package ships the openly licensed v2 weights and needs no login.
+Two more facts from the same witnessing session: use **Python 3.12 or
+older** for this backend (`py -3.12` on Windows — the pinned package wants
+an older scikit-learn that has no prebuilt wheel on newer Pythons, so pip
+tries to compile it and dies looking for a C compiler), and on CPU with
+more than 1 000 training rows TabPFN refuses to start unless
+`TABPFN_ALLOW_CPU_LARGE_DATASET=1` is set — a speed guard, not a fault,
+and a CPU run over this dataset takes a long while.
 
 Two caveats travel with it, and they are in the adapter's error message so
 they cannot be missed:
