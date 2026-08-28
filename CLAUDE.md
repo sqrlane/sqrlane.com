@@ -925,14 +925,18 @@ claims were written and tested but unwitnessed. Most are now confirmed.
   does the structured half on its own. **If the news family reads 0, the news half
   of the live claim is still decoration.**
 
-  The thirteen structured sources added on top — Open-Meteo, Open-Meteo Marine,
-  Open-Meteo Flood (GloFAS), the DWD warnings feed, USGS, EMSC, NASA EONET, GDACS,
-  the NHC, the Federal Register, Frankfurter, the US NWS and the Hong Kong
-  Observatory — are in exactly the position PEGELONLINE was in before it was
-  confirmed in production: built to their published shapes, covered by stub tests,
-  and never once witnessed answering, because this sandbox's egress policy blocks
-  every third-party host with a 403 at the proxy. The same goes for the ten RSS
-  feeds and three gauges added in the 42 → 60 widening. **Run `python -m src.signals` on a
+  **The thirteen structured sources were witnessed on 2026-08-28** from the owner's
+  machine: ten answered on first contact, and the run caught four real faults, all
+  fixed the same day — EMSC and the US NWS rejected request parameters (both are now
+  minimal and spec-literal), the GDACS JSON api 400'd (it now reads GDACS's
+  twenty-year-old RSS feed instead), and the GloFAS flood model answered 0 m3/s from
+  a grid cell beside the channel, which briefly became a false "critically low"
+  event — the exact invented-alarm failure this project refuses, now blocked by a
+  plausibility floor (`DISCHARGE_MIN_PLAUSIBLE_M3S`): a dry cell is no reading, not
+  a crisis. The three repaired sources and the flood floor are unwitnessed again
+  until the next real `python -m src.signals` run. The ten added RSS feeds are
+  still unwitnessed entirely (the news half needs `python -m src.risk_monitor` on a
+  real connection). **Run `python -m src.signals` on a
   real connection before presenting.** A source whose response shape has moved shows
   as `failed` with a readable reason, which is the designed behaviour and not a
   reason to panic mid-demo — but it is worth knowing which ones answer.

@@ -97,7 +97,12 @@ PAYLOADS = {
                             "rates": {"USD": 1.09, "CNY": 7.82, "GBP": 0.85}},
     "api.weather.gov": {"features": [
         {"properties": {"event": "Hurricane Warning", "areaDesc": "Coastal Georgia",
-                        "severity": "Extreme"}}]},
+                        "severity": "Extreme", "status": "Actual"}},
+        # Filtered out in code now that the request itself stays minimal:
+        {"properties": {"event": "Frost Advisory", "areaDesc": "Inland",
+                        "severity": "Minor", "status": "Actual"}},
+        {"properties": {"event": "Hurricane Drill", "areaDesc": "Test",
+                        "severity": "Extreme", "status": "Test"}}]},
     "data.weather.gov.hk": {"WTCSGNL": {"name": "Tropical Cyclone Warning Signal",
                                         "code": "TC8NE", "actionCode": "ISSUE",
                                         "issueTime": "2026-08-25T01:40:00"}},
@@ -124,20 +129,36 @@ PAYLOADS = {
                         "time": "2026-08-25T01:12:00.0Z", "unid": "20260825_0000001"},
          "geometry": {"coordinates": [32.3, 30.1, 10]}},
     ]},
-    "www.gdacs.org": {"features": [
-        # Red, and near a watched corridor - becomes an event.
-        {"properties": {"eventtype": "TC", "alertlevel": "Red",
-                        "name": "Tropical Cyclone ONIL-26", "country": "Yemen"},
-         "geometry": {"type": "Point", "coordinates": [43.0, 13.2]}},
-        # Orange, and nowhere near anything this board routes through - dropped.
-        {"properties": {"eventtype": "WF", "alertlevel": "Orange",
-                        "name": "Wildfire in NSW", "country": "Australia"},
-         "geometry": {"type": "Point", "coordinates": [147.0, -35.0]}},
-        # Green - context, never an event, wherever it is.
-        {"properties": {"eventtype": "EQ", "alertlevel": "Green",
-                        "name": "M 5.8 offshore", "country": "Chile"},
-         "geometry": {"type": "Point", "coordinates": [-72.0, -33.0]}},
-    ]},
+    # The RSS feed (the api endpoint 400'd on first real contact), served as
+    # a raw string: three items - Red near a corridor, Orange far away, Green.
+    "www.gdacs.org": """<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:gdacs="http://www.gdacs.org" xmlns:georss="http://www.georss.org/georss">
+<channel><title>GDACS</title>
+<item>
+  <title>Red alert Tropical Cyclone ONIL-26 in Yemen</title>
+  <gdacs:eventtype>TC</gdacs:eventtype>
+  <gdacs:alertlevel>Red</gdacs:alertlevel>
+  <gdacs:eventname>Tropical Cyclone ONIL-26</gdacs:eventname>
+  <gdacs:country>Yemen</gdacs:country>
+  <georss:point>13.2 43.0</georss:point>
+</item>
+<item>
+  <title>Orange alert Wildfire in NSW</title>
+  <gdacs:eventtype>WF</gdacs:eventtype>
+  <gdacs:alertlevel>Orange</gdacs:alertlevel>
+  <gdacs:eventname>Wildfire in NSW</gdacs:eventname>
+  <gdacs:country>Australia</gdacs:country>
+  <georss:point>-35.0 147.0</georss:point>
+</item>
+<item>
+  <title>Green alert M 5.8 offshore</title>
+  <gdacs:eventtype>EQ</gdacs:eventtype>
+  <gdacs:alertlevel>Green</gdacs:alertlevel>
+  <gdacs:eventname>M 5.8 offshore</gdacs:eventname>
+  <gdacs:country>Chile</gdacs:country>
+  <georss:point>-33.0 -72.0</georss:point>
+</item>
+</channel></rss>""",
     "www.nhc.noaa.gov": {"activeStorms": [
         {"id": "al062026", "binNumber": "AT1", "name": "Helene",
          "classification": "HU", "intensity": "90", "pressure": "952",
@@ -268,6 +289,26 @@ class SignalsTest(unittest.TestCase):
         # Green never becomes an event; it shows up in context instead.
         self.assertEqual([e for e in read["events"] if "offshore" in e["title"]], [])
         self.assertEqual(read["context"]["gdacs_alerts"]["green"], 1)
+
+    def test_a_dry_model_cell_is_no_reading_not_a_critical_low(self):
+        """Witnessed on the first real read: the GloFAS cell nearest the Kaub
+        coordinate is beside the channel and answers ~0 m3/s, and the board
+        raised a false "critically low" event off it. A number below the
+        plausibility floor is a misplaced grid cell, not a river, and must
+        produce no event and no reading - inventing an alarm off a dry cell
+        is exactly the invented metric this project refuses."""
+        def dry_cell(url, *, timeout, params=None, headers=None):
+            host = httpget.host_of(url)
+            if host == "flood-api.open-meteo.com":
+                return FakeResponse({"daily": {"time": ["2026-08-28", "2026-08-29"],
+                                               "river_discharge": [0.0, 0.4]}})
+            return FakeResponse(PAYLOADS[host])
+
+        self._serve(dry_cell)
+        result = signals.fetch_river_discharge(8.0)
+        self.assertEqual(result.get("events", []), [])
+        self.assertEqual(result["context"]["river_discharge"], {})
+        self.assertIn("dry cell", result["detail"])
 
     def test_an_event_far_from_every_corridor_is_dropped(self):
         """A magnitude 7.4 in the South Pacific is real and is not this board's

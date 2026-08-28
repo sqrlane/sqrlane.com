@@ -355,6 +355,9 @@ WIND_BANDS = [
 # The three points a box on this board actually rounds.
 
 OPEN_METEO_MARINE_ENDPOINT = "https://marine-api.open-meteo.com/v1/marine"
+# SUEZ sits inside the canal, where significant wave height is rightly null -
+# witnessed on the first real read: the API answers for the two open-water
+# points and stays silent for the canal, and the report counts what answered.
 MARINE_WAYPOINTS = ["SUEZ", "REDSEA", "COGH"]
 
 # Significant wave height in metres.
@@ -459,6 +462,13 @@ DISCHARGE_BANDS = [
     (1100, "low",    "falling",        [1, 2], "loading restrictions beginning to bite"),
 ]
 
+# Below this, the number is not a river. GloFAS is a grid model, and a
+# coordinate that lands on a cell beside the channel answers ~0 m3/s - the
+# first real read did exactly that and the board raised a false "critically
+# low" event off a dry cell. The record 2022 low at Kaub was still hundreds
+# of m3/s, so anything under this floor is a misplaced cell, not a reading.
+DISCHARGE_MIN_PLAUSIBLE_M3S = 50
+
 # --- 13. Deutscher Wetterdienst - the official German warnings --------------
 # Not in the public-apis catalogue: this is the German weather service's own
 # open warnings feed, the one its warnapp reads. The body is JSONP rather than
@@ -495,7 +505,12 @@ EMSC_ENDPOINT = "https://www.seismicportal.eu/fdsnws/event/1/query"
 # the UN and the European Commission. It has already judged severity - Green /
 # Orange / Red - so the banding here is a translation, not a threshold.
 
-GDACS_ENDPOINT = "https://www.gdacs.org/gdacsapi/api/events/geteventlist/MAP"
+# The RSS feed, not the JSON api: the api endpoint answered HTTP 400 the
+# first time it was read for real (2026-08-28), and the RSS feed is the
+# interface GDACS has published continuously since 2005. It carries the
+# alert level, the event type and a coordinate per item, which is all the
+# translation below needs.
+GDACS_ENDPOINT = "https://www.gdacs.org/xml/rss.xml"
 GDACS_RADIUS_KM = 300
 GDACS_ALERT_BANDS = {
     "red":    ("high",   [2, 5]),

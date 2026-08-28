@@ -54,6 +54,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from concurrent.futures import TimeoutError as FuturesTimeout
 from datetime import datetime, timedelta, timezone
 
+import feedparser
 import requests
 
 from src import config, geo, httpget
@@ -490,12 +491,15 @@ def fetch_us_alerts(timeout: float) -> dict:
     nothing today. It is wired because it is the same read as every other
     source, and it says so on screen rather than implying otherwise.
     """
+    # The one parameter the API's own examples use, passed as a literal
+    # string so the commas stay commas. The first real read got HTTP 400 on
+    # a fuller status+severity request, so those are filtered here in code
+    # instead - a filter cannot be rejected by the server.
     response = httpget.get_capped(
         config.NWS_ENDPOINT,
         timeout=timeout,
         headers={"Accept": "application/geo+json"},
-        params={"status": "actual", "severity": "Severe,Extreme",
-                "area": ",".join(config.NWS_AREAS), "limit": config.NWS_MAX_ALERTS},
+        params="area=" + ",".join(config.NWS_AREAS),
     )
     features = response.json().get("features") or []
     alerts = [
@@ -506,7 +510,9 @@ def fetch_us_alerts(timeout: float) -> dict:
         }
         for f in features
         if (f.get("properties") or {}).get("event")
-    ]
+        and (f.get("properties") or {}).get("severity") in ("Severe", "Extreme")
+        and (f.get("properties") or {}).get("status", "Actual") == "Actual"
+    ][:config.NWS_MAX_ALERTS]
     return {"context": {"us_alerts": alerts},
             "detail": f"{len(alerts)} severe alerts over the US port states"}
 
@@ -568,16 +574,23 @@ def fetch_river_discharge(timeout: float) -> dict:
     days = daily.get("time") or []
     flows = daily.get("river_discharge") or []
 
-    # The first day with a value is today's modelled flow. The model can carry
-    # nulls at the front of the series, so walk rather than index.
+    # The first day with a PLAUSIBLE value is today's modelled flow. The model
+    # can carry nulls at the front of the series, and a coordinate that lands
+    # on a grid cell beside the channel answers ~0 m3/s - a dry cell, not the
+    # river. Charging the board a "critically low" event off that zero is how
+    # this source invented an alarm the first time it was read for real, so
+    # anything under the plausibility floor is treated as no reading at all.
     discharge, as_of = None, None
     for day, flow in zip(days, flows):
-        if flow is not None:
+        if flow is not None and float(flow) >= config.DISCHARGE_MIN_PLAUSIBLE_M3S:
             discharge, as_of = float(flow), day
             break
     if discharge is None:
+        had_values = [float(f) for f in flows if f is not None]
         return {"context": {"river_discharge": {}},
-                "detail": "no discharge value in the reply"}
+                "detail": (f"nearest model cell reports {max(had_values):.0f} m3/s "
+                           f"- a dry cell, not the river; no usable reading"
+                           if had_values else "no discharge value in the reply")}
 
     band = _band_low(config.DISCHARGE_BANDS, discharge)
     reading = {"place": config.DISCHARGE_RIVER, "name": spot["name"],
@@ -700,14 +713,13 @@ def fetch_emsc(timeout: float) -> dict:
     response = httpget.get_capped(
         config.EMSC_ENDPOINT,
         timeout=timeout,
-        params={"format": "json", "start": since,
-                "minmag": config.QUAKE_MIN_MAGNITUDE, "limit": 40,
-                # FDSN services answer a matching-nothing query with HTTP 204
-                # and an EMPTY body by default - which would read as a broken
-                # source when it is really a quiet day. nodata=200 asks for a
-                # parseable answer; the belt-and-braces check below covers a
-                # server that ignores it.
-                "nodata": "200"},
+        # Full FDSN parameter names, nothing beyond the spec: the short
+        # aliases and a nonstandard nodata value that USGS tolerates got an
+        # HTTP 400 from this stricter service the first time it was read for
+        # real. A quiet day answers 204 with an empty body, which the check
+        # below reads as zero quakes rather than a broken source.
+        params={"format": "json", "starttime": since,
+                "minmagnitude": config.QUAKE_MIN_MAGNITUDE, "limit": 40},
     )
     body = (response.text or "").strip()
     features = ((json.loads(body) if body else {}) or {}).get("features") or []
@@ -766,20 +778,33 @@ def fetch_gdacs(timeout: float) -> dict:
     chokepoint or it is dropped - a Red cyclone in the open Pacific is real
     and is not this board's problem. Green alerts are context, never events.
     """
+    # The GDACS RSS feed. feedparser normalises the georss:point into
+    # entry["where"] with GeoJSON ordering (longitude first) when it can;
+    # the raw "lat lon" string is the fallback for builds that keep it.
     response = httpget.get_capped(config.GDACS_ENDPOINT, timeout=timeout)
-    features = (response.json() or {}).get("features") or []
+    parsed = feedparser.parse(response.text)
+
+    def _coords(entry):
+        where = entry.get("where") or {}
+        coords = where.get("coordinates")
+        if isinstance(coords, (list, tuple)) and len(coords) >= 2:
+            return float(coords[1]), float(coords[0])          # lat, lon
+        point = (entry.get("georss_point") or "").split()
+        if len(point) >= 2:
+            return float(point[0]), float(point[1])            # lat lon
+        return None, None
 
     events, greens, seen = [], [], set()
-    for feature in features:
-        props = feature.get("properties") or {}
-        coords = ((feature.get("geometry") or {}).get("coordinates") or [None, None])
-        lon, lat = coords[0], coords[1]
-        event_type = (props.get("eventtype") or "").upper()
-        alert = (props.get("alertlevel") or "").strip().lower()
-        title = props.get("name") or props.get("eventname") or event_type or "event"
+    for entry in parsed.entries:
+        lat, lon = _coords(entry)
+        event_type = (entry.get("gdacs_eventtype") or "").upper()
+        alert = (entry.get("gdacs_alertlevel") or "").strip().lower()
+        title = (entry.get("gdacs_eventname") or entry.get("title")
+                 or event_type or "event")
+        country = entry.get("gdacs_country") or None
         if alert == "green":
             greens.append({"name": title, "type": event_type,
-                           "country": props.get("country")})
+                           "country": country})
             continue
         if lat is None or lon is None or alert not in config.GDACS_ALERT_BANDS:
             continue
@@ -801,7 +826,7 @@ def fetch_gdacs(timeout: float) -> dict:
             title=(f"GDACS {alert.capitalize()} alert: {title} - "
                    f"{km:.0f} km from {name}"),
             summary=(f"GDACS carries a {alert.capitalize()} alert for {title}"
-                     f"{' in ' + props['country'] if props.get('country') else ''}."),
+                     f"{' in ' + country if country else ''}."),
             source="GDACS (UN/EC)",
             source_type="hazard",
             url="https://www.gdacs.org/",
@@ -812,7 +837,7 @@ def fetch_gdacs(timeout: float) -> dict:
         ))
     context = {"green": len(greens), "sample": greens[:config.GDACS_CONTEXT_SAMPLE]}
     return {"events": events, "context": {"gdacs_alerts": context},
-            "detail": (f"{len(features)} alerts read, {len(events)} near a corridor, "
+            "detail": (f"{len(parsed.entries)} alerts read, {len(events)} near a corridor, "
                        f"{len(greens)} green")}
 
 
