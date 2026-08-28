@@ -15,6 +15,20 @@ where options still exist.
 The confidence grid shows the mechanism, not a measured accuracy, and says so.
 """
 from deckkit import *
+import json, re
+
+# The coastline the product itself draws, reused verbatim so the deck's map and
+# the dashboard's map are the same geometry rather than two hand-drawn guesses.
+_H = (ROOT / "static" / "index.html").read_text()
+COAST = re.search(r'const COAST\s*=\s*"([^"]+)"', _H).group(1)
+GEO = json.loads((ROOT / "data" / "geo.json").read_text())
+FR = GEO["_frame"]
+
+
+def proj(lat, lon):
+    x = (lon - FR["lon0"]) / (FR["lon1"] - FR["lon0"]) * FR["width"]
+    y = (FR["lat1"] - lat) / (FR["lat1"] - FR["lat0"]) * FR["height"]
+    return x, y
 
 GREEN, GREEN_BG = "#0f7b3f", "#e7f5ec"
 BLUE, BLUE_BG = "#006bff", "#e8f1ff"
@@ -50,7 +64,7 @@ for i, (label, head, opts, n, col, bg, stroke) in enumerate(WINDOWS):
 # TOP RIGHT - signals and the confidence read
 # =========================================================================
 TOP = 228
-SX, SW, SH = 444, 260, 250
+SX, SW, SH = 444, 220, 250
 s.card(SX, TOP, SW, SH)
 sx = SX + 20
 s.text(sx, TOP + 32, "SIGNALS", 10, 700, FAINT, ls=1.4)
@@ -61,21 +75,21 @@ for j, (fam, live) in enumerate(FAMS):
     y = TOP + 56 + j * 18
     s.raw(f'<circle cx="{sx+4}" cy="{y-4}" r="3" fill="{GREEN if live else "none"}" '
           f'stroke="{GRAY400}" stroke-width="{0 if live else 1.2}"/>')
-    s.text(sx + 16, y, fam, 11.5, 500 if live else 400, FG if live else FAINT)
-s.text(sx, TOP + 232, "42 live. The rest are phase two.", 10.5, 400, FAINT)
+    s.text(sx + 16, y, fam, 11, 500 if live else 400, FG if live else FAINT)
+s.text(sx, TOP + 232, "42 live. Rest is phase two.", 10, 400, FAINT)
 
-HX, HW = 724, W - M - 724
+HX, HW = 684, 620
 s.card(HX, TOP, HW, SH, stroke=BORDER_STRONG)
 hx = HX + 22
 s.text(hx, TOP + 32, "CONFIDENCE, BUILDING", 10, 700, AMBER, ls=1.4)
-s.text(hx + 200, TOP + 32, "mechanism, not a measured accuracy", 10.5, 400, FAINT)
+s.text(HX + HW - 22, TOP + 32, "mechanism, not accuracy", 10, 400, FAINT, anchor="end")
 VARS = [("Union ballot", [0, 0, 1, 1, 2, 3, 3, 4, 4, 4]),
         ("Berth waiting", [0, 0, 0, 1, 1, 1, 2, 3, 4, 4]),
         ("Throughput", [0, 1, 0, 1, 1, 2, 2, 3, 3, 4]),
         ("Rail slots", [0, 0, 0, 0, 1, 1, 2, 2, 3, 4]),
         ("Prediction mkt", [0, 0, 1, 1, 2, 2, 3, 4, 4, 4]),
         ("Wire volume", [0, 0, 0, 0, 0, 1, 1, 2, 3, 4])]
-GX, CELL, GAP = hx + 108, 52, 6
+GX, CELL, GAP = hx + 96, 44, 4
 for r, (name, row) in enumerate(VARS):
     y = TOP + 54 + r * 19
     s.text(hx, y + 10, name, 10.5, 400, MUTED)
@@ -93,7 +107,51 @@ for c, v in enumerate(CONF):
           f'rx="2" fill="{AMBER if v >= 70 else GRAY400}"/>')
 ty = BASE - HGT * 0.70
 s.line(GX - 8, ty, GX + 10 * (CELL + GAP) - GAP + 8, ty, AMBER, 1.4, dash="4 4")
-s.text(GX + 10 * (CELL + GAP) + 10, ty + 4, "trigger", 10.5, 600, AMBER)
+s.text(GX - 12, ty + 4, "trigger", 10, 600, AMBER, anchor="end")
+
+# =========================================================================
+# THE LANES, ON A MAP - Europe and the approaches it is reached through
+# =========================================================================
+MX, MW, MH = 1324, W - M - 1324, SH
+LON0, LON1, LAT0, LAT1 = -25.0, 38.4, 26.0, 59.5
+_x0, _y0 = proj(LAT1, LON0)
+_x1, _y1 = proj(LAT0, LON1)
+SC = MW / (_x1 - _x0)
+
+s.card(MX, TOP, MW, MH, fill="#f7f9fb", stroke=BORDER_STRONG)
+s.raw(f'<clipPath id="mclip"><rect x="{MX}" y="{TOP}" width="{MW}" height="{MH}" rx="{RMD}"/></clipPath>')
+s.raw(f'<g clip-path="url(#mclip)">'
+      f'<g transform="translate({MX - _x0*SC:.1f},{TOP - _y0*SC:.1f}) scale({SC:.4f})">'
+      f'<path d="{COAST}" fill="#e8ecef" stroke="#d3d9de" stroke-width="0.7"/></g></g>')
+
+
+def mp(lat, lon):
+    x, y = proj(lat, lon)
+    return MX + (x - _x0) * SC, TOP + (y - _y0) * SC
+
+
+s.raw('<g clip-path="url(#mclip)">')
+for name in ("redsea_to_suez", "suez_to_gibraltar", "suez_to_fos", "gibraltar_to_northsea"):
+    pts = [mp(la, lo) for la, lo in GEO["corridors"][name]]
+    d = " ".join(f"{'M' if i==0 else 'L'}{x:.1f},{y:.1f}" for i, (x, y) in enumerate(pts))
+    s.raw(f'<path d="{d}" fill="none" stroke="{AMBER}" stroke-width="1.6" '
+          f'stroke-linecap="round" opacity="0.55"/>')
+s.raw('</g>')
+
+PORTS = [("HAM", "Hamburg", 1, 10, -8, "start"), ("RTM", "Rotterdam", 1, -10, -9, "end"),
+         ("ANR", "Antwerp", 0, -10, 15, "end"), ("RHINE", "Rhine", 1, 11, 14, "start"),
+         ("FOS", "Fos", 0, 10, 13, "start"), ("SUEZ", "Suez", 0, -10, -8, "end")]
+for pid, lab, hot, dx, dy, anc in PORTS:
+    p = GEO["places"][pid]
+    x, y = mp(p["lat"], p["lon"])
+    s.raw(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{5 if hot else 3.6}" '
+          f'fill="{AMBER if hot else CARD}" stroke="{AMBER if hot else FAINT}" stroke-width="1.5"/>')
+    s.text(x + dx, y + dy, lab, 10, 600 if hot else 500, FG if hot else MUTED, anchor=anc)
+
+s.card(MX + 14, TOP + MH - 46, 210, 32, fill=CARD, stroke=BORDER, rx=R)
+s.raw(f'<circle cx="{MX+30}" cy="{TOP+MH-30}" r="4.5" fill="{AMBER}"/>')
+s.text(MX + 42, TOP + MH - 26, "watched chokepoint", 10.5, 500, FG)
+s.text(MX + MW - 16, TOP + 30, "lanes from data/geo.json", 9.5, 400, FAINT, anchor="end")
 
 # =========================================================================
 # THE APP, MID-RUN
