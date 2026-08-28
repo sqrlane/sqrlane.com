@@ -120,8 +120,12 @@ weights from Hugging Face on first fit; this build sandbox blocks that host,
 so the adapter is built to TabPFN's published interface and degrades to a
 readable "here is how to enable it" message — the same posture the repo takes
 with its eight unwitnessed structured sources. To enable it on a real
-machine: `pip install -r ml/requirements.txt`, then `pip install tabpfn`
-(pulls torch), then run once with internet so the weights cache.
+machine: `pip install -r ml/requirements.txt`, then
+`pip install "tabpfn>=2.0,<2.1"` (pulls torch), then run once with internet
+so the weights cache. The version pin was learned by witnessing: a plain
+`pip install tabpfn` ships the newer gated 2.5/3 weights, whose mandatory
+Prior Labs account login crashes outright on Windows (`WinError 10038`) —
+the 2.0.x package ships the openly licensed v2 weights and needs no login.
 
 Two caveats travel with it, and they are in the adapter's error message so
 they cannot be missed:

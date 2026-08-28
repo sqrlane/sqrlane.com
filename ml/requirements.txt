@@ -13,10 +13,14 @@ scikit-learn>=1.4
 # --- optional: TabPFN -------------------------------------------------------
 # Deliberately commented out. Uncommenting is a decision, not a default:
 #
-#   * `pip install tabpfn` pulls PyTorch (several GB), and the FIRST fit
-#     downloads model weights from huggingface.co - a network the build
-#     sandbox blocks, so it can never run there. Run it on a machine with
-#     real internet once so the weights cache.
+#   * Install with the pin: pip install "tabpfn>=2.0,<2.1". A plain
+#     `pip install tabpfn` ships the newer 2.5/3 weights, which are GATED
+#     behind a Prior Labs account login whose browser flow crashes on
+#     Windows (WinError 10038, witnessed 2026-08-28); the 2.0.x package
+#     ships the openly licensed v2 weights with no login. Either pulls
+#     PyTorch (several GB), and the FIRST fit downloads weights from
+#     huggingface.co - a host the build sandbox blocks, so it can never
+#     run there. Run once on a machine with real internet so they cache.
 #   * License: the TabPFN code and v2 weights are Prior-Labs-License
 #     (Apache-2.0 plus a required "Built with PriorLabs-TabPFN" attribution
 #     when you distribute); the newer 2.5/3 weights are NON-COMMERCIAL -
