@@ -415,6 +415,20 @@ Suggested three, drawn from S15's own gap:
 
 ---
 
+## Slide index, as built
+
+| File | Section | Argues |
+|---|---|---|
+| `slide-01-introduction.svg` | Introduction | A forwarder's product is a date; four things take it |
+| `slide-02-the-what.svg` | The What | Two problems: the work is manual, nothing watches the route |
+| `slide-03-the-why.svg` | The Why | EUR 4bn of desk work, and a seam neither category crosses |
+| `slide-04-the-how-1.svg` | The How 1/2 | Answers problem one: the desk work does itself |
+| `slide-05-the-how-2.svg` | The How 2/2 | Answers problem two: know early, while options exist |
+
+Each How slide answers one of slide 02's two problems by name. That pairing is
+the spine of the deck; if a How slide stops answering its problem, it has
+drifted.
+
 ## Build order once the reference deck lands
 
 1. Extract palette, type scale, grid and any recurring motif from the upload.
