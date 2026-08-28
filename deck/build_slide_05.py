@@ -110,43 +110,60 @@ s.card(AX + 190, AY + 10, 132, 20, fill=AMBER_BG, stroke=AMBER, rx=R)
 s.text(AX + 256, AY + 24, "triggered · 92%", 9.5, 700, AMBER, anchor="middle")
 s.text(AX + AW - 20, AY + 24, "12:00", 10.5, 400, FAINT, anchor="end", cls="mono")
 
-PX, PW2 = AX + 22, 800
+PX, PW2 = AX + 22, 430
 s.text(PX, AY + 70, "AGENTS WORKING", 9.5, 700, FAINT, ls=1.3)
-WORK = [("Risk Monitor", "reading 42 sources", 100, "3 exceptions"),
-        ("Route Advisor", "pricing alternatives", 100, "14 options"),
-        ("Comms Agent", "drafting carrier + customer", 100, "6 mails"),
-        ("Customs", "checking entry for 2 countries", 72, "in progress"),
-        ("TMS Link", "queueing changes to the record", 40, "in progress")]
-for j, (who, doing, pct, out) in enumerate(WORK):
-    y = AY + 100 + j * 44
+WORK = [("Risk Monitor", 100, "3 exceptions"), ("Route Advisor", 100, "14 options"),
+        ("Comms Agent", 100, "6 mails"), ("Customs", 72, "in progress"),
+        ("TMS Link", 40, "in progress")]
+for j, (who, pct, out) in enumerate(WORK):
+    y = AY + 102 + j * 42
     done = pct == 100
-    s.raw(f'<circle cx="{PX+9}" cy="{y+6}" r="8" fill="{GREEN_BG if done else AMBER_BG}"/>')
+    s.raw(f'<circle cx="{PX+9}" cy="{y+2}" r="8" fill="{GREEN_BG if done else AMBER_BG}"/>')
     if done:
-        s.raw(f'<path d="M{PX+5} {y+6} l3 3 l6 -7" stroke="{GREEN}" stroke-width="1.8" '
+        s.raw(f'<path d="M{PX+5} {y+2} l3 3 l6 -7" stroke="{GREEN}" stroke-width="1.8" '
               f'fill="none" stroke-linecap="round"/>')
     else:
-        s.raw(f'<circle cx="{PX+9}" cy="{y+6}" r="3" fill="{AMBER}"/>')
-    s.text(PX + 28, y + 4, who, 13, 600, FG)
-    s.text(PX + 150, y + 4, doing, 12, 400, MUTED)
-    s.raw(f'<rect x="{PX+430}" y="{y}" width="220" height="8" rx="4" fill="{SURFACE}"/>')
-    s.raw(f'<rect x="{PX+430}" y="{y}" width="{220*pct/100:.0f}" height="8" rx="4" '
+        s.raw(f'<circle cx="{PX+9}" cy="{y+2}" r="3" fill="{AMBER}"/>')
+    s.text(PX + 28, y, who, 12.5, 600, FG)
+    s.text(PX + PW2 - 20, y, out, 10.5, 400, FAINT, anchor="end", cls="mono")
+    s.raw(f'<rect x="{PX+28}" y="{y+10}" width="220" height="6" rx="3" fill="{SURFACE}"/>')
+    s.raw(f'<rect x="{PX+28}" y="{y+10}" width="{220*pct/100:.0f}" height="6" rx="3" '
           f'fill="{GREEN if done else AMBER}"/>')
-    s.text(PX + PW2 - 20, y + 4, out, 11, 400, FAINT, anchor="end", cls="mono")
 
-QX = AX + AW - 22 - 500
-s.line(QX - 24, AY + 58, QX - 24, AY + AH - 22, BORDER)
-s.text(QX, AY + 70, "RECOMMENDATION", 9.5, 700, FAINT, ls=1.3)
-s.text(QX, AY + 108, "Route around 2", 20, 600, FG, ls=-0.4)
-s.text(QX, AY + 134, "Amend 1 · Watch 4", 20, 600, FG, ls=-0.4)
+# the artefact itself, so "drafts written" is a thing rather than a count
+DXp = AX + 22 + PW2 + 26
+DWp = 470
+s.line(DXp - 26, AY + 58, DXp - 26, AY + AH - 22, BORDER)
+s.text(DXp, AY + 70, "WHAT COMMS JUST WROTE", 9.5, 700, FAINT, ls=1.3)
+s.card(DXp, AY + 84, DWp, 168, fill=CARD_MUTED, stroke=BORDER_STRONG)
+s.text(DXp + 16, AY + 108, "To", 9.5, 600, FAINT)
+s.text(DXp + 52, AY + 108, "Booking Desk, Hapag-Lloyd", 11, 500, FG)
+s.text(DXp + 16, AY + 128, "Subj", 9.5, 600, FAINT)
+s.text(DXp + 52, AY + 128, "HLCU-2261188 — amend discharge to RTM", 11, 500, FG)
+s.line(DXp + 16, AY + 142, DXp + DWp - 16, AY + 142, BORDER)
+for j, ln in enumerate(["Please amend the booking to discharge at RTM",
+                        "instead of HAM, and confirm the revised schedule.",
+                        "Revised ETA on our side is 15 Sep."]):
+    s.text(DXp + 16, AY + 164 + j * 18, ln, 11, 400, MUTED)
+s.chip(DXp + 16, AY + 222, 122, 22, "DRAFT · not sent", fs=9, fill=AMBER_BG, col=AMBER, weight=700)
+s.text(DXp + 148, AY + 237, "written by Comms, held for you", 10.5, 400, FAINT)
+s.text(DXp, AY + 276, "Five more like it: one customer mail, a carrier", 11.5, 400, MUTED)
+s.text(DXp, AY + 294, "amendment, and the customs entry for Rotterdam.", 11.5, 400, MUTED)
+
+QX = AX + AW - 22 - 300
+s.line(QX - 26, AY + 58, QX - 26, AY + AH - 22, BORDER)
+s.text(QX, AY + 70, "THE CALL", 9.5, 700, FAINT, ls=1.3)
+s.text(QX, AY + 108, "Route around 2", 18, 600, FG, ls=-0.4)
+s.text(QX, AY + 132, "Amend 1 · Watch 4", 18, 600, FG, ls=-0.4)
 for j, (sid, act, col) in enumerate((("SHP-001", "route around", AMBER),
                                      ("SHP-005", "route around", AMBER),
                                      ("SHP-002", "amend", FG))):
-    y = AY + 176 + j * 26
-    s.text(QX, y, sid, 11.5, 500, MUTED, cls="mono")
-    s.text(QX + 92, y, act, 11.5, 500, col)
-s.card(QX, AY + AH - 74, 150, 34, fill=FG, stroke="none", rx=R)
-s.text(QX + 75, AY + AH - 52, "Approve all", 12.5, 600, CARD, anchor="middle")
-s.text(QX + 164, AY + AH - 52, "one click, or one at a time", 10.5, 400, FAINT)
+    y = AY + 174 + j * 24
+    s.text(QX, y, sid, 11, 500, MUTED, cls="mono")
+    s.text(QX + 86, y, act, 11, 500, col)
+s.card(QX, AY + AH - 84, 150, 34, fill=FG, stroke="none", rx=R)
+s.text(QX + 75, AY + AH - 62, "Approve all", 12.5, 600, CARD, anchor="middle")
+s.text(QX, AY + AH - 32, "or one at a time", 10.5, 400, FAINT)
 
 s.text(M, 890, "The prediction moves the decision left, into the window where options still exist.",
        23, 600, FG, ls=-0.5)

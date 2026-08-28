@@ -24,7 +24,7 @@ s.header("04 — THE HOW (1/2)",
 # =========================================================================
 # THE PRODUCT, AS IT LOOKS
 # =========================================================================
-DX, DY, DW, DH = M, 224, 830, 336
+DX, DY, DW, DH = M, 216, 830, 354
 s.card(DX, DY, DW, DH, fill=CARD, stroke=BORDER_STRONG)
 s.raw(f'<rect x="{DX}" y="{DY}" width="{DW}" height="38" rx="{RMD}" fill="{SURFACE}"/>')
 s.raw(f'<rect x="{DX}" y="{DY+26}" width="{DW}" height="12" fill="{SURFACE}"/>')
@@ -93,11 +93,18 @@ s.text(DX + DW - 18, DY + 302, "7 shipments · last run 12:00", 8.5, 400, FAINT,
 # =========================================================================
 TX2, TW2 = 950, W - M - 950
 s.card(TX2, DY, TW2, DH)
+s.raw(f'<rect x="{TX2}" y="{DY}" width="{TW2}" height="38" rx="{RMD}" fill="{SURFACE}"/>')
+s.raw(f'<rect x="{TX2}" y="{DY+26}" width="{TW2}" height="12" fill="{SURFACE}"/>')
+s.line(TX2, DY + 38, TX2 + TW2, DY + 38, BORDER)
 tx = TX2 + 24
-s.text(tx, DY + 36, "WHAT ARRIVES", 9, 700, FAINT, ls=1.2)
-s.text(tx + 250, DY + 36, "AGENT", 9, 700, FAINT, ls=1.2)
-s.text(tx + 380, DY + 36, "WHAT LANDS ON THE BOOKING", 9, 700, FAINT, ls=1.2)
-s.line(tx, DY + 48, TX2 + TW2 - 24, DY + 48, BORDER_STRONG)
+s.text(tx, DY + 24, "What used to be typed", 11.5, 500, MUTED)
+s.text(TX2 + TW2 - 24, DY + 24, "scripted today · src/roster.py", 10, 400, FAINT,
+       anchor="end", cls="mono")
+
+s.text(tx, DY + 66, "WHAT ARRIVES", 9, 700, FAINT, ls=1.2)
+s.text(tx + 250, DY + 66, "AGENT", 9, 700, FAINT, ls=1.2)
+s.text(tx + 380, DY + 66, "WHAT LANDS ON THE BOOKING", 9, 700, FAINT, ls=1.2)
+s.line(tx, DY + 78, TX2 + TW2 - 24, DY + 78, BORDER_STRONG)
 ROWS = [("A rate request", "RFQ", "Quote on the file"),
         ("Carrier or customer mail", "Inbox", "Reply on the comms log"),
         ("A bill of lading, an invoice", "Docs", "Fields on the booking"),
@@ -106,20 +113,18 @@ ROWS = [("A rate request", "RFQ", "Quote on the file"),
         ("A new country of entry", "Customs", "Escalation, not a filing"),
         ("Every one of the above", "TMS Link", "One queued change, gated")]
 for j, (a, ag, l) in enumerate(ROWS):
-    y = DY + 80 + j * 37
+    y = DY + 110 + j * 38
     last = j == len(ROWS) - 1
     if last:
-        s.card(tx - 10, y - 20, TW2 - 28, 30, fill=SURFACE, stroke="none", rx=R)
+        s.card(tx - 10, y - 21, TW2 - 28, 32, fill=SURFACE, stroke="none", rx=R)
     s.text(tx, y, a, 12.5, 500, FG)
     s.text(tx + 250, y, ag, 12.5, 600, FG)
     s.text(tx + 380, y, l, 12.5, 400, MUTED)
-s.text(tx, DY + DH - 22, "Scripted today, tagged on screen. Roles from src/roster.py.",
-       10.5, 400, FAINT)
 
 # =========================================================================
 # THE WORKFLOW, AS THE APP SHOWS IT
 # =========================================================================
-LY, LH = 588, 262
+LY, LH = 594, 286
 s.card(DX, LY, DW, LH, stroke=BORDER_STRONG)
 s.raw(f'<rect x="{DX}" y="{LY}" width="{DW}" height="34" rx="{RMD}" fill="{SURFACE}"/>')
 s.raw(f'<rect x="{DX}" y="{LY+22}" width="{DW}" height="12" fill="{SURFACE}"/>')
@@ -151,25 +156,28 @@ for j, (ts, who, what, col) in enumerate(FLOW):
 # =========================================================================
 s.card(TX2, LY, TW2, LH)
 s.text(TX2 + 24, LY + 34, "AND THEY RUN AT ONCE", 10, 700, AMBER, ls=1.4)
-LANES = [("Inbox", 0, 5), ("Docs", 0, 4), ("RFQ", 0, 3),
-         ("Booking", 3, 7), ("Invoice", 4, 8), ("Customs", 6, 10)]
-L0, LWU = TX2 + 130, (TW2 - 210) / 10
-for j, (name, a, b) in enumerate(LANES):
-    y = LY + 58 + j * 17
+LANES = [("Inbox", 0, 5, "starts at once"), ("Docs", 0, 4, "starts at once"),
+         ("RFQ", 0, 3, "starts at once"), ("Booking", 3, 7, "waits for the fields"),
+         ("Invoice", 4, 8, "waits for the agreed rate"), ("Customs", 6, 10, "waits for the new port")]
+L0, LWU = TX2 + 116, 380 / 10
+for j, (name, a, b, why) in enumerate(LANES):
+    y = LY + 62 + j * 24
     s.text(TX2 + 24, y + 9, name, 10.5, 400, MUTED)
-    s.raw(f'<rect x="{L0}" y="{y+3}" width="{10*LWU}" height="10" rx="3" fill="{SURFACE}"/>')
-    s.raw(f'<rect x="{L0 + a*LWU}" y="{y+3}" width="{(b-a)*LWU}" height="10" rx="3" fill="{AMBER}"/>')
-    s.raw(f'<circle cx="{L0 + b*LWU + 14}" cy="{y+8}" r="5" fill="{GREEN_BG}"/>')
-    s.raw(f'<path d="M{L0 + b*LWU + 11.5} {y+8} l2 2 l4.5 -4.5" stroke="{GREEN}" '
-          f'stroke-width="1.5" fill="none" stroke-linecap="round"/>')
-s.line(TX2 + 24, LY + 176, TX2 + TW2 - 24, LY + 176, BORDER)
-s.text(TX2 + 24, LY + 204, "Each starts when the fact it needs arrives.", 13, 500, FG)
-s.text(TX2 + 24, LY + 226, "Six loops opened, six closed by another agent.", 13, 400, MUTED)
-s.text(TX2 + 24, LY + 246, "One approval, at the end.", 13, 400, MUTED)
+    s.raw(f'<rect x="{L0}" y="{y+3}" width="{10*LWU}" height="11" rx="3" fill="{SURFACE}"/>')
+    s.raw(f'<rect x="{L0 + a*LWU}" y="{y+3}" width="{(b-a)*LWU}" height="11" rx="3" fill="{AMBER}"/>')
+    s.raw(f'<circle cx="{L0 + b*LWU + 14}" cy="{y+8}" r="5.5" fill="{GREEN_BG}"/>')
+    s.raw(f'<path d="M{L0 + b*LWU + 11} {y+8} l2.2 2.2 l5 -5" stroke="{GREEN}" '
+          f'stroke-width="1.6" fill="none" stroke-linecap="round"/>')
+    s.text(L0 + 400 + 30, y + 12, why, 11, 400, FAINT)
 
-s.text(M, 900, "Six systems, one record. The re-typing is gone.", 24, 600, FG, ls=-0.5)
-s.raw(f'<text x="{W-M}" y="896" font-size="30" font-weight="600" fill="{FG}" '
+s.line(TX2 + 24, LY + 212, TX2 + TW2 - 24, LY + 212, BORDER)
+s.text(TX2 + 24, LY + 240, "A bar starts when the fact it needs exists, and ends", 13, 500, FG)
+s.text(TX2 + 24, LY + 260, "when its output is on the booking. Nothing waits for", 13, 400, MUTED)
+s.text(TX2 + 24, LY + 280, "a person until the single approval at the end.", 13, 400, MUTED)
+
+s.text(M, 926, "Six systems, one record. The re-typing is gone.", 24, 600, FG, ls=-0.5)
+s.raw(f'<text x="{W-M}" y="922" font-size="30" font-weight="600" fill="{FG}" '
       f'text-anchor="end" class="num">40%</text>')
-s.text(W - M, 918, "of the day, back", 12, 400, FAINT, anchor="end")
+s.text(W - M, 944, "of the day, back", 12, 400, FAINT, anchor="end")
 s.footer("04 / THE HOW 1/2")
 s.write("slide-04-the-how-1.svg")

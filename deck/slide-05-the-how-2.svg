@@ -175,54 +175,65 @@ text{font-family:"Geist",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-se
 <text x="700" y="526" font-size="9.5" font-weight="700" fill="#96580a" text-anchor="middle">triggered · 92%</text>
 <text x="1804" y="526" font-size="10.5" font-weight="400" fill="#8f8f8f" text-anchor="end" class="mono">12:00</text>
 <text x="466" y="572" font-size="9.5" font-weight="700" fill="#8f8f8f" letter-spacing="1.3">AGENTS WORKING</text>
-<circle cx="475" cy="608" r="8" fill="#e7f5ec"/>
-<path d="M471 608 l3 3 l6 -7" stroke="#0f7b3f" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-<text x="494" y="606" font-size="13" font-weight="600" fill="#171717">Risk Monitor</text>
-<text x="616" y="606" font-size="12" font-weight="400" fill="#4d4d4d">reading 42 sources</text>
-<rect x="896" y="602" width="220" height="8" rx="4" fill="#f2f2f2"/>
-<rect x="896" y="602" width="220" height="8" rx="4" fill="#0f7b3f"/>
-<text x="1246" y="606" font-size="11" font-weight="400" fill="#8f8f8f" text-anchor="end" class="mono">3 exceptions</text>
-<circle cx="475" cy="652" r="8" fill="#e7f5ec"/>
-<path d="M471 652 l3 3 l6 -7" stroke="#0f7b3f" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-<text x="494" y="650" font-size="13" font-weight="600" fill="#171717">Route Advisor</text>
-<text x="616" y="650" font-size="12" font-weight="400" fill="#4d4d4d">pricing alternatives</text>
-<rect x="896" y="646" width="220" height="8" rx="4" fill="#f2f2f2"/>
-<rect x="896" y="646" width="220" height="8" rx="4" fill="#0f7b3f"/>
-<text x="1246" y="650" font-size="11" font-weight="400" fill="#8f8f8f" text-anchor="end" class="mono">14 options</text>
-<circle cx="475" cy="696" r="8" fill="#e7f5ec"/>
-<path d="M471 696 l3 3 l6 -7" stroke="#0f7b3f" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-<text x="494" y="694" font-size="13" font-weight="600" fill="#171717">Comms Agent</text>
-<text x="616" y="694" font-size="12" font-weight="400" fill="#4d4d4d">drafting carrier + customer</text>
-<rect x="896" y="690" width="220" height="8" rx="4" fill="#f2f2f2"/>
-<rect x="896" y="690" width="220" height="8" rx="4" fill="#0f7b3f"/>
-<text x="1246" y="694" font-size="11" font-weight="400" fill="#8f8f8f" text-anchor="end" class="mono">6 mails</text>
-<circle cx="475" cy="740" r="8" fill="#fdf3e3"/>
-<circle cx="475" cy="740" r="3" fill="#96580a"/>
-<text x="494" y="738" font-size="13" font-weight="600" fill="#171717">Customs</text>
-<text x="616" y="738" font-size="12" font-weight="400" fill="#4d4d4d">checking entry for 2 countries</text>
-<rect x="896" y="734" width="220" height="8" rx="4" fill="#f2f2f2"/>
-<rect x="896" y="734" width="158" height="8" rx="4" fill="#96580a"/>
-<text x="1246" y="738" font-size="11" font-weight="400" fill="#8f8f8f" text-anchor="end" class="mono">in progress</text>
-<circle cx="475" cy="784" r="8" fill="#fdf3e3"/>
-<circle cx="475" cy="784" r="3" fill="#96580a"/>
-<text x="494" y="782" font-size="13" font-weight="600" fill="#171717">TMS Link</text>
-<text x="616" y="782" font-size="12" font-weight="400" fill="#4d4d4d">queueing changes to the record</text>
-<rect x="896" y="778" width="220" height="8" rx="4" fill="#f2f2f2"/>
-<rect x="896" y="778" width="88" height="8" rx="4" fill="#96580a"/>
-<text x="1246" y="782" font-size="11" font-weight="400" fill="#8f8f8f" text-anchor="end" class="mono">in progress</text>
-<line x1="1278" y1="560" x2="1278" y2="812" stroke="#00000014" stroke-width="1"/>
-<text x="1302" y="572" font-size="9.5" font-weight="700" fill="#8f8f8f" letter-spacing="1.3">RECOMMENDATION</text>
-<text x="1302" y="610" font-size="20" font-weight="600" fill="#171717" letter-spacing="-0.4">Route around 2</text>
-<text x="1302" y="636" font-size="20" font-weight="600" fill="#171717" letter-spacing="-0.4">Amend 1 · Watch 4</text>
-<text x="1302" y="678" font-size="11.5" font-weight="500" fill="#4d4d4d" class="mono">SHP-001</text>
-<text x="1394" y="678" font-size="11.5" font-weight="500" fill="#96580a">route around</text>
-<text x="1302" y="704" font-size="11.5" font-weight="500" fill="#4d4d4d" class="mono">SHP-005</text>
-<text x="1394" y="704" font-size="11.5" font-weight="500" fill="#96580a">route around</text>
-<text x="1302" y="730" font-size="11.5" font-weight="500" fill="#4d4d4d" class="mono">SHP-002</text>
-<text x="1394" y="730" font-size="11.5" font-weight="500" fill="#171717">amend</text>
-<rect x="1302" y="760" width="150" height="34" rx="6" fill="#171717" stroke="none"/>
-<text x="1377" y="782" font-size="12.5" font-weight="600" fill="#ffffff" text-anchor="middle">Approve all</text>
-<text x="1466" y="782" font-size="10.5" font-weight="400" fill="#8f8f8f">one click, or one at a time</text>
+<circle cx="475" cy="606" r="8" fill="#e7f5ec"/>
+<path d="M471 606 l3 3 l6 -7" stroke="#0f7b3f" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+<text x="494" y="604" font-size="12.5" font-weight="600" fill="#171717">Risk Monitor</text>
+<text x="876" y="604" font-size="10.5" font-weight="400" fill="#8f8f8f" text-anchor="end" class="mono">3 exceptions</text>
+<rect x="494" y="614" width="220" height="6" rx="3" fill="#f2f2f2"/>
+<rect x="494" y="614" width="220" height="6" rx="3" fill="#0f7b3f"/>
+<circle cx="475" cy="648" r="8" fill="#e7f5ec"/>
+<path d="M471 648 l3 3 l6 -7" stroke="#0f7b3f" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+<text x="494" y="646" font-size="12.5" font-weight="600" fill="#171717">Route Advisor</text>
+<text x="876" y="646" font-size="10.5" font-weight="400" fill="#8f8f8f" text-anchor="end" class="mono">14 options</text>
+<rect x="494" y="656" width="220" height="6" rx="3" fill="#f2f2f2"/>
+<rect x="494" y="656" width="220" height="6" rx="3" fill="#0f7b3f"/>
+<circle cx="475" cy="690" r="8" fill="#e7f5ec"/>
+<path d="M471 690 l3 3 l6 -7" stroke="#0f7b3f" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+<text x="494" y="688" font-size="12.5" font-weight="600" fill="#171717">Comms Agent</text>
+<text x="876" y="688" font-size="10.5" font-weight="400" fill="#8f8f8f" text-anchor="end" class="mono">6 mails</text>
+<rect x="494" y="698" width="220" height="6" rx="3" fill="#f2f2f2"/>
+<rect x="494" y="698" width="220" height="6" rx="3" fill="#0f7b3f"/>
+<circle cx="475" cy="732" r="8" fill="#fdf3e3"/>
+<circle cx="475" cy="732" r="3" fill="#96580a"/>
+<text x="494" y="730" font-size="12.5" font-weight="600" fill="#171717">Customs</text>
+<text x="876" y="730" font-size="10.5" font-weight="400" fill="#8f8f8f" text-anchor="end" class="mono">in progress</text>
+<rect x="494" y="740" width="220" height="6" rx="3" fill="#f2f2f2"/>
+<rect x="494" y="740" width="158" height="6" rx="3" fill="#96580a"/>
+<circle cx="475" cy="774" r="8" fill="#fdf3e3"/>
+<circle cx="475" cy="774" r="3" fill="#96580a"/>
+<text x="494" y="772" font-size="12.5" font-weight="600" fill="#171717">TMS Link</text>
+<text x="876" y="772" font-size="10.5" font-weight="400" fill="#8f8f8f" text-anchor="end" class="mono">in progress</text>
+<rect x="494" y="782" width="220" height="6" rx="3" fill="#f2f2f2"/>
+<rect x="494" y="782" width="88" height="6" rx="3" fill="#96580a"/>
+<line x1="896" y1="560" x2="896" y2="812" stroke="#00000014" stroke-width="1"/>
+<text x="922" y="572" font-size="9.5" font-weight="700" fill="#8f8f8f" letter-spacing="1.3">WHAT COMMS JUST WROTE</text>
+<rect x="922" y="586" width="470" height="168" rx="12" fill="#fafafa" stroke="#00000024"/>
+<text x="938" y="610" font-size="9.5" font-weight="600" fill="#8f8f8f">To</text>
+<text x="974" y="610" font-size="11" font-weight="500" fill="#171717">Booking Desk, Hapag-Lloyd</text>
+<text x="938" y="630" font-size="9.5" font-weight="600" fill="#8f8f8f">Subj</text>
+<text x="974" y="630" font-size="11" font-weight="500" fill="#171717">HLCU-2261188 — amend discharge to RTM</text>
+<line x1="938" y1="644" x2="1376" y2="644" stroke="#00000014" stroke-width="1"/>
+<text x="938" y="666" font-size="11" font-weight="400" fill="#4d4d4d">Please amend the booking to discharge at RTM</text>
+<text x="938" y="684" font-size="11" font-weight="400" fill="#4d4d4d">instead of HAM, and confirm the revised schedule.</text>
+<text x="938" y="702" font-size="11" font-weight="400" fill="#4d4d4d">Revised ETA on our side is 15 Sep.</text>
+<rect x="938" y="724" width="122" height="22" rx="6" fill="#fdf3e3" stroke="none"/>
+<text x="999.0" y="738.24" font-size="9" font-weight="700" fill="#96580a" text-anchor="middle">DRAFT · not sent</text>
+<text x="1070" y="739" font-size="10.5" font-weight="400" fill="#8f8f8f">written by Comms, held for you</text>
+<text x="922" y="778" font-size="11.5" font-weight="400" fill="#4d4d4d">Five more like it: one customer mail, a carrier</text>
+<text x="922" y="796" font-size="11.5" font-weight="400" fill="#4d4d4d">amendment, and the customs entry for Rotterdam.</text>
+<line x1="1476" y1="560" x2="1476" y2="812" stroke="#00000014" stroke-width="1"/>
+<text x="1502" y="572" font-size="9.5" font-weight="700" fill="#8f8f8f" letter-spacing="1.3">THE CALL</text>
+<text x="1502" y="610" font-size="18" font-weight="600" fill="#171717" letter-spacing="-0.4">Route around 2</text>
+<text x="1502" y="634" font-size="18" font-weight="600" fill="#171717" letter-spacing="-0.4">Amend 1 · Watch 4</text>
+<text x="1502" y="676" font-size="11" font-weight="500" fill="#4d4d4d" class="mono">SHP-001</text>
+<text x="1588" y="676" font-size="11" font-weight="500" fill="#96580a">route around</text>
+<text x="1502" y="700" font-size="11" font-weight="500" fill="#4d4d4d" class="mono">SHP-005</text>
+<text x="1588" y="700" font-size="11" font-weight="500" fill="#96580a">route around</text>
+<text x="1502" y="724" font-size="11" font-weight="500" fill="#4d4d4d" class="mono">SHP-002</text>
+<text x="1588" y="724" font-size="11" font-weight="500" fill="#171717">amend</text>
+<rect x="1502" y="750" width="150" height="34" rx="6" fill="#171717" stroke="none"/>
+<text x="1577" y="772" font-size="12.5" font-weight="600" fill="#ffffff" text-anchor="middle">Approve all</text>
+<text x="1502" y="802" font-size="10.5" font-weight="400" fill="#8f8f8f">or one at a time</text>
 <text x="96" y="890" font-size="23" font-weight="600" fill="#171717" letter-spacing="-0.5">The prediction moves the decision left, into the window where options still exist.</text>
 <line x1="96" y1="1008" x2="1824" y2="1008" stroke="#00000014" stroke-width="1"/>
 <rect x="96" y="1022" width="18" height="18" rx="5" fill="#171717"/>
