@@ -17,7 +17,7 @@
 
 ## The one-paragraph pitch
 
-Small agents watch **everything that moves a trade lane** — 42 free, keyless sources across six families: news in multiple languages, river gauges, port weather and sea state, seismic and natural-hazard feeds, government filings, and the reference rate a reroute is billed at. When a disruption hits, the system reads your bookings out of the TMS, works out which are affected, decides whether to reroute or hold each one — and *explains why* — drafts the carrier and customer emails a human would need to send, and **queues each change back onto the booking it came from**, which is the part a person otherwise re-types. Risk → decision → communication → the system of record, as one closed loop, with the reasoning recorded and every write held for approval. A light "5U AI-style AI Worker" wrapper sits on top purely as demo framing.
+Small agents watch **everything that moves a trade lane** — 60 free, keyless sources across six families: news in multiple languages, river gauges, port weather and sea state, seismic and natural-hazard feeds, government filings, and the reference rate a reroute is billed at. When a disruption hits, the system reads your bookings out of the TMS, works out which are affected, decides whether to reroute or hold each one — and *explains why* — drafts the carrier and customer emails a human would need to send, and **queues each change back onto the booking it came from**, which is the part a person otherwise re-types. Risk → decision → communication → the system of record, as one closed loop, with the reasoning recorded and every write held for approval. A light "5U AI-style AI Worker" wrapper sits on top purely as demo framing.
 
 ---
 
@@ -27,7 +27,7 @@ Read this out loud. If a feature doesn't help this story land, it doesn't get bu
 
 1. **"Here are 5 bookings out of your TMS, in transit."** A dashboard shows 5 shipment cards, all green.
 2. **"Watch — a strike hits the Port of Hamburg."** You click a trigger button.
-3. **"The system caught it from a German-language source before the English news wires."** The risk feed shows the event, flagged as detected from a German source first — and beside it, the family strip showing the other 41 sources read on the same run: the gauges, the weather, the hazard feeds, the government filings, the rates. *(This part runs against real, live sources — see below.)*
+3. **"The system caught it from a German-language source before the English news wires."** The risk feed shows the event, flagged as detected from a German source first — and beside it, the family strip showing the other 59 sources read on the same run: the gauges, the weather, the hazard feeds, the government filings, the rates. *(This part runs against real, live sources — see below.)*
 4. **"It triaged all 5 shipments in seconds."** Cards change state:
    - Two Hamburg-bound shipments with schedule slack → **reroute** (via Rotterdam).
    - One tight cold-chain Hamburg shipment → **hold + notify** (rerouting would be worse).

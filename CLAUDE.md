@@ -18,7 +18,7 @@ agents decide against those records, and every action they take is written back 
 Risk → decision → communication → the system of record, closed. Nothing the agents do
 happens beside the TMS.
 
-Small agents watch **everything that moves a trade lane**, not just the news: 42 free, keyless
+Small agents watch **everything that moves a trade lane**, not just the news: 60 free, keyless
 sources across six families — news in multiple languages, river gauges, port weather and sea
 state, seismic and natural-hazard feeds, government filings, and the reference rate a reroute is
 billed at. When a disruption hits, the system checks which of those bookings are affected,
@@ -56,8 +56,8 @@ two, and **re-keying each decision into the TMS is the plank of that bridge that
 
 **The second one is the bigger one.** Say so.
 
-1. **One terminal for everything that moves a lane.** Not a news monitor. **42 sources in six
-   families**, read together on every run: news (11 GDELT queries + 20 feeds), river gauges,
+1. **One terminal for everything that moves a lane.** Not a news monitor. **60 sources in six
+   families**, read together on every run: news (11 GDELT queries + 30 feeds), rivers,
    port weather and sea state, seismic and natural-hazard feeds, government filings, and
    reference rates. Prose goes to the model; a gust, a wave height, a magnitude and a water
    level go to a threshold, which costs nothing and cannot hallucinate. Two things follow:
@@ -68,7 +68,7 @@ two, and **re-keying each decision into the TMS is the plank of that bridge that
    only — every extra source is one more thing that can break". The reason behind it still
    holds and is now enforced structurally instead: every source is its own small function,
    inside a shared budget, reporting its own failure, and the families are read concurrently
-   so 42 sources cost about what the slowest family costs. If a new source can make the
+   so 60 sources cost about what the slowest family costs. If a new source can make the
    cycle fail, it is wired wrong.
 
    **The website never names a language.** Multilingual reading is one *mechanism* among
@@ -108,10 +108,12 @@ the button. `README.md` is the front door for anyone new.
 
 It is also **deployed on Vercel** and running against the live Groq key there.
 
-**The source layer was widened from 20 to 42** — eight structured public APIs added on top of
-the news feeds, so the board reads weather, sea state, seismic activity, natural hazards,
-government filings and reference rates as well as headlines. All eight are keyless and all
-eight are unwitnessed from the build sandbox, which blocks every third-party host at the
+**The source layer was widened from 20 to 42, then to 60** — thirteen structured public APIs
+added on top of
+the news feeds, so the board reads weather, sea state, river flow, official weather warnings, seismic activity
+(two independent readers), natural hazards, disaster alerts, hurricanes, government filings and
+reference rates as well as headlines. All thirteen are keyless and all
+thirteen are unwitnessed from the build sandbox, which blocks every third-party host at the
 proxy; they are covered by stub tests and by graceful degradation, and
 [What still needs a human](#what-still-needs-a-human) says what to check before presenting.
 
@@ -170,9 +172,10 @@ work on the TMS's records, not on a book of their own.
         |  (src/tms.py - the ONLY door in. Nothing else opens shipments.json)
         v
   [ Risk Monitor ] --writes--> risk_state.json
-        |  (42 keyless sources, read concurrently, in six families:
-        |   news GDELT/RSS, river gauges, weather + sea state, seismic
-        |   + natural hazards, government filings, reference rates.
+        |  (60 keyless sources, read concurrently, in six families:
+        |   news GDELT/RSS, rivers (gauges + modelled flow), weather +
+        |   sea state + official warnings, seismic + natural hazards +
+        |   disaster alerts, government filings, reference rates.
         |   The prose half is risk_monitor.py, the instruments are signals.py)
         v
   [ Orchestrator ] --reads shipments + risk--> decides which shipments are affected
@@ -200,7 +203,7 @@ work on the TMS's records, not on a book of their own.
    agent's output into the change it implies on that record, named by the Worker that made
    it and gated. Imports nothing but `json`, `datetime` and `config` — no client, no
    credential, no endpoint.
-1. **Risk Monitor** (the real, live part) — reads all 42 free sources at once. Prose (GDELT,
+1. **Risk Monitor** (the real, live part) — reads all 60 free sources at once. Prose (GDELT,
    RSS, Federal Register filings) is LLM-classified for logistics relevance → chokepoint /
    type / severity; numbers (gauges, gusts, wave heights, magnitudes, hazard coordinates) are
    classified by threshold in `signals.py` and never reach the model. Writes `risk_state.json`.
@@ -502,7 +505,7 @@ stays a dict. Never present the connector as a live TMS link; it says `connected
 everywhere it is surfaced, and a test asserts that.
 
 **`tests/test_signals_read_wide_and_fail_soft.py` holds what breadth costs.** Forty-two
-sources is forty-two things that can be down, slow or reshaped in front of an audience, so it
+sources is sixty things that can be down, slow or reshaped in front of an audience, so it
 asserts the three things that have actually gone wrong here before: a structured event matches
 the scripted event schema **key for key** (parity has broken three times, every time by adding
 a field to one producer and not the others); a reading far from every corridor is **dropped**
@@ -640,7 +643,20 @@ here too, because this is what the next session reads to find its way around.
 │   ├── index.html            # the dashboard (HTML+CSS+JS in one file)
 │   ├── whitepaper.html       # the technical paper
 │   └── fonts/                # Geist Sans + Mono, self-hosted - never a CDN
-├── tests/                    # eight suites, one per claim the demo makes out loud
+├── ml/                       # the ML layer - PREPARED, NOT WIRED. Nothing in
+│   │                         #   src/ imports it and the Vercel bundle excludes it
+│   ├── synth.py              # the synthetic TMS world - bookings, episodes,
+│   │                         #   latent severities, realized outcomes. stdlib only
+│   ├── features.py           # the ONE feature list, behind a leakage fence
+│   ├── models.py             # baselines (incl. the SHIPPED rules engine),
+│   │                         #   sklearn, TabPFN - one fit/predict surface
+│   ├── tabpfn_adapter.py     # TabPFN behind a readable degrade + license note
+│   ├── evaluate.py           # time-split eval, three tasks, honest reports
+│   ├── requirements.txt      # numpy + scikit-learn - NEVER added to the root file
+│   ├── README.md             # plain-language: what it proves, what it cannot
+│   ├── data/                 # sample committed; the full book is gitignored
+│   └── reports/              # evaluation.json / .md - synthetic-world numbers
+├── tests/                    # nine suites, one per claim the demo makes out loud
 ├── tools/build_rhine_map.py  # regenerates the landing page's corridor map
 ├── scratch/genheat.py        # one-off generator for the landing heatmap
 ├── docs/dashboard.png        # the README's screenshot
@@ -685,17 +701,17 @@ Ausstand auf"*. The demo points at the **source language** — that *is* the dif
 ## Data sources — wide, keyless, and none of them load-bearing
 
 Full rationale, and which `public-apis` catalogue entry each one is, in `DATA-SOURCES.md`.
-**42 sources in six families, every one free and keyless.** The old rule was "wire CORE only";
+**60 sources in six families, every one free and keyless.** The old rule was "wire CORE only";
 breadth is now the point, so what holds instead is the reason behind it — **no source may be
 load-bearing**. Each is its own small function inside a shared budget, families are read
 concurrently, and a source that is down, slow or reshaped is reported failed and skipped.
 
 | Family | Sources | Count | Classified by |
 |---|---|---|---|
-| **News** | GDELT DOC 2.0 (one query per corridor, plus customs/tariffs/sanctions) and RSS via `feedparser` — regional broadcasters and papers on the corridors' doorsteps (NDR, tagesschau, DW, NOS, VRT, RTVE, El País, France Info, Le Monde, ANSA, NHK, Al Jazeera, France 24, Straits Times, Times of India) plus the narrow trade press (gCaptain, Splash 247, The Maritime Executive). The international feeds stay so the lead *against* them is measurable | 31 | the model |
-| **River gauges** | PEGELONLINE — Kaub, Duisburg-Ruhrort, Emmerich → RHINE | 3 | threshold |
-| **Weather & sea state** | Open-Meteo (gusts over HAM/RTM/ANR/FOS), Open-Meteo Marine (wave height at SUEZ/REDSEA/COGH), Hong Kong Observatory (warnings in force — *context*) | 3 | threshold |
-| **Natural hazards** | USGS Earthquake Hazards Program, NASA EONET — each reading mapped to the nearest chokepoint, **dropped if none is within reach** | 2 | threshold + proximity |
+| **News** | GDELT DOC 2.0 (one query per corridor, plus customs/tariffs/sanctions) and RSS via `feedparser` — regional broadcasters and papers on the corridors' doorsteps (NDR, tagesschau, DW, NOS, VRT, RTVE, El País, France Info, Le Monde, ANSA, NHK, Al Jazeera, France 24, Straits Times, Times of India, Rijnmond, Hamburger Abendblatt, ORF, Egypt Independent, News24, Daily Maverick) plus the narrow trade press (gCaptain, Splash 247, The Maritime Executive, The Loadstar, Hellenic Shipping News, Container News, SAFETY4SEA). The international feeds stay so the lead *against* them is measurable | 41 | the model |
+| **Rivers** | PEGELONLINE — Kaub, Duisburg-Ruhrort, Emmerich, Köln, Mainz, Maxau → RHINE — plus Open-Meteo Flood (GloFAS modelled discharge; a gauge is a level at a point, GloFAS is flow for the reach — two independent reads on the same river; **low is the risk**, so its bands walk `_band_low`) | 7 | threshold |
+| **Weather & sea state** | Open-Meteo (gusts over HAM/RTM/ANR/FOS), Open-Meteo Marine (wave height at SUEZ/REDSEA/COGH), DWD official weather warnings (JSONP; Warnstufe ≥ 4 over a watched region → event, everything else *context*), Hong Kong Observatory (warnings in force — *context*) | 4 | threshold |
+| **Natural hazards** | USGS Earthquake Hazards Program, EMSC (the second seismic reader — same bands and proximity rule as USGS by design, and `read_signals()` keeps only one event when both carry the same quake, noting the corroboration), NASA EONET, GDACS (Red→high, Orange→medium, Green never an event), NOAA NHC active storms (*context*) — each reading mapped to the nearest chokepoint, **dropped if none is within reach** | 5 | threshold + proximity |
 | **Government & regulatory** | Federal Register (tariff / sanctions / customs / port-security filings — prose, so it goes to the model), US National Weather Service (*context*) | 2 | model / threshold |
 | **Markets** | Frankfurter — the ECB's own reference rates (*context*) | 1 | not classified |
 
@@ -776,7 +792,7 @@ than as one rehearsed German trick:
 Live events carry the same two fields with a single-entry trail, so live and scripted events
 stay the same shape.
 
-The dashboard's source line — "N of 42 sources read", with the family strip under it —
+The dashboard's source line — "N of 60 sources read", with the family strip under it —
 **excludes the scripted scenario**, which reports itself as a source so the CLI can show where
 each event came from. Counting it would inflate both halves of the exact number an audience
 uses to check the live claim. `risk_monitor.expected_sources()` is the one authority on that
@@ -805,7 +821,7 @@ but a *slow* one. The whole live pull has a hard **25-second budget**
 (`LIVE_PULL_BUDGET_SECONDS`) and each request an 8-second timeout. Whatever is not read by
 then is marked `skipped` and the cycle moves on.
 
-**The families are read concurrently, and that is what makes 42 sources fit.** Read in turn,
+**The families are read concurrently, and that is what makes 60 sources fit.** Read in turn,
 the first family would spend the whole budget and the rest would be skipped — which is how a
 board that claims to watch the world quietly ends up watching one feed. `pull_everything()`
 runs RSS, GDELT, the gauges and the structured sources at once, each filling its own report,
@@ -842,7 +858,7 @@ trickles still ends inside its budget with the scenario intact. It runs with the
 patched down so the suite stays fast, and asserts the documented 25s / 8s separately —
 the mechanism working and the numbers being what the pages quote are two claims.
 
-RSS feeds are read **concurrently** (`RSS_CONCURRENCY`). Sequentially, twenty feeds at the
+RSS feeds are read **concurrently** (`RSS_CONCURRENCY`). Sequentially, thirty feeds at the
 per-source timeout cannot fit a serverless budget — only the first would be read and the
 language count the whole differentiation rests on would collapse to one. The pool is
 deliberately not a `with` block: its exit joins every worker, so one wedged feed would simply
@@ -899,28 +915,78 @@ claims were written and tested but unwitnessed. Most are now confirmed.
   robotic, tune `ADVISOR_SYSTEM` in `route_advisor.py` and `CARRIER_SYSTEM` /
   `CUSTOMER_SYSTEM` in `comms_agent.py` — the prompts, not the plumbing.
 - **Whether the live *news* sources return anything useful.** PEGELONLINE is
-  confirmed (above), which settles the gauges. The other thirty-nine
+  confirmed (above), which settles the gauges. The other fifty-seven
   sources are not: nobody has confirmed a real GDELT or RSS item was fetched,
   prefiltered and classified. That is the credibility anchor — "the risk detection is
   real" is the demo's central honest claim, and the `LIVE` chip on the risk feed
-  asserts it. The dashboard's source line ("N of 42 sources read") and the family
+  asserts it. The dashboard's source line ("N of 60 sources read") and the family
   strip under it settle it at a glance; `python -m src.risk_monitor` on a real
   connection answers it in detail, family by family, and `python -m src.signals`
   does the structured half on its own. **If the news family reads 0, the news half
   of the live claim is still decoration.**
 
-  The eight structured sources added on top — Open-Meteo, Open-Meteo Marine, USGS,
-  NASA EONET, the Federal Register, Frankfurter, the US NWS and the Hong Kong
+  The thirteen structured sources added on top — Open-Meteo, Open-Meteo Marine,
+  Open-Meteo Flood (GloFAS), the DWD warnings feed, USGS, EMSC, NASA EONET, GDACS,
+  the NHC, the Federal Register, Frankfurter, the US NWS and the Hong Kong
   Observatory — are in exactly the position PEGELONLINE was in before it was
   confirmed in production: built to their published shapes, covered by stub tests,
   and never once witnessed answering, because this sandbox's egress policy blocks
-  every third-party host with a 403 at the proxy. **Run `python -m src.signals` on a
+  every third-party host with a 403 at the proxy. The same goes for the ten RSS
+  feeds and three gauges added in the 42 → 60 widening. **Run `python -m src.signals` on a
   real connection before presenting.** A source whose response shape has moved shows
   as `failed` with a readable reason, which is the designed behaviour and not a
   reason to panic mid-demo — but it is worth knowing which ones answer.
 - **The two reroute cards have never been read.** Every review so far has been
   SHP-002, the hold. SHP-001 and SHP-005 take the other branch in both the advisor
   and the comms prompts, so the reroute emails have never been seen by anyone.
+
+### The ML layer — prepared, not wired
+
+`ml/` holds the models that would power the agents the day there is history to learn
+from — and the reason it exists at all is a problem worth remembering: **this repo has no
+ground truth.** Training a model on the rules engine's own output would relearn an
+if-statement and score a meaningless 100%; publishing that number would be the invented
+metric this project refuses to produce. So the layer is built around a **synthetic TMS
+world** (`python -m ml.synth --bookings 6000 --seed 7`): ~18 months of weekly departures
+over the real route catalogue, disruption episodes with **latent** severities and
+durations the desk never observes, noisy proxies it does (banded severities, published
+delay estimates, instrument readings), and realized outcomes generated by a structural
+model with irreducible noise. Labels come from realized cost, never from any policy —
+and a model scoring near-perfectly is treated as a bug by test, because in this world it
+would have to be cheating.
+
+Three models, each tied to the Worker it would power: **delay** (regression — how late
+does this booking actually run; Risk/Milestones), **action** (reroute / hold / no-action;
+Routing, as a consistency prior beside the LLM, never instead of it), **breach**
+(probability the deadline breaks; the approval queue's sort order). Backends share one
+fit/predict surface: stdlib baselines, **the shipped rules engine itself** (imported, not
+copied — `build_assessment` + `decide_with_rules` on reconstructed facts), scikit-learn,
+and a TabPFN adapter. `python -m ml.evaluate` runs a time-based split (no episode
+straddles the boundary — asserted), writes `ml/reports/evaluation.{json,md}`, and the
+report records the exact sklearn version it was scored on.
+
+Four rules keep it honest, all held by `tests/test_the_models_stay_honest.py`:
+
+- **Prepared, not wired.** Nothing in `src/` imports `ml/`; the root `requirements.txt`
+  and the Vercel bundle carry no ML dependency. The demo is byte-for-byte unaffected.
+- **Synthetic-world numbers stay in `ml/reports/`.** They show the pipeline works and
+  rank model families inside a controlled world; they say **nothing** about real
+  freight and must never reach the pages, the README pitch, or a demo script.
+- **The feature fence is mechanical.** `ml/features.py` owns the one column list; a
+  feature reading an outcome or latent key raises, and the direction-of-error prose in
+  the report is computed from the confusion table, never asserted.
+- **TabPFN is adapted but unwitnessed.** It needs torch plus a first-run weight download
+  from Hugging Face, which this sandbox blocks. License: code + v2 weights are
+  Prior-Labs-License (Apache-2.0 + "Built with PriorLabs-TabPFN" attribution on
+  distribution); the 2.5/3 weights are **non-commercial**; `tabpfn-client` sends data to
+  Prior Labs' servers and must never be pointed at real customer bookings without
+  sign-off. Internal benchmarking triggers none of it.
+
+One measured finding safe to use internally (synthetic-world only): the shipped rules
+engine takes every published delay estimate at face value and never asks whether an
+episode will still be alive when the vessel reaches the chokepoint — on the committed
+seed it caught 229 of 266 bookings that needed action but acted on 484 the world left
+alone. Teaching it that one timing question is a concrete non-ML improvement.
 
 ### Free-tier rate limits are the binding constraint
 
@@ -952,8 +1018,11 @@ uvicorn src.app:app --reload      # then open http://127.0.0.1:8000
 
 `/` is the landing page, `/whitepaper` is the technical whitepaper and `/app` is the
 dashboard; all three are single self-contained files. `GET /api/initial` renders the calm five-green-cards board instantly; `POST /run`
-is the button. `GET /api/gauges` reads the three Rhine gauges live from PEGELONLINE for
-the landing page's gauge panel — cached for `GAUGE_CACHE_SECONDS` because the page is
+is the button. `GET /api/gauges` reads the three reference Rhine gauges live from PEGELONLINE for
+the landing page's gauge panel (`config.LANDING_GAUGES` — the panel was designed for
+three; the monitor's live pull reads all six stations in `config.RHINE_GAUGES`, and both
+resolve against the one configured list so the two callers cannot band the same station
+apart) — cached for `GAUGE_CACHE_SECONDS` because the page is
 public and the source refreshes about every fifteen minutes, and it answers 200 with
 `ok: false` rather than failing, so a gauge being down can never blank the page. `GET /api/health` reports what a running instance can actually see — the
 path it received, whether the dashboard and data files shipped, and whether a provider
@@ -1057,14 +1126,17 @@ file in `src/` and fails naming the file and line if a transport library ever ap
 (including via `__import__` or `importlib`). It also runs a full offline cycle and checks
 every draft it produces. Run the whole suite with
 `python -m unittest discover -s tests` — standard library, nothing to install, and it
-covers the other seven claim-guards too: the TMS being the only door to the book; the
+covers the other eight claim-guards too: the TMS being the only door to the book; the
 pages naming no language, loading nothing external, carrying one product name and
 disclaiming the systems they name; the simulated week never sending a booking back to a
 route it left; a trickling source being cut off rather than hanging the run; the
 structured sources keeping schema parity with the scripted ones and failing alone; a
 reroute having to be worth what it costs, including the board outcomes that pricing must
 not quietly move; and the landing page's live gauges being banded exactly as the risk
-monitor bands them, so the two cannot disagree about the same number. Note it is deliberately *not* a "no networking" rule: the
+monitor bands them, so the two cannot disagree about the same number; and the ML layer
+staying prepared-not-wired — nothing in `src/` importing `ml/`, no ML dependency in the
+root requirements, the synthetic book never opening the demo book's file, features blind
+to outcomes, and a learner scoring a suspicious 100% failing the build. Note it is deliberately *not* a "no networking" rule: the
 live news pull and the LLM calls are real HTTP and must stay that way. Every draft carries `status: "DRAFT - not sent"`
 in the data, not just in the UI. Say this out loud in the demo — it is the responsible
 design, not a missing feature.

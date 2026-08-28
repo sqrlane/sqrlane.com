@@ -11,7 +11,7 @@ The same shape 5U AI uses (listener → worker → approval → communicator), w
         |  (src/tms.py - the ONLY door in. Nothing else opens shipments.json)
         v
   [ Risk Monitor ] --writes--> risk_state.json
-        |  (42 keyless sources: news GDELT/RSS, gauges, weather, sea
+        |  (60 keyless sources: news GDELT/RSS, gauges, weather, sea
         |   state, seismic, natural hazards, government filings, FX)
         v
   [ Orchestrator ] --reads shipments + risk--> decides which shipments are affected

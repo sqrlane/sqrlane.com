@@ -141,7 +141,7 @@ class TheLiveClaimIsMadeOnlyWhenItIsTrue(unittest.TestCase):
     """"Live" is the demo's central honest claim, so it is earned per run.
 
     The risk feed used to hard-code a green `live` chip and to print
-    "✓ 0 of 42 sources read" - a tick against a zero. On a network that blocks
+    "✓ 0 of 60 sources read" - a tick against a zero. On a network that blocks
     the sources, or a machine with no route out, the board therefore asserted a
     live read it had not made. That is the one failure this project cannot
     afford: it turns the honest differentiator into the invented metric
@@ -169,7 +169,7 @@ class TheLiveClaimIsMadeOnlyWhenItIsTrue(unittest.TestCase):
         self.assertNotIn("✓ ${ok}", feed, "\n".join([
             "",
             'The source line prints an unconditional ✓ before the count, so a run',
-            'that read nothing renders "✓ 0 of 42 sources read".',
+            'that read nothing renders "✓ 0 of 60 sources read".',
             "The marker must follow the count, not precede it unconditionally.",
         ]))
 

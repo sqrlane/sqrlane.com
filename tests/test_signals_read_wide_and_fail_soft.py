@@ -8,7 +8,7 @@ gone wrong in this project before:
      by adding a field to one producer and not the others. So a structured
      event is compared key-for-key against a scripted one.
 
-  2. FAIL-SOFT. Forty-two sources is forty-two things that can be down, slow or
+  2. FAIL-SOFT. Sixty sources is sixty things that can be down, slow or
      reshaped in front of an audience. Every one of them must be able to fail
      without the cycle failing, and the failure has to be reported rather than
      swallowed.
@@ -22,6 +22,7 @@ Run it with the rest:  python -m unittest discover -s tests
 """
 
 import http.server
+import json
 import socketserver
 import sys
 import threading
@@ -40,6 +41,14 @@ class FakeResponse:
 
     def json(self):
         return self._payload
+
+    @property
+    def text(self):
+        # The DWD source reads the raw body (it is JSONP, not JSON), so a
+        # string payload is served as-is and everything else as its JSON text.
+        if isinstance(self._payload, str):
+            return self._payload
+        return json.dumps(self._payload)
 
 
 # What each host answers with, in the shape its documentation describes.
@@ -92,6 +101,48 @@ PAYLOADS = {
     "data.weather.gov.hk": {"WTCSGNL": {"name": "Tropical Cyclone Warning Signal",
                                         "code": "TC8NE", "actionCode": "ISSUE",
                                         "issueTime": "2026-08-25T01:40:00"}},
+    # GloFAS modelled flow at the Rhine coordinate, in the critical band.
+    "flood-api.open-meteo.com": {
+        "daily": {"time": ["2026-08-25", "2026-08-26", "2026-08-27"],
+                  "river_discharge": [430.0, 425.0, 410.0]}},
+    # DWD answers JSONP, not JSON - stored as the raw string it really sends.
+    # One level-4 warning over Hamburg (an event) and one over a region no
+    # chokepoint maps to (context).
+    "www.dwd.de": (
+        'warnWetter.loadWarnings({"time":1756100000000,"warnings":{'
+        '"110160000":[{"level":4,"event":"SCHWERE STURMB\u00d6EN",'
+        '"regionName":"Hansestadt Hamburg",'
+        '"description":"Es treten schwere Sturmb\u00f6en auf."}],'
+        '"105358000":[{"level":3,"event":"WINDB\u00d6EN",'
+        '"regionName":"Kreis Segeberg",'
+        '"description":"Es treten Windb\u00f6en auf."}]},'
+        '"vorabInformation":{},"copyright":"Quelle: Deutscher Wetterdienst"});'),
+    # The same quake near Suez as the USGS payload carries, in EMSC's shape:
+    # ISO time string, flynn_region, [lon, lat, depth].
+    "www.seismicportal.eu": {"type": "FeatureCollection", "features": [
+        {"properties": {"mag": 6.5, "flynn_region": "EGYPT",
+                        "time": "2026-08-25T01:12:00.0Z", "unid": "20260825_0000001"},
+         "geometry": {"coordinates": [32.3, 30.1, 10]}},
+    ]},
+    "www.gdacs.org": {"features": [
+        # Red, and near a watched corridor - becomes an event.
+        {"properties": {"eventtype": "TC", "alertlevel": "Red",
+                        "name": "Tropical Cyclone ONIL-26", "country": "Yemen"},
+         "geometry": {"type": "Point", "coordinates": [43.0, 13.2]}},
+        # Orange, and nowhere near anything this board routes through - dropped.
+        {"properties": {"eventtype": "WF", "alertlevel": "Orange",
+                        "name": "Wildfire in NSW", "country": "Australia"},
+         "geometry": {"type": "Point", "coordinates": [147.0, -35.0]}},
+        # Green - context, never an event, wherever it is.
+        {"properties": {"eventtype": "EQ", "alertlevel": "Green",
+                        "name": "M 5.8 offshore", "country": "Chile"},
+         "geometry": {"type": "Point", "coordinates": [-72.0, -33.0]}},
+    ]},
+    "www.nhc.noaa.gov": {"activeStorms": [
+        {"id": "al062026", "binNumber": "AT1", "name": "Helene",
+         "classification": "HU", "intensity": "90", "pressure": "952",
+         "latitudeNumeric": 24.9, "longitudeNumeric": -83.4},
+    ]},
 }
 
 
@@ -163,6 +214,61 @@ class SignalsTest(unittest.TestCase):
         self.assertEqual(events["EVT-SEA-COGH"]["severity"], "high")
         self.assertNotIn("EVT-SEA-SUEZ", events)
 
+    def test_low_discharge_and_official_warnings_read_as_events(self):
+        """The newer instruments: modelled Rhine flow in its critical band, and
+        a DWD Warnstufe-4 warning over Hamburg. Both are classified by
+        threshold, and neither ever reaches the model."""
+        self._serve(self._all_good)
+        events = {e["event_id"]: e for e in signals.read_signals(Budget())["events"]}
+        # 430 m3/s is below the 500 m3/s critical band - low is the risk here.
+        self.assertEqual(events["EVT-RIV-RHINE"]["severity"], "high")
+        self.assertEqual(events["EVT-RIV-RHINE"]["chokepoint"], "RHINE")
+        # DWD Warnstufe 4 over Hamburg is a medium; the level-3 warning over a
+        # region no chokepoint maps to stays out of the events entirely.
+        self.assertEqual(events["EVT-DWD-HAM"]["severity"], "medium")
+        self.assertEqual(events["EVT-DWD-HAM"]["chokepoint"], "HAM")
+        self.assertEqual([e for e in events if "Segeberg" in e], [])
+
+    def test_the_second_seismic_reader_bands_like_the_first(self):
+        """EMSC deliberately reuses USGS's bands and proximity rule, so the
+        same quake near Suez lands on the same chokepoint at the same
+        severity from both readers. Checked at the fetch level, because
+        read_signals() then deliberately keeps only one of the pair."""
+        self._serve(self._all_good)
+        mine = {e["event_id"]: e for e in signals.fetch_emsc(8.0)["events"]}
+        theirs = {e["event_id"]: e for e in signals.fetch_earthquakes(8.0)["events"]}
+        self.assertEqual(mine["EVT-EMSC-SUEZ"]["chokepoint"], "SUEZ")
+        self.assertEqual(mine["EVT-EMSC-SUEZ"]["severity"],
+                         theirs["EVT-QUAKE-SUEZ"]["severity"])
+
+    def test_one_quake_read_by_two_readers_is_one_event_not_two(self):
+        """Redundancy covers one reader being down; it must never count the
+        same quake twice. When both answer, read_signals keeps the first
+        reader's event and records the corroboration on it - a duplicate
+        would inflate the visible alarm count off the board's own
+        redundancy, which is exactly the kind of self-inflation the
+        context tier exists to prevent."""
+        self._serve(self._all_good)
+        events = signals.read_signals(Budget())["events"]
+        seismic = [e for e in events
+                   if e["event_id"] in ("EVT-QUAKE-SUEZ", "EVT-EMSC-SUEZ")]
+        self.assertEqual([e["event_id"] for e in seismic], ["EVT-QUAKE-SUEZ"])
+        self.assertIn("corroborated by EMSC", seismic[0]["reasoning"])
+
+    def test_gdacs_translates_alert_levels_and_drops_the_far_and_the_green(self):
+        """GDACS has already judged severity, so Red translates to high - but
+        only near a corridor, and Green is context wherever it is."""
+        self._serve(self._all_good)
+        read = signals.read_signals(Budget())
+        events = {e["event_id"]: e for e in read["events"]}
+        self.assertEqual(events["EVT-GDACS-REDSEA-TC"]["severity"], "high")
+        self.assertEqual(events["EVT-GDACS-REDSEA-TC"]["type"], "weather")
+        # Orange, but nowhere near a corridor - dropped, not attached to a lane.
+        self.assertEqual([e for e in read["events"] if "NSW" in e["title"]], [])
+        # Green never becomes an event; it shows up in context instead.
+        self.assertEqual([e for e in read["events"] if "offshore" in e["title"]], [])
+        self.assertEqual(read["context"]["gdacs_alerts"]["green"], 1)
+
     def test_an_event_far_from_every_corridor_is_dropped(self):
         """A magnitude 7.4 in the South Pacific is real and is not this board's
         problem. Attaching it to a lane would be inventing exposure."""
@@ -206,6 +312,12 @@ class SignalsTest(unittest.TestCase):
         self.assertEqual(len(context["fx"]["pairs"]), 3)
         self.assertEqual(context["hk_warnings"][0]["code"], "TC8NE")
         self.assertEqual(context["us_alerts"][0]["event"], "Hurricane Warning")
+        self.assertEqual(context["nhc_storms"][0]["name"], "Helene")
+        # Lane sources may carry context too: the reading behind the event, and
+        # the warnings that mapped to no chokepoint.
+        self.assertEqual(context["river_discharge"]["state"], "critically low")
+        self.assertEqual(context["dwd_warnings"]["count"], 1)
+        self.assertEqual(context["dwd_warnings"]["sample"][0]["region"], "Kreis Segeberg")
 
     # -- 4. fail-soft -------------------------------------------------------
 
