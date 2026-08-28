@@ -39,6 +39,59 @@ DECISIONS = ["reroute", "hold", "no-action"]
 # fall back to a range implied by its severity.
 SEVERITY_FALLBACK_DELAY = {"low": [0, 1], "medium": [1, 3], "high": [3, 5]}
 
+# --- The timing question -----------------------------------------------------
+# A delay estimate describes the disruption NOW. A vessel that reaches the
+# chokepoint three weeks from now may find the strike settled and the queue
+# worked off - and an advisor that charges every booking the full estimate
+# regardless is wrong in a specific, measurable way: on the synthetic world in
+# ml/, taking every estimate at face value made the rules engine act on 484
+# bookings the world left alone.
+#
+# The question is only ASKED when the event record can answer it: it must
+# carry days_into_episode and days_to_passage (the ML world's reconstructed
+# facts do; a live event will the day the connector knows vessel positions).
+# The demo's authored events deliberately do not - their delay estimates are
+# already per-booking impact forecasts, so discounting them again would count
+# the same timing twice. No field, no guess, no discount.
+#
+# What a desk assumes about how long these things typically run, in days.
+# Deliberately NOT imported from ml/synth.py: these are round domain numbers,
+# and the synthetic world has to be allowed to disagree with them - a policy
+# tuned to the simulator's exact constants would be learning the answer key.
+TYPICAL_EPISODE_DAYS = {
+    "strike": 4,          # walkouts settle in days
+    "weather": 5,         # a storm system moves through
+    "congestion": 14,     # queues build and clear slowly
+    "geopolitical": 30,   # closures hold for weeks or months
+    "customs": 7,         # a filing dispute takes days to clear
+}
+
+# The queue does not vanish the hour the event ends: allow half the typical
+# run again for the backlog to work off before calling a lane clear.
+BACKLOG_TAIL = 0.5
+
+
+def timing_factor(event) -> tuple:
+    """How much of this event's delay estimate is still standing when THIS
+    booking reaches the chokepoint. Returns (factor, judgment) - judgment is
+    None when the event cannot answer the question, and the factor is then 1
+    so an unanswerable question changes nothing."""
+    days_into = event.get("days_into_episode")
+    to_passage = event.get("days_to_passage")
+    if days_into is None or to_passage is None:
+        return 1.0, None
+    typical = TYPICAL_EPISODE_DAYS.get(event.get("type"), 7)
+    remaining = max(0, typical - days_into)
+    horizon = remaining + BACKLOG_TAIL * typical
+    if to_passage <= horizon:
+        return 1.0, (f"likely still active at passage "
+                     f"({to_passage}d out, horizon ~{horizon:.0f}d)")
+    if to_passage <= 2 * horizon:
+        return 0.5, (f"may have cleared by passage "
+                     f"({to_passage}d out vs a ~{horizon:.0f}d horizon) - half weight")
+    return 0.0, (f"likely long cleared by passage "
+                 f"({to_passage}d out vs a ~{horizon:.0f}d horizon)")
+
 SEVERITY_RANK = {"low": 1, "medium": 2, "high": 3}
 
 
@@ -146,8 +199,15 @@ def cost_of(candidate: dict, shipment: dict, primary: dict) -> dict:
 def assess_route(route: dict, primary: dict, events: list[dict]) -> dict:
     """Everything measurable about one candidate route, versus the primary."""
     exposure = events_on_route(route, events)
-    worst_case = max((_delay_range(e)[1] for e in exposure), default=0)
-    best_case = max((_delay_range(e)[0] for e in exposure), default=0)
+
+    def effective_range(event):
+        factor, _ = timing_factor(event)
+        low, high = _delay_range(event)
+        return [round(low * factor), round(high * factor)]
+
+    ranges = [effective_range(e) for e in exposure]
+    worst_case = max((r[1] for r in ranges), default=0)
+    best_case = max((r[0] for r in ranges), default=0)
     added_transit = route["transit_days"] - primary["transit_days"]
 
     return {
@@ -161,7 +221,9 @@ def assess_route(route: dict, primary: dict, events: list[dict]) -> dict:
         "added_cost_index": route["cost_index"] - primary["cost_index"],
         "exposed_to": [
             {"event_id": e["event_id"], "chokepoint": e["chokepoint"], "type": e["type"],
-             "severity": e["severity"], "delay_days": _delay_range(e), "title": e["title"]}
+             "severity": e["severity"], "delay_days": effective_range(e),
+             "estimated_delay_days": _delay_range(e),
+             "timing_judgment": timing_factor(e)[1], "title": e["title"]}
             for e in exposure
         ],
         "risk_delay_days": [best_case, worst_case],
@@ -194,6 +256,17 @@ def build_assessment(shipment: dict, routes: dict, events: list[dict]) -> dict:
              "Exposed: " + "; ".join(
                  f"{x['chokepoint']} {x['type']}/{x['severity']} "
                  f"({x['delay_days'][0]}-{x['delay_days'][1]}d)" for x in current["exposed_to"]))
+        # The timing question, asked out loud - but only for events that can
+        # answer it (see timing_factor). The demo's authored events cannot, so
+        # their trails carry no such step and their arithmetic is unchanged.
+        for exposed in current["exposed_to"]:
+            if exposed["timing_judgment"]:
+                note("Weigh event age against passage",
+                     f"{exposed['event_id']} ({exposed['type']} at "
+                     f"{exposed['chokepoint']}): {exposed['timing_judgment']} - "
+                     f"charging {exposed['delay_days'][0]}-{exposed['delay_days'][1]}d "
+                     f"of the {exposed['estimated_delay_days'][0]}-"
+                     f"{exposed['estimated_delay_days'][1]}d estimate.")
     else:
         note("Cross-reference active risk",
              f"No active event touches {', '.join(primary['chokepoints'])}.")

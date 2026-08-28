@@ -57,13 +57,13 @@
     }
    },
    "rules": {
-    "accuracy": 0.6575,
-    "macro_f1": 0.5075,
+    "accuracy": 0.7603,
+    "macro_f1": 0.5793,
     "confusion": {
      "no-action": {
-      "no-action": 923,
-      "hold": 336,
-      "reroute": 148
+      "no-action": 1099,
+      "hold": 211,
+      "reroute": 97
      },
      "hold": {
       "no-action": 3,
@@ -71,9 +71,9 @@
       "reroute": 27
      },
      "reroute": {
-      "no-action": 34,
-      "hold": 25,
-      "reroute": 104
+      "no-action": 45,
+      "hold": 18,
+      "reroute": 100
      }
     }
    },

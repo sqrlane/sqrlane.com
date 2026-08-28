@@ -162,6 +162,11 @@ class ShippedRules:
             "type": e["type"],
             "severity": e["severity"],
             "expected_delay_days": e.get("expected_delay_days"),
+            # The two facts that let the advisor ask its timing question -
+            # how old the episode is, and how far off this booking's passage
+            # is. Both are decision-time observations, not outcomes.
+            "days_into_episode": e.get("days_into_episode"),
+            "days_to_passage": e.get("days_to_passage"),
             "title": f"{e['type']} at {e['chokepoint']} (synthetic episode)",
         } for e in episodes]
 
