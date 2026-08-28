@@ -24,7 +24,7 @@ s.header("04 — THE HOW (1/2)",
 # =========================================================================
 # THE PRODUCT, AS IT LOOKS
 # =========================================================================
-DX, DY, DW, DH = M, 224, 838, 340
+DX, DY, DW, DH = M, 224, 830, 336
 s.card(DX, DY, DW, DH, fill=CARD, stroke=BORDER_STRONG)
 s.raw(f'<rect x="{DX}" y="{DY}" width="{DW}" height="38" rx="{RMD}" fill="{SURFACE}"/>')
 s.raw(f'<rect x="{DX}" y="{DY+26}" width="{DW}" height="12" fill="{SURFACE}"/>')
@@ -91,7 +91,7 @@ s.text(DX + DW - 18, DY + 302, "7 shipments · last run 12:00", 8.5, 400, FAINT,
 # =========================================================================
 # WHAT USED TO BE TYPED
 # =========================================================================
-TX2, TW2 = 962, W - M - 962
+TX2, TW2 = 950, W - M - 950
 s.card(TX2, DY, TW2, DH)
 tx = TX2 + 24
 s.text(tx, DY + 36, "WHAT ARRIVES", 9, 700, FAINT, ls=1.2)
@@ -117,36 +117,59 @@ s.text(tx, DY + DH - 22, "Scripted today, tagged on screen. Roles from src/roste
        10.5, 400, FAINT)
 
 # =========================================================================
-# THEY RUN AT ONCE
+# THE WORKFLOW, AS THE APP SHOWS IT
 # =========================================================================
-LY, LH = 590, 240
-s.card(M, LY, CW, LH, stroke=BORDER_STRONG)
-s.text(M + 24, LY + 32, "THEY RUN AT ONCE", 10, 700, AMBER, ls=1.4)
-s.text(M + 220, LY + 32, "each waits only for the fact it needs, and no fact waits for a person",
-       11.5, 400, FAINT)
+LY, LH = 588, 262
+s.card(DX, LY, DW, LH, stroke=BORDER_STRONG)
+s.raw(f'<rect x="{DX}" y="{LY}" width="{DW}" height="34" rx="{RMD}" fill="{SURFACE}"/>')
+s.raw(f'<rect x="{DX}" y="{LY+22}" width="{DW}" height="12" fill="{SURFACE}"/>')
+s.line(DX, LY + 34, DX + DW, LY + 34, BORDER)
+for k in range(3):
+    s.raw(f'<circle cx="{DX+18+k*13}" cy="{LY+17}" r="3.5" fill="{GRAY400}"/>')
+s.text(DX + 68, LY + 21, "SQRlane / Shipments / SHP-001", 11, 500, MUTED)
+s.text(DX + DW - 16, LY + 21, "activity", 10, 400, FAINT, anchor="end", cls="mono")
 
+FLOW = [("09:12", "Inbox", "carrier mail read, linked to SHP-001", GREEN),
+        ("09:12", "Docs", "B/L fields extracted onto the booking", GREEN),
+        ("09:13", "Booking", "amendment drafted for the carrier", GREEN),
+        ("09:13", "Customs", "entry checked, B/L reissue flagged", AMBER),
+        ("09:13", "Invoice", "surcharge reconciled against the rate", GREEN),
+        ("09:14", "TMS Link", "4 changes queued, awaiting approval", FG)]
+for j, (ts, who, what, col) in enumerate(FLOW):
+    y = LY + 62 + j * 33
+    s.text(DX + 20, y, ts, 10.5, 400, FAINT, cls="mono")
+    s.raw(f'<circle cx="{DX+78}" cy="{y-4}" r="4" fill="{col}"/>')
+    if j < len(FLOW) - 1:
+        s.line(DX + 78, y + 2, DX + 78, y + 25, GRAY400, 1.2)
+    s.text(DX + 94, y, who, 12.5, 600, FG)
+    s.text(DX + 190, y, what, 12.5, 400, MUTED)
+    s.chip(DX + DW - 20 - 62, y - 13, 62, 19, "done" if col is not FG else "queued",
+           fs=9, fill=SURFACE, col=MUTED, weight=600)
+
+# =========================================================================
+# AND THEY RUN AT ONCE - the same claim, a sixth of the space
+# =========================================================================
+s.card(TX2, LY, TW2, LH)
+s.text(TX2 + 24, LY + 34, "AND THEY RUN AT ONCE", 10, 700, AMBER, ls=1.4)
 LANES = [("Inbox", 0, 5), ("Docs", 0, 4), ("RFQ", 0, 3),
          ("Booking", 3, 7), ("Invoice", 4, 8), ("Customs", 6, 10)]
-L0, LWU = M + 130, (CW - 300) / 10
+L0, LWU = TX2 + 130, (TW2 - 210) / 10
 for j, (name, a, b) in enumerate(LANES):
-    y = LY + 56 + j * 22
-    s.text(M + 24, y + 11, name, 11.5, 500, MUTED)
-    s.raw(f'<rect x="{L0}" y="{y+4}" width="{10*LWU}" height="14" rx="4" fill="{SURFACE}"/>')
-    s.raw(f'<rect x="{L0 + a*LWU}" y="{y+4}" width="{(b-a)*LWU}" height="14" rx="4" fill="{AMBER}"/>')
-    s.raw(f'<circle cx="{L0 + b*LWU + 16}" cy="{y+11}" r="6" fill="{GREEN_BG}"/>')
-    s.raw(f'<path d="M{L0 + b*LWU + 13} {y+11} l2.5 2.5 l5 -5.5" stroke="{GREEN}" '
-          f'stroke-width="1.6" fill="none" stroke-linecap="round"/>')
-for (fa, fb) in ((2, 3), (2, 4), (3, 5)):
-    ya = LY + 56 + fa * 22 + 18
-    yb = LY + 56 + fb * 22 + 4
-    x = L0 + LANES[fb][1] * LWU
-    s.line(x, ya, x, yb, FAINT, 1.2, "ahN", dash="3 3")
-s.text(M + 24, LY + LH - 22, "Six loops opened. Six closed by another agent. One approval at the end.",
-       13, 500, FG)
+    y = LY + 58 + j * 17
+    s.text(TX2 + 24, y + 9, name, 10.5, 400, MUTED)
+    s.raw(f'<rect x="{L0}" y="{y+3}" width="{10*LWU}" height="10" rx="3" fill="{SURFACE}"/>')
+    s.raw(f'<rect x="{L0 + a*LWU}" y="{y+3}" width="{(b-a)*LWU}" height="10" rx="3" fill="{AMBER}"/>')
+    s.raw(f'<circle cx="{L0 + b*LWU + 14}" cy="{y+8}" r="5" fill="{GREEN_BG}"/>')
+    s.raw(f'<path d="M{L0 + b*LWU + 11.5} {y+8} l2 2 l4.5 -4.5" stroke="{GREEN}" '
+          f'stroke-width="1.5" fill="none" stroke-linecap="round"/>')
+s.line(TX2 + 24, LY + 176, TX2 + TW2 - 24, LY + 176, BORDER)
+s.text(TX2 + 24, LY + 204, "Each starts when the fact it needs arrives.", 13, 500, FG)
+s.text(TX2 + 24, LY + 226, "Six loops opened, six closed by another agent.", 13, 400, MUTED)
+s.text(TX2 + 24, LY + 246, "One approval, at the end.", 13, 400, MUTED)
 
-s.text(M, 878, "Six systems, one record. The re-typing is gone.", 24, 600, FG, ls=-0.5)
-s.raw(f'<text x="{W-M}" y="878" font-size="30" font-weight="600" fill="{FG}" '
+s.text(M, 900, "Six systems, one record. The re-typing is gone.", 24, 600, FG, ls=-0.5)
+s.raw(f'<text x="{W-M}" y="896" font-size="30" font-weight="600" fill="{FG}" '
       f'text-anchor="end" class="num">40%</text>')
-s.text(W - M, 900, "of the day, back", 12, 400, FAINT, anchor="end")
+s.text(W - M, 918, "of the day, back", 12, 400, FAINT, anchor="end")
 s.footer("04 / THE HOW 1/2")
 s.write("slide-04-the-how-1.svg")
