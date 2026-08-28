@@ -708,7 +708,7 @@ concurrently, and a source that is down, slow or reshaped is reported failed and
 
 | Family | Sources | Count | Classified by |
 |---|---|---|---|
-| **News** | GDELT DOC 2.0 (one query per corridor, plus customs/tariffs/sanctions) and RSS via `feedparser` — regional broadcasters and papers on the corridors' doorsteps (NDR, tagesschau, DW, NOS, VRT, RTVE, El País, France Info, Le Monde, ANSA, NHK, Al Jazeera, France 24, Straits Times, Times of India, Rijnmond, Hamburger Abendblatt, ORF, Egypt Independent, News24, Daily Maverick) plus the narrow trade press (gCaptain, Splash 247, The Maritime Executive, The Loadstar, Hellenic Shipping News, Container News, SAFETY4SEA). The international feeds stay so the lead *against* them is measurable | 41 | the model |
+| **News** | GDELT DOC 2.0 (one query per corridor, plus customs/tariffs/sanctions) and RSS via `feedparser` — regional broadcasters and papers on the corridors' doorsteps (NDR, tagesschau, DW, NOS, VRT, RTVE, El País, France Info, Le Monde, ANSA, NHK, Al Jazeera, BBC Arabic, France 24, Straits Times, Times of India, Rijnmond, Hamburger Abendblatt, ORF, Egypt Independent, News24, Daily Maverick) plus the narrow trade press (gCaptain, Splash 247, The Maritime Executive, The Loadstar, Hellenic Shipping News, Container News, FreightWaves). The international feeds stay so the lead *against* them is measurable | 41 | the model |
 | **Rivers** | PEGELONLINE — Kaub, Duisburg-Ruhrort, Emmerich, Köln, Mainz, Maxau → RHINE — plus Open-Meteo Flood (GloFAS modelled discharge; a gauge is a level at a point, GloFAS is flow for the reach — two independent reads on the same river; **low is the risk**, so its bands walk `_band_low`) | 7 | threshold |
 | **Weather & sea state** | Open-Meteo (gusts over HAM/RTM/ANR/FOS), Open-Meteo Marine (wave height at SUEZ/REDSEA/COGH), DWD official weather warnings (JSONP; Warnstufe ≥ 4 over a watched region → event, everything else *context*), Hong Kong Observatory (warnings in force — *context*) | 4 | threshold |
 | **Natural hazards** | USGS Earthquake Hazards Program, EMSC (the second seismic reader — same bands and proximity rule as USGS by design, and `read_signals()` keeps only one event when both carry the same quake, noting the corroboration), NASA EONET, GDACS (Red→high, Orange→medium, Green never an event), NOAA NHC active storms (*context*) — each reading mapped to the nearest chokepoint, **dropped if none is within reach** | 5 | threshold + proximity |
@@ -914,16 +914,20 @@ claims were written and tested but unwitnessed. Most are now confirmed.
   centrepiece and cannot be asserted in a test. Read them aloud. If they sound
   robotic, tune `ADVISOR_SYSTEM` in `route_advisor.py` and `CARRIER_SYSTEM` /
   `CUSTOMER_SYSTEM` in `comms_agent.py` — the prompts, not the plumbing.
-- **Whether the live *news* sources return anything useful.** PEGELONLINE is
-  confirmed (above), which settles the gauges. The other fifty-seven
-  sources are not: nobody has confirmed a real GDELT or RSS item was fetched,
-  prefiltered and classified. That is the credibility anchor — "the risk detection is
-  real" is the demo's central honest claim, and the `LIVE` chip on the risk feed
-  asserts it. The dashboard's source line ("N of 60 sources read") and the family
-  strip under it settle it at a glance; `python -m src.risk_monitor` on a real
-  connection answers it in detail, family by family, and `python -m src.signals`
-  does the structured half on its own. **If the news family reads 0, the news half
-  of the live claim is still decoration.**
+- **The news family was witnessed on 2026-08-28** from the owner's machine:
+  28 of 30 RSS feeds answered with 583 real items, the prefilter surfaced 40
+  chokepoint mentions, and non-English sources produced real events — including
+  NDR Hamburg carrying an actual Hamburg transport closure, which is the demo's
+  own story happening unscripted. Two rotted feeds were swapped the same day
+  (Al Jazeera Arabic → BBC Arabic; SAFETY4SEA → FreightWaves, both unwitnessed
+  until the next run), and a warn-band gauge event was found captioning the
+  wrong threshold — fixed with the crossed threshold now quoted. Two things
+  remain open on this claim: **GDELT failed from that machine with an SSL error
+  on all eleven queries** (client-side, undiagnosed — the wires' lag benchmark
+  is unavailable until a machine can reach it), and the machine had no AI key,
+  so classification ran the keyword path — labelled as such on every event —
+  while the model half stays witnessed only in production. `python -m
+  src.risk_monitor` on a real connection remains the pre-demo check.
 
   **The thirteen structured sources were witnessed on 2026-08-28** from the owner's
   machine: ten answered on first contact, and the run caught four real faults, all

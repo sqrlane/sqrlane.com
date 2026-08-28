@@ -426,11 +426,25 @@ def fetch_rhine_levels(report: SourceReport, budget: "Budget") -> list[dict]:
     return events
 
 
+def _crossed_threshold_cm(gauge: dict, level_cm: float):
+    """The threshold the reading actually crossed - the first band it clears,
+    same walk as _gauge_state. Witnessed going wrong before this existed: a
+    warn-band reading (Maxau, 370 cm) was captioned "at or below the 320 cm
+    restriction threshold", quoting the medium band it had NOT crossed. The
+    band was right and the sentence was false, which is worse than being
+    wrong - it reads as broken arithmetic on screen."""
+    for key, *_ in GAUGE_BANDS:
+        if level_cm <= gauge[key]:
+            return gauge[key]
+    return None
+
+
 def _rhine_event(gauge, level_cm, timestamp):
     """Turn a gauge reading into an event, or None if the level is unremarkable."""
     severity, _state, delay, note = _gauge_state(gauge, level_cm)
     if severity is None:
         return None
+    crossed_cm = _crossed_threshold_cm(gauge, level_cm)
 
     return {
         "event_id": f"EVT-RHINE-{gauge['station']}",
@@ -441,7 +455,7 @@ def _rhine_event(gauge, level_cm, timestamp):
         "title": f"Rhine low water at {gauge['name']}: {level_cm:.0f} cm - {note}",
         "title_original": None,
         "summary": (f"Gauge {gauge['name']} reading {level_cm:.0f} cm "
-                    f"(restriction threshold {gauge['high_cm']} cm)."),
+                    f"(restriction threshold {crossed_cm} cm)."),
         "source": f"PEGELONLINE / {gauge['name']} gauge",
         "source_type": "gauge",
         "source_language": "de",
@@ -458,7 +472,7 @@ def _rhine_event(gauge, level_cm, timestamp):
         "english_wire_lag_hours": None,
         "confidence": 0.9,
         "reasoning": (f"Water level {level_cm:.0f} cm is at or below the "
-                      f"{gauge['high_cm']} cm restriction threshold for {gauge['name']}, "
+                      f"{crossed_cm} cm restriction threshold for {gauge['name']}, "
                       f"so Rhine barge capacity out of the North Range is constrained."),
     }
 

@@ -56,7 +56,7 @@ news family reads **outward from the corridors**, not from the newsroom.
 | Source | Catalogue entry | What it gives you | Key? |
 |---|---|---|---|
 | **GDELT DOC 2.0** — 11 queries | *News → GDELT* | Global news backbone, ~15 min refresh, filterable by keyword, language and country. One query pinned per corridor: North Range, Low Countries, Western Med and the Rhone, Red Sea and the Gulf, Asian gateway ports, the Turkish straits, Panama and the Americas, plus customs/tariffs/sanctions. | No |
-| **RSS** via `feedparser` — 30 feeds | *(direct publisher feeds)* | Regional broadcasters and papers on the corridors' doorsteps — NDR Hamburg, Hamburger Abendblatt (a walkout in the port is its local story first), tagesschau, DW, ORF (the Alpine hinterland the rail legs serve), NOS, Rijnmond (Rotterdam's own regional broadcaster), VRT, RTVE, El País, France Info, Le Monde, ANSA, NHK, Al Jazeera (Arabic and English), DW and France 24 in Arabic, Egypt Independent (the Suez corridor's doorstep), News24 and Daily Maverick (two readers on the Cape of Good Hope corridor, the same redundancy rationale as the two Arabic feeds), The Straits Times, Times of India — plus the narrow trade press where nearly every item is on topic: gCaptain, Splash 247, The Maritime Executive, The Loadstar, Hellenic Shipping News, Container News, SAFETY4SEA. | No |
+| **RSS** via `feedparser` — 30 feeds | *(direct publisher feeds)* | Regional broadcasters and papers on the corridors' doorsteps — NDR Hamburg, Hamburger Abendblatt (a walkout in the port is its local story first), tagesschau, DW, ORF (the Alpine hinterland the rail legs serve), NOS, Rijnmond (Rotterdam's own regional broadcaster), VRT, RTVE, El País, France Info, Le Monde, ANSA, NHK, Al Jazeera (English), BBC Arabic, DW and France 24 in Arabic, Egypt Independent (the Suez corridor's doorstep), News24 and Daily Maverick (two readers on the Cape of Good Hope corridor, the same redundancy rationale as the two Arabic feeds), The Straits Times, Times of India — plus the narrow trade press where nearly every item is on topic: gCaptain, Splash 247, The Maritime Executive, The Loadstar, Hellenic Shipping News, Container News, FreightWaves. | No |
 
 Both are prose, so both go through the cheap keyword prefilter and then to the model, which
 makes the actual relevance / chokepoint / severity call.
@@ -177,6 +177,21 @@ key. `llm.py` resolves the model at runtime against the provider's own list.
   again until the next real run; SUEZ rightly yields no wave height (it is a canal).
   The build sandbox still blocks every third-party host, so `python -m src.signals`
   on a real connection remains the pre-demo check.
+- **The news family was witnessed later the same day (2026-08-28)**, from the same
+  machine: 28 of 30 RSS feeds answered with 583 real items, all six PEGELONLINE
+  gauges read live (the Rhine genuinely was low — five real low-water events), and
+  the repaired EMSC, GDACS and US NWS all answered on the retry. Two feeds had
+  rotted and were swapped the same day — Al Jazeera Arabic (HTTP 404; BBC Arabic
+  replaces it, and the corridor kept two other Arabic readers throughout, which is
+  what the redundancy is for) and SAFETY4SEA (served HTML where the feed should
+  be; FreightWaves replaces it) — both replacements unwitnessed until the next
+  run. **GDELT failed from that machine with an SSL error on all eleven queries**;
+  the run degraded exactly as designed (the wires' lag benchmark was the only
+  loss), but the cause is on the client side and undiagnosed — check GDELT from
+  any second machine before relying on the wire-lag comparison in a demo. With no
+  AI key on the machine, classification ran the keyword path and every such event
+  said so on screen ("KEYWORD MATCH ONLY - no LLM was used"); the model half of
+  the claim was witnessed separately, in production.
 - **Breadth is safe only because nothing is load-bearing.** If you add a source, add it as
   its own function, inside the budget, reporting its own failure. If a new source can make
   the cycle fail, it is wired wrong.
