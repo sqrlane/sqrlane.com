@@ -2037,6 +2037,10 @@ function instrumentCard(){
     {k:`Wind · ${esc(r.name)}`, v:`${r.gusts_kn} kn`, s:esc(r.state), sev:r.severity}));
   (c.seas || []).forEach(r => tiles.push(
     {k:`Sea · ${esc(r.name)}`, v:`${r.wave_m} m`, s:esc(r.state), sev:r.severity}));
+  const riv = c.river_discharge;
+  if (riv && riv.discharge_m3s != null) tiles.push(
+    {k:`Flow · ${esc(riv.name||"Rhine")}`, v:`${riv.discharge_m3s} m³/s`,
+     s:esc(riv.state||""), sev:riv.severity});
   if (!tiles.length) return "";
   const firing = tiles.filter(t => t.sev).length;
   return `<div class="card" style="margin-top:20px">
@@ -2063,6 +2067,14 @@ function contextCard(){
     {k:"Hong Kong", v:esc(w.code||"—"), s:esc(w.name||"")}));
   (c.us_alerts || []).slice(0,3).forEach(a => tiles.push(
     {k:"US ports", v:esc(a.event||"—"), s:esc(a.area||"")}));
+  (c.nhc_storms || []).slice(0,3).forEach(s => tiles.push(
+    {k:"Named storms", v:esc(s.name||"—"), s:esc(s.classification||"")}));
+  const dwd = c.dwd_warnings;
+  if (dwd && dwd.count) tiles.push(
+    {k:"DWD warnings", v:String(dwd.count), s:"in force away from the corridors"});
+  const gd = c.gdacs_alerts;
+  if (gd && gd.green) tiles.push(
+    {k:"GDACS", v:`${gd.green} green`, s:"alerts, none of them actionable here"});
   if (!tiles.length) return "";
   return `<div class="card" style="margin-top:20px">
     <div class="card-h"><h2>Board context</h2><span class="chip live">live</span>
@@ -2070,9 +2082,10 @@ function contextCard(){
     <div class="ctxgrid">${tiles.map(t=>`<div class="ctxi">
       <div class="k">${t.k}</div><div class="v">${t.v}</div><div class="s">${t.s}</div>
     </div>`).join("")}</div>
-    <div class="srcline"><div class="r">The rate a reroute is billed at, and weather over ports
-      this board does not call at. Read live on this run, and none of it moves a booking here —
-      shown rather than implied, and never promoted to look like risk.</div></div>
+    <div class="srcline"><div class="r">The rate a reroute is billed at, weather over ports
+      this board does not call at, storms in basins no booking here routes through. Read live on
+      this run, and none of it moves a booking here — shown rather than implied, and never
+      promoted to look like risk.</div></div>
   </div>`;
 }
 

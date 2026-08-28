@@ -24,6 +24,7 @@ import socketserver
 import threading
 import time
 import unittest
+import urllib.parse
 from pathlib import Path
 import sys
 
@@ -43,7 +44,9 @@ RESPONSES: dict = {}
 
 class _FakeGauge(http.server.BaseHTTPRequestHandler):
     def do_GET(self):                                    # noqa: N802
-        station = self.path.strip("/").split("/")[0]
+        # requests percent-encodes a non-ASCII station name (KÖLN) in the URL
+        # path, so decode it back before looking the station up.
+        station = urllib.parse.unquote(self.path.strip("/").split("/")[0])
         answer = RESPONSES.get(station, "missing")
 
         if answer == "missing":
@@ -155,7 +158,9 @@ class ReadingTheGauges(GaugeTestCase):
         payload = risk_monitor.read_rhine_gauges()
 
         self.assertTrue(payload["ok"])
-        self.assertEqual(len(payload["gauges"]), len(config.RHINE_GAUGES))
+        # The default read is the landing panel's selection - the three
+        # reference gauges - not the monitor's wider RHINE_GAUGES list.
+        self.assertEqual(len(payload["gauges"]), len(config.LANDING_GAUGES))
         kaub = payload["gauges"][0]
         self.assertEqual(kaub["station"], "KAUB")
         self.assertEqual(kaub["level_cm"], 214)
@@ -178,7 +183,25 @@ class ReadingTheGauges(GaugeTestCase):
         RESPONSES.update({"KAUB": 200.0, "DUISBURG-RUHRORT": 400.0, "EMMERICH": 200.0})
         payload = risk_monitor.read_rhine_gauges()
         self.assertEqual([g["station"] for g in payload["gauges"]],
-                         [g["station"] for g in config.RHINE_GAUGES])
+                         config.LANDING_GAUGES)
+
+    def test_the_landing_default_and_the_wider_monitor_read_are_one_list(self):
+        """The landing panel was designed around three readings and keeps
+        showing exactly the reference gauges; the monitor reads every gauge in
+        RHINE_GAUGES. The split is a parameter over one configured list, so
+        the two callers cannot carry different thresholds for a station."""
+        RESPONSES.update({"KAUB": 214.0, "DUISBURG-RUHRORT": 385.0, "EMMERICH": 240.0,
+                          "KÖLN": 300.0, "MAINZ": 250.0, "MAXAU": 500.0})
+        default = risk_monitor.read_rhine_gauges()
+        self.assertEqual([g["station"] for g in default["gauges"]],
+                         config.LANDING_GAUGES)
+
+        everything = risk_monitor.read_rhine_gauges(
+            stations=[g["station"] for g in config.RHINE_GAUGES])
+        self.assertEqual(len(everything["gauges"]), len(config.RHINE_GAUGES))
+        koeln = {g["station"]: g for g in everything["gauges"]}["KÖLN"]
+        self.assertTrue(koeln["ok"])
+        self.assertEqual(koeln["state"], "normal")
 
 
 # --------------------------------------------------------------------------

@@ -1,0 +1,30 @@
+# ml/ layer only. The ROOT requirements.txt must NOT gain any of these -
+# Vercel installs the root file, and the demo neither imports nor needs the
+# ML layer. tests/test_the_models_stay_honest.py fails the build if an ML
+# dependency ever appears in the root file.
+#
+# Note ml/synth.py (the world generator) and the stdlib baselines need NONE
+# of this - they run on the standard library plus the repo's own modules.
+# This file is for the learners.
+
+numpy>=1.26
+scikit-learn>=1.4
+
+# --- optional: TabPFN -------------------------------------------------------
+# Deliberately commented out. Uncommenting is a decision, not a default:
+#
+#   * `pip install tabpfn` pulls PyTorch (several GB), and the FIRST fit
+#     downloads model weights from huggingface.co - a network the build
+#     sandbox blocks, so it can never run there. Run it on a machine with
+#     real internet once so the weights cache.
+#   * License: the TabPFN code and v2 weights are Prior-Labs-License
+#     (Apache-2.0 plus a required "Built with PriorLabs-TabPFN" attribution
+#     when you distribute); the newer 2.5/3 weights are NON-COMMERCIAL -
+#     internal benchmarking is fine, shipping is a license decision to make
+#     deliberately. See ml/tabpfn_adapter.py for the full note.
+#   * tabpfn-client (their hosted API, no torch) also exists, but it sends
+#     the table to Prior Labs' servers - never point it at real customer
+#     bookings without a data-processing agreement and sign-off.
+#
+# tabpfn>=2.0
+# torch>=2.2

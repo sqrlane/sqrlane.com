@@ -6,7 +6,7 @@
 the shipments are read out of the system of record, the Workers decide against those
 records, and every action they take is written back onto them.
 
-Three AI Workers watch **everything that moves a trade lane** — 42 free, keyless sources
+Three AI Workers watch **everything that moves a trade lane** — 60 free, keyless sources
 across six families: news and trade press in several languages, river gauges, port weather
 and sea state, seismic and natural-hazard feeds, government filings, and the reference rate
 a reroute is billed at. When something hits, they work out which bookings are affected,
@@ -166,8 +166,8 @@ oversight is the responsible design, not a missing feature.
 | | | |
 |---|---|---|
 | **TMS link** | `src/tms.py` | The system of record. Reads the book in, and turns each Worker's action into the booking change it implies — queued, never written. Imports nothing but `json`, `datetime` and the config. |
-| **Risk Monitor** | `src/risk_monitor.py` | The news half: 11 GDELT queries and 20 multilingual feeds, plus the Rhine gauges. An LLM classifies each item for logistics relevance → chokepoint, type, severity. |
-| **Signal layer** | `src/signals.py` | The structured half: port weather and sea state (Open-Meteo), seismic (USGS), natural events (NASA EONET), trade filings (Federal Register), and the ECB's rates (Frankfurter). Numbers are classified by threshold — no model call, and nothing to hallucinate. |
+| **Risk Monitor** | `src/risk_monitor.py` | The news half: 11 GDELT queries and 30 multilingual feeds, plus the six Rhine gauges. An LLM classifies each item for logistics relevance → chokepoint, type, severity. |
+| **Signal layer** | `src/signals.py` | The structured half: port weather and sea state (Open-Meteo, Open-Meteo Marine), official weather warnings (DWD), river discharge (GloFAS via Open-Meteo Flood), seismic (USGS and EMSC), natural events and disaster alerts (NASA EONET, GDACS), trade filings (Federal Register), and the ECB's rates (Frankfurter) — with the US NWS, NOAA NHC and the Hong Kong Observatory read as context. Numbers are classified by threshold — no model call, and nothing to hallucinate. |
 | **Route Advisor** | `src/route_advisor.py` | Weighs schedule slack against added transit against expected disruption delay. Decides reroute / hold / no-action, and records the trail. |
 | **Comms Agent** | `src/comms_agent.py` | Drafts a carrier email and a customer email, in two deliberately different voices. Sends nothing. |
 | **Orchestrator** | `src/orchestrator.py` | The loop, plus `src/app.py` (FastAPI), `static/index.html` (the dashboard) and `static/landing.html` (the front page). |
@@ -228,10 +228,10 @@ Serverless changes two things, both handled automatically:
 - **A dead source is skipped, not fatal.** Each one is read in its own function and its
   failure is recorded and shown.
 - **A slow source cannot stall the demo.** The whole live pull has a hard 25-second
-  budget shared across every family, and the families are read concurrently — 42 sources
+  budget shared across every family, and the families are read concurrently — 60 sources
   cost about what the slowest one costs. Whatever isn't read by then is skipped and the
   cycle moves on.
-- **No source is load-bearing.** That is what makes breadth safe: any one of the 42 can
+- **No source is load-bearing.** That is what makes breadth safe: any one of the 60 can
   be down, slow or reshaped without the cycle failing, and a test holds it.
 - **No provider, no problem.** Decisions and drafts fall back to deterministic logic,
   clearly badged.
@@ -245,7 +245,7 @@ Serverless changes two things, both handled automatically:
 
 The demo runs itself; these are the things only a person can check.
 
-1. **Open the risk feed and read the source line** — "N of 42 sources read", and the
+1. **Open the risk feed and read the source line** — "N of 60 sources read", and the
    family strip under it. If the news family is at 0, the live news pull is not working
    and the `LIVE` chip is overclaiming. `python -m src.risk_monitor` says which sources
    failed and why, family by family; `python -m src.signals` does the structured half
@@ -321,7 +321,7 @@ demo.** Against real sockets: a source that hangs and a source that trickles one
 time are both cut off, and a run whose every source trickles still ends inside its budget
 with the scenario intact.
 
-None of these is a "no networking" rule. The app makes real HTTP calls on purpose — all 42
+None of these is a "no networking" rule. The app makes real HTTP calls on purpose — all 60
 sources and the LLM provider — and the live pull is the credibility anchor. What must not
 exist is a way to send a *message*. So `requests` is fine and `smtplib` is not.
 

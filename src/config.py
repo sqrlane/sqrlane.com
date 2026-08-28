@@ -104,8 +104,8 @@ LLM_TEMPERATURE = 0.0        # classification should be repeatable
 HTTP_TIMEOUT_SECONDS = _env_int("HTTP_TIMEOUT_SECONDS", 6 if SERVERLESS else 8)
 
 # Hard ceiling on the entire live pull. Once this is spent, whatever has not
-# been read is marked skipped and the cycle moves on. Forty-two sources at eight
-# seconds each would otherwise be most of an hour - so this, plus reading every
+# been read is marked skipped and the cycle moves on. Sixty sources at eight
+# seconds each would otherwise be eight minutes - so this, plus reading every
 # family concurrently, is what actually keeps the run on time.
 #
 # Deployed, the ceiling is the function's own timeout, and the LLM calls that
@@ -123,7 +123,7 @@ USER_AGENT = "trade-risk-agent/0.1 (demo prototype; contact: local)"
 # what holds instead is the reason behind that rule - NO SOURCE MAY BE
 # LOAD-BEARING. Each is its own small function, inside a shared budget,
 # reporting its own failure; the families are read concurrently. See
-# DATA-SOURCES.md, and src/signals.py for sources 4-11.
+# DATA-SOURCES.md, and src/signals.py for sources 4-16.
 #
 # (These numbers are the sources; the SIX FAMILIES they group into - news,
 # river gauges, weather & sea state, natural hazards, government, markets -
@@ -198,6 +198,11 @@ RSS_FEEDS = [
     {"name": "NDR Hamburg", "language": "de", "url": "https://www.ndr.de/nachrichten/hamburg/index-rss.xml"},
     {"name": "tagesschau", "language": "de", "url": "https://www.tagesschau.de/index~rss2.xml"},
     {"name": "DW (Deutsch)", "language": "de", "url": "https://rss.dw.com/rdf/rss-de-all"},
+    # Hamburg's own paper - a walkout in the port is its local story before it
+    # is anyone's shipping story.
+    {"name": "Hamburger Abendblatt", "language": "de", "url": "https://www.abendblatt.de/rss"},
+    # Austria - the Alpine hinterland the rail legs out of the North Range serve.
+    {"name": "ORF", "language": "de", "url": "https://rss.orf.at/news.xml"},
     # Arabic - Red Sea, Suez and Gulf incidents surface here before the wires.
     {"name": "Al Jazeera Arabic", "language": "ar", "url": "https://www.aljazeera.net/xml/rss/all.xml"},
     # French - Fos-sur-Mer, Le Havre, and the Rhone corridor.
@@ -205,6 +210,9 @@ RSS_FEEDS = [
     {"name": "Le Monde", "language": "fr", "url": "https://www.lemonde.fr/rss/une.xml"},
     # Dutch - Rotterdam and Antwerp are Dutch-language ports.
     {"name": "NOS Nieuws", "language": "nl", "url": "https://feeds.nos.nl/nosnieuwsalgemeen"},
+    # Rotterdam's own regional broadcaster, on the port's doorstep - the same
+    # role NDR Hamburg plays for the other end of the North Range.
+    {"name": "Rijnmond", "language": "nl", "url": "https://www.rijnmond.nl/rss/index.xml"},
     # Spanish - Algeciras, Valencia and the western Mediterranean.
     {"name": "RTVE", "language": "es", "url": "https://api2.rtve.es/rss/temas_noticias.xml"},
     # Flemish - Antwerp's own regional broadcaster, on the port's doorstep.
@@ -213,6 +221,15 @@ RSS_FEEDS = [
     # feed having a bad day should not silence a whole corridor.
     {"name": "DW (العربية)", "language": "ar", "url": "https://rss.dw.com/rdf/rss-ar-all"},
     {"name": "France 24 (العربية)", "language": "ar", "url": "https://www.france24.com/ar/rss"},
+    # The Suez corridor's doorstep, in English - close to the canal rather than
+    # to a newsroom half the world away from it.
+    {"name": "Egypt Independent", "language": "en", "url": "https://www.egyptindependent.com/feed/"},
+    # The Cape of Good Hope corridor - the leg every Red Sea reroute on this
+    # board actually sails. Two readers, for the same reason there are two
+    # Arabic feeds: one source having a bad day must not silence a corridor.
+    {"name": "News24", "language": "en",
+     "url": "https://feeds.capi24.com/v1/Search/articles/news24/TopStories/rss"},
+    {"name": "Daily Maverick", "language": "en", "url": "https://www.dailymaverick.co.za/dmrss/"},
     # Italian - Genoa, Trieste and the Adriatic feeder network.
     {"name": "ANSA", "language": "it", "url": "https://www.ansa.it/sito/ansait_rss.xml"},
     # Spanish - Algeciras and Valencia already have GDELT; this is the paper.
@@ -230,6 +247,15 @@ RSS_FEEDS = [
     {"name": "Splash 247 (maritime)", "language": "en", "url": "https://splash247.com/feed/"},
     {"name": "The Maritime Executive", "language": "en",
      "url": "https://www.maritime-executive.com/articles.rss"},
+    # More of the same trade press: The Loadstar is the forwarders' own paper,
+    # Hellenic Shipping News and Container News cover the carriers and the box
+    # trades, and SAFETY4SEA carries the casualty and port-state stories that
+    # close a berth before anyone calls it a disruption.
+    {"name": "The Loadstar", "language": "en", "url": "https://theloadstar.com/feed/"},
+    {"name": "Hellenic Shipping News", "language": "en",
+     "url": "https://www.hellenicshippingnews.com/feed/"},
+    {"name": "Container News", "language": "en", "url": "https://container-news.com/feed/"},
+    {"name": "SAFETY4SEA", "language": "en", "url": "https://safety4sea.com/feed/"},
     # English - the wires, kept so the lag against them is measurable.
     {"name": "gCaptain (maritime)", "language": "en", "url": "https://gcaptain.com/feed/"},
     {"name": "Al Jazeera English", "language": "en", "url": "https://www.aljazeera.com/xml/rss/all.xml"},
@@ -242,10 +268,10 @@ RSS_MAX_ITEMS_PER_FEED = 25
 HTTP_MAX_BYTES = _env_int("HTTP_MAX_BYTES", 4_000_000)
 
 # Feeds are independent requests, so they are read at once rather than in turn.
-# Sequentially, twenty feeds at the per-source timeout cannot fit in a
+# Sequentially, thirty feeds at the per-source timeout cannot fit in a
 # serverless budget and all but the first would be skipped - taking the language
 # spread, and most of the point, with them.
-RSS_CONCURRENCY = _env_int("RSS_CONCURRENCY", 20)
+RSS_CONCURRENCY = _env_int("RSS_CONCURRENCY", 30)
 
 # --- 3. PEGELONLINE - Rhine water levels, the DACH domain-depth signal ------
 # Gauge readings are numbers, not prose, so they are classified by threshold
@@ -254,11 +280,26 @@ RSS_CONCURRENCY = _env_int("RSS_CONCURRENCY", 20)
 
 PEGELONLINE_ENDPOINT = "https://www.pegelonline.wsv.de/webservices/rest-api/v2/stations"
 
+# Everything the risk monitor reads. The first three are the reference gauges
+# the barge market quotes; the next three widen the read along the river - Köln
+# and Maxau bracket Kaub upstream and down, Mainz sits at the Main confluence -
+# so a level falling in one reach shows up before it reaches the reference
+# gauge. Bands for the newer three are demo-tuned like the rest.
 RHINE_GAUGES = [
     {"station": "KAUB", "name": "Kaub", "warn_cm": 100, "high_cm": 78, "critical_cm": 40},
     {"station": "DUISBURG-RUHRORT", "name": "Duisburg-Ruhrort", "warn_cm": 250, "high_cm": 200, "critical_cm": 150},
     {"station": "EMMERICH", "name": "Emmerich", "warn_cm": 100, "high_cm": 70, "critical_cm": 30},
+    {"station": "KÖLN", "name": "Köln", "warn_cm": 180, "high_cm": 140, "critical_cm": 90},
+    {"station": "MAINZ", "name": "Mainz", "warn_cm": 160, "high_cm": 120, "critical_cm": 80},
+    {"station": "MAXAU", "name": "Maxau", "warn_cm": 380, "high_cm": 320, "critical_cm": 250},
 ]
+
+# The landing page's gauge panel was designed around three readings, and the
+# three it shows are the reference gauges - so the panel keeps its shape while
+# the monitor reads the wider set above. Station ids, resolved against
+# RHINE_GAUGES, so the two lists cannot carry different thresholds for the
+# same station.
+LANDING_GAUGES = ["KAUB", "DUISBURG-RUHRORT", "EMMERICH"]
 
 # The landing page reads these gauges live, so they get their own allowance -
 # tighter than the button's live pull, because a visitor will not wait 25
@@ -269,16 +310,17 @@ GAUGE_BUDGET_SECONDS = _env_int("GAUGE_BUDGET_SECONDS", 8 if SERVERLESS else 10)
 GAUGE_CACHE_SECONDS = _env_int("GAUGE_CACHE_SECONDS", 300)
 
 # ===========================================================================
-# Sources 4-11 - the structured public APIs (read by src/signals.py)
+# Sources 4-16 - the structured public APIs (read by src/signals.py)
 #
 # Everything above this line is prose: a headline that a model has to read and
 # judge. Everything below it arrives as a NUMBER or a government notice, which
 # is a different kind of signal and a cheaper one - a wave height or a warning
 # code is classified by threshold, so it costs nothing and cannot hallucinate.
 #
-# All keyless, all HTTPS, every one of them listed in the public-apis catalogue
-# (github.com/public-apis/public-apis). DATA-SOURCES.md says which catalogue
-# entry each one is and why it earns its place on a freight desk.
+# All keyless, all HTTPS, most of them listed in the public-apis catalogue
+# (github.com/public-apis/public-apis); the rest are institutions publishing
+# their own open feeds. DATA-SOURCES.md says which catalogue entry each one is
+# where there is one, and why it earns its place on a freight desk.
 #
 # None of these are load-bearing for the demo. Each is read in its own small
 # function, and a source that is down, slow or reshaped is reported as failed
@@ -396,10 +438,87 @@ NWS_MAX_ALERTS = 12
 
 HKO_ENDPOINT = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php"
 
+# --- 12. Open-Meteo Flood - GloFAS river discharge on the Rhine -------------
+# public-apis: Weather > Open-Meteo (the same provider's flood endpoint).
+# Complements the PEGELONLINE gauges rather than repeating them: a gauge is a
+# measured LEVEL at a point, GloFAS is modelled FLOW for the reach - two
+# independent reads on the same river, so one being down or wrong does not
+# blind the board to the Rhine.
+
+OPEN_METEO_FLOOD_ENDPOINT = "https://flood-api.open-meteo.com/v1/flood"
+DISCHARGE_RIVER = "RHINE"     # the chokepoint whose coordinate is asked about
+
+# Discharge in m3/s, and LOW is the risk - the inverse of every other band
+# table here, so it is walked with value <= threshold rather than >=. The
+# figures are demo-tuned like the gauge thresholds: they position a demo, they
+# do not run a barge operator.
+DISCHARGE_BANDS = [
+    # m3/s      severity  state             delay days  what it means
+    (500,  "high",   "critically low", [3, 6], "barge loading largely uneconomic"),
+    (800,  "medium", "low",            [2, 4], "barges loading well below capacity"),
+    (1100, "low",    "falling",        [1, 2], "loading restrictions beginning to bite"),
+]
+
+# --- 13. Deutscher Wetterdienst - the official German warnings --------------
+# Not in the public-apis catalogue: this is the German weather service's own
+# open warnings feed, the one its warnapp reads. The body is JSONP rather than
+# JSON, so signals.py unwraps it before parsing.
+
+DWD_WARNINGS_ENDPOINT = "https://www.dwd.de/DWD/warnungen/warnapp/json/warnings.json"
+
+# Which warning regions map onto a chokepoint on this board. DWD warns by
+# administrative region, so the match is on the region NAME; only Hamburg is a
+# chokepoint here today, and the day Bremerhaven is on the board it is one more
+# row in this table.
+DWD_REGION_WATCH = [
+    {"match": "Hamburg", "chokepoint": "HAM"},
+]
+
+# DWD Warnstufen: 1 is weather, 5 is extreme weather. Below 4, a warning is
+# real and moves nothing - it stays context, like most of what this file reads.
+DWD_LEVEL_BANDS = {
+    5: ("high",   [2, 4], "extreme weather warning - handling likely suspended"),
+    4: ("medium", [1, 2], "severe weather warning - crane hours likely lost"),
+}
+DWD_CONTEXT_SAMPLE = 5        # how many of the other regions' warnings to show
+
+# --- 14. EMSC - the European seismic reader ---------------------------------
+# A standard FDSN event service, the same query shape as USGS. A second seismic
+# reader for the same reason there are two Arabic feeds: one source having a
+# bad day must not silence the signal. It reuses the USGS thresholds and
+# proximity rule wholesale, so the two can never band the same quake apart.
+
+EMSC_ENDPOINT = "https://www.seismicportal.eu/fdsnws/event/1/query"
+
+# --- 15. GDACS - the UN/EC disaster alert system ----------------------------
+# Public JSON from the Global Disaster Alert and Coordination System, run by
+# the UN and the European Commission. It has already judged severity - Green /
+# Orange / Red - so the banding here is a translation, not a threshold.
+
+GDACS_ENDPOINT = "https://www.gdacs.org/gdacsapi/api/events/geteventlist/MAP"
+GDACS_RADIUS_KM = 300
+GDACS_ALERT_BANDS = {
+    "red":    ("high",   [2, 5]),
+    "orange": ("medium", [1, 3]),
+    # Green is deliberately absent: a Green alert is context, never an event.
+}
+# GDACS event types that are weather-shaped (tropical cyclone, flood, wildfire,
+# drought); earthquakes and volcanoes are classified "other" like USGS quakes.
+GDACS_WEATHER_TYPES = ("TC", "FL", "WF", "DR")
+GDACS_CONTEXT_SAMPLE = 5
+
+# --- 16. NOAA National Hurricane Center - active storms ---------------------
+# Public JSON. Board context, same honesty as the US NWS source: these are
+# Atlantic and East-Pacific storms and no booking on this board routes there,
+# so it informs the desk and may never move a booking.
+
+NHC_ENDPOINT = "https://www.nhc.noaa.gov/CurrentStorms.json"
+
 # How many of the structured sources are read at once. They are independent
 # requests to different hosts, so reading them in turn would spend the whole
-# budget on the slowest one.
-SIGNAL_CONCURRENCY = _env_int("SIGNAL_CONCURRENCY", 8)
+# budget on the slowest one - and with thirteen of them, anything less than
+# all-at-once queues the stragglers behind the slowest of the first wave.
+SIGNAL_CONCURRENCY = _env_int("SIGNAL_CONCURRENCY", 13)
 
 # --- Classification tuning -------------------------------------------------
 

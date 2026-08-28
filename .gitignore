@@ -23,3 +23,8 @@ data/cache/
 # Natural Earth source data for tools/build_rhine_map.py - fetched on demand,
 # never committed (5.5 MB, and the map it produces is already inlined).
 tools/.ne-cache/
+
+# ML layer (ml/) - the full synthetic book is ~13 MB and byte-identical
+# reproducible from its seed (python -m ml.synth --bookings 6000 --seed 7),
+# so only the 50-record sample beside it is committed.
+ml/data/tms_synthetic_bookings.json

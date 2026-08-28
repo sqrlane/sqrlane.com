@@ -8,7 +8,7 @@ it tells a forwarder**, and **how it is classified** once it arrives.
 **The shape of it.** A trade lane is not moved by news alone. It is moved by a strike, a
 gale, a river, an earthquake, a tariff notice and — when the invoice lands — an exchange
 rate. Those arrive in different formats from different institutions, and a desk that only
-watches headlines is reading a summary of some of them, late. So SQRlane reads **42
+watches headlines is reading a summary of some of them, late. So SQRlane reads **60
 sources across six families**, all of them free and keyless, and puts the whole picture on
 one screen before deciding anything.
 
@@ -16,7 +16,7 @@ one screen before deciding anything.
 three sources, nothing else — no longer holds. What holds instead is the reason behind it:
 **no source may be load-bearing.** Every one is read in its own small function, inside a
 shared time budget, and a source that is down, slow or reshaped is reported as failed and
-skipped. Forty-two sources are safe to run in front of an audience precisely because none
+skipped. Sixty sources are safe to run in front of an audience precisely because none
 of them can take the run down. `tests/test_signals_read_wide_and_fail_soft.py` holds that.
 
 **How to read the tables**
@@ -46,7 +46,7 @@ a terminal that shows you the world and a dashboard that inflates its own alarm 
 
 ---
 
-## 1. News — the wires and the press closer to the event  ·  31 sources
+## 1. News — the wires and the press closer to the event  ·  41 sources
 
 A disruption is known locally long before it is news globally: the union announces it, the
 regional broadcaster carries it, and only then does an international wire pick it up. A
@@ -56,7 +56,7 @@ news family reads **outward from the corridors**, not from the newsroom.
 | Source | Catalogue entry | What it gives you | Key? |
 |---|---|---|---|
 | **GDELT DOC 2.0** — 11 queries | *News → GDELT* | Global news backbone, ~15 min refresh, filterable by keyword, language and country. One query pinned per corridor: North Range, Low Countries, Western Med and the Rhone, Red Sea and the Gulf, Asian gateway ports, the Turkish straits, Panama and the Americas, plus customs/tariffs/sanctions. | No |
-| **RSS** via `feedparser` — 20 feeds | *(direct publisher feeds)* | Regional broadcasters and papers on the corridors' doorsteps — NDR Hamburg, tagesschau, DW, NOS, VRT, RTVE, El País, France Info, Le Monde, ANSA, NHK, Al Jazeera (Arabic and English), DW and France 24 in Arabic, The Straits Times, Times of India — plus the narrow trade press where nearly every item is on topic: gCaptain, Splash 247, The Maritime Executive. | No |
+| **RSS** via `feedparser` — 30 feeds | *(direct publisher feeds)* | Regional broadcasters and papers on the corridors' doorsteps — NDR Hamburg, Hamburger Abendblatt (a walkout in the port is its local story first), tagesschau, DW, ORF (the Alpine hinterland the rail legs serve), NOS, Rijnmond (Rotterdam's own regional broadcaster), VRT, RTVE, El País, France Info, Le Monde, ANSA, NHK, Al Jazeera (Arabic and English), DW and France 24 in Arabic, Egypt Independent (the Suez corridor's doorstep), News24 and Daily Maverick (two readers on the Cape of Good Hope corridor, the same redundancy rationale as the two Arabic feeds), The Straits Times, Times of India — plus the narrow trade press where nearly every item is on topic: gCaptain, Splash 247, The Maritime Executive, The Loadstar, Hellenic Shipping News, Container News, SAFETY4SEA. | No |
 
 Both are prose, so both go through the cheap keyword prefilter and then to the model, which
 makes the actual relevance / chokepoint / severity call.
@@ -66,23 +66,27 @@ makes the actual relevance / chokepoint / severity call.
 
 ---
 
-## 2. River gauges — the inland leg  ·  3 sources
+## 2. Rivers — the inland leg  ·  7 sources
 
 | Source | Catalogue entry | What it gives you | Family | Tier |
 |---|---|---|---|---|
-| **PEGELONLINE** (German WSV) | *(German federal waterways API)* | Rhine water levels at Kaub, Duisburg-Ruhrort and Emmerich, mapped to the `RHINE` chokepoint. Kaub is the gauge the barge market actually watches. | water | lane |
+| **PEGELONLINE** (German WSV) — 6 gauges | *(German federal waterways API)* | Rhine water levels at Kaub, Duisburg-Ruhrort, Emmerich, Köln, Mainz and Maxau, mapped to the `RHINE` chokepoint. Kaub is the gauge the barge market actually watches; Köln and Maxau bracket it upstream and down, Mainz sits at the Main confluence, so a level falling in one reach shows up before it reaches the reference gauge. The landing page's gauge panel keeps showing exactly the three reference gauges it was designed around; the monitor reads all six. | water | lane |
+| **Open-Meteo Flood** (GloFAS) | *Weather → Open-Meteo* (the same provider's flood endpoint) | Modelled river discharge at the Rhine chokepoint, from the EU's Global Flood Awareness System. It complements the gauges rather than repeating them: a gauge is a measured **level** at a point, GloFAS is modelled **flow** for the reach — two independent reads on the same river, so one being down or wrong does not blind the board to the Rhine. Low is the risk, so its bands (`DISCHARGE_BANDS`, demo-tuned) are walked downward. | water | lane |
 
-Readings are numbers, so they are classified by threshold (`GAUGE_BANDS`), not by the
-model. Confirmed working against the live host in production.
+Readings are numbers, so they are classified by threshold (`GAUGE_BANDS`,
+`DISCHARGE_BANDS`), not by the model. PEGELONLINE is confirmed working against the live
+host in production; the flood endpoint is unwitnessed like the rest of the structured
+sources — see [Honest notes](#honest-notes).
 
 ---
 
-## 3. Weather & sea state  ·  3 sources
+## 3. Weather & sea state  ·  4 sources
 
 | Source | Catalogue entry | What it gives you | Tier |
 |---|---|---|---|
 | **Open-Meteo** — port weather | *Weather → Open-Meteo* (Auth: No, HTTPS: Yes, CORS: Yes) | Wind and gusts over Hamburg, Rotterdam, Antwerp and Fos-sur-Mer, in one request. A container terminal loses crane hours around gale force 8 and stops near force 10 — `WIND_BANDS`. | lane |
 | **Open-Meteo Marine** — sea state | *Weather → Open-Meteo* (marine endpoint) | Significant wave height at the Suez approaches, Bab-el-Mandeb and the Cape of Good Hope: the three points a box on this board actually rounds — `WAVE_BANDS`. | lane |
+| **Deutscher Wetterdienst** — official warnings | *(not in the catalogue — the German weather service's own open warnings feed, the one its warnapp reads)* | The warnings actually in force, graded by the issuing authority (Warnstufen 1–5). A level-4-or-worse warning over a region that maps to a chokepoint — Hamburg today — becomes an event; every other warning is real, German, and not this board's problem, so it stays context. The body is JSONP, unwrapped before parsing. | lane |
 | **Hong Kong Observatory** | *Weather → Hong Kong Obervatory* (Auth: No) | The warnings in force over the Pearl River Delta. Two of the bookings load there and a T8 signal shuts Yantian and Hong Kong for a day — but load ports are not modelled as chokepoints, so this informs and decides nothing. | context |
 
 Coordinates are **not** kept here: `data/geo.json` already carries a real lat/lon for every
@@ -91,12 +95,15 @@ read from the map. One source of truth.
 
 ---
 
-## 4. Natural hazards  ·  2 sources
+## 4. Natural hazards  ·  5 sources
 
 | Source | Catalogue entry | What it gives you | Tier |
 |---|---|---|---|
 | **USGS Earthquake Hazards Program** | *Science & Math → USGS Earthquake Hazards Program* (Auth: No) | Real-time seismic activity. A quake is mapped to the nearest watched chokepoint and **dropped if none is within 300 km** — a magnitude 7 in the South Pacific is real and is not this board's problem. | lane |
+| **EMSC** (seismicportal.eu) | *(a standard FDSN event service — the same query shape as USGS)* | The European seismic reader, for the same reason there are two Arabic feeds: one source having a bad day must not silence the signal. It deliberately reuses the **same** proximity rule and `QUAKE_BANDS` as USGS, so the two readers can never band the same quake apart. | lane |
 | **NASA EONET** | *Science & Math → NASA* (Auth: No) | NASA's natural-event tracker: wildfires, severe storms, floods and volcanoes, each with a coordinate, mapped onto a corridor the same way. This is the live source the authored `france` scenario — a wildfire on a land leg — is a rehearsal of. | lane |
+| **GDACS** (UN/EC) | *(public JSON from the Global Disaster Alert and Coordination System)* | Disaster alerts a coordination body has **already judged**: Red translates to high, Orange to medium, and Green is context, never an event. The same proximity rule applies — an alert maps to the nearest watched chokepoint or is dropped. | lane |
+| **NOAA National Hurricane Center** | *(public JSON — CurrentStorms)* | The active Atlantic and East-Pacific storms. No booking on this board routes through either basin, so it is context — the same honesty as the US NWS source, and already connected the day a transatlantic lane is on the board. | context |
 
 ---
 
@@ -158,8 +165,11 @@ key. `llm.py` resolves the model at runtime against the provider's own list.
   number that may have moved.
 - **None of this has been witnessed from this sandbox.** Its egress policy blocks every
   third-party host with a 403 at the proxy, so the new sources are built to their published
-  shapes and tested against stubs. PEGELONLINE was in exactly this position until it was
-  confirmed in production. Check `python -m src.signals` on a real connection.
+  shapes and tested against stubs. That covers all thirteen structured sources — the
+  original eight and the five added after them (Open-Meteo Flood, DWD, EMSC, GDACS, NHC)
+  alike — and the three added Rhine gauges and ten added feeds too. PEGELONLINE was in
+  exactly this position until it was confirmed in production. Check `python -m src.signals`
+  on a real connection before presenting.
 - **Breadth is safe only because nothing is load-bearing.** If you add a source, add it as
   its own function, inside the budget, reporting its own failure. If a new source can make
   the cycle fail, it is wired wrong.

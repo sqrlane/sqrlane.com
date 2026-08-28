@@ -103,7 +103,7 @@ class SourceReport:
     instead of the whole demo falling over.
 
     Each report belongs to one family - news, water, weather, and so on - which
-    is what lets the board group forty-odd sources into something a person can
+    is what lets the board group sixty sources into something a person can
     read at a glance instead of one long list.
     """
 
@@ -296,10 +296,11 @@ def _strip_html(text: str) -> str:
 # be understood, so these are classified by threshold and become events directly.
 #
 # Two callers want these gauges for different reasons: the risk monitor wants
-# events, the landing page wants the readings themselves. Both go through
-# _read_one_gauge and _gauge_state, so neither the request nor the threshold
-# bands can drift between them - which is how the injected and live event
-# schemas came apart three times.
+# events off every gauge in RHINE_GAUGES, the landing page wants the readings
+# themselves - and only for the three reference gauges its panel was designed
+# around (LANDING_GAUGES). Both go through _read_one_gauge and _gauge_state,
+# so neither the request nor the threshold bands can drift between them -
+# which is how the injected and live event schemas came apart three times.
 
 # The bands, in the order they are tested: a reading at or below the threshold
 # named on the left is in that band. Above them all, the gauge is unremarkable.
@@ -353,21 +354,32 @@ def _read_one_gauge(gauge: dict, timeout: float) -> dict:
     }
 
 
-def read_rhine_gauges() -> dict:
-    """Every Rhine gauge at once, for callers that want the numbers not events.
+def read_rhine_gauges(stations: list[str] | None = None) -> dict:
+    """The Rhine gauges as readings, for callers that want numbers not events.
+
+    `stations` picks which gauges by station id; it defaults to LANDING_GAUGES
+    because the caller that matters is the landing page's gauge panel, which
+    was designed around the three reference gauges and keeps showing exactly
+    those - the monitor's live pull reads the wider RHINE_GAUGES list through
+    fetch_rhine_levels instead. Both resolve against the same configured list,
+    so the two callers cannot carry different thresholds for the same station.
 
     Read concurrently and on a tight leash: this one is called from a page load
     rather than from the button, and three sequential timeouts against a source
     having a slow day is a page that hangs in front of whoever opened it.
     """
+    wanted = stations if stations is not None else config.LANDING_GAUGES
+    by_station = {g["station"]: g for g in config.RHINE_GAUGES}
+    selected = [by_station[s] for s in wanted if s in by_station]
+
     timeout = min(config.GAUGE_TIMEOUT_SECONDS, config.GAUGE_BUDGET_SECONDS)
     results = {}
     # Not a `with` block, for the reason given in fetch_rss: its exit joins every
     # worker, so one wedged gauge would block here instead.
-    pool = ThreadPoolExecutor(max_workers=len(config.RHINE_GAUGES))
+    pool = ThreadPoolExecutor(max_workers=max(1, len(selected)))
     try:
         futures = {pool.submit(_read_one_gauge, g, timeout): g
-                   for g in config.RHINE_GAUGES}
+                   for g in selected}
         try:
             for future in as_completed(futures, timeout=config.GAUGE_BUDGET_SECONDS):
                 gauge = futures[future]
@@ -385,7 +397,7 @@ def read_rhine_gauges() -> dict:
     # Reported in the configured order so the strip is stable read to read.
     gauges = [results.get(g["station"], {
         "station": g["station"], "name": g["name"], "ok": False,
-        "error": "no answer inside the time budget"}) for g in config.RHINE_GAUGES]
+        "error": "no answer inside the time budget"}) for g in selected]
     return {"source": "PEGELONLINE",
             "read_at": _now_iso(),
             "gauges": gauges,
@@ -461,7 +473,7 @@ def _rhine_event(gauge, level_cm, timestamp):
 # the count on screen is of what was ATTEMPTED, not of what happened to answer.
 FAMILY_LABELS = {
     "news": "News",
-    "water": "River gauges",
+    "water": "Rivers",
     **signals.FAMILY_LABELS,
     # Read live like everything else, and unable to move a booking on this
     # board. Kept as its own family so the count of what decides things stays
@@ -506,7 +518,7 @@ def source_count() -> int:
 def family_summary(entries: list[dict]) -> list[dict]:
     """One row per family: how many of its sources answered, and what it is for.
 
-    Forty-odd sources in a flat list is a wall. Grouped, it is the shape of the
+    Sixty sources in a flat list is a wall. Grouped, it is the shape of the
     claim - the desk reads news, instruments, notices and rates, not just news.
     """
     rows = []
@@ -531,7 +543,7 @@ def family_summary(entries: list[dict]) -> list[dict]:
 def pull_everything(budget: "Budget") -> dict:
     """Every family at once, inside one shared time budget.
 
-    Read in turn, forty sources cannot fit a serverless budget: the first family
+    Read in turn, sixty sources cannot fit a serverless budget: the first family
     would spend it and the rest would be skipped, which is how a board that
     claims to watch the world quietly ends up watching one feed. The families
     are independent requests to different hosts, so they run together and the

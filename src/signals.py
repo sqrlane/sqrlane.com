@@ -6,18 +6,24 @@ moved by more than news.
 
     weather over the ports        Open-Meteo
     sea state on the open legs    Open-Meteo Marine
+    modelled flow on the Rhine    Open-Meteo Flood (GloFAS)
+    official weather warnings     Deutscher Wetterdienst
     seismic activity              USGS Earthquake Hazards Program
+    seismic activity, 2nd reader  EMSC (seismicportal.eu)
     natural events, worldwide     NASA EONET
+    disaster alerts, judged       GDACS (UN/EC)
     the rule before it is news    Federal Register
     the rate a reroute is billed  Frankfurter (ECB reference rates)
     government alerts, US ports   US National Weather Service
     warnings in force, Pearl Rvr  Hong Kong Observatory
+    active Atlantic storms        NOAA National Hurricane Center
 
-Every one is keyless and listed in the public-apis catalogue; DATA-SOURCES.md
-says which entry each came from. None of them needs a model: a wave height, a
-magnitude and a warning code are classified by threshold, which costs nothing
-and cannot hallucinate. The one exception is the Federal Register, which is
-prose, so its documents go into the same classifier queue as the headlines.
+Every one is keyless - most from the public-apis catalogue, the rest are
+institutions publishing their own open feeds; DATA-SOURCES.md says which is
+which. None of them needs a model: a wave height, a magnitude and a warning
+code are classified by threshold, which costs nothing and cannot hallucinate.
+The one exception is the Federal Register, which is prose, so its documents go
+into the same classifier queue as the headlines.
 
 Two tiers, and the difference is not cosmetic:
 
@@ -35,7 +41,7 @@ showed you alarms would be lying about the shape of the job.
 Each source is its own small function so one can be added or pulled without
 touching the others, and none of them may take the run down: a source that is
 down, slow or reshaped is reported failed and skipped. They are read
-concurrently, because eight independent hosts read in turn would spend the
+concurrently, because thirteen independent hosts read in turn would spend the
 whole budget waiting on the slowest.
 
 Run it on its own:
@@ -112,6 +118,16 @@ def _band(bands, value):
     no event at all."""
     for band in bands:
         if value >= band[0]:
+            return band
+    return None
+
+
+def _band_low(bands, value):
+    """The inverse of _band, for readings where LOW is the risk: the first band
+    the value has fallen to, walking from the worst up. A river discharge is
+    the one reading here that gets dangerous by shrinking."""
+    for band in bands:
+        if value <= band[0]:
             return band
     return None
 
@@ -526,20 +542,337 @@ def fetch_hk_warnings(timeout: float) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# 12 - Open-Meteo Flood: GloFAS modelled discharge on the Rhine
+# ---------------------------------------------------------------------------
+
+
+def fetch_river_discharge(timeout: float) -> dict:
+    """Modelled river flow at the Rhine chokepoint, from GloFAS via Open-Meteo.
+
+    This complements the PEGELONLINE gauges rather than repeating them: a gauge
+    is a measured LEVEL at a point, GloFAS is modelled FLOW for the reach - two
+    independent reads on the same river. Low is the risk, so the bands are
+    walked with `_band_low` rather than `_band`.
+    """
+    spot = geo.place(config.DISCHARGE_RIVER)
+    if not spot:
+        return {"detail": "the watched river has no coordinate on the board"}
+
+    response = httpget.get_capped(
+        config.OPEN_METEO_FLOOD_ENDPOINT,
+        timeout=timeout,
+        params={"latitude": spot["lat"], "longitude": spot["lon"],
+                "daily": "river_discharge"},
+    )
+    daily = (response.json() or {}).get("daily") or {}
+    days = daily.get("time") or []
+    flows = daily.get("river_discharge") or []
+
+    # The first day with a value is today's modelled flow. The model can carry
+    # nulls at the front of the series, so walk rather than index.
+    discharge, as_of = None, None
+    for day, flow in zip(days, flows):
+        if flow is not None:
+            discharge, as_of = float(flow), day
+            break
+    if discharge is None:
+        return {"context": {"river_discharge": {}},
+                "detail": "no discharge value in the reply"}
+
+    band = _band_low(config.DISCHARGE_BANDS, discharge)
+    reading = {"place": config.DISCHARGE_RIVER, "name": spot["name"],
+               "discharge_m3s": round(discharge), "as_of": as_of,
+               "state": band[2] if band else "normal",
+               "severity": band[1] if band else None}
+    events = []
+    if band:
+        _threshold, severity, state, delay, note = band
+        events.append(build_event(
+            event_id=f"EVT-RIV-{config.DISCHARGE_RIVER}",
+            chokepoint=config.DISCHARGE_RIVER,
+            type_="weather",
+            severity=severity,
+            title=(f"Rhine flow {state} at {spot['name']}: "
+                   f"{discharge:.0f} m3/s - {note}"),
+            summary=(f"GloFAS models river discharge of {discharge:.0f} m3/s at "
+                     f"{spot['name']}, at or below the {_threshold} m3/s band "
+                     f"where {note}."),
+            source="Open-Meteo Flood (GloFAS)",
+            source_type="hydrology",
+            url="https://open-meteo.com/en/docs/flood-api",
+            published_at=f"{as_of}T00:00:00+00:00" if as_of else None,
+            delay_days=delay,
+            reasoning=(f"Modelled flow of {discharge:.0f} m3/s at {spot['name']} is in "
+                       f"the {state} band, so {note} and the barge leg through "
+                       f"{config.DISCHARGE_RIVER} is constrained."),
+        ))
+    return {"events": events, "context": {"river_discharge": reading},
+            "detail": f"{discharge:.0f} m3/s at {spot['name']} - "
+                      f"{reading['state']}"}
+
+
+# ---------------------------------------------------------------------------
+# 13 - Deutscher Wetterdienst: the official weather warnings
+# ---------------------------------------------------------------------------
+
+
+def fetch_dwd_warnings(timeout: float) -> dict:
+    """The Deutscher Wetterdienst's own warnings, from the feed its warnapp reads.
+
+    The body is JSONP - `warnWetter.loadWarnings({...});` - so it is unwrapped
+    from response.text before parsing. A warning over a region that maps to a
+    chokepoint (DWD_REGION_WATCH) becomes an event at Warnstufe 4 or above;
+    every other warning is real, in force over a region no route here touches,
+    and therefore stays context.
+    """
+    response = httpget.get_capped(config.DWD_WARNINGS_ENDPOINT, timeout=timeout)
+    raw = response.text.strip()
+    # Unwrap the JSONP by the brackets rather than the exact function name, so
+    # a renamed callback does not read as a dead source.
+    start, end = raw.find("("), raw.rfind(")")
+    if start < 0 or end <= start:
+        raise ValueError("not a JSONP body")
+    payload = json.loads(raw[start + 1:end])
+
+    warnings = []
+    for cell in (payload.get("warnings") or {}).values():
+        warnings.extend(w for w in (cell or []) if isinstance(w, dict))
+
+    events, others = [], []
+    worst = {}          # chokepoint -> the highest-level matching warning
+    for warning in warnings:
+        region = warning.get("regionName") or ""
+        level = warning.get("level") or 0
+        watched = next((w["chokepoint"] for w in config.DWD_REGION_WATCH
+                        if w["match"] in region), None)
+        if watched and level in config.DWD_LEVEL_BANDS:
+            kept = worst.get(watched)
+            if kept is None or level > (kept.get("level") or 0):
+                worst[watched] = warning
+        else:
+            others.append({"region": region, "event": warning.get("event"),
+                           "level": level})
+
+    for chokepoint, warning in worst.items():
+        severity, delay, note = config.DWD_LEVEL_BANDS[warning["level"]]
+        name = (geo.place(chokepoint) or {}).get("name", chokepoint)
+        events.append(build_event(
+            event_id=f"EVT-DWD-{chokepoint}",
+            chokepoint=chokepoint,
+            type_="weather",
+            severity=severity,
+            title=(f"DWD level-{warning['level']} warning over {name}: "
+                   f"{warning.get('event') or 'severe weather'} - {note}"),
+            summary=(warning.get("description")
+                     or f"Deutscher Wetterdienst has a level-{warning['level']} "
+                        f"warning in force over {warning.get('regionName')}.")[:400],
+            source="Deutscher Wetterdienst",
+            source_type="weather",
+            url="https://www.dwd.de/",
+            delay_days=delay,
+            source_language="de",
+            reasoning=(f"A DWD Warnstufe-{warning['level']} warning over "
+                       f"{warning.get('regionName')} covers the {name} chokepoint, "
+                       f"so {note}."),
+        ))
+    context = {"count": len(others),
+               "sample": others[:config.DWD_CONTEXT_SAMPLE]}
+    return {"events": events, "context": {"dwd_warnings": context},
+            "detail": (f"{len(warnings)} warnings in force, "
+                       f"{len(events)} over a chokepoint")}
+
+
+# ---------------------------------------------------------------------------
+# 14 - EMSC: the European seismic reader
+# ---------------------------------------------------------------------------
+
+
+def fetch_emsc(timeout: float) -> dict:
+    """Significant quakes from EMSC, the European sister reader to USGS.
+
+    A second seismic reader for the same reason the Red Sea corridor has two
+    feeds: one source having a bad day must not silence the signal. It
+    deliberately reuses the SAME proximity rule and QUAKE_BANDS as
+    fetch_earthquakes, so the two readers can never band the same quake apart.
+    """
+    since = (datetime.now(timezone.utc)
+             - timedelta(days=config.QUAKE_LOOKBACK_DAYS)).strftime("%Y-%m-%d")
+    response = httpget.get_capped(
+        config.EMSC_ENDPOINT,
+        timeout=timeout,
+        params={"format": "json", "start": since,
+                "minmag": config.QUAKE_MIN_MAGNITUDE, "limit": 40,
+                # FDSN services answer a matching-nothing query with HTTP 204
+                # and an EMPTY body by default - which would read as a broken
+                # source when it is really a quiet day. nodata=200 asks for a
+                # parseable answer; the belt-and-braces check below covers a
+                # server that ignores it.
+                "nodata": "200"},
+    )
+    body = (response.text or "").strip()
+    features = ((json.loads(body) if body else {}) or {}).get("features") or []
+
+    events, seen = [], set()
+    for feature in features:
+        props = feature.get("properties") or {}
+        coords = ((feature.get("geometry") or {}).get("coordinates") or [None, None])
+        lon, lat = coords[0], coords[1]
+        magnitude = props.get("mag")
+        if lat is None or lon is None or magnitude is None:
+            continue
+        place_id, km = geo.nearest_place(float(lat), float(lon), _WATCHED,
+                                         config.QUAKE_RADIUS_KM)
+        if not place_id or place_id in seen:
+            continue
+        band = _band(config.QUAKE_BANDS, float(magnitude))
+        if not band:
+            continue
+        seen.add(place_id)
+        _threshold, severity, delay, note = band
+        name = geo.place(place_id)["name"]
+        events.append(build_event(
+            event_id=f"EVT-EMSC-{place_id}",
+            chokepoint=place_id,
+            type_="other",
+            severity=severity,
+            title=(f"M{float(magnitude):.1f} earthquake {km:.0f} km from {name}"
+                   f" - {note}"),
+            summary=(f"EMSC reports {props.get('flynn_region') or 'an earthquake'} "
+                     f"at magnitude {float(magnitude):.1f}."),
+            source="EMSC (seismicportal.eu)",
+            source_type="seismic",
+            url="https://www.seismicportal.eu/",
+            published_at=props.get("time"),
+            delay_days=delay,
+            reasoning=(f"A magnitude {float(magnitude):.1f} event {km:.0f} km from {name} "
+                       f"is inside the {config.QUAKE_RADIUS_KM} km radius this board "
+                       f"watches, so {note}."),
+        ))
+    return {"events": events,
+            "detail": f"{len(features)} quakes read, {len(events)} near a corridor"}
+
+
+# ---------------------------------------------------------------------------
+# 15 - GDACS: the UN/EC disaster alert system
+# ---------------------------------------------------------------------------
+
+
+def fetch_gdacs(timeout: float) -> dict:
+    """Disaster alerts that a coordination body has already judged.
+
+    GDACS grades every event Green / Orange / Red, so the banding here is a
+    translation of that judgement, not a threshold of our own. The proximity
+    rule is the same as for a quake: an alert maps to the nearest watched
+    chokepoint or it is dropped - a Red cyclone in the open Pacific is real
+    and is not this board's problem. Green alerts are context, never events.
+    """
+    response = httpget.get_capped(config.GDACS_ENDPOINT, timeout=timeout)
+    features = (response.json() or {}).get("features") or []
+
+    events, greens, seen = [], [], set()
+    for feature in features:
+        props = feature.get("properties") or {}
+        coords = ((feature.get("geometry") or {}).get("coordinates") or [None, None])
+        lon, lat = coords[0], coords[1]
+        event_type = (props.get("eventtype") or "").upper()
+        alert = (props.get("alertlevel") or "").strip().lower()
+        title = props.get("name") or props.get("eventname") or event_type or "event"
+        if alert == "green":
+            greens.append({"name": title, "type": event_type,
+                           "country": props.get("country")})
+            continue
+        if lat is None or lon is None or alert not in config.GDACS_ALERT_BANDS:
+            continue
+        place_id, km = geo.nearest_place(float(lat), float(lon), _WATCHED,
+                                         config.GDACS_RADIUS_KM)
+        if not place_id:
+            continue
+        key = (place_id, event_type)
+        if key in seen:
+            continue
+        seen.add(key)
+        severity, delay = config.GDACS_ALERT_BANDS[alert]
+        name = geo.place(place_id)["name"]
+        events.append(build_event(
+            event_id=f"EVT-GDACS-{place_id}-{event_type or 'OTHER'}",
+            chokepoint=place_id,
+            type_="weather" if event_type in config.GDACS_WEATHER_TYPES else "other",
+            severity=severity,
+            title=(f"GDACS {alert.capitalize()} alert: {title} - "
+                   f"{km:.0f} km from {name}"),
+            summary=(f"GDACS carries a {alert.capitalize()} alert for {title}"
+                     f"{' in ' + props['country'] if props.get('country') else ''}."),
+            source="GDACS (UN/EC)",
+            source_type="hazard",
+            url="https://www.gdacs.org/",
+            delay_days=delay,
+            reasoning=(f"A GDACS {alert.capitalize()} alert {km:.0f} km from {name} is "
+                       f"inside the {config.GDACS_RADIUS_KM} km radius this board "
+                       f"watches, so the leg through {name} may be affected."),
+        ))
+    context = {"green": len(greens), "sample": greens[:config.GDACS_CONTEXT_SAMPLE]}
+    return {"events": events, "context": {"gdacs_alerts": context},
+            "detail": (f"{len(features)} alerts read, {len(events)} near a corridor, "
+                       f"{len(greens)} green")}
+
+
+# ---------------------------------------------------------------------------
+# 16 - NOAA National Hurricane Center: active storms
+# ---------------------------------------------------------------------------
+
+
+def fetch_nhc_storms(timeout: float) -> dict:
+    """The active Atlantic and East-Pacific storms. Board context.
+
+    No booking on this synthetic board routes through either basin, so this
+    moves nothing today - the same honesty as the US NWS source. It is wired
+    because it is the same read as every other source, and the day a
+    transatlantic lane is on the board it is already connected.
+    """
+    response = httpget.get_capped(config.NHC_ENDPOINT, timeout=timeout)
+    storms = [
+        {"name": storm.get("name"), "classification": storm.get("classification"),
+         "intensity": storm.get("intensity")}
+        for storm in ((response.json() or {}).get("activeStorms") or [])
+        if isinstance(storm, dict) and storm.get("name")
+    ]
+    return {"context": {"nhc_storms": storms},
+            "detail": (f"{len(storms)} active storms"
+                       if storms else "no active storms")}
+
+
+# ---------------------------------------------------------------------------
 # The roster, and reading it
 # ---------------------------------------------------------------------------
 
 # tier: "lane" can move a booking on this board; "context" cannot, and says so.
+# Lane sources first, context sources grouped at the end - the same split the
+# board draws on screen, so the roster reads the way it renders.
 SIGNAL_SOURCES = [
+    # The flood model leads so the roster reads family by family - it belongs
+    # to the rivers family the PEGELONLINE gauges open, and the CLI prints its
+    # headers on family transitions.
+    {"id": "open-meteo-flood", "name": "Open-Meteo Flood: Rhine discharge",
+     "family": "water", "tier": "lane", "host": "flood-api.open-meteo.com",
+     "fn": fetch_river_discharge},
     {"id": "open-meteo", "name": "Open-Meteo: port weather", "family": "weather",
      "tier": "lane", "host": "api.open-meteo.com", "fn": fetch_port_weather},
     {"id": "open-meteo-marine", "name": "Open-Meteo Marine: sea state",
      "family": "weather", "tier": "lane", "host": "marine-api.open-meteo.com",
      "fn": fetch_sea_state},
+    # "DWD" and "Deutscher Wetterdienst" are the outlet's own name, which
+    # identifies a source; the served name deliberately does not carry a
+    # nationality adjective, for the same reason the pages never name one.
+    {"id": "dwd", "name": "DWD: official weather warnings", "family": "weather",
+     "tier": "lane", "host": "www.dwd.de", "fn": fetch_dwd_warnings},
     {"id": "usgs-quake", "name": "USGS: seismic", "family": "hazard",
      "tier": "lane", "host": "earthquake.usgs.gov", "fn": fetch_earthquakes},
+    {"id": "emsc", "name": "EMSC: seismic (Europe)", "family": "hazard",
+     "tier": "lane", "host": "www.seismicportal.eu", "fn": fetch_emsc},
     {"id": "eonet", "name": "NASA EONET: natural events", "family": "hazard",
      "tier": "lane", "host": "eonet.gsfc.nasa.gov", "fn": fetch_natural_events},
+    {"id": "gdacs", "name": "GDACS: disaster alerts", "family": "hazard",
+     "tier": "lane", "host": "www.gdacs.org", "fn": fetch_gdacs},
     {"id": "federal-register", "name": "Federal Register: trade rules",
      "family": "government", "tier": "lane", "host": "www.federalregister.gov",
      "fn": fetch_federal_register},
@@ -550,6 +883,8 @@ SIGNAL_SOURCES = [
      "tier": "context", "host": "api.weather.gov", "fn": fetch_us_alerts},
     {"id": "hko", "name": "Hong Kong Observatory: warnings", "family": "weather",
      "tier": "context", "host": "data.weather.gov.hk", "fn": fetch_hk_warnings},
+    {"id": "nhc", "name": "NOAA NHC: active storms", "family": "hazard",
+     "tier": "context", "host": "www.nhc.noaa.gov", "fn": fetch_nhc_storms},
 ]
 
 FAMILY_LABELS = {
@@ -628,7 +963,25 @@ def read_signals(budget) -> dict:
         entries.append({"name": label, "status": status,
                         "items": len(found) + len(raw), "detail": detail,
                         "family": spec["family"], "tier": spec["tier"]})
-    return {"events": events, "items": items, "context": context, "entries": entries}
+
+    # Two seismic readers exist for redundancy, not volume. When both are up
+    # they carry the same physical quake, and two feed entries for one event
+    # would inflate the visible alarm count - the exact thing the context tier
+    # exists to avoid. Keep the first reader's event and record the
+    # corroboration on it, which is worth more than a duplicate.
+    usgs_hit = {e["chokepoint"] for e in events
+                if e["event_id"].startswith("EVT-QUAKE-")}
+    deduped = []
+    for event in events:
+        if (event["event_id"].startswith("EVT-EMSC-")
+                and event["chokepoint"] in usgs_hit):
+            for kept in deduped:
+                if kept["event_id"] == f"EVT-QUAKE-{event['chokepoint']}":
+                    kept["reasoning"] += (" Independently corroborated by EMSC "
+                                          "(seismicportal.eu).")
+            continue
+        deduped.append(event)
+    return {"events": deduped, "items": items, "context": context, "entries": entries}
 
 
 # ---------------------------------------------------------------------------
