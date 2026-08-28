@@ -50,7 +50,13 @@ class TabPFNUnavailable(RuntimeError):
 _ENABLE_MESSAGE = (
     "TabPFN is not installed, so the tabpfn backend is skipped. To enable it:\n"
     "  1. pip install -r ml/requirements.txt   (numpy + scikit-learn)\n"
-    "  2. pip install tabpfn                   (pulls PyTorch - several GB)\n"
+    "  2. pip install \"tabpfn>=2.0,<2.1\"      (pulls PyTorch - several GB)\n"
+    "     The pin matters, and was learned the hard way: a plain\n"
+    "     'pip install tabpfn' ships the newer 2.5/3 weights, which are\n"
+    "     GATED - the first fit demands a Prior Labs account login whose\n"
+    "     browser flow crashes outright on Windows (select() on stdin,\n"
+    "     WinError 10038). The 2.0.x package ships the openly licensed v2\n"
+    "     weights and downloads with no login at all.\n"
     "  3. run once with network access to huggingface.co - the first fit\n"
     "     downloads the model weights from Hugging Face, and a sandbox that\n"
     "     blocks that host (like the one this repo is built in) cannot ever\n"
@@ -58,9 +64,11 @@ _ENABLE_MESSAGE = (
     "License: TabPFN code and v2 weights are Prior-Labs-License (Apache-2.0\n"
     "plus required 'Built with PriorLabs-TabPFN' attribution when you\n"
     "distribute); the 2.5/3 weights are NON-COMMERCIAL - internal\n"
-    "benchmarking is fine, shipping is a license decision. tabpfn-client\n"
-    "(their hosted API, no torch) exists but sends the data to Prior Labs'\n"
-    "servers - never point it at real customer bookings without sign-off."
+    "benchmarking is fine, shipping is a license decision, and using them\n"
+    "at all means accepting their license at ux.priorlabs.ai first.\n"
+    "tabpfn-client (their hosted API, no torch) exists but sends the data\n"
+    "to Prior Labs' servers - never point it at real customer bookings\n"
+    "without sign-off."
 )
 
 
