@@ -102,7 +102,7 @@ read from the map. One source of truth.
 | **USGS Earthquake Hazards Program** | *Science & Math → USGS Earthquake Hazards Program* (Auth: No) | Real-time seismic activity. A quake is mapped to the nearest watched chokepoint and **dropped if none is within 300 km** — a magnitude 7 in the South Pacific is real and is not this board's problem. | lane |
 | **EMSC** (seismicportal.eu) | *(a standard FDSN event service — the same query shape as USGS)* | The European seismic reader, for the same reason there are two Arabic feeds: one source having a bad day must not silence the signal. It deliberately reuses the **same** proximity rule and `QUAKE_BANDS` as USGS, so the two readers can never band the same quake apart. | lane |
 | **NASA EONET** | *Science & Math → NASA* (Auth: No) | NASA's natural-event tracker: wildfires, severe storms, floods and volcanoes, each with a coordinate, mapped onto a corridor the same way. This is the live source the authored `france` scenario — a wildfire on a land leg — is a rehearsal of. | lane |
-| **GDACS** (UN/EC) | *(public JSON from the Global Disaster Alert and Coordination System)* | Disaster alerts a coordination body has **already judged**: Red translates to high, Orange to medium, and Green is context, never an event. The same proximity rule applies — an alert maps to the nearest watched chokepoint or is dropped. | lane |
+| **GDACS** (UN/EC) | *(the RSS feed the Global Disaster Alert and Coordination System has published since 2005)* | Disaster alerts a coordination body has **already judged**: Red translates to high, Orange to medium, and Green is context, never an event. The same proximity rule applies — an alert maps to the nearest watched chokepoint or is dropped. The JSON api answered HTTP 400 on first real contact, so the long-lived RSS feed is the wire. | lane |
 | **NOAA National Hurricane Center** | *(public JSON — CurrentStorms)* | The active Atlantic and East-Pacific storms. No booking on this board routes through either basin, so it is context — the same honesty as the US NWS source, and already connected the day a transatlantic lane is on the board. | context |
 
 ---
@@ -163,13 +163,20 @@ key. `llm.py` resolves the model at runtime against the provider's own list.
 
 - **Free tiers change.** Verify current limits when you wire one; don't design around a
   number that may have moved.
-- **None of this has been witnessed from this sandbox.** Its egress policy blocks every
-  third-party host with a 403 at the proxy, so the new sources are built to their published
-  shapes and tested against stubs. That covers all thirteen structured sources — the
-  original eight and the five added after them (Open-Meteo Flood, DWD, EMSC, GDACS, NHC)
-  alike — and the three added Rhine gauges and ten added feeds too. PEGELONLINE was in
-  exactly this position until it was confirmed in production. Check `python -m src.signals`
-  on a real connection before presenting.
+- **The structured sources were witnessed for the first time on 2026-08-28**, from the
+  owner's own machine: ten of thirteen answered on first contact (Open-Meteo weather,
+  marine and flood, DWD with 111 real warnings, USGS, EONET, Federal Register,
+  Frankfurter, HKO, NHC with three active storms). The run also caught four real
+  faults, each fixed the same day: EMSC and the US NWS rejected request parameters a
+  stub cannot check (both requests are now minimal and spec-literal), the GDACS JSON
+  api answered HTTP 400 (the source now reads the RSS feed GDACS has published since
+  2005), and the GloFAS flood model returned 0 m3/s from a grid cell beside the
+  channel — which the board briefly turned into a false "critically low" event, so a
+  plausibility floor (`DISCHARGE_MIN_PLAUSIBLE_M3S`) now treats a dry cell as no
+  reading at all. The three repaired sources and the flood floor are unwitnessed
+  again until the next real run; SUEZ rightly yields no wave height (it is a canal).
+  The build sandbox still blocks every third-party host, so `python -m src.signals`
+  on a real connection remains the pre-demo check.
 - **Breadth is safe only because nothing is load-bearing.** If you add a source, add it as
   its own function, inside the budget, reporting its own failure. If a new source can make
   the cycle fail, it is wired wrong.
