@@ -275,6 +275,61 @@ class LearningHappensAndStaysImperfect(unittest.TestCase):
                         "the features; do not accept the circular result.")
 
 
+class TheBestModelClaimTracksTheTable(unittest.TestCase):
+    """The plain-language section's "best model" sentences are computed, not
+    asserted. This has bitten twice: prose written when GBM led kept calling
+    GBM the best after TabPFN overtook it, in the same file whose tables
+    showed the truth. A report that contradicts its own table is this repo's
+    hard-coded "live" chip all over again, so the winner is recomputed from
+    the results and NAMED beside the number."""
+
+    @staticmethod
+    def _report(action_winner):
+        scores = {"majority": 0.84, "rules": 0.76,
+                  "gbm": 0.88, "tabpfn": 0.88}
+        scores[action_winner] = 0.90
+        blank = {t: {p: 0 for p in ("no-action", "hold", "reroute")}
+                 for t in ("no-action", "hold", "reroute")}
+        action = {name: {"accuracy": acc, "macro_f1": 0.5, "confusion": blank}
+                  for name, acc in scores.items()}
+        return {
+            "honesty": "test", "world": {"bookings": 1, "weeks": 1, "seed": 1},
+            "split": {"cut_date": "2026-01-01", "train": 1, "test": 1,
+                      "dropped_straddling_bookings": 0, "train_episodes": 1,
+                      "test_episodes": 1},
+            "environment": {"python": "x", "scikit_learn": None},
+            "results": {
+                "action": action,
+                "delay": {"mean": {"mae_days": 7.0, "p90_abs_error_days": 8.0},
+                          "gbm": {"mae_days": 2.4, "p90_abs_error_days": 5.0},
+                          "tabpfn": {"mae_days": 2.3, "p90_abs_error_days": 5.3}},
+                "breach": {"base-rate": {"roc_auc": 0.5, "brier": 0.27},
+                           "gbm": {"roc_auc": 0.86, "brier": 0.13},
+                           "tabpfn": {"roc_auc": 0.88, "brier": 0.128}},
+            },
+        }
+
+    def test_the_named_winner_is_the_argmax_whoever_wins(self):
+        from ml import evaluate
+        for winner in ("tabpfn", "gbm"):
+            rendered = evaluate.render_markdown(self._report(winner))
+            self.assertIn(f"The best trained model ({winner}) gets 90%", rendered)
+        # And the delay/breach winners are computed too, not inherited.
+        rendered = evaluate.render_markdown(self._report("gbm"))
+        self.assertIn("best model (tabpfn) is off by 2.3", rendered)
+        self.assertIn("best model's (tabpfn) ROC-AUC", rendered)
+
+    def test_a_baseline_can_never_be_called_the_best_trained_model(self):
+        from ml import evaluate
+        report = self._report("gbm")
+        # Even if a baseline outscores every learner, the "best trained
+        # model" sentence must not crown it.
+        report["results"]["action"]["majority"]["accuracy"] = 0.99
+        report["results"]["action"]["rules"]["accuracy"] = 0.99
+        rendered = evaluate.render_markdown(report)
+        self.assertIn("The best trained model (gbm)", rendered)
+
+
 class TabPFNDegradesReadably(unittest.TestCase):
     """Where tabpfn is not installed (this sandbox, most machines), asking for
     it must produce instructions and the license story - not a stack trace."""
