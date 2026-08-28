@@ -204,7 +204,9 @@ RSS_FEEDS = [
     # Austria - the Alpine hinterland the rail legs out of the North Range serve.
     {"name": "ORF", "language": "de", "url": "https://rss.orf.at/news.xml"},
     # Arabic - Red Sea, Suez and Gulf incidents surface here before the wires.
-    {"name": "Al Jazeera Arabic", "language": "ar", "url": "https://www.aljazeera.net/xml/rss/all.xml"},
+    # Al Jazeera Arabic's feed URL rotted (HTTP 404, witnessed 2026-08-28);
+    # BBC Arabic replaces it - BBC feed URLs are famously stable.
+    {"name": "BBC (العربية)", "language": "ar", "url": "https://feeds.bbci.co.uk/arabic/rss.xml"},
     # French - Fos-sur-Mer, Le Havre, and the Rhone corridor.
     {"name": "France Info", "language": "fr", "url": "https://www.francetvinfo.fr/titres.rss"},
     {"name": "Le Monde", "language": "fr", "url": "https://www.lemonde.fr/rss/une.xml"},
@@ -249,13 +251,14 @@ RSS_FEEDS = [
      "url": "https://www.maritime-executive.com/articles.rss"},
     # More of the same trade press: The Loadstar is the forwarders' own paper,
     # Hellenic Shipping News and Container News cover the carriers and the box
-    # trades, and SAFETY4SEA carries the casualty and port-state stories that
-    # close a berth before anyone calls it a disruption.
+    # trades, and FreightWaves covers the freight market end of the same desk.
+    # (SAFETY4SEA held this slot until the first real read found its feed
+    # serving HTML - witnessed 2026-08-28, swapped the same day.)
     {"name": "The Loadstar", "language": "en", "url": "https://theloadstar.com/feed/"},
     {"name": "Hellenic Shipping News", "language": "en",
      "url": "https://www.hellenicshippingnews.com/feed/"},
     {"name": "Container News", "language": "en", "url": "https://container-news.com/feed/"},
-    {"name": "SAFETY4SEA", "language": "en", "url": "https://safety4sea.com/feed/"},
+    {"name": "FreightWaves", "language": "en", "url": "https://www.freightwaves.com/feed"},
     # English - the wires, kept so the lag against them is measurable.
     {"name": "gCaptain (maritime)", "language": "en", "url": "https://gcaptain.com/feed/"},
     {"name": "Al Jazeera English", "language": "en", "url": "https://www.aljazeera.com/xml/rss/all.xml"},

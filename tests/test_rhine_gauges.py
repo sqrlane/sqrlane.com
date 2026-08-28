@@ -327,3 +327,27 @@ class TheEndpoint(GaugeTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TheEventQuotesTheThresholdItCrossed(unittest.TestCase):
+    """Witnessed on the first real six-gauge read: Maxau at 370 cm (warn band,
+    380) was captioned "at or below the 320 cm restriction threshold" - the
+    medium band it had NOT crossed. The band was right, the sentence was
+    false. The quoted number must be the threshold the walk actually stopped
+    at, for every band."""
+
+    def test_every_band_quotes_its_own_threshold(self):
+        gauge = {"station": "TEST", "name": "Test",
+                 "warn_cm": 380, "high_cm": 320, "critical_cm": 250}
+        for level, crossed in ((370, 380), (300, 320), (200, 250)):
+            event = risk_monitor._rhine_event(gauge, float(level), "2026-08-28T00:00:00Z")
+            self.assertIn(f"at or below the {crossed} cm", event["reasoning"],
+                          f"level {level} should quote the {crossed} cm band")
+            self.assertIn(f"restriction threshold {crossed} cm", event["summary"])
+            self.assertGreaterEqual(crossed, level,
+                                    "a quoted threshold below the level is a false sentence")
+
+    def test_a_normal_level_still_produces_no_event(self):
+        gauge = {"station": "TEST", "name": "Test",
+                 "warn_cm": 380, "high_cm": 320, "critical_cm": 250}
+        self.assertIsNone(risk_monitor._rhine_event(gauge, 400.0, "2026-08-28T00:00:00Z"))
