@@ -27,7 +27,7 @@ TOP = 226
 # =========================================================================
 # SIGNALS
 # =========================================================================
-SX, SW, SH = M, 300, 280
+SX, SW, SH = M, 270, 280
 s.card(SX, TOP, SW, SH)
 sx = SX + 24
 s.text(sx, TOP + 36, "SIGNALS", 10, 700, FAINT, ls=1.4)
@@ -45,11 +45,12 @@ s.text(sx, TOP + 262, "42 live today. The rest are phase two.", 11.5, 400, FAINT
 # =========================================================================
 # CONFIDENCE
 # =========================================================================
-HX, HW = 428, W - M - 428
+HX, HW = 390, 700
 s.card(HX, TOP, HW, SH, stroke=BORDER_STRONG)
 hx = HX + 24
 s.text(hx, TOP + 36, "CONFIDENCE, BUILDING", 10, 700, AMBER, ls=1.4)
-s.text(hx + 216, TOP + 36, "how detection works — not a measured accuracy", 11, 400, FAINT)
+s.text(hx + 208, TOP + 26, "mechanism, not", 9.5, 400, FAINT)
+s.text(hx + 208, TOP + 40, "a measured accuracy", 9.5, 400, FAINT)
 
 VARS = [("Union ballot", [0, 0, 1, 1, 2, 3, 3, 4, 4, 4]),
         ("Berth waiting", [0, 0, 0, 1, 1, 1, 2, 3, 4, 4]),
@@ -57,10 +58,10 @@ VARS = [("Union ballot", [0, 0, 1, 1, 2, 3, 3, 4, 4, 4]),
         ("Rail slots", [0, 0, 0, 0, 1, 1, 2, 2, 3, 4]),
         ("Prediction mkt", [0, 0, 1, 1, 2, 2, 3, 4, 4, 4]),
         ("Wire volume", [0, 0, 0, 0, 0, 1, 1, 2, 3, 4])]
-GX, CELL, GAP = hx + 116, 58, 6
+GX, CELL, GAP = hx + 104, 42, 5
 for r, (name, row) in enumerate(VARS):
     y = TOP + 62 + r * 21
-    s.text(hx, y + 11, name, 11.5, 400, MUTED)
+    s.text(hx, y + 11, name, 10.5, 400, MUTED)
     for c, v in enumerate(row):
         s.raw(f'<rect x="{GX + c*(CELL+GAP)}" y="{y}" width="{CELL}" height="16" rx="3" '
               f'fill="{HEAT[v]}"/>')
@@ -79,6 +80,40 @@ for c, v in enumerate(CONF):
 ty = BASE - HGT * 0.70
 s.line(GX - 8, ty, GX + 10 * (CELL + GAP) - GAP + 8, ty, AMBER, 1.4, dash="4 4")
 s.text(GX + 10 * (CELL + GAP) + 10, ty + 4, "trigger", 11, 600, AMBER)
+
+# =========================================================================
+# AFTER THE TRIGGER - the run, as the app shows it
+# =========================================================================
+RX, RW = 1114, W - M - 1114
+s.card(RX, TOP, RW, SH, fill=CARD, stroke=BORDER_STRONG)
+s.raw(f'<rect x="{RX}" y="{TOP}" width="{RW}" height="34" rx="{RMD}" fill="{SURFACE}"/>')
+s.raw(f'<rect x="{RX}" y="{TOP+22}" width="{RW}" height="12" fill="{SURFACE}"/>')
+s.line(RX, TOP + 34, RX + RW, TOP + 34, BORDER)
+s.text(RX + 16, TOP + 22, "SQRlane / Run", 11, 500, MUTED)
+s.text(RX + RW - 16, TOP + 22, "12:00", 10.5, 400, FAINT, anchor="end", cls="mono")
+
+s.card(RX + 14, TOP + 46, RW - 28, 34, fill=AMBER_BG, stroke=AMBER, rx=R)
+s.text(RX + 28, TOP + 68, "TRIGGERED", 10, 700, AMBER, ls=1.3)
+s.text(RX + 122, TOP + 68, "Hamburg strike", 12.5, 600, FG)
+s.text(RX + RW - 28, TOP + 68, "confidence 92%", 11.5, 500, AMBER, anchor="end", cls="mono")
+
+STEPS = [("Risk Monitor", "exception raised", "3 bookings"),
+         ("Route Advisor", "alternatives priced", "14 options"),
+         ("Comms Agent", "drafts written", "6 mails"),
+         ("Customs", "entries checked", "2 countries")]
+for j, (who, did, n) in enumerate(STEPS):
+    y = TOP + 108 + j * 26
+    s.raw(f'<circle cx="{RX+30}" cy="{y-4}" r="6" fill="{GREEN_BG}"/>')
+    s.raw(f'<path d="M{RX+27} {y-4} l2.5 2.5 l5 -5.5" stroke="{GREEN}" stroke-width="1.6" '
+          f'fill="none" stroke-linecap="round"/>')
+    s.text(RX + 46, y, who, 11.5, 600, FG)
+    s.text(RX + 158, y, did, 11.5, 400, MUTED)
+    s.text(RX + RW - 28, y, n, 11, 400, FAINT, anchor="end", cls="mono")
+
+s.line(RX + 16, TOP + 222, RX + RW - 16, TOP + 222, BORDER)
+s.text(RX + 28, TOP + 244, "RECOMMENDED", 9.5, 700, FAINT, ls=1.3)
+s.text(RX + 28, TOP + 266, "Route around 2 · Amend 1 · Watch 4", 13, 600, FG)
+s.chip(RX + RW - 28 - 84, TOP + 240, 84, 28, "Approve", fs=11.5, fill=FG, col=CARD, weight=600)
 
 # =========================================================================
 # THE DECISION WINDOW - what earlier knowledge is actually worth
