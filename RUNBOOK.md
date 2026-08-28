@@ -219,6 +219,21 @@ done:
     py -m src.orchestrator --no-live           # the entire loop, no network
     py -m unittest discover -s tests           # every claim-guard (should end "OK")
 
+**What this does *not* run: the prediction models.** TabPFN and the other
+models from the ML work live in `ml/` and are **prepared, not wired** —
+nothing in the demo imports them, and a test fails the build if that ever
+changes. The agents above decide with the LLM (rules as fallback); the
+models are benchmarked separately, against the practice world only:
+
+    py -3.12 -m ml.synth --bookings 6000 --seed 7
+    py -3.12 -m ml.evaluate
+
+The day a real TMS provides real history, that harness runs unchanged and
+the models would power the Workers (delay → Risk/Milestones, action → a
+consistency prior beside the LLM in Routing, breach → the approval queue's
+sort order). Until then their scores describe a simulated world and stay
+out of the demo — see `ml/README.md` and the lab notes.
+
 ---
 
 ## 9. Driving it like an operator
