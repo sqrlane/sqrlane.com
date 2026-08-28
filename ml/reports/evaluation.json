@@ -30,8 +30,8 @@
   "test_episodes": 38
  },
  "environment": {
-  "python": "3.11.15",
-  "scikit_learn": "1.9.0"
+  "python": "3.12.10",
+  "scikit_learn": "1.6.1"
  },
  "results": {
   "action": {
@@ -99,28 +99,46 @@
     }
    },
    "gbm": {
-    "accuracy": 0.8799,
-    "macro_f1": 0.6154,
+    "accuracy": 0.8805,
+    "macro_f1": 0.6082,
     "confusion": {
      "no-action": {
-      "no-action": 1376,
+      "no-action": 1381,
       "hold": 13,
-      "reroute": 18
+      "reroute": 13
      },
      "hold": {
-      "no-action": 56,
-      "hold": 34,
+      "no-action": 58,
+      "hold": 32,
       "reroute": 13
      },
      "reroute": {
-      "no-action": 90,
+      "no-action": 92,
       "hold": 11,
-      "reroute": 62
+      "reroute": 60
      }
     }
    },
    "tabpfn": {
-    "skipped": "TabPFN is not installed, so the tabpfn backend is skipped. To enable it:\n  1. pip install -r ml/requirements.txt   (numpy + scikit-learn)\n  2. pip install tabpfn                   (pulls PyTorch - several GB)\n  3. run once with network access to huggingface.co - the first fit\n     downloads the model weights from Hugging Face, and a sandbox that\n     blocks that host (like the one this repo is built in) cannot ever\n     run it. That is expected there, not a bug.\nLicense: TabPFN code and v2 weights are Prior-Labs-License (Apache-2.0\nplus required 'Built with PriorLabs-TabPFN' attribution when you\ndistribute); the 2.5/3 weights are NON-COMMERCIAL - internal\nbenchmarking is fine, shipping is a license decision. tabpfn-client\n(their hosted API, no torch) exists but sends the data to Prior Labs'\nservers - never point it at real customer bookings without sign-off."
+    "accuracy": 0.8954,
+    "macro_f1": 0.6663,
+    "confusion": {
+     "no-action": {
+      "no-action": 1390,
+      "hold": 10,
+      "reroute": 7
+     },
+     "hold": {
+      "no-action": 43,
+      "hold": 53,
+      "reroute": 7
+     },
+     "reroute": {
+      "no-action": 90,
+      "hold": 18,
+      "reroute": 55
+     }
+    }
    }
   },
   "delay": {
@@ -137,11 +155,12 @@
     "p90_abs_error_days": 6.662
    },
    "gbm": {
-    "mae_days": 2.409,
-    "p90_abs_error_days": 4.813
+    "mae_days": 2.382,
+    "p90_abs_error_days": 4.851
    },
    "tabpfn": {
-    "skipped": "TabPFN is not installed, so the tabpfn backend is skipped. To enable it:\n  1. pip install -r ml/requirements.txt   (numpy + scikit-learn)\n  2. pip install tabpfn                   (pulls PyTorch - several GB)\n  3. run once with network access to huggingface.co - the first fit\n     downloads the model weights from Hugging Face, and a sandbox that\n     blocks that host (like the one this repo is built in) cannot ever\n     run it. That is expected there, not a bug.\nLicense: TabPFN code and v2 weights are Prior-Labs-License (Apache-2.0\nplus required 'Built with PriorLabs-TabPFN' attribution when you\ndistribute); the 2.5/3 weights are NON-COMMERCIAL - internal\nbenchmarking is fine, shipping is a license decision. tabpfn-client\n(their hosted API, no torch) exists but sends the data to Prior Labs'\nservers - never point it at real customer bookings without sign-off."
+    "mae_days": 2.334,
+    "p90_abs_error_days": 5.337
    }
   },
   "breach": {
@@ -159,10 +178,11 @@
    },
    "gbm": {
     "roc_auc": 0.88,
-    "brier": 0.1278
+    "brier": 0.1287
    },
    "tabpfn": {
-    "skipped": "TabPFN is not installed, so the tabpfn backend is skipped. To enable it:\n  1. pip install -r ml/requirements.txt   (numpy + scikit-learn)\n  2. pip install tabpfn                   (pulls PyTorch - several GB)\n  3. run once with network access to huggingface.co - the first fit\n     downloads the model weights from Hugging Face, and a sandbox that\n     blocks that host (like the one this repo is built in) cannot ever\n     run it. That is expected there, not a bug.\nLicense: TabPFN code and v2 weights are Prior-Labs-License (Apache-2.0\nplus required 'Built with PriorLabs-TabPFN' attribution when you\ndistribute); the 2.5/3 weights are NON-COMMERCIAL - internal\nbenchmarking is fine, shipping is a license decision. tabpfn-client\n(their hosted API, no torch) exists but sends the data to Prior Labs'\nservers - never point it at real customer bookings without sign-off."
+    "roc_auc": 0.8814,
+    "brier": 0.1284
    }
   }
  }
