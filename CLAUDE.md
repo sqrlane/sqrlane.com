@@ -982,11 +982,20 @@ Four rules keep it honest, all held by `tests/test_the_models_stay_honest.py`:
   Prior Labs' servers and must never be pointed at real customer bookings without
   sign-off. Internal benchmarking triggers none of it.
 
-One measured finding safe to use internally (synthetic-world only): the shipped rules
-engine takes every published delay estimate at face value and never asks whether an
-episode will still be alive when the vessel reaches the chokepoint — on the committed
-seed it caught 229 of 266 bookings that needed action but acted on 484 the world left
-alone. Teaching it that one timing question is a concrete non-ML improvement.
+One measured finding, and the layer's first paid-off improvement (synthetic-world
+only): the shipped rules engine used to take every published delay estimate at face
+value, never asking whether an episode would still be alive when the vessel reached the
+chokepoint — on the committed seed it acted on 484 bookings the world left alone. The
+advisor now asks exactly that (`timing_factor` in `src/route_advisor.py`) — but **only
+when the event record carries `days_into_episode` and `days_to_passage`**, which the ML
+world's reconstructed facts do and the demo's authored events deliberately do not: their
+delay estimates are already per-booking impact forecasts, so discounting them again
+would count the same timing twice, and the screenplay's outcomes are the spec. Measured
+effect on the same seed: rules accuracy 65.7% → 76.0%, false alarms 484 → 308, catches
+229 → 218 of 266 — found by the harness, fixed in the product, verified by re-running
+the harness. `tests/test_a_reroute_has_to_be_worth_what_it_costs.py` holds both halves:
+the question turns the decision when it is answerable, and the demo trails never
+pretend it was asked.
 
 ### Free-tier rate limits are the binding constraint
 

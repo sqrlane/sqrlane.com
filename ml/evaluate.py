@@ -386,12 +386,14 @@ def _plain_language_reading(results) -> list[str]:
             lines.append("")
             lines.append(
                 f"The rules engine the product actually ships scores {rules:.0%} "
-                f"here. The gap has a specific, explainable cause: the rules take "
-                f"every visible disruption's published delay estimate at face "
-                f"value, but many episodes will have blown over before the vessel "
-                f"actually reaches the disrupted chokepoint. The trained models "
-                f"learn to weigh an episode's age and type against how far ahead "
-                f"the passage is; the rules never ask.")
+                f"here. It asks one timing question this harness surfaced the "
+                f"need for - whether an episode will still be standing when the "
+                f"vessel actually reaches the chokepoint (timing_factor in "
+                f"src/route_advisor.py, asked only when the record carries the "
+                f"facts to answer it). What remains of the gap is everything "
+                f"else the learners weigh that a fixed rule cannot: how hard "
+                f"each episode type tends to bite, what each carrier tends to "
+                f"add, and what the instruments were reading.")
             if caught + missed:
                 direction = (
                     f"they acted on {over_alert} bookings the world left alone and "
@@ -404,10 +406,20 @@ def _plain_language_reading(results) -> list[str]:
                 lines.append(
                     f"In exchange the rules caught {caught} of the {caught + missed} "
                     f"bookings that genuinely needed action, where \"always do "
-                    f"nothing\" catches none. On this test set {direction}. "
-                    f"Teaching the shipped policy that one timing question is a "
-                    f"concrete improvement a future version could adopt without "
-                    f"any machine learning.")
+                    f"nothing\" catches none. On this test set {direction}.")
+            best_name = _best(action, "accuracy")
+            best_table = action.get(best_name, {}).get("confusion")
+            if best_name and best_name != "rules" and best_table and (caught + missed):
+                best_caught = sum(best_table[t][p] for t in acted for p in acted)
+                lines.append("")
+                lines.append(
+                    f"One number accuracy hides: of those {caught + missed} bookings "
+                    f"that needed action, the rules moved on {caught} and "
+                    f"{best_name} - the accuracy winner - moved on {best_caught}. "
+                    f"A model can be right more often by acting rarely, and a "
+                    f"policy can miss less by acting constantly; which error "
+                    f"costs more is a desk decision, not a modelling one, so "
+                    f"neither headline number settles the choice on its own.")
 
     delay = results["delay"]
     if "skipped" not in delay.get("gbm", {"skipped": True}) and "skipped" not in delay.get("mean", {"skipped": True}):

@@ -82,9 +82,16 @@ from its seed, but sklearn numbers can drift across releases). Headlines:
 the gradient-boosting model decides reroute/hold/no-action at about 88%
 against an 84% "always do nothing" floor (macro-F1 0.62 vs 0.30 — the
 learner's edge is on the rare classes, which are the ones that matter); the
-shipped rules engine lands at about 66% with the honest excuse that it takes
-every published estimate at face value and never asks whether the episode
-will still be alive when the vessel gets there; the delay model is off by
+shipped rules engine lands at about 76% — and that number carries this
+harness's first measured product improvement: the first evaluation scored the
+rules at 66%, acting on 484 bookings the world left alone, because they took
+every published estimate at face value and never asked whether the episode
+would still be alive when the vessel got there. Teaching the advisor that one
+timing question (`timing_factor` in `src/route_advisor.py`, asked only when
+the record carries the facts to answer it) removed 176 of those false alarms
+at the cost of 11 real catches (recall 229→218 of 266) and lifted the rules
+past the logistic learner on macro-F1 — a non-ML change, found by the
+harness, verified by re-running it; the delay model is off by
 about 2.4 days where guessing the average is off by 7.2; the breach model
 ranks a breaching booking above a safe one 88% of the time.
 
