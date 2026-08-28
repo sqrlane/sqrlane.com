@@ -979,12 +979,18 @@ Four rules keep it honest, all held by `tests/test_the_models_stay_honest.py`:
 - **The feature fence is mechanical.** `ml/features.py` owns the one column list; a
   feature reading an outcome or latent key raises, and the direction-of-error prose in
   the report is computed from the confusion table, never asserted.
-- **TabPFN is adapted but unwitnessed.** It needs torch plus a first-run weight download
-  from Hugging Face, which this sandbox blocks. License: code + v2 weights are
-  Prior-Labs-License (Apache-2.0 + "Built with PriorLabs-TabPFN" attribution on
-  distribution); the 2.5/3 weights are **non-commercial**; `tabpfn-client` sends data to
-  Prior Labs' servers and must never be pointed at real customer bookings without
-  sign-off. Internal benchmarking triggers none of it.
+- **TabPFN was witnessed on 2026-08-28** — the owner's laptop, v2 weights on CPU
+  (`pip install "tabpfn>=2.0,<2.1"`, Python ≤3.12, `TABPFN_ALLOW_CPU_LARGE_DATASET=1`)
+  — and **won all three tasks** in the committed reports: action 89.5%/0.666 vs GBM
+  88.1%/0.608, delay MAE 2.33 vs 2.38 (GBM keeps the tighter P90 tail), breach AUC
+  0.8814 vs 0.880. Synthetic-world numbers, as ever. It still cannot run in the build
+  sandbox (weight host blocked), so the adapter keeps its readable degradation.
+  License: code + v2 weights are Prior-Labs-License (Apache-2.0 + "Built with
+  PriorLabs-TabPFN" attribution on distribution); the newer 2.5/3 weights are
+  **non-commercial** and gated behind a Prior Labs login (broken on Windows —
+  the pin avoids them); `tabpfn-client` sends data to Prior Labs' servers and must
+  never be pointed at real customer bookings without sign-off. Internal benchmarking
+  triggers none of it.
 
 One measured finding, and the layer's first paid-off improvement (synthetic-world
 only): the shipped rules engine used to take every published delay estimate at face

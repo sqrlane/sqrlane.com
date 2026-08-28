@@ -46,7 +46,7 @@ Confusion table for `tabpfn` (rows = truth, columns = predicted):
 
 ## What this means, in plain language
 
-On the reroute/hold/do-nothing call, always answering "do nothing" is right 84% of the time in this simulated world - most bookings are fine, there as here. The best trained model gets 88%. The gap between those two numbers is what learning is actually worth on this task. The shortfall from 100% is by construction: the generator injects noise no observer is shown - how hard a storm bites, whether a strike settles tomorrow - so a model scoring near-perfectly here would be a bug, not a triumph.
+On the reroute/hold/do-nothing call, always answering "do nothing" is right 84% of the time in this simulated world - most bookings are fine, there as here. The best trained model (tabpfn) gets 90%. The gap between those two numbers is what learning is actually worth on this task. The shortfall from 100% is by construction: the generator injects noise no observer is shown - how hard a storm bites, whether a strike settles tomorrow - so a model scoring near-perfectly here would be a bug, not a triumph.
 
 The rules engine the product actually ships scores 76% here. It asks one timing question this harness surfaced the need for - whether an episode will still be standing when the vessel actually reaches the chokepoint (timing_factor in src/route_advisor.py, asked only when the record carries the facts to answer it). What remains of the gap is everything else the learners weigh that a fixed rule cannot: how hard each episode type tends to bite, what each carrier tends to add, and what the instruments were reading.
 
@@ -54,9 +54,9 @@ In exchange the rules caught 218 of the 266 bookings that genuinely needed actio
 
 One number accuracy hides: of those 266 bookings that needed action, the rules moved on 218 and tabpfn - the accuracy winner - moved on 133. A model can be right more often by acting rarely, and a policy can miss less by acting constantly; which error costs more is a desk decision, not a modelling one, so neither headline number settles the choice on its own.
 
-On "how late will this booking actually run", guessing the historical average is off by 7.2 days on a typical booking; the best model is off by 2.4. That is the difference between a number you can put in a customer email and one you cannot.
+On "how late will this booking actually run", guessing the historical average is off by 7.2 days on a typical booking; the best model (tabpfn) is off by 2.3. That is the difference between a number you can put in a customer email and one you cannot.
 
-On "will the deadline break", the best model's ROC-AUC is 0.88: show it two bookings, one that will breach and one that will not, and it puts the riskier one first 88% of the time. That ranking is what an approval queue would sort by, so the person works the most urgent booking first.
+On "will the deadline break", the best model's (tabpfn) ROC-AUC is 0.88: show it two bookings, one that will breach and one that will not, and it puts the riskier one first 88% of the time. That ranking is what an approval queue would sort by, so the person works the most urgent booking first.
 
 None of these numbers transfer to real freight. They show the PIPELINE works - features, split, baselines, honest labels - and they rank model families against each other inside a controlled world. The day real TMS history exists, this same harness runs unchanged and produces numbers that mean something operationally; until then, these stay in ml/reports/ and out of every page, pitch and demo.
 

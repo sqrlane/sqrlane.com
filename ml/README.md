@@ -115,17 +115,32 @@ sklearn-style fit/predict, a single forward pass instead of training, and its
 published strength is small tables — which is what a forwarder's booking
 history is. It has a slot in the registry via `ml/tabpfn_adapter.py`.
 
-It has **never run here**. The package needs PyTorch and downloads its
-weights from Hugging Face on first fit; this build sandbox blocks that host,
-so the adapter is built to TabPFN's published interface and degrades to a
-readable "here is how to enable it" message — the same posture the repo takes
-with its eight unwitnessed structured sources. To enable it on a real
+It has **run for real exactly once**: on the owner's laptop, 2026-08-28,
+v2 weights on CPU (Python 3.12, `TABPFN_ALLOW_CPU_LARGE_DATASET=1`), and it
+**won all three tasks** — action 89.5% / 0.666 macro-F1 against GBM's 88.1%
+/ 0.608 (the edge concentrated on the rare classes, which are the ones that
+matter), delay MAE 2.33 vs 2.38 (though GBM keeps the tighter P90 tail,
+4.85 vs 5.34 days), breach AUC 0.8814 / Brier 0.1284 vs 0.880 / 0.1287.
+The committed reports carry that witnessed run. It still cannot run in the
+build sandbox (the weight host is blocked), so the adapter keeps its
+readable degradation — the same posture the repo takes with unwitnessed
+sources. To enable it on a real
 machine: `pip install -r ml/requirements.txt`, then
 `pip install "tabpfn>=2.0,<2.1"` (pulls torch), then run once with internet
-so the weights cache. The version pin was learned by witnessing: a plain
+so the weights cache. When only the report PROSE changes,
+`python -m ml.evaluate --rerender` rewrites evaluation.md from the existing
+evaluation.json without re-running any model — a witnessed TabPFN run costs
+hours of laptop CPU, and a wording fix must never cost that again. The version pin was learned by witnessing: a plain
 `pip install tabpfn` ships the newer gated 2.5/3 weights, whose mandatory
 Prior Labs account login crashes outright on Windows (`WinError 10038`) —
 the 2.0.x package ships the openly licensed v2 weights and needs no login.
+Two more facts from the same witnessing session: use **Python 3.12 or
+older** for this backend (`py -3.12` on Windows — the pinned package wants
+an older scikit-learn that has no prebuilt wheel on newer Pythons, so pip
+tries to compile it and dies looking for a C compiler), and on CPU with
+more than 1 000 training rows TabPFN refuses to start unless
+`TABPFN_ALLOW_CPU_LARGE_DATASET=1` is set — a speed guard, not a fault,
+and a CPU run over this dataset takes a long while.
 
 Two caveats travel with it, and they are in the adapter's error message so
 they cannot be missed:

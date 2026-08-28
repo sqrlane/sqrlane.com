@@ -349,6 +349,21 @@ def _best(task_results, metric, higher=True):
     return (max if higher else min)(scored, key=scored.get)
 
 
+def _best_learner(task_results, metric, *, higher, baselines):
+    """The winning TRAINED backend for a task - baselines and the rules
+    policy are excluded, because "the best trained model" must mean exactly
+    that. Returns (name, value) or (None, None) when nothing trained ran.
+    The name is quoted in the prose beside the number, so a reader can check
+    the claim against the table above it in one glance."""
+    scored = {n: r[metric] for n, r in task_results.items()
+              if n not in baselines and "skipped" not in r
+              and r.get(metric) is not None}
+    if not scored:
+        return None, None
+    name = (max if higher else min)(scored, key=scored.get)
+    return name, scored[name]
+
+
 def _plain_language_reading(results) -> list[str]:
     """The closing section, written for the repo owner, who does not code.
 
@@ -360,14 +375,16 @@ def _plain_language_reading(results) -> list[str]:
     lines = ["## What this means, in plain language", ""]
 
     action = results["action"]
-    if "skipped" not in action.get("gbm", {"skipped": True}) and "skipped" not in action.get("majority", {"skipped": True}):
-        gbm = action["gbm"]["accuracy"]
+    best_action, best_action_acc = _best_learner(
+        action, "accuracy", higher=True, baselines=("majority", "rules"))
+    if best_action and "skipped" not in action.get("majority", {"skipped": True}):
         majority = action["majority"]["accuracy"]
         lines.append(
             f"On the reroute/hold/do-nothing call, always answering \"do nothing\" "
             f"is right {majority:.0%} of the time in this simulated world - most "
-            f"bookings are fine, there as here. The best trained model gets "
-            f"{gbm:.0%}. The gap between those two numbers is what learning is "
+            f"bookings are fine, there as here. The best trained model "
+            f"({best_action}) gets {best_action_acc:.0%}. The gap between those "
+            f"two numbers is what learning is "
             f"actually worth on this task. The shortfall from 100% is by "
             f"construction: the generator injects noise no observer is shown - "
             f"how hard a storm bites, whether a strike settles tomorrow - so a "
@@ -422,21 +439,24 @@ def _plain_language_reading(results) -> list[str]:
                     f"neither headline number settles the choice on its own.")
 
     delay = results["delay"]
-    if "skipped" not in delay.get("gbm", {"skipped": True}) and "skipped" not in delay.get("mean", {"skipped": True}):
+    best_delay, best_delay_mae = _best_learner(
+        delay, "mae_days", higher=False, baselines=("mean", "desk-estimate"))
+    if best_delay and "skipped" not in delay.get("mean", {"skipped": True}):
         lines.append("")
         lines.append(
             f"On \"how late will this booking actually run\", guessing the "
             f"historical average is off by {delay['mean']['mae_days']:.1f} days "
-            f"on a typical booking; the best model is off by "
-            f"{delay['gbm']['mae_days']:.1f}. That is the difference between a "
+            f"on a typical booking; the best model ({best_delay}) is off by "
+            f"{best_delay_mae:.1f}. That is the difference between a "
             f"number you can put in a customer email and one you cannot.")
 
     breach = results["breach"]
-    if "skipped" not in breach.get("gbm", {"skipped": True}):
-        auc = breach["gbm"]["roc_auc"]
+    best_breach, auc = _best_learner(
+        breach, "roc_auc", higher=True, baselines=("base-rate", "desk-estimate"))
+    if best_breach:
         lines.append("")
         lines.append(
-            f"On \"will the deadline break\", the best model's ROC-AUC is "
+            f"On \"will the deadline break\", the best model's ({best_breach}) ROC-AUC is "
             f"{auc:.2f}: show it two bookings, one that will breach and one that "
             f"will not, and it puts the riskier one first {auc:.0%} of the time. "
             f"That ranking is what an approval queue would sort by, so the "
@@ -458,7 +478,22 @@ def main() -> int:
         description="Evaluate every available backend against the synthetic world.")
     parser.add_argument("--data", default=str(DEFAULT_DATA),
                         help="dataset produced by python -m ml.synth")
+    parser.add_argument("--rerender", action="store_true",
+                        help="rewrite evaluation.md from the existing "
+                             "evaluation.json without re-running any model - "
+                             "for when only the report PROSE changed. A "
+                             "witnessed TabPFN run takes hours on a laptop "
+                             "CPU; a wording fix must never cost that again.")
     args = parser.parse_args()
+
+    if args.rerender:
+        json_path = REPORTS_DIR / "evaluation.json"
+        report = json.loads(json_path.read_text(encoding="utf-8"))
+        md_path = REPORTS_DIR / "evaluation.md"
+        with open(md_path, "w", encoding="utf-8") as handle:
+            handle.write(render_markdown(report))
+        print(f"Re-rendered {md_path} from {json_path} - no model was run.")
+        return 0
 
     world = load_world(Path(args.data))
     print(f"Evaluating against {args.data} "
