@@ -61,6 +61,67 @@ plain functions, and the human approval gate is still the only exit. A
 central super-agent that privately negotiates with other agents would hide
 exactly the reasoning this product exists to show.
 
+## The Worker card — the Planner, described like its peers
+
+Every Worker on the board is described the same way: what arrives, what it
+does, what lands on the booking. The Planner's card, in that format:
+
+- **What arrives:** the forward book — every quotation and unshipped booking
+  — plus the same risk state every other agent reads, plus (new) labelled
+  forecasts for brewing situations.
+- **Cadence:** a scheduled sweep (daily, and immediately after any new
+  lane-tier event), over horizon buckets that carry different menus —
+  quote-stage · booked, departure minus 14+ days · minus 7 · the final 72
+  hours before cargo cut-off, the last cheap moment.
+- **What it does:** for each shipment in the sweep, answer three questions
+  in order. *Is this shipment exposed to anything on its horizon?* (the
+  timing question, counted from ETD). *Is acting now better than waiting?*
+  — acting early on a fuzzy forecast can be worse than waiting for clarity
+  while rebooking is still cheap, so the Planner's real skill is choosing
+  the **last cheap moment**, not the earliest one. *Which move?* — from the
+  pre-departure menu: rebook carrier/sailing/routing · leave earlier to buy
+  slack · **split** across two routings · flexible or refundable terms ·
+  price the risk into the customer's quote · stand down.
+- **Every sweep ends in one of three states per shipment:** **act now**
+  (proposals drafted), **tripwire armed** (see below), or **stand down** —
+  and stand-down is a real answer, recorded with its reasoning, exactly as
+  no-action is today.
+- **What lands on the booking:** a *plan of record* (chosen routing and the
+  reasoning trail), hedge orders as drafts, tripwire conditions, a risk
+  line on the quote, a customer advisory draft — every one
+  `DRAFT - not sent` / `QUEUED - not written`, behind the same approval
+  gate as everything else.
+- **Mode on the board:** `SCR` when it first appears (an authored scenario,
+  honestly tagged, like Inbox and Customs); `LIVE` only when the sweep,
+  the pricing and the proposals genuinely run.
+
+## Four nuances that make it a desk role, not a feature
+
+1. **Tripwires — deciding when to decide, mechanically.** A tripwire is a
+   condition the Planner writes onto the record — *"if Kaub falls below X
+   cm"*, *"if the strike ballot passes"*, *"if the forecast crosses 60%"* —
+   that the Risk Monitor's ordinary runs evaluate, because they are
+   conditions over readings the sources already band. When one trips, the
+   prepared proposal is raised for approval. This is how "wait" stays a
+   managed position instead of a forgotten one.
+2. **The portfolio view — hedging in the real sense.** The Planner is the
+   only agent that looks *across* bookings. Twelve shipments routed through
+   the same chokepoint in the same week is concentration risk no
+   per-booking agent can see; spreading the book is a hedge only the
+   Planner can propose. When hedge capacity is scarce, it allocates by
+   priced exposure — whose late fees and breach penalties are largest —
+   never first-come.
+3. **Jurisdiction — one owner per shipment at a time.** The Planner owns a
+   booking until cargo cut-off; the in-transit advisor owns it after. The
+   baton pass is itself a write-back: the plan of record, hedges in place
+   and tripwires still armed, inherited by the advisor. Two agents never
+   fight over one booking, and the record shows who decided what, when.
+4. **The learning flywheel.** Every Planner decision and its eventual
+   outcome is precisely the labelled history the ML layer was built
+   waiting for. The Planner does not just consume the breach model — it
+   generates the data that will retrain it. In the practice world this
+   loop can be rehearsed end to end before any real booking is touched.
+
 ## Almost everything it needs already exists
 
 This is the striking part: the Planner is mostly a re-aiming of proven
