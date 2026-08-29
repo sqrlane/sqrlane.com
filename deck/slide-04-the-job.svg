@@ -21,104 +21,143 @@ text{font-family:"Geist",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-se
 <text x="122" y="252" font-size="10" font-weight="700" fill="#8f8f8f" letter-spacing="1.4">ONE FILE, END TO END</text>
 <text x="336" y="252" font-size="11.5" font-weight="400" fill="#8f8f8f">Shanghai to Munich</text>
 <text x="1798" y="252" font-size="13" font-weight="600" fill="#171717" text-anchor="end" class="mono">45 days</text>
-<rect x="283.5" y="278" width="51.577777777777776" height="20" rx="4" fill="#f2f2f2" stroke="none"/>
-<rect x="338.0777777777778" y="278" width="78.86666666666666" height="20" rx="4" fill="#f2f2f2" stroke="none"/>
-<text x="377.5111111111111" y="292" font-size="10" font-weight="500" fill="#8f8f8f" text-anchor="middle" class="mono">3d</text>
-<rect x="419.94444444444446" y="278" width="51.577777777777776" height="20" rx="4" fill="#f2f2f2" stroke="none"/>
-<rect x="474.52222222222224" y="278" width="51.577777777777776" height="20" rx="4" fill="#f2f2f2" stroke="none"/>
-<rect x="529.1" y="278" width="870.2444444444444" height="20" rx="4" fill="#ebebeb" stroke="none"/>
-<text x="964.2222222222222" y="292" font-size="10" font-weight="600" fill="#4d4d4d" text-anchor="middle" class="mono">32d</text>
-<rect x="1402.3444444444444" y="278" width="51.577777777777776" height="20" rx="4" fill="#f2f2f2" stroke="none"/>
-<rect x="1456.9222222222222" y="278" width="24.288888888888888" height="20" rx="4" fill="#f2f2f2" stroke="none"/>
-<rect x="1484.211111111111" y="278" width="24.288888888888888" height="20" rx="4" fill="#f2f2f2" stroke="none"/>
+<rect x="283.5" y="278" width="48.91111111111111" height="20" rx="4" fill="#f2f2f2" stroke="none"/>
+<rect x="335.4111111111111" y="278" width="74.86666666666667" height="20" rx="4" fill="#f2f2f2" stroke="none"/>
+<text x="372.84444444444443" y="292" font-size="10" font-weight="500" fill="#8f8f8f" text-anchor="middle" class="mono">3d</text>
+<rect x="413.27777777777777" y="278" width="48.91111111111111" height="20" rx="4" fill="#f2f2f2" stroke="none"/>
+<rect x="465.18888888888887" y="278" width="48.91111111111111" height="20" rx="4" fill="#f2f2f2" stroke="none"/>
+<rect x="517.1" y="278" width="827.5777777777778" height="20" rx="4" fill="#ebebeb" stroke="none"/>
+<text x="930.8888888888889" y="292" font-size="10" font-weight="600" fill="#4d4d4d" text-anchor="middle" class="mono">32d</text>
+<rect x="1347.677777777778" y="278" width="48.91111111111111" height="20" rx="4" fill="#f2f2f2" stroke="none"/>
+<rect x="1399.588888888889" y="278" width="22.955555555555556" height="20" rx="4" fill="#f2f2f2" stroke="none"/>
+<rect x="1425.5444444444445" y="278" width="22.955555555555556" height="20" rx="4" fill="#f2f2f2" stroke="none"/>
 <text x="122" y="293" font-size="11.5" font-weight="500" fill="#171717">the clock</text>
 <text x="282" y="318" font-size="10.5" font-weight="400" fill="#8f8f8f">opens</text>
-<text x="1510" y="318" font-size="10.5" font-weight="400" fill="#8f8f8f" text-anchor="end">closes</text>
+<text x="1450" y="318" font-size="10.5" font-weight="400" fill="#8f8f8f" text-anchor="end">closes</text>
 <line x1="122" y1="334" x2="1798" y2="334" stroke="#00000014" stroke-width="1"/>
 <text x="122" y="364" font-size="10" font-weight="700" fill="#96580a" letter-spacing="1.4">WHO THE FORWARDER TALKS TO</text>
 <text x="388" y="364" font-size="11" font-weight="400" fill="#8f8f8f">every dot is a mail, a portal login or a call</text>
-<text x="358.75" y="394" font-size="10" font-weight="600" fill="#4d4d4d" text-anchor="middle">Enquiry</text>
-<text x="512.25" y="394" font-size="10" font-weight="600" fill="#4d4d4d" text-anchor="middle">Quote</text>
-<text x="665.75" y="394" font-size="10" font-weight="600" fill="#4d4d4d" text-anchor="middle">Book</text>
-<text x="819.25" y="394" font-size="10" font-weight="600" fill="#4d4d4d" text-anchor="middle">Docs</text>
-<text x="972.75" y="394" font-size="10" font-weight="600" fill="#4d4d4d" text-anchor="middle">In transit</text>
-<text x="1126.25" y="394" font-size="10" font-weight="600" fill="#4d4d4d" text-anchor="middle">Customs</text>
-<text x="1279.75" y="394" font-size="10" font-weight="600" fill="#4d4d4d" text-anchor="middle">Delivery</text>
-<text x="1433.25" y="394" font-size="10" font-weight="600" fill="#4d4d4d" text-anchor="middle">Invoice</text>
-<text x="1550" y="394" font-size="9" font-weight="700" fill="#96580a" letter-spacing="1.2">REACHED ON</text>
+<text x="355.0" y="394" font-size="10" font-weight="600" fill="#4d4d4d" text-anchor="middle">Enquiry</text>
+<text x="501.0" y="394" font-size="10" font-weight="600" fill="#4d4d4d" text-anchor="middle">Quote</text>
+<text x="647.0" y="394" font-size="10" font-weight="600" fill="#4d4d4d" text-anchor="middle">Book</text>
+<text x="793.0" y="394" font-size="10" font-weight="600" fill="#4d4d4d" text-anchor="middle">Docs</text>
+<text x="939.0" y="394" font-size="10" font-weight="600" fill="#4d4d4d" text-anchor="middle">In transit</text>
+<text x="1085.0" y="394" font-size="10" font-weight="600" fill="#4d4d4d" text-anchor="middle">Customs</text>
+<text x="1231.0" y="394" font-size="10" font-weight="600" fill="#4d4d4d" text-anchor="middle">Delivery</text>
+<text x="1377.0" y="394" font-size="10" font-weight="600" fill="#4d4d4d" text-anchor="middle">Invoice</text>
+<text x="1490" y="394" font-size="9" font-weight="700" fill="#96580a" letter-spacing="1.2">REACHED ON</text>
+<text x="1798" y="394" font-size="9" font-weight="400" fill="#8f8f8f" text-anchor="end">and not an exhaustive list</text>
 <line x1="282" y1="404" x2="1798" y2="404" stroke="#00000024" stroke-width="1"/>
 <text x="122" y="430" font-size="12" font-weight="500" fill="#171717">Customer</text>
-<circle cx="358.75" cy="426" r="6" fill="#96580a"/>
-<circle cx="512.25" cy="426" r="6" fill="#96580a"/>
-<circle cx="665.75" cy="426" r="6" fill="#96580a"/>
-<circle cx="819.25" cy="426" r="6" fill="#96580a"/>
-<circle cx="972.75" cy="426" r="6" fill="#96580a"/>
-<circle cx="1126.25" cy="426" r="2" fill="#dbdbdb"/>
-<circle cx="1279.75" cy="426" r="6" fill="#96580a"/>
-<circle cx="1433.25" cy="426" r="6" fill="#96580a"/>
-<text x="1550" y="430" font-size="11" font-weight="400" fill="#4d4d4d" class="mono">email · phone · WhatsApp</text>
+<circle cx="355.0" cy="426" r="6" fill="#96580a"/>
+<circle cx="501.0" cy="426" r="6" fill="#96580a"/>
+<circle cx="647.0" cy="426" r="6" fill="#96580a"/>
+<circle cx="793.0" cy="426" r="6" fill="#96580a"/>
+<circle cx="939.0" cy="426" r="6" fill="#96580a"/>
+<circle cx="1085.0" cy="426" r="2" fill="#dbdbdb"/>
+<circle cx="1231.0" cy="426" r="6" fill="#96580a"/>
+<circle cx="1377.0" cy="426" r="6" fill="#96580a"/>
+<rect x="1490" y="417" width="54.0" height="19" rx="4" fill="#fdf3e3" stroke="none"/>
+<circle cx="1500" cy="425.5" r="3" fill="#96580a"/>
+<text x="1508" y="429.5" font-size="10" font-weight="600" fill="#96580a">email</text>
+<rect x="1549.0" y="417" width="54.0" height="19" rx="4" fill="#fdf3e3" stroke="none"/>
+<circle cx="1559.0" cy="425.5" r="3" fill="#96580a"/>
+<text x="1567.0" y="429.5" font-size="10" font-weight="600" fill="#96580a">phone</text>
+<rect x="1608.0" y="417" width="70.8" height="19" rx="4" fill="#fdf3e3" stroke="none"/>
+<circle cx="1618.0" cy="425.5" r="3" fill="#96580a"/>
+<text x="1626.0" y="429.5" font-size="10" font-weight="600" fill="#96580a">WhatsApp</text>
 <text x="122" y="452" font-size="12" font-weight="500" fill="#171717">Shipping line</text>
-<circle cx="358.75" cy="448" r="2" fill="#dbdbdb"/>
-<circle cx="512.25" cy="448" r="6" fill="#96580a"/>
-<circle cx="665.75" cy="448" r="6" fill="#96580a"/>
-<circle cx="819.25" cy="448" r="6" fill="#96580a"/>
-<circle cx="972.75" cy="448" r="6" fill="#96580a"/>
-<circle cx="1126.25" cy="448" r="2" fill="#dbdbdb"/>
-<circle cx="1279.75" cy="448" r="2" fill="#dbdbdb"/>
-<circle cx="1433.25" cy="448" r="6" fill="#96580a"/>
-<text x="1550" y="452" font-size="11" font-weight="400" fill="#4d4d4d" class="mono">portal · EDI · email</text>
+<circle cx="355.0" cy="448" r="2" fill="#dbdbdb"/>
+<circle cx="501.0" cy="448" r="6" fill="#96580a"/>
+<circle cx="647.0" cy="448" r="6" fill="#96580a"/>
+<circle cx="793.0" cy="448" r="6" fill="#96580a"/>
+<circle cx="939.0" cy="448" r="6" fill="#96580a"/>
+<circle cx="1085.0" cy="448" r="2" fill="#dbdbdb"/>
+<circle cx="1231.0" cy="448" r="2" fill="#dbdbdb"/>
+<circle cx="1377.0" cy="448" r="6" fill="#96580a"/>
+<rect x="1490" y="439" width="59.599999999999994" height="19" rx="4" fill="#fdf3e3" stroke="none"/>
+<circle cx="1500" cy="447.5" r="3" fill="#96580a"/>
+<text x="1508" y="451.5" font-size="10" font-weight="600" fill="#96580a">portal</text>
+<rect x="1554.6" y="439" width="42.8" height="19" rx="4" fill="#fdf3e3" stroke="none"/>
+<circle cx="1564.6" cy="447.5" r="3" fill="#96580a"/>
+<text x="1572.6" y="451.5" font-size="10" font-weight="600" fill="#96580a">EDI</text>
+<rect x="1602.3999999999999" y="439" width="54.0" height="19" rx="4" fill="#fdf3e3" stroke="none"/>
+<circle cx="1612.3999999999999" cy="447.5" r="3" fill="#96580a"/>
+<text x="1620.3999999999999" y="451.5" font-size="10" font-weight="600" fill="#96580a">email</text>
 <text x="122" y="474" font-size="12" font-weight="500" fill="#171717">Origin agent</text>
-<circle cx="358.75" cy="470" r="2" fill="#dbdbdb"/>
-<circle cx="512.25" cy="470" r="2" fill="#dbdbdb"/>
-<circle cx="665.75" cy="470" r="6" fill="#96580a"/>
-<circle cx="819.25" cy="470" r="6" fill="#96580a"/>
-<circle cx="972.75" cy="470" r="2" fill="#dbdbdb"/>
-<circle cx="1126.25" cy="470" r="2" fill="#dbdbdb"/>
-<circle cx="1279.75" cy="470" r="2" fill="#dbdbdb"/>
-<circle cx="1433.25" cy="470" r="2" fill="#dbdbdb"/>
-<text x="1550" y="474" font-size="11" font-weight="400" fill="#4d4d4d" class="mono">email · WhatsApp</text>
+<circle cx="355.0" cy="470" r="2" fill="#dbdbdb"/>
+<circle cx="501.0" cy="470" r="2" fill="#dbdbdb"/>
+<circle cx="647.0" cy="470" r="6" fill="#96580a"/>
+<circle cx="793.0" cy="470" r="6" fill="#96580a"/>
+<circle cx="939.0" cy="470" r="2" fill="#dbdbdb"/>
+<circle cx="1085.0" cy="470" r="2" fill="#dbdbdb"/>
+<circle cx="1231.0" cy="470" r="2" fill="#dbdbdb"/>
+<circle cx="1377.0" cy="470" r="2" fill="#dbdbdb"/>
+<rect x="1490" y="461" width="54.0" height="19" rx="4" fill="#fdf3e3" stroke="none"/>
+<circle cx="1500" cy="469.5" r="3" fill="#96580a"/>
+<text x="1508" y="473.5" font-size="10" font-weight="600" fill="#96580a">email</text>
+<rect x="1549.0" y="461" width="70.8" height="19" rx="4" fill="#fdf3e3" stroke="none"/>
+<circle cx="1559.0" cy="469.5" r="3" fill="#96580a"/>
+<text x="1567.0" y="473.5" font-size="10" font-weight="600" fill="#96580a">WhatsApp</text>
 <text x="122" y="496" font-size="12" font-weight="500" fill="#171717">Port terminal</text>
-<circle cx="358.75" cy="492" r="2" fill="#dbdbdb"/>
-<circle cx="512.25" cy="492" r="2" fill="#dbdbdb"/>
-<circle cx="665.75" cy="492" r="2" fill="#dbdbdb"/>
-<circle cx="819.25" cy="492" r="6" fill="#96580a"/>
-<circle cx="972.75" cy="492" r="6" fill="#96580a"/>
-<circle cx="1126.25" cy="492" r="6" fill="#96580a"/>
-<circle cx="1279.75" cy="492" r="2" fill="#dbdbdb"/>
-<circle cx="1433.25" cy="492" r="2" fill="#dbdbdb"/>
-<text x="1550" y="496" font-size="11" font-weight="400" fill="#4d4d4d" class="mono">portal</text>
+<circle cx="355.0" cy="492" r="2" fill="#dbdbdb"/>
+<circle cx="501.0" cy="492" r="2" fill="#dbdbdb"/>
+<circle cx="647.0" cy="492" r="2" fill="#dbdbdb"/>
+<circle cx="793.0" cy="492" r="6" fill="#96580a"/>
+<circle cx="939.0" cy="492" r="6" fill="#96580a"/>
+<circle cx="1085.0" cy="492" r="6" fill="#96580a"/>
+<circle cx="1231.0" cy="492" r="2" fill="#dbdbdb"/>
+<circle cx="1377.0" cy="492" r="2" fill="#dbdbdb"/>
+<rect x="1490" y="483" width="59.599999999999994" height="19" rx="4" fill="#fdf3e3" stroke="none"/>
+<circle cx="1500" cy="491.5" r="3" fill="#96580a"/>
+<text x="1508" y="495.5" font-size="10" font-weight="600" fill="#96580a">portal</text>
 <text x="122" y="518" font-size="12" font-weight="500" fill="#171717">Haulier</text>
-<circle cx="358.75" cy="514" r="2" fill="#dbdbdb"/>
-<circle cx="512.25" cy="514" r="6" fill="#96580a"/>
-<circle cx="665.75" cy="514" r="2" fill="#dbdbdb"/>
-<circle cx="819.25" cy="514" r="2" fill="#dbdbdb"/>
-<circle cx="972.75" cy="514" r="2" fill="#dbdbdb"/>
-<circle cx="1126.25" cy="514" r="2" fill="#dbdbdb"/>
-<circle cx="1279.75" cy="514" r="6" fill="#96580a"/>
-<circle cx="1433.25" cy="514" r="6" fill="#96580a"/>
-<text x="1550" y="518" font-size="11" font-weight="400" fill="#4d4d4d" class="mono">phone · WhatsApp</text>
+<circle cx="355.0" cy="514" r="2" fill="#dbdbdb"/>
+<circle cx="501.0" cy="514" r="6" fill="#96580a"/>
+<circle cx="647.0" cy="514" r="2" fill="#dbdbdb"/>
+<circle cx="793.0" cy="514" r="2" fill="#dbdbdb"/>
+<circle cx="939.0" cy="514" r="2" fill="#dbdbdb"/>
+<circle cx="1085.0" cy="514" r="2" fill="#dbdbdb"/>
+<circle cx="1231.0" cy="514" r="6" fill="#96580a"/>
+<circle cx="1377.0" cy="514" r="6" fill="#96580a"/>
+<rect x="1490" y="505" width="54.0" height="19" rx="4" fill="#fdf3e3" stroke="none"/>
+<circle cx="1500" cy="513.5" r="3" fill="#96580a"/>
+<text x="1508" y="517.5" font-size="10" font-weight="600" fill="#96580a">phone</text>
+<rect x="1549.0" y="505" width="70.8" height="19" rx="4" fill="#fdf3e3" stroke="none"/>
+<circle cx="1559.0" cy="513.5" r="3" fill="#96580a"/>
+<text x="1567.0" y="517.5" font-size="10" font-weight="600" fill="#96580a">WhatsApp</text>
 <text x="122" y="540" font-size="12" font-weight="500" fill="#171717">Customs broker</text>
-<circle cx="358.75" cy="536" r="2" fill="#dbdbdb"/>
-<circle cx="512.25" cy="536" r="2" fill="#dbdbdb"/>
-<circle cx="665.75" cy="536" r="2" fill="#dbdbdb"/>
-<circle cx="819.25" cy="536" r="6" fill="#96580a"/>
-<circle cx="972.75" cy="536" r="2" fill="#dbdbdb"/>
-<circle cx="1126.25" cy="536" r="6" fill="#96580a"/>
-<circle cx="1279.75" cy="536" r="6" fill="#96580a"/>
-<circle cx="1433.25" cy="536" r="2" fill="#dbdbdb"/>
-<text x="1550" y="540" font-size="11" font-weight="400" fill="#4d4d4d" class="mono">email · portal</text>
+<circle cx="355.0" cy="536" r="2" fill="#dbdbdb"/>
+<circle cx="501.0" cy="536" r="2" fill="#dbdbdb"/>
+<circle cx="647.0" cy="536" r="2" fill="#dbdbdb"/>
+<circle cx="793.0" cy="536" r="6" fill="#96580a"/>
+<circle cx="939.0" cy="536" r="2" fill="#dbdbdb"/>
+<circle cx="1085.0" cy="536" r="6" fill="#96580a"/>
+<circle cx="1231.0" cy="536" r="6" fill="#96580a"/>
+<circle cx="1377.0" cy="536" r="2" fill="#dbdbdb"/>
+<rect x="1490" y="527" width="54.0" height="19" rx="4" fill="#fdf3e3" stroke="none"/>
+<circle cx="1500" cy="535.5" r="3" fill="#96580a"/>
+<text x="1508" y="539.5" font-size="10" font-weight="600" fill="#96580a">email</text>
+<rect x="1549.0" y="527" width="59.599999999999994" height="19" rx="4" fill="#fdf3e3" stroke="none"/>
+<circle cx="1559.0" cy="535.5" r="3" fill="#96580a"/>
+<text x="1567.0" y="539.5" font-size="10" font-weight="600" fill="#96580a">portal</text>
 <text x="122" y="562" font-size="12" font-weight="500" fill="#171717">Consignee</text>
-<circle cx="358.75" cy="558" r="2" fill="#dbdbdb"/>
-<circle cx="512.25" cy="558" r="2" fill="#dbdbdb"/>
-<circle cx="665.75" cy="558" r="2" fill="#dbdbdb"/>
-<circle cx="819.25" cy="558" r="2" fill="#dbdbdb"/>
-<circle cx="972.75" cy="558" r="6" fill="#96580a"/>
-<circle cx="1126.25" cy="558" r="2" fill="#dbdbdb"/>
-<circle cx="1279.75" cy="558" r="6" fill="#96580a"/>
-<circle cx="1433.25" cy="558" r="6" fill="#96580a"/>
-<text x="1550" y="562" font-size="11" font-weight="400" fill="#4d4d4d" class="mono">email · phone</text>
+<circle cx="355.0" cy="558" r="2" fill="#dbdbdb"/>
+<circle cx="501.0" cy="558" r="2" fill="#dbdbdb"/>
+<circle cx="647.0" cy="558" r="2" fill="#dbdbdb"/>
+<circle cx="793.0" cy="558" r="2" fill="#dbdbdb"/>
+<circle cx="939.0" cy="558" r="6" fill="#96580a"/>
+<circle cx="1085.0" cy="558" r="2" fill="#dbdbdb"/>
+<circle cx="1231.0" cy="558" r="6" fill="#96580a"/>
+<circle cx="1377.0" cy="558" r="6" fill="#96580a"/>
+<rect x="1490" y="549" width="54.0" height="19" rx="4" fill="#fdf3e3" stroke="none"/>
+<circle cx="1500" cy="557.5" r="3" fill="#96580a"/>
+<text x="1508" y="561.5" font-size="10" font-weight="600" fill="#96580a">email</text>
+<rect x="1549.0" y="549" width="54.0" height="19" rx="4" fill="#fdf3e3" stroke="none"/>
+<circle cx="1559.0" cy="557.5" r="3" fill="#96580a"/>
+<text x="1567.0" y="561.5" font-size="10" font-weight="600" fill="#96580a">phone</text>
 <line x1="122" y1="590" x2="1798" y2="590" stroke="#00000014" stroke-width="1"/>
-<text x="122" y="602" font-size="13.5" font-weight="500" fill="#171717">26 handoffs, seven parties, five channels. None of them talk to each other, and the TMS sees none of it until someone types it in.</text>
+<text x="122" y="602" font-size="13.5" font-weight="500" fill="#171717">26 handoffs, seven parties, five channels, before Teams, SMS, a carrier's own portal or whatever this customer happens to prefer.</text>
 <rect x="96" y="636" width="830" height="250" rx="12" fill="#ffffff" stroke="#00000014"/>
 <text x="122" y="670" font-size="10" font-weight="700" fill="#8f8f8f" letter-spacing="1.4">WHERE THE TMS SITS</text>
 <text x="122" y="702" font-size="9.5" font-weight="700" fill="#171717" letter-spacing="1.2">IT HOLDS</text>

@@ -34,7 +34,7 @@ s.text(W - M - 26, FY + 34, "45 days", 13, 600, FG, anchor="end", cls="mono")
 
 STAGES = [("Enquiry", 2), ("Quote", 3), ("Book", 2), ("Docs", 2),
           ("In transit", 32), ("Customs", 2), ("Delivery", 1), ("Invoice", 1)]
-TX0, TXW = M + 186, CW - 500
+TX0, TXW = M + 186, CW - 560
 UNIT = TXW / 45
 x = TX0
 for name, days in STAGES:
@@ -66,6 +66,7 @@ CWD = TXW / len(COLS)
 for c, lab in enumerate(COLS):
     s.text(TX0 + c * CWD + CWD / 2, FY + 176, lab, 10, 600, MUTED, anchor="middle")
 s.text(CHX, FY + 176, "REACHED ON", 9, 700, AMBER, ls=1.2)
+s.text(W - M - 26, FY + 176, "and not an exhaustive list", 9, 400, FAINT, anchor="end")
 s.line(TX0, FY + 186, W - M - 26, FY + 186, BORDER_STRONG)
 for r, (party, row, chans) in enumerate(PARTIES):
     y = FY + 208 + r * 22
@@ -73,11 +74,17 @@ for r, (party, row, chans) in enumerate(PARTIES):
     for c, on in enumerate(row):
         cx = TX0 + c * CWD + CWD / 2
         s.raw(f'<circle cx="{cx}" cy="{y}" r="{6 if on else 2}" fill="{AMBER if on else GRAY400}"/>')
-    s.text(CHX, y + 4, chans, 11, 400, MUTED, cls="mono")
+    cx_ = CHX
+    for ch in chans.split(" · "):
+        wpx = len(ch) * 5.6 + 26
+        s.card(cx_, y - 9, wpx, 19, fill=AMBER_BG, stroke="none", rx=4)
+        s.raw(f'<circle cx="{cx_+10}" cy="{y-0.5}" r="3" fill="{AMBER}"/>')
+        s.text(cx_ + 18, y + 3.5, ch, 10, 600, AMBER)
+        cx_ += wpx + 5
 s.line(M + 26, FY + 372, W - M - 26, FY + 372, BORDER)
 s.text(M + 26, FY + FH - 12,
-       f"{TOUCHES} handoffs, seven parties, five channels. None of them talk to each other, and the "
-       "TMS sees none of it until someone types it in.", 13.5, 500, FG)
+       f"{TOUCHES} handoffs, seven parties, five channels, before Teams, SMS, a carrier's own portal "
+       "or whatever this customer happens to prefer.", 13.5, 500, FG)
 
 # =========================================================================
 # WHERE THE TMS SITS
