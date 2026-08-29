@@ -228,12 +228,27 @@ work on the TMS's records, not on a book of their own.
 
 ### The product layer
 
-**Thirteen Workers, three of them real.** Risk, Routing and Comms genuinely run and are
-tagged `LIVE`. Rate, Milestones, Docs, Inbox, RFQ, Booking, Invoice, Customs and Assistant
-replay authored data from `src/roster.py` and are tagged `SCRIPTED`. **The tag is the
-honesty** — never present a scripted Worker as reasoning live. They are still *reactive*:
+**Fourteen Workers, three of them real.** Risk, Routing and Comms genuinely run and are
+tagged `LIVE`. Planner, Rate, Milestones, Docs, Inbox, RFQ, Booking, Invoice, Customs and
+Assistant replay authored data from `src/roster.py` and are tagged `SCRIPTED`. **The tag is
+the honesty** — never present a scripted Worker as reasoning live. They are still *reactive*:
 each panel is built from the active scenario and the selected shipment, so switching either
 visibly changes it. What is authored is the content, not the shape.
+
+**The Planner is the newest of the scripted ten, and the one with a roadmap.** It is
+rung two of `ROADMAP-PRE-DEPARTURE.md`'s own proof ladder: the pre-departure sweep of an
+authored forward book (a quotation and two unshipped bookings — earlier lifecycle states
+the demo connector does not model yet), ending in exactly one of three states per record —
+**act now**, **tripwire armed**, or **stand down**, recorded with reasoning. Its panel is
+**board-level by design** (it reads the forward book, not the selected card), so its
+reactivity is the scenario: the same three records sweep to a different pattern under each
+disruption, and `tests/test_the_planner_sweeps_before_departure.py` fails if two active
+scenarios ever produce the same pattern. The route arithmetic in its prose is computed
+from `routes.json` at build time, and the Kaub tripwire quotes the same threshold
+`config.RHINE_GAUGES` carries, so neither can drift. Every proposal is gated like
+everything else, and a stand-down queues nothing. Do not present it as sweeping live, and
+do not give it a live forecast source — forecasts are phase-two work behind the roadmap's
+own honesty rule.
 
 **The TMS Link is the exception, and carries its own tag** — `mode: "demo"`, rendered
 `DEMO`. Nothing in it is replayed: its write-backs are derived from the decisions the real
@@ -656,7 +671,7 @@ here too, because this is what the next session reads to find its way around.
 │   ├── README.md             # plain-language: what it proves, what it cannot
 │   ├── data/                 # sample committed; the full book is gitignored
 │   └── reports/              # evaluation.json / .md - synthetic-world numbers
-├── tests/                    # nine suites, one per claim the demo makes out loud
+├── tests/                    # ten suites, one per claim the demo makes out loud
 ├── tools/build_rhine_map.py  # regenerates the landing page's corridor map
 ├── scratch/genheat.py        # one-off generator for the landing heatmap
 ├── docs/dashboard.png        # the README's screenshot
@@ -1149,13 +1164,16 @@ file in `src/` and fails naming the file and line if a transport library ever ap
 (including via `__import__` or `importlib`). It also runs a full offline cycle and checks
 every draft it produces. Run the whole suite with
 `python -m unittest discover -s tests` — standard library, nothing to install, and it
-covers the other eight claim-guards too: the TMS being the only door to the book; the
+covers the other nine claim-guards too: the TMS being the only door to the book; the
 pages naming no language, loading nothing external, carrying one product name and
 disclaiming the systems they name; the simulated week never sending a booking back to a
 route it left; a trickling source being cut off rather than hanging the run; the
 structured sources keeping schema parity with the scripted ones and failing alone; a
 reroute having to be worth what it costs, including the board outcomes that pricing must
-not quietly move; and the landing page's live gauges being banded exactly as the risk
+not quietly move; the Planner's sweep ending in one of exactly three recorded states,
+every proposal gated, its tripwires quoting the thresholds the sources already band, and
+no two active scenarios sweeping to the same pattern; and the landing page's live gauges
+being banded exactly as the risk
 monitor bands them, so the two cannot disagree about the same number; and the ML layer
 staying prepared-not-wired — nothing in `src/` importing `ml/`, no ML dependency in the
 root requirements, the synthetic book never opening the demo book's file, features blind

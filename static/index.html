@@ -1760,7 +1760,7 @@ function scenarioSwitcher(){
 }
 
 /* Every entry in this strip is a Worker, so the word is carried by the heading
-   rather than repeated thirteen times. The full name stays in the tooltip and in
+   rather than repeated fourteen times. The full name stays in the tooltip and in
    the panel header, where there is room for it. */
 function shortWorker(n){ return String(n).replace(/\s+Worker$/, ""); }
 
@@ -1915,6 +1915,45 @@ function scriptedPanelBody(w, ship){
         esc(p.draft_reply)}</div>`:""}
       <span class="gate-s awaiting">${esc(p.status)}</span>`;
 
+  if (w.id === "planner")
+    /* Board-level on purpose: the Planner reads the forward book, so this panel
+       is the same whichever in-transit card is selected. Its reactivity is the
+       scenario - each disruption sweeps the same three forward bookings into a
+       different three-state pattern, which is the whole demonstration. */
+    return `<p class="sec-t">${esc(p.headline)}</p>
+      <p class="pnote">${esc(p.cadence)}</p>
+      <p class="pnote">${esc(p.note)}</p>
+      ${p.items.map(it=>`<div class="inb">
+        <div class="inb-h">
+          <span class="who mono">${esc(it.ref)}</span>
+          <span class="qtag">${esc(it.stage_label)}</span>
+          <span class="ago">${esc(it.horizon)}</span>
+          <span class="gate-s ${it.state==="stand_down"?"approved":"awaiting"}">${esc(it.state_label)}</span>
+        </div>
+        <div class="inb-s">${esc(it.lane)} · ${esc(it.customer)} · <span class="mono">${esc(it.routing)}</span></div>
+        <div class="fields">
+          <span class="f">Departs</span><span>${esc(it.etd)} · cargo cut-off ${esc(it.cutoff)}</span>
+          <span class="f">Exposed?</span><span>${esc(it.exposure)}</span>
+          <span class="f">Act or wait?</span><span>${esc(it.timing)}</span>
+          ${it.move?`<span class="f">The move</span><span>${esc(it.move)}</span>`:""}
+        </div>
+        ${it.menu.length?`<table class="q" style="margin-top:10px"><thead><tr><th>Option</th><th>The price of it</th><th></th></tr></thead>
+          <tbody>${it.menu.map(o=>`<tr class="${o.picked?"pick":""}">
+            <td>${esc(o.option)}</td><td>${esc(o.note)}</td>
+            <td>${o.picked?`<span class="qtag">chosen</span>`:""}</td></tr>`).join("")}
+          </tbody></table>`:""}
+        ${it.tripwire?`<div class="inb-r"><div class="inb-rl">Tripwire — deciding when to decide</div>
+          If ${esc(it.tripwire.condition)}. Checked by ${esc(it.tripwire.checked_by)}.
+          Prepared: ${esc(it.tripwire.prepared)}.</div>`:""}
+        <div class="reason" style="margin-top:10px">${esc(it.reasoning)}</div>
+        ${it.proposals.length?`<div class="inb-rl" style="margin-top:10px">What this sweep puts on the booking</div>
+          ${it.proposals.map(pr=>`<div style="margin:6px 0">${esc(pr.summary)}
+            <span class="gate-s awaiting">${esc(pr.status)}</span></div>`).join("")}`:""}
+      </div>`).join("")}
+      <div class="inb-rl" style="margin-top:12px">Across the book — what no per-booking view sees</div>
+      <p class="pnote">${esc(p.portfolio)}</p>
+      <p class="pnote">${esc(p.baton)}</p>`;
+
   if (w.id === "tms")
     return `<p class="sec-t">${esc(p.headline)}
         <span class="chip">${esc(p.status)}</span></p>
@@ -1940,7 +1979,7 @@ function scriptedPanelBody(w, ship){
 
 function workersCard(){
   /* The three that actually run. The full roster has its own strip above, and
-     listing all thirteen here under a "3" badge was saying two different things
+     listing all fourteen here under a "3" badge was saying two different things
      at once. These are the ones with a summary to report. */
   const live = workers.filter(w => w.mode === "live");
   return `<div class="card" style="margin-bottom:20px">

@@ -29,6 +29,7 @@ reasoning recorded, and every message and every write held for human approval.
 | **Risk Worker** | Reads the wires, the press next to the port, the instruments and the government notices, tags what threatens a lane, and flags the exception on the booking | `LIVE` |
 | **Routing Worker** | Weighs schedule slack against added transit and expected delay, then writes the booking change | `LIVE` |
 | **Comms Worker** | Drafts the carrier and customer emails and files them against the booking. Sends nothing | `LIVE` |
+| **Planner Worker** | Sweeps the forward book before departure — exposure, the last cheap moment, and the rebooking or hedge it implies, each ending act-now / tripwire / stand-down | `SCRIPTED` |
 | **Rate Worker** | Quote and rate lookups across the carriers on a lane | `SCRIPTED` |
 | **Milestones Worker** | Milestones and position, against the TMS booking | `SCRIPTED` |
 | **Docs Worker** | Field extraction from bills of lading | `SCRIPTED` |

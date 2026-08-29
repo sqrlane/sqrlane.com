@@ -9,9 +9,9 @@ Written to be followed live, step by step, with **what to type**, **what you
 should see**, and — where it matters — **what to say out loud**. Windows
 commands first (`py`); the Mac/Linux form is the same with `python3`.
 
-**The honest frame, before anything runs.** Thirteen Workers are on the
+**The honest frame, before anything runs.** Fourteen Workers are on the
 board. Three are **LIVE** (Risk, Routing, Comms — they genuinely read, decide
-and draft on every run). Nine are **SCRIPTED** (they replay authored content,
+and draft on every run). Ten are **SCRIPTED** (they replay authored content,
 reactive to the scenario and the selected shipment — the tag on each pill is
 the honesty). The TMS Link is a **DEMO** connector: both directions are
 modelled, its write-backs are derived from the real decisions of that run,
@@ -86,7 +86,7 @@ Across the top of every view sits one band:
   note on what decision type it forces. Click one to arm it. The same seven
   bookings react differently to each — that is the point: one board,
   different disruptions, different defensible answers.
-- **Workers** — thirteen pills, each carrying its mode tag (`LIVE`, `SCR`,
+- **Workers** — fourteen pills, each carrying its mode tag (`LIVE`, `SCR`,
   `DEMO`). **Click a pill to open that Worker's panel** below the strip;
   click another to switch, the same one to close. Every panel is built from
   the active scenario and the currently selected shipment, so changing
@@ -143,6 +143,7 @@ the booking record — that is what makes it a desk, not a set of panels.
 
 | What arrives | Click this pill | What lands on the booking | Mode |
 |---|---|---|---|
+| A brewing disruption, before departure | **Planner** | the pre-departure sweep of the forward book — quotations and unshipped bookings. Each ends in one of three states: **act now** (a rebooking or a re-priced quote, drafted), **tripwire armed** (a prepared move held behind a condition the Risk Monitor already reads — the Kaub gauge, the strike's own duration), or **stand down**, recorded with reasoning. Board-level on purpose: it reads the forward book, not the selected card, so its reactivity is the scenario | SCR |
 | A rate request | **RFQ** | the request read into fields, priced with the scenario's surcharge, a quote drafted on the file | SCR |
 | Carrier or customer mail | **Inbox** | mail triaged: intent, linked booking, a reply drafted on the comms log — and for an on-plan booking, *no reply at all* (judgement, not volume) | SCR |
 | A bill of lading, an invoice | **Docs** | the document's fields extracted onto the booking | SCR |
