@@ -424,10 +424,18 @@ Suggested three, drawn from S15's own gap:
 | `slide-03-the-why.svg` | The Why | EUR 4bn of desk work, and a seam neither category crosses |
 | `slide-04-the-how-1.svg` | The How 1/2 | Answers problem one: the desk work does itself |
 | `slide-05-the-how-2.svg` | The How 2/2 | Answers problem two: know early, while options exist |
+| `slide-a1-lab-notes.svg` | Appendix · Lab notes 1/3 | Nobody could grade the calls; a practice world with an answer key fixes that |
+| `slide-a2-lab-notes.svg` | Appendix · Lab notes 2/3 | TabPFN wins the exam, status quo vs. after; its lesson ships, not the model |
+| `slide-a3-lab-notes.svg` | Appendix · Lab notes 3/3 | The first full live read: 47 of 60 answered, five faults found, four fixed |
 
 Each How slide answers one of slide 02's two problems by name. That pairing is
 the spine of the deck; if a How slide stops answering its problem, it has
 drifted.
+
+The three appendix slides retell `LAB-NOTES-2026-08-28.md` for a mixed room,
+one idea per slide. Every figure on them is counted from our own runs, the
+practice-world caveat is printed on the chart itself, and A2 carries the honest
+line in a dashed box: TabPFN itself is not in the product, its lesson is.
 
 ## Build order once the reference deck lands
 
