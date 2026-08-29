@@ -702,8 +702,8 @@ def _planner_outcomes(scenario_id, routes):
                     "prepared": "Rebooking to R-RTM-ALT, drafted and held",
                 },
                 "reasoning": "Acting now pays the alternate for certain against a "
-                             "disruption that should be gone before this box is at sea "
-                             "a week. Waiting unmanaged wastes the last cheap moment. "
+                             "walkout that is expected to be over before this box even "
+                             "sails. Waiting unmanaged wastes the last cheap moment. "
                              "The tripwire is the middle: the decision is prepared now "
                              "and taken only if the facts move.",
             },
@@ -774,7 +774,9 @@ def _planner_outcomes(scenario_id, routes):
                 "reasoning": "A split is a hedge, and hedges only exist before "
                              "commitment. Half the cargo pays the Cape premium to make "
                              "the date certain; the other half keeps the cheap routing "
-                             "if the corridor reopens. After departure this option is "
+                             "if the corridor reopens - and if it stays shut, the "
+                             "delivered half keeps the customer's line running while "
+                             "the held half runs late. After departure this option is "
                              "gone.",
             },
             "BKG-3103": {
@@ -804,9 +806,9 @@ def _planner_outcomes(scenario_id, routes):
                 ],
                 "tripwire": None,
                 "reasoning": "The same reroute costs a rebooking fee today and a "
-                             "diversion after Friday. The whole point of the "
-                             "pre-departure sweep is to be the desk that notices "
-                             "before cut-off, not after.",
+                             "diversion at sea once cut-off passes. The whole point "
+                             "of the pre-departure sweep is to be the desk that "
+                             "notices before cut-off, not after.",
             },
         }
 
