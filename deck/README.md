@@ -12,8 +12,8 @@ Investment deck. **SVG only, one file per slide, 1920×1080.** No PPTX.
 
 ```bash
 cd deck
-python3 build_slide_04.py          # writes slide-04-the-how-1.svg
-python3 render.py slide-04-the-how-1.svg   # writes ...-preview.png at 2x
+python3 build_slide_05.py          # writes slide-05-the-how-1.svg
+python3 render.py slide-05-the-how-1.svg   # writes ...-preview.png at 2x
 ```
 
 `render.py` shells out to the bundled Chromium. **Its one non-obvious job:** the
@@ -120,7 +120,7 @@ chip · write`. Geometry is always explicit so a layout can be read off the code
 |---|---|
 | `deckkit.py` | tokens, embedded fonts, primitives. The template. |
 | `render.py` | SVG → 2× PNG, with the Chromium viewport fix |
-| `build_slide_01..05.py` | one per slide; all import `deckkit` |
+| `build_slide_01..06.py` | one per slide; all import `deckkit` |
 | `CONTENT.md` | slide index, the sourced number bank, what each slide argues |
 | `SOURCES.md` | ~70 candidate signal sources by family, and the phase-two six |
 
@@ -131,8 +131,9 @@ chip · write`. Geometry is always explicit so a layout can be read off the code
 | 01 Introduction | A forwarder's product is a date; four things take it |
 | 02 The What | Two problems: the work is manual, nothing watches the route |
 | 03 The Why | €4bn of desk work, and a seam neither category crosses |
-| 04 The How 1/2 | Answers problem one: the desk work does itself |
-| 05 The How 2/2 | Answers problem two: know early, while options still exist |
+| 04 The Lane | What the work is, and what one bad day costs the forwarder |
+| 05 The How 1/2 | Answers problem one: the desk work does itself |
+| 06 The How 2/2 | Answers problem two: know early, while options still exist |
 
 **Each How slide answers one of slide 02's two problems by name.** That pairing
 is the spine of the deck. If a How slide stops answering its problem, it has
@@ -140,7 +141,7 @@ drifted — that exact drift happened once and needed a rebuild to fix.
 
 ### Reusing the product's own geometry
 
-Slide 05's map is not drawn by hand. The coastline is read at build time from
+Slide 06's map is not drawn by hand. The coastline is read at build time from
 the `COAST` constant in `static/index.html`, the lanes are the corridor chains
 in `data/geo.json`, and the ports are their real coordinates. Prefer this
 wherever the product already holds the data — two hand-drawn versions of the
