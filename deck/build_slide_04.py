@@ -26,7 +26,7 @@ s.header("04 — THE JOB (1/2)",
 # =========================================================================
 # THE CLOCK, AND THE COORDINATION WEB
 # =========================================================================
-FY, FH = 224, 396
+FY, FH = 218, 396
 s.card(M, FY, CW, FH)
 s.text(M + 26, FY + 34, "ONE FILE, END TO END", 10, 700, FAINT, ls=1.4)
 s.text(M + 240, FY + 34, "Shanghai to Munich", 11.5, 400, FAINT)
@@ -34,7 +34,7 @@ s.text(W - M - 26, FY + 34, "45 days", 13, 600, FG, anchor="end", cls="mono")
 
 STAGES = [("Enquiry", 2), ("Quote", 3), ("Book", 2), ("Docs", 2),
           ("In transit", 32), ("Customs", 2), ("Delivery", 1), ("Invoice", 1)]
-TX0, TXW = M + 190, CW - 214
+TX0, TXW = M + 186, CW - 500
 UNIT = TXW / 45
 x = TX0
 for name, days in STAGES:
@@ -53,29 +53,36 @@ s.line(M + 26, FY + 116, W - M - 26, FY + 116, BORDER)
 s.text(M + 26, FY + 146, "WHO THE FORWARDER TALKS TO", 10, 700, AMBER, ls=1.4)
 s.text(M + 292, FY + 146, "every dot is a mail, a portal login or a call", 11, 400, FAINT)
 COLS = [n for n, _ in STAGES]
-PARTIES = [("Customer", [1, 1, 1, 1, 1, 0, 1, 1]), ("Shipping line", [0, 1, 1, 1, 1, 0, 0, 1]),
-           ("Origin agent", [0, 0, 1, 1, 0, 0, 0, 0]), ("Port terminal", [0, 0, 0, 1, 1, 1, 0, 0]),
-           ("Haulier", [0, 1, 0, 0, 0, 0, 1, 1]), ("Customs broker", [0, 0, 0, 1, 0, 1, 1, 0]),
-           ("Consignee", [0, 0, 0, 0, 1, 0, 1, 1])]
-TOUCHES = sum(sum(r) for _, r in PARTIES)
+PARTIES = [("Customer", [1, 1, 1, 1, 1, 0, 1, 1], "email · phone · WhatsApp"),
+           ("Shipping line", [0, 1, 1, 1, 1, 0, 0, 1], "portal · EDI · email"),
+           ("Origin agent", [0, 0, 1, 1, 0, 0, 0, 0], "email · WhatsApp"),
+           ("Port terminal", [0, 0, 0, 1, 1, 1, 0, 0], "portal"),
+           ("Haulier", [0, 1, 0, 0, 0, 0, 1, 1], "phone · WhatsApp"),
+           ("Customs broker", [0, 0, 0, 1, 0, 1, 1, 0], "email · portal"),
+           ("Consignee", [0, 0, 0, 0, 1, 0, 1, 1], "email · phone")]
+TOUCHES = sum(sum(r) for _, r, _ in PARTIES)
+CHX = TX0 + TXW + 40
 CWD = TXW / len(COLS)
 for c, lab in enumerate(COLS):
-    s.text(TX0 + c * CWD + CWD / 2, FY + 176, lab, 10.5, 600, MUTED, anchor="middle")
-s.line(TX0, FY + 186, TX0 + TXW, FY + 186, BORDER_STRONG)
-for r, (party, row) in enumerate(PARTIES):
-    y = FY + 206 + r * 22
+    s.text(TX0 + c * CWD + CWD / 2, FY + 176, lab, 10, 600, MUTED, anchor="middle")
+s.text(CHX, FY + 176, "REACHED ON", 9, 700, AMBER, ls=1.2)
+s.line(TX0, FY + 186, W - M - 26, FY + 186, BORDER_STRONG)
+for r, (party, row, chans) in enumerate(PARTIES):
+    y = FY + 208 + r * 22
     s.text(M + 26, y + 4, party, 12, 500, FG)
     for c, on in enumerate(row):
         cx = TX0 + c * CWD + CWD / 2
         s.raw(f'<circle cx="{cx}" cy="{y}" r="{6 if on else 2}" fill="{AMBER if on else GRAY400}"/>')
-s.text(M + 26, FY + FH - 24,
-       f"{TOUCHES} handoffs, and every one ends with the same facts typed somewhere new.",
-       13.5, 500, FG)
+    s.text(CHX, y + 4, chans, 11, 400, MUTED, cls="mono")
+s.line(M + 26, FY + 372, W - M - 26, FY + 372, BORDER)
+s.text(M + 26, FY + FH - 12,
+       f"{TOUCHES} handoffs, seven parties, five channels. None of them talk to each other, and the "
+       "TMS sees none of it until someone types it in.", 13.5, 500, FG)
 
 # =========================================================================
 # WHERE THE TMS SITS
 # =========================================================================
-TY2, TH3 = 640, 236
+TY2, TH3 = 636, 250
 s.card(M, TY2, 830, TH3)
 s.text(M + 26, TY2 + 34, "WHERE THE TMS SITS", 10, 700, FAINT, ls=1.4)
 for lab, x0, col, items in (
@@ -85,7 +92,7 @@ for lab, x0, col, items in (
                                          "Type itself"])):
     s.text(x0, TY2 + 66, lab, 9.5, 700, col, ls=1.2)
     for j, it in enumerate(items):
-        y = TY2 + 96 + j * 26
+        y = TY2 + 100 + j * 28
         if col is AMBER:
             s.raw(f'<path d="M{x0+2} {y-8} l9 9 M{x0+11} {y-8} l-9 9" stroke="{AMBER}" '
                   f'stroke-width="1.8" stroke-linecap="round"/>')
@@ -94,8 +101,8 @@ for lab, x0, col, items in (
                   f'fill="none" stroke-linecap="round"/>')
         s.text(x0 + 22, y, it, 12.5, 500 if col is AMBER else 400,
                FG if col is AMBER else MUTED)
-s.line(M + 404, TY2 + 50, M + 404, TY2 + TH3 - 52, BORDER)
-s.text(M + 26, TY2 + TH3 - 26,
+s.line(M + 404, TY2 + 52, M + 404, TY2 + TH3 - 72, BORDER)
+s.text(M + 26, TY2 + TH3 - 30,
        "It is the system of record, and the desk is the thing that records into it.", 12.5, 400, MUTED)
 
 # =========================================================================
@@ -106,24 +113,27 @@ s.card(BX, TY2, BW, TH3, stroke=BORDER_STRONG)
 s.text(BX + 26, TY2 + 34, "WHAT A CLEAN FILE EARNS", 10, 700, AMBER, ls=1.4)
 s.text(BX + BW - 26, TY2 + 34, "per container", 11, 400, FAINT, anchor="end")
 
-STEPS = [("Billed to the customer", 1913, GRAY400), ("Paid to the carrier", -1475, GRAY400),
-         ("Gross profit", 438, SURFACE_2), ("Running the desk", -311, GRAY400),
-         ("Left over", 127, AMBER)]
+STEPS = [("Billed to the customer", 1913, 100.0), ("Paid to the carrier", -1475, -77.1),
+         ("Gross profit", 438, 22.9), ("Running the desk", -311, -16.3),
+         ("Left over", 127, 6.6)]
 SX2, SWID = BX + 26, BW - 52
-for j, (lab, val, col) in enumerate(STEPS):
-    y = TY2 + 64 + j * 25
+for j, (lab, val, pct) in enumerate(STEPS):
+    y = TY2 + 66 + j * 28
     last = j == len(STEPS) - 1
+    col = AMBER if last else (SURFACE_2 if val > 0 else GRAY400)
     s.text(SX2, y, lab, 12.5, 600 if last else 400, FG if last else MUTED)
-    s.raw(f'<rect x="{SX2+250}" y="{y-11}" width="{abs(val)/1913*300:.0f}" height="14" rx="3" '
-          f'fill="{AMBER if last else (SURFACE_2 if val > 0 else GRAY400)}"/>')
-    s.raw(f'<text x="{SX2+SWID}" y="{y}" font-size="{16 if last else 13}" '
-          f'font-weight="600" fill="{AMBER if last else (FG if val>0 else FAINT)}" '
-          f'text-anchor="end" class="num">{"−" if val<0 else ""}€{abs(val):,}</text>')
+    s.raw(f'<rect x="{SX2+210}" y="{y-11}" width="{abs(pct)/100*230:.0f}" height="14" rx="3" fill="{col}"/>')
+    s.raw(f'<text x="{SX2+SWID-96}" y="{y}" font-size="{15 if last else 12.5}" font-weight="600" '
+          f'fill="{AMBER if last else (FG if val>0 else FAINT)}" text-anchor="end" class="num">'
+          f'{"−" if val<0 else ""}€{abs(val):,}</text>')
+    s.raw(f'<text x="{SX2+SWID}" y="{y}" font-size="{16 if last else 13}" font-weight="600" '
+          f'fill="{AMBER if last else (MUTED if val>0 else FAINT)}" text-anchor="end" class="num">'
+          f'{"−" if pct<0 else ""}{abs(pct):.1f}%</text>')
 s.line(SX2, TY2 + TH3 - 54, BX + BW - 26, TY2 + TH3 - 54, BORDER)
-s.text(SX2, TY2 + TH3 - 30, "6.6% of what the customer paid.", 15, 600, FG)
+s.text(SX2, TY2 + TH3 - 30, "Six euros and change on every hundred billed.", 15, 600, FG)
 s.text(SX2, TY2 + TH3 - 10, "K+N Sea Logistics FY25 · CHF at 1.07 · gross profit from the 29% conversion rate",
        10, 400, FAINT, cls="mono")
 
-s.text(M, 906, "That is the good day.", 24, 600, FG, ls=-0.5)
+s.text(M, 916, "That is the good day.", 24, 600, FG, ls=-0.5)
 s.footer("04 / THE JOB 1/2")
 s.write("slide-04-the-job.svg")
