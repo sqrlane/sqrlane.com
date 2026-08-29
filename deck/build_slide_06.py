@@ -1,229 +1,183 @@
 #!/usr/bin/env python3
 """
-Slide 06 - THE HOW (2/2).  Emits deck/slide-06-the-how-2.svg.
+Slide 06 - THE HOW (1/2).  Emits deck/slide-06-the-how-1.svg.
 
-Answers problem two from slide 02: nothing watches the route.
+Answers problem one from slide 02: the work is manual. Three parts -
 
-  left    what the warning is worth by when it arrives, stacked
-  top     signals feeding one confidence read, and the line it crosses
-  bottom  the app, mid-run: the agents working, and the recommendation
+  a dashboard mock, drawn from docs/dashboard.png so it is the real product
+  the desk-work table, one row per job that used to be typed
+  a parallel lane diagram: the agents run at once, each waiting only for the
+  fact it needs, and every open loop closed by another agent rather than a person
 
-Deliberately no mid-ocean reroute. A box already on the water has almost no
-options, so the value is that knowing earlier moves the decision into a window
-where options still exist.
-
-The confidence grid shows the mechanism, not a measured accuracy, and says so.
+Roles are verbatim from src/roster.py; the tags are what they are today.
 """
 from deckkit import *
-import json, re
-
-# The coastline the product itself draws, reused verbatim so the deck's map and
-# the dashboard's map are the same geometry rather than two hand-drawn guesses.
-_H = (ROOT / "static" / "index.html").read_text()
-COAST = re.search(r'const COAST\s*=\s*"([^"]+)"', _H).group(1)
-GEO = json.loads((ROOT / "data" / "geo.json").read_text())
-FR = GEO["_frame"]
-
-
-def proj(lat, lon):
-    x = (lon - FR["lon0"]) / (FR["lon1"] - FR["lon0"]) * FR["width"]
-    y = (FR["lat1"] - lat) / (FR["lat1"] - FR["lat0"]) * FR["height"]
-    return x, y
 
 GREEN, GREEN_BG = "#0f7b3f", "#e7f5ec"
 BLUE, BLUE_BG = "#006bff", "#e8f1ff"
-HEAT = ["#f2f2f2", "#fdf3e3", "#f6dfb4", "#d9a441", "#96580a"]
 
 s = Slide()
-s.header("06 — THE HOW (2/2)",
-         "Know early enough that you still have options.",
-         "Many signals, one confidence read. The earlier it fires, the cheaper the answer.")
+s.header("06 — THE HOW (1/2)",
+         "The desk work does itself.",
+         "The same six systems. Nobody re-types anything between them any more.")
 
 # =========================================================================
-# LEFT - what the warning is worth, by when it arrives
+# THE PRODUCT, AS IT LOOKS
 # =========================================================================
-LX, LW = M, 320
-s.text(LX, 216, "WORTH, BY WHEN IT ARRIVES", 10, 700, FAINT, ls=1.4)
-WINDOWS = [("NOT YET BOOKED", "Route around it.", "many", 5, AMBER, AMBER_BG, AMBER),
-           ("BOOKED, NOT SAILED", "Amend while it is cheap.", "some", 2, FG, SURFACE, BORDER_STRONG),
-           ("ALREADY IN TRANSIT", "Prepare. Do not reroute.", "few", 1, MUTED, CARD, BORDER_STRONG)]
-for i, (label, head, opts, n, col, bg, stroke) in enumerate(WINDOWS):
-    y = 228 + i * 208
-    s.card(LX, y, LW, 190, fill=bg, stroke=stroke)
-    s.text(LX + 24, y + 34, label, 9.5, 700, col, ls=1.3)
-    s.text(LX + 24, y + 76, head.split(" ", 1)[0], 21, 600, FG, ls=-0.4)
-    s.text(LX + 24, y + 102, head.split(" ", 1)[1] if " " in head else "", 21, 600, FG, ls=-0.4)
-    s.line(LX + 24, y + 128, LX + LW - 24, y + 128, BORDER)
-    s.text(LX + 24, y + 160, opts, 20, 600, col)
-    s.text(LX + 24, y + 176, "options", 10.5, 400, FAINT)
-    for k in range(5):
-        s.raw(f'<rect x="{LX + LW - 24 - (5-k)*22}" y="{y+148}" width="15" height="15" rx="3" '
-              f'fill="{col if k < n else GRAY400}"/>')
+DX, DY, DW, DH = M, 216, 830, 354
+s.card(DX, DY, DW, DH, fill=CARD, stroke=BORDER_STRONG)
+s.raw(f'<rect x="{DX}" y="{DY}" width="{DW}" height="38" rx="{RMD}" fill="{SURFACE}"/>')
+s.raw(f'<rect x="{DX}" y="{DY+26}" width="{DW}" height="12" fill="{SURFACE}"/>')
+s.line(DX, DY + 38, DX + DW, DY + 38, BORDER)
+s.text(DX + 16, DY + 25, "SQRlane / Overview", 11.5, 500, MUTED)
+s.card(DX + DW - 150, DY + 8, 134, 22, fill=FG, stroke="none", rx=R)
+s.text(DX + DW - 83, DY + 23, "Inject Hamburg strike", 9.5, 600, CARD, anchor="middle")
 
-# =========================================================================
-# TOP RIGHT - signals and the confidence read
-# =========================================================================
-TOP = 228
-SX, SW, SH = 444, 220, 250
-s.card(SX, TOP, SW, SH)
-sx = SX + 20
-s.text(sx, TOP + 32, "SIGNALS", 10, 700, FAINT, ls=1.4)
-FAMS = [("News & wires", 1), ("Weather & sea state", 1), ("River gauges", 1),
-        ("Seismic & hazards", 1), ("Government filings", 1), ("Reference rates", 1),
-        ("Prediction markets", 0), ("AIS & port calls", 0), ("Freight indices", 0)]
-for j, (fam, live) in enumerate(FAMS):
-    y = TOP + 56 + j * 18
-    s.raw(f'<circle cx="{sx+4}" cy="{y-4}" r="3" fill="{GREEN if live else "none"}" '
-          f'stroke="{GRAY400}" stroke-width="{0 if live else 1.2}"/>')
-    s.text(sx + 16, y, fam, 11, 500 if live else 400, FG if live else FAINT)
-s.text(sx, TOP + 232, "42 live. Rest is phase two.", 10, 400, FAINT)
+# sidebar
+SBW = 116
+s.line(DX + SBW, DY + 38, DX + SBW, DY + DH, BORDER)
+s.raw(f'<rect x="{DX+14}" y="{DY+52}" width="14" height="14" rx="4" fill="{FG}"/>')
+s.text(DX + 34, DY + 63, "SQRlane", 10, 600, FG)
+for j, (nav, n) in enumerate((("Overview", ""), ("Shipments", "7"), ("Risk feed", "1"),
+                              ("Approvals", "18"), ("Map", "7"), ("Simulation", ""),
+                              ("TMS link", "12"))):
+    y = DY + 88 + j * 22
+    if j == 0:
+        s.card(DX + 8, y - 11, SBW - 16, 19, fill=SURFACE, stroke="none", rx=4)
+    s.text(DX + 14, y, nav, 9.5, 600 if j == 0 else 400, FG if j == 0 else MUTED)
+    if n:
+        s.text(DX + SBW - 14, y, n, 9, 500, FAINT, anchor="end", cls="mono")
 
-HX, HW = 684, 620
-s.card(HX, TOP, HW, SH, stroke=BORDER_STRONG)
-hx = HX + 22
-s.text(hx, TOP + 32, "CONFIDENCE, BUILDING", 10, 700, AMBER, ls=1.4)
-s.text(HX + HW - 22, TOP + 32, "mechanism, not accuracy", 10, 400, FAINT, anchor="end")
-VARS = [("Union ballot", [0, 0, 1, 1, 2, 3, 3, 4, 4, 4]),
-        ("Berth waiting", [0, 0, 0, 1, 1, 1, 2, 3, 4, 4]),
-        ("Throughput", [0, 1, 0, 1, 1, 2, 2, 3, 3, 4]),
-        ("Rail slots", [0, 0, 0, 0, 1, 1, 2, 2, 3, 4]),
-        ("Prediction mkt", [0, 0, 1, 1, 2, 2, 3, 4, 4, 4]),
-        ("Wire volume", [0, 0, 0, 0, 0, 1, 1, 2, 3, 4])]
-GX, CELL, GAP = hx + 96, 44, 4
-for r, (name, row) in enumerate(VARS):
-    y = TOP + 54 + r * 19
-    s.text(hx, y + 10, name, 10.5, 400, MUTED)
-    for c, v in enumerate(row):
-        s.raw(f'<rect x="{GX + c*(CELL+GAP)}" y="{y}" width="{CELL}" height="14" rx="3" fill="{HEAT[v]}"/>')
-for c, lab in enumerate(["T-9", "", "T-7", "", "T-5", "", "T-3", "", "T-1", "T-0"]):
-    if lab:
-        s.text(GX + c * (CELL + GAP) + CELL / 2, TOP + 182, lab, 9, 400, FAINT, anchor="middle", cls="mono")
-CONF = [5, 8, 14, 20, 31, 42, 55, 68, 81, 92]
-BASE, HGT = TOP + 232, 40
-s.text(hx, BASE - 14, "confidence", 11, 500, FG)
-for c, v in enumerate(CONF):
-    h = HGT * v / 100
-    s.raw(f'<rect x="{GX + c*(CELL+GAP)}" y="{BASE-h:.0f}" width="{CELL}" height="{h:.0f}" '
-          f'rx="2" fill="{AMBER if v >= 70 else GRAY400}"/>')
-ty = BASE - HGT * 0.70
-s.line(GX - 8, ty, GX + 10 * (CELL + GAP) - GAP + 8, ty, AMBER, 1.4, dash="4 4")
-s.text(GX - 12, ty + 4, "trigger", 10, 600, AMBER, anchor="end")
+CXX = DX + SBW + 18
+s.text(CXX, DY + 62, "WORKERS", 8.5, 700, FAINT, ls=1.2)
+PILLS = [("Risk", "LIVE"), ("Routing", "LIVE"), ("Comms", "LIVE"), ("Rate", "SCR"),
+         ("Milestones", "SCR"), ("Docs", "SCR"), ("Inbox", "SCR"), ("RFQ", "SCR"),
+         ("Booking", "SCR"), ("Invoice", "SCR"), ("Customs", "SCR"), ("TMS Link", "DEMO"),
+         ("Assistant", "SCR")]
+px_, py_ = CXX, DY + 72
+for name, tag in PILLS:
+    w = len(name) * 5.4 + 42
+    if px_ + w > DX + DW - 18:
+        px_, py_ = CXX, py_ + 26
+    live = tag == "LIVE"
+    s.card(px_, py_, w, 21, fill=CARD, stroke=BORDER_STRONG, rx=R)
+    s.text(px_ + 8, py_ + 14, name, 9, 500, FG)
+    s.text(px_ + w - 8, py_ + 14, tag, 7.5, 700, GREEN if live else FAINT, anchor="end")
+    px_ += w + 6
+
+STATS = [("Bookings", "7", "4 on plan · 12 queued back", "3 actioned", BLUE, BLUE_BG),
+         ("Risk events", "1", "Hamburg strike, high", "live", GREEN, GREEN_BG),
+         ("Deadlines at risk", "1", "customer date missed", "breach", "#ea001d", "#feecec"),
+         ("Awaiting approval", "18", "6 drafts · 12 TMS changes", "held", AMBER, AMBER_BG)]
+SW_ = (DW - SBW - 36 - 3 * 10) / 4
+for j, (lab, val, sub, chip, col, bg) in enumerate(STATS):
+    x = CXX + j * (SW_ + 10)
+    s.card(x, DY + 152, SW_, 92, fill=CARD, stroke=BORDER)
+    s.text(x + 12, DY + 174, lab, 8.5, 500, MUTED)
+    s.chip(x + SW_ - 12 - 54, DY + 163, 54, 15, chip, fs=7, fill=bg, col=col, weight=700)
+    s.raw(f'<text x="{x+12}" y="{DY+212}" font-size="26" font-weight="600" fill="{FG}" '
+          f'class="num">{val}</text>')
+    s.text(x + 12, DY + 232, sub, 8, 400, FAINT)
+
+s.card(CXX, DY + 254, DW - SBW - 36, 68, fill=CARD, stroke=BORDER)
+s.text(CXX + 12, DY + 274, "Board outcome", 9.5, 600, FG)
+for j, (lab, n, col) in enumerate((("Rerouted", 2, BLUE), ("Held", 1, AMBER), ("On plan", 4, GREEN))):
+    x = CXX + 12 + j * 150
+    s.raw(f'<circle cx="{x+5}" cy="{DY+298}" r="4" fill="{col}"/>')
+    s.text(x + 16, DY + 302, lab, 9.5, 400, MUTED)
+    s.text(x + 96, DY + 302, str(n), 9.5, 600, FG, cls="mono")
+s.text(DX + DW - 18, DY + 302, "7 shipments · last run 12:00", 8.5, 400, FAINT, anchor="end")
 
 # =========================================================================
-# THE LANES, ON A MAP - Europe and the approaches it is reached through
+# WHAT USED TO BE TYPED
 # =========================================================================
-MX, MW, MH = 1324, W - M - 1324, SH
-LON0, LON1, LAT0, LAT1 = -25.0, 38.4, 26.0, 59.5
-_x0, _y0 = proj(LAT1, LON0)
-_x1, _y1 = proj(LAT0, LON1)
-SC = MW / (_x1 - _x0)
+TX2, TW2 = 950, W - M - 950
+s.card(TX2, DY, TW2, DH)
+s.raw(f'<rect x="{TX2}" y="{DY}" width="{TW2}" height="38" rx="{RMD}" fill="{SURFACE}"/>')
+s.raw(f'<rect x="{TX2}" y="{DY+26}" width="{TW2}" height="12" fill="{SURFACE}"/>')
+s.line(TX2, DY + 38, TX2 + TW2, DY + 38, BORDER)
+tx = TX2 + 24
+s.text(tx, DY + 24, "What used to be typed", 11.5, 500, MUTED)
+s.text(TX2 + TW2 - 24, DY + 24, "scripted today · src/roster.py", 10, 400, FAINT,
+       anchor="end", cls="mono")
 
-s.card(MX, TOP, MW, MH, fill="#f7f9fb", stroke=BORDER_STRONG)
-s.raw(f'<clipPath id="mclip"><rect x="{MX}" y="{TOP}" width="{MW}" height="{MH}" rx="{RMD}"/></clipPath>')
-s.raw(f'<g clip-path="url(#mclip)">'
-      f'<g transform="translate({MX - _x0*SC:.1f},{TOP - _y0*SC:.1f}) scale({SC:.4f})">'
-      f'<path d="{COAST}" fill="#e8ecef" stroke="#d3d9de" stroke-width="0.7"/></g></g>')
-
-
-def mp(lat, lon):
-    x, y = proj(lat, lon)
-    return MX + (x - _x0) * SC, TOP + (y - _y0) * SC
-
-
-s.raw('<g clip-path="url(#mclip)">')
-for name in ("redsea_to_suez", "suez_to_gibraltar", "suez_to_fos", "gibraltar_to_northsea"):
-    pts = [mp(la, lo) for la, lo in GEO["corridors"][name]]
-    d = " ".join(f"{'M' if i==0 else 'L'}{x:.1f},{y:.1f}" for i, (x, y) in enumerate(pts))
-    s.raw(f'<path d="{d}" fill="none" stroke="{AMBER}" stroke-width="1.6" '
-          f'stroke-linecap="round" opacity="0.55"/>')
-s.raw('</g>')
-
-PORTS = [("HAM", "Hamburg", 1, 10, -8, "start"), ("RTM", "Rotterdam", 1, -10, -9, "end"),
-         ("ANR", "Antwerp", 0, -10, 15, "end"), ("RHINE", "Rhine", 1, 11, 14, "start"),
-         ("FOS", "Fos", 0, 10, 13, "start"), ("SUEZ", "Suez", 0, -10, -8, "end")]
-for pid, lab, hot, dx, dy, anc in PORTS:
-    p = GEO["places"][pid]
-    x, y = mp(p["lat"], p["lon"])
-    s.raw(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{5 if hot else 3.6}" '
-          f'fill="{AMBER if hot else CARD}" stroke="{AMBER if hot else FAINT}" stroke-width="1.5"/>')
-    s.text(x + dx, y + dy, lab, 10, 600 if hot else 500, FG if hot else MUTED, anchor=anc)
-
-s.card(MX + 14, TOP + MH - 46, 210, 32, fill=CARD, stroke=BORDER, rx=R)
-s.raw(f'<circle cx="{MX+30}" cy="{TOP+MH-30}" r="4.5" fill="{AMBER}"/>')
-s.text(MX + 42, TOP + MH - 26, "watched chokepoint", 10.5, 500, FG)
-s.text(MX + MW - 16, TOP + 30, "lanes from data/geo.json", 9.5, 400, FAINT, anchor="end")
+s.text(tx, DY + 66, "WHAT ARRIVES", 9, 700, FAINT, ls=1.2)
+s.text(tx + 250, DY + 66, "AGENT", 9, 700, FAINT, ls=1.2)
+s.text(tx + 380, DY + 66, "WHAT LANDS ON THE BOOKING", 9, 700, FAINT, ls=1.2)
+s.line(tx, DY + 78, TX2 + TW2 - 24, DY + 78, BORDER_STRONG)
+ROWS = [("A rate request", "RFQ", "Quote on the file"),
+        ("Carrier or customer mail", "Inbox", "Reply on the comms log"),
+        ("A bill of lading, an invoice", "Docs", "Fields on the booking"),
+        ("A change to the booking", "Booking", "Amendment, for approval"),
+        ("The carrier's invoice", "Invoice", "Discrepancy, flagged"),
+        ("A new country of entry", "Customs", "Escalation, not a filing"),
+        ("Every one of the above", "TMS Link", "One queued change, gated")]
+for j, (a, ag, l) in enumerate(ROWS):
+    y = DY + 110 + j * 38
+    last = j == len(ROWS) - 1
+    if last:
+        s.card(tx - 10, y - 21, TW2 - 28, 32, fill=SURFACE, stroke="none", rx=R)
+    s.text(tx, y, a, 12.5, 500, FG)
+    s.text(tx + 250, y, ag, 12.5, 600, FG)
+    s.text(tx + 380, y, l, 12.5, 400, MUTED)
 
 # =========================================================================
-# THE APP, MID-RUN
+# THE WORKFLOW, AS THE APP SHOWS IT
 # =========================================================================
-AX, AY, AW, AH = 444, 502, W - M - 444, 332
-s.card(AX, AY, AW, AH, stroke=BORDER_STRONG)
-s.raw(f'<rect x="{AX}" y="{AY}" width="{AW}" height="38" rx="{RMD}" fill="{SURFACE}"/>')
-s.raw(f'<rect x="{AX}" y="{AY+26}" width="{AW}" height="12" fill="{SURFACE}"/>')
-s.line(AX, AY + 38, AX + AW, AY + 38, BORDER)
+LY, LH = 594, 286
+s.card(DX, LY, DW, LH, stroke=BORDER_STRONG)
+s.raw(f'<rect x="{DX}" y="{LY}" width="{DW}" height="34" rx="{RMD}" fill="{SURFACE}"/>')
+s.raw(f'<rect x="{DX}" y="{LY+22}" width="{DW}" height="12" fill="{SURFACE}"/>')
+s.line(DX, LY + 34, DX + DW, LY + 34, BORDER)
 for k in range(3):
-    s.raw(f'<circle cx="{AX+20+k*14}" cy="{AY+19}" r="4" fill="{GRAY400}"/>')
-s.text(AX + 74, AY + 24, "SQRlane / Run", 11.5, 500, MUTED)
-s.card(AX + 190, AY + 10, 132, 20, fill=AMBER_BG, stroke=AMBER, rx=R)
-s.text(AX + 256, AY + 24, "triggered · 92%", 9.5, 700, AMBER, anchor="middle")
-s.text(AX + AW - 20, AY + 24, "12:00", 10.5, 400, FAINT, anchor="end", cls="mono")
+    s.raw(f'<circle cx="{DX+18+k*13}" cy="{LY+17}" r="3.5" fill="{GRAY400}"/>')
+s.text(DX + 68, LY + 21, "SQRlane / Shipments / SHP-001", 11, 500, MUTED)
+s.text(DX + DW - 16, LY + 21, "activity", 10, 400, FAINT, anchor="end", cls="mono")
 
-PX, PW2 = AX + 22, 430
-s.text(PX, AY + 70, "AGENTS WORKING", 9.5, 700, FAINT, ls=1.3)
-WORK = [("Risk Monitor", 100, "3 exceptions"), ("Route Advisor", 100, "14 options"),
-        ("Comms Agent", 100, "6 mails"), ("Customs", 72, "in progress"),
-        ("TMS Link", 40, "in progress")]
-for j, (who, pct, out) in enumerate(WORK):
-    y = AY + 102 + j * 42
-    done = pct == 100
-    s.raw(f'<circle cx="{PX+9}" cy="{y+2}" r="8" fill="{GREEN_BG if done else AMBER_BG}"/>')
-    if done:
-        s.raw(f'<path d="M{PX+5} {y+2} l3 3 l6 -7" stroke="{GREEN}" stroke-width="1.8" '
-              f'fill="none" stroke-linecap="round"/>')
-    else:
-        s.raw(f'<circle cx="{PX+9}" cy="{y+2}" r="3" fill="{AMBER}"/>')
-    s.text(PX + 28, y, who, 12.5, 600, FG)
-    s.text(PX + PW2 - 20, y, out, 10.5, 400, FAINT, anchor="end", cls="mono")
-    s.raw(f'<rect x="{PX+28}" y="{y+10}" width="220" height="6" rx="3" fill="{SURFACE}"/>')
-    s.raw(f'<rect x="{PX+28}" y="{y+10}" width="{220*pct/100:.0f}" height="6" rx="3" '
-          f'fill="{GREEN if done else AMBER}"/>')
+FLOW = [("09:12", "Inbox", "carrier mail read, linked to SHP-001", GREEN),
+        ("09:12", "Docs", "B/L fields extracted onto the booking", GREEN),
+        ("09:13", "Booking", "amendment drafted for the carrier", GREEN),
+        ("09:13", "Customs", "entry checked, B/L reissue flagged", AMBER),
+        ("09:13", "Invoice", "surcharge reconciled against the rate", GREEN),
+        ("09:14", "TMS Link", "4 changes queued, awaiting approval", FG)]
+for j, (ts, who, what, col) in enumerate(FLOW):
+    y = LY + 62 + j * 33
+    s.text(DX + 20, y, ts, 10.5, 400, FAINT, cls="mono")
+    s.raw(f'<circle cx="{DX+78}" cy="{y-4}" r="4" fill="{col}"/>')
+    if j < len(FLOW) - 1:
+        s.line(DX + 78, y + 2, DX + 78, y + 25, GRAY400, 1.2)
+    s.text(DX + 94, y, who, 12.5, 600, FG)
+    s.text(DX + 190, y, what, 12.5, 400, MUTED)
+    s.chip(DX + DW - 20 - 62, y - 13, 62, 19, "done" if col is not FG else "queued",
+           fs=9, fill=SURFACE, col=MUTED, weight=600)
 
-# the artefact itself, so "drafts written" is a thing rather than a count
-DXp = AX + 22 + PW2 + 26
-DWp = 470
-s.line(DXp - 26, AY + 58, DXp - 26, AY + AH - 22, BORDER)
-s.text(DXp, AY + 70, "WHAT COMMS JUST WROTE", 9.5, 700, FAINT, ls=1.3)
-s.card(DXp, AY + 84, DWp, 168, fill=CARD_MUTED, stroke=BORDER_STRONG)
-s.text(DXp + 16, AY + 108, "To", 9.5, 600, FAINT)
-s.text(DXp + 52, AY + 108, "Booking Desk, Hapag-Lloyd", 11, 500, FG)
-s.text(DXp + 16, AY + 128, "Subj", 9.5, 600, FAINT)
-s.text(DXp + 52, AY + 128, "HLCU-2261188 — amend discharge to RTM", 11, 500, FG)
-s.line(DXp + 16, AY + 142, DXp + DWp - 16, AY + 142, BORDER)
-for j, ln in enumerate(["Please amend the booking to discharge at RTM",
-                        "instead of HAM, and confirm the revised schedule.",
-                        "Revised ETA on our side is 15 Sep."]):
-    s.text(DXp + 16, AY + 164 + j * 18, ln, 11, 400, MUTED)
-s.chip(DXp + 16, AY + 222, 122, 22, "DRAFT · not sent", fs=9, fill=AMBER_BG, col=AMBER, weight=700)
-s.text(DXp + 148, AY + 237, "written by Comms, held for you", 10.5, 400, FAINT)
-s.text(DXp, AY + 276, "Five more like it: one customer mail, a carrier", 11.5, 400, MUTED)
-s.text(DXp, AY + 294, "amendment, and the customs entry for Rotterdam.", 11.5, 400, MUTED)
+# =========================================================================
+# AND THEY RUN AT ONCE - the same claim, a sixth of the space
+# =========================================================================
+s.card(TX2, LY, TW2, LH)
+s.text(TX2 + 24, LY + 34, "AND THEY RUN AT ONCE", 10, 700, AMBER, ls=1.4)
+LANES = [("Inbox", 0, 5, "starts at once"), ("Docs", 0, 4, "starts at once"),
+         ("RFQ", 0, 3, "starts at once"), ("Booking", 3, 7, "waits for the fields"),
+         ("Invoice", 4, 8, "waits for the agreed rate"), ("Customs", 6, 10, "waits for the new port")]
+L0, LWU = TX2 + 116, 380 / 10
+for j, (name, a, b, why) in enumerate(LANES):
+    y = LY + 62 + j * 24
+    s.text(TX2 + 24, y + 9, name, 10.5, 400, MUTED)
+    s.raw(f'<rect x="{L0}" y="{y+3}" width="{10*LWU}" height="11" rx="3" fill="{SURFACE}"/>')
+    s.raw(f'<rect x="{L0 + a*LWU}" y="{y+3}" width="{(b-a)*LWU}" height="11" rx="3" fill="{AMBER}"/>')
+    s.raw(f'<circle cx="{L0 + b*LWU + 14}" cy="{y+8}" r="5.5" fill="{GREEN_BG}"/>')
+    s.raw(f'<path d="M{L0 + b*LWU + 11} {y+8} l2.2 2.2 l5 -5" stroke="{GREEN}" '
+          f'stroke-width="1.6" fill="none" stroke-linecap="round"/>')
+    s.text(L0 + 400 + 30, y + 12, why, 11, 400, FAINT)
 
-QX = AX + AW - 22 - 300
-s.line(QX - 26, AY + 58, QX - 26, AY + AH - 22, BORDER)
-s.text(QX, AY + 70, "THE CALL", 9.5, 700, FAINT, ls=1.3)
-s.text(QX, AY + 108, "Route around 2", 18, 600, FG, ls=-0.4)
-s.text(QX, AY + 132, "Amend 1 · Watch 4", 18, 600, FG, ls=-0.4)
-for j, (sid, act, col) in enumerate((("SHP-001", "route around", AMBER),
-                                     ("SHP-005", "route around", AMBER),
-                                     ("SHP-002", "amend", FG))):
-    y = AY + 174 + j * 24
-    s.text(QX, y, sid, 11, 500, MUTED, cls="mono")
-    s.text(QX + 86, y, act, 11, 500, col)
-s.card(QX, AY + AH - 84, 150, 34, fill=FG, stroke="none", rx=R)
-s.text(QX + 75, AY + AH - 62, "Approve all", 12.5, 600, CARD, anchor="middle")
-s.text(QX, AY + AH - 32, "or one at a time", 10.5, 400, FAINT)
+s.line(TX2 + 24, LY + 212, TX2 + TW2 - 24, LY + 212, BORDER)
+s.text(TX2 + 24, LY + 240, "A bar starts when the fact it needs exists, and ends", 13, 500, FG)
+s.text(TX2 + 24, LY + 260, "when its output is on the booking. Nothing waits for", 13, 400, MUTED)
+s.text(TX2 + 24, LY + 280, "a person until the single approval at the end.", 13, 400, MUTED)
 
-s.text(M, 890, "The prediction moves the decision left, into the window where options still exist.",
-       23, 600, FG, ls=-0.5)
-s.footer("06 / THE HOW 2/2")
-s.write("slide-06-the-how-2.svg")
+s.text(M, 926, "Six systems, one record. The re-typing is gone.", 24, 600, FG, ls=-0.5)
+s.raw(f'<text x="{W-M}" y="922" font-size="30" font-weight="600" fill="{FG}" '
+      f'text-anchor="end" class="num">40%</text>')
+s.text(W - M, 944, "of the day, back", 12, 400, FAINT, anchor="end")
+s.footer("06 / THE HOW 1/2")
+s.write("slide-06-the-how-1.svg")

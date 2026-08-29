@@ -422,9 +422,10 @@ Suggested three, drawn from S15's own gap:
 | `slide-01-introduction.svg` | Introduction | A forwarder's product is a date; four things take it |
 | `slide-02-the-what.svg` | The What | Two problems: the work is manual, nothing watches the route |
 | `slide-03-the-why.svg` | The Why | EUR 4bn of desk work, and a seam neither category crosses |
-| `slide-04-the-lane.svg` | The Lane | What the work is, and what one bad day costs the forwarder |
-| `slide-05-the-how-1.svg` | The How 1/2 | Answers problem one: the desk work does itself |
-| `slide-06-the-how-2.svg` | The How 2/2 | Answers problem two: know early, while options exist |
+| `slide-04-the-job.svg` | The Job 1/2 | The status quo: 45 days, 26 handoffs, EUR 127 a box |
+| `slide-05-when-it-breaks.svg` | The Job 2/2 | Half of sailings are late; who owns the cost |
+| `slide-06-the-how-1.svg` | The How 1/2 | Answers problem one: the desk work does itself |
+| `slide-07-the-how-2.svg` | The How 2/2 | Answers problem two: know early, while options exist |
 
 Each How slide answers one of slide 02's two problems by name. That pairing is
 the spine of the deck; if a How slide stops answering its problem, it has

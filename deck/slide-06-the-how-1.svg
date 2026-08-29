@@ -13,7 +13,7 @@ text{font-family:"Geist",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-se
   <path d="M0,0.4 L8,4 L0,7.6 Z" fill="#8f8f8f"/></marker>
 </defs>
 <rect width="1920" height="1080" fill="#fafafa"/>
-<text x="96" y="74" font-size="12" font-weight="600" fill="#8f8f8f" letter-spacing="2.2">05 — THE HOW (1/2)</text>
+<text x="96" y="74" font-size="12" font-weight="600" fill="#8f8f8f" letter-spacing="2.2">06 — THE HOW (1/2)</text>
 <text x="96" y="136" font-size="52" font-weight="600" fill="#171717" letter-spacing="-1.4">The desk work does itself.</text>
 <text x="96" y="176" font-size="17" font-weight="400" fill="#4d4d4d">The same six systems. Nobody re-types anything between them any more.</text>
 <line x1="96" y1="200" x2="1824" y2="200" stroke="#00000024" stroke-width="1"/>
@@ -248,5 +248,5 @@ text{font-family:"Geist",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-se
 <path d="M100.5 1035h9 M100.5 1031h6 M100.5 1027h3.5" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
 <text x="124" y="1036" font-size="13" font-weight="600" fill="#171717">SQRlane</text>
 <text x="188" y="1036" font-size="12" font-weight="400" fill="#8f8f8f">Trade-lane risk, decided.</text>
-<text x="1824" y="1036" font-size="11.5" font-weight="500" fill="#8f8f8f" text-anchor="end" letter-spacing="1.2" class="mono">05 / THE HOW 1/2</text>
+<text x="1824" y="1036" font-size="11.5" font-weight="500" fill="#8f8f8f" text-anchor="end" letter-spacing="1.2" class="mono">06 / THE HOW 1/2</text>
 </svg>

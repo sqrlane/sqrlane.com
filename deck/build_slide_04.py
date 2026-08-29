@@ -1,37 +1,35 @@
 #!/usr/bin/env python3
 """
-Slide 04 - THE LANE.  Emits deck/slide-04-the-lane.svg.
+Slide 04 - THE JOB (1/2).  Emits deck/slide-04-the-job.svg.
 
-The bridge from why into how. Three things:
+The status quo, on a file where nothing goes wrong.
 
-  the file, end to end, drawn to scale so the sea leg visibly dominates
-  the coordination web: who the forwarder talks to at each stage, as a matrix,
-    because the density is the job
-  what one bad day costs, and which side of the invoice it lands on
+  the clock       45 days, drawn to scale, the sea leg owning 32 of them
+  the web         seven parties, eight stages, a dot per handoff - the
+                  repetition IS the job, so the density carries it
+  the TMS         what it holds and what it does not do
+  the margin      the P&L on one container, ending at EUR 127
 
-Plain language throughout: no demurrage, no detention. A day the box sits at
-the port is what it is.
-
-EUR 127 is Kuehne+Nagel Sea Logistics FY25 - CHF 585m recurring EBIT over 4.3M
-TEU - the best-run operator in the industry, so the comparison is conservative.
-Port storage is the 2025 global average. Both conversions are on the slide.
+All K+N Sea Logistics FY25: CHF 8.8bn net turnover and CHF 585m recurring EBIT
+over 4.3M TEU, gross profit backed out of the published 29% conversion rate.
+Best-run operator in the industry, so every figure here is generous.
 """
 from deckkit import *
 
 GREEN = "#0f7b3f"
 
 s = Slide()
-s.header("04 — THE LANE",
-         "Forty-five days, seven parties, and a margin one bad day wide.",
-         "The forwarder owns no ship and no truck. They own the coordination, and every message in it.")
+s.header("04 — THE JOB (1/2)",
+         "Forty-five days, seven parties, €127.",
+         "This is a file where nothing goes wrong. The TMS holds the booking; it does not do the work.")
 
 # =========================================================================
-# THE FILE - the clock, then the coordination
+# THE CLOCK, AND THE COORDINATION WEB
 # =========================================================================
-FY, FH = 224, 414
+FY, FH = 224, 396
 s.card(M, FY, CW, FH)
-s.text(M + 26, FY + 34, "THE FILE, END TO END", 10, 700, FAINT, ls=1.4)
-s.text(M + 244, FY + 34, "one shipment, Shanghai to Munich", 11.5, 400, FAINT)
+s.text(M + 26, FY + 34, "ONE FILE, END TO END", 10, 700, FAINT, ls=1.4)
+s.text(M + 240, FY + 34, "Shanghai to Munich", 11.5, 400, FAINT)
 s.text(W - M - 26, FY + 34, "45 days", 13, 600, FG, anchor="end", cls="mono")
 
 STAGES = [("Enquiry", 2), ("Quote", 3), ("Book", 2), ("Docs", 2),
@@ -42,94 +40,90 @@ x = TX0
 for name, days in STAGES:
     w = days * UNIT
     hot = days > 10
-    s.card(x + 1.5, FY + 62, w - 3, 22, fill=SURFACE_2 if hot else SURFACE, stroke="none", rx=4)
+    s.card(x + 1.5, FY + 60, w - 3, 20, fill=SURFACE_2 if hot else SURFACE, stroke="none", rx=4)
     if w > 70:
-        s.text(x + w / 2, FY + 77, f"{days}d", 10.5, 600 if hot else 500,
+        s.text(x + w / 2, FY + 74, f"{days}d", 10, 600 if hot else 500,
                MUTED if hot else FAINT, anchor="middle", cls="mono")
     x += w
-s.text(M + 26, FY + 78, "the clock", 11.5, 500, FG)
-STRIKE = TX0 + 18 * UNIT
-s.line(STRIKE, FY + 56, STRIKE, FY + 92, AMBER, 2)
-s.raw(f'<circle cx="{STRIKE}" cy="{FY+56}" r="5" fill="{AMBER}"/>')
-s.text(STRIKE + 12, FY + 106, "day 18 · the lane breaks", 12, 600, AMBER)
-s.text(TX0, FY + 106, "opens", 11, 400, FAINT)
-s.text(TX0 + TXW, FY + 106, "closes", 11, 400, FAINT, anchor="end")
-s.line(M + 26, FY + 126, W - M - 26, FY + 126, BORDER)
+s.text(M + 26, FY + 75, "the clock", 11.5, 500, FG)
+s.text(TX0, FY + 100, "opens", 10.5, 400, FAINT)
+s.text(TX0 + TXW, FY + 100, "closes", 10.5, 400, FAINT, anchor="end")
+s.line(M + 26, FY + 116, W - M - 26, FY + 116, BORDER)
 
-# -- the coordination web -------------------------------------------------
-s.text(M + 26, FY + 156, "WHO THE FORWARDER TALKS TO", 10, 700, AMBER, ls=1.4)
-s.text(M + 290, FY + 156, "every dot is a mail, a portal login or a call", 11, 400, FAINT)
-
-COLS = ["Enquiry", "Quote", "Book", "Docs", "In transit", "Customs", "Delivery", "Invoice"]
-PARTIES = [
-    ("Customer", [1, 1, 1, 1, 1, 0, 1, 1]),
-    ("Shipping line", [0, 1, 1, 1, 1, 0, 0, 1]),
-    ("Origin agent", [0, 0, 1, 1, 0, 0, 0, 0]),
-    ("Port terminal", [0, 0, 0, 1, 1, 1, 0, 0]),
-    ("Haulier", [0, 1, 0, 0, 0, 0, 1, 1]),
-    ("Customs broker", [0, 0, 0, 1, 0, 1, 1, 0]),
-    ("Consignee", [0, 0, 0, 0, 1, 0, 1, 1]),
-]
+s.text(M + 26, FY + 146, "WHO THE FORWARDER TALKS TO", 10, 700, AMBER, ls=1.4)
+s.text(M + 292, FY + 146, "every dot is a mail, a portal login or a call", 11, 400, FAINT)
+COLS = [n for n, _ in STAGES]
+PARTIES = [("Customer", [1, 1, 1, 1, 1, 0, 1, 1]), ("Shipping line", [0, 1, 1, 1, 1, 0, 0, 1]),
+           ("Origin agent", [0, 0, 1, 1, 0, 0, 0, 0]), ("Port terminal", [0, 0, 0, 1, 1, 1, 0, 0]),
+           ("Haulier", [0, 1, 0, 0, 0, 0, 1, 1]), ("Customs broker", [0, 0, 0, 1, 0, 1, 1, 0]),
+           ("Consignee", [0, 0, 0, 0, 1, 0, 1, 1])]
 TOUCHES = sum(sum(r) for _, r in PARTIES)
-MX0, MW_ = M + 190, CW - 214
-CWD = MW_ / len(COLS)
+CWD = TXW / len(COLS)
 for c, lab in enumerate(COLS):
-    s.text(MX0 + c * CWD + CWD / 2, FY + 186, lab, 10.5, 600, MUTED, anchor="middle")
-s.line(MX0, FY + 196, MX0 + MW_, FY + 196, BORDER_STRONG)
+    s.text(TX0 + c * CWD + CWD / 2, FY + 176, lab, 10.5, 600, MUTED, anchor="middle")
+s.line(TX0, FY + 186, TX0 + TXW, FY + 186, BORDER_STRONG)
 for r, (party, row) in enumerate(PARTIES):
-    y = FY + 218 + r * 24
+    y = FY + 206 + r * 22
     s.text(M + 26, y + 4, party, 12, 500, FG)
     for c, on in enumerate(row):
-        cx = MX0 + c * CWD + CWD / 2
-        if on:
-            s.raw(f'<circle cx="{cx}" cy="{y}" r="6" fill="{AMBER}"/>')
+        cx = TX0 + c * CWD + CWD / 2
+        s.raw(f'<circle cx="{cx}" cy="{y}" r="{6 if on else 2}" fill="{AMBER if on else GRAY400}"/>')
+s.text(M + 26, FY + FH - 24,
+       f"{TOUCHES} handoffs, and every one ends with the same facts typed somewhere new.",
+       13.5, 500, FG)
+
+# =========================================================================
+# WHERE THE TMS SITS
+# =========================================================================
+TY2, TH3 = 640, 236
+s.card(M, TY2, 830, TH3)
+s.text(M + 26, TY2 + 34, "WHERE THE TMS SITS", 10, 700, FAINT, ls=1.4)
+for lab, x0, col, items in (
+        ("IT HOLDS", M + 26, FG, ["The booking and its dates", "The rate that was agreed",
+                                  "The documents on file"]),
+        ("IT DOES NOT", M + 424, AMBER, ["Watch anything", "Decide anything",
+                                         "Type itself"])):
+    s.text(x0, TY2 + 66, lab, 9.5, 700, col, ls=1.2)
+    for j, it in enumerate(items):
+        y = TY2 + 96 + j * 26
+        if col is AMBER:
+            s.raw(f'<path d="M{x0+2} {y-8} l9 9 M{x0+11} {y-8} l-9 9" stroke="{AMBER}" '
+                  f'stroke-width="1.8" stroke-linecap="round"/>')
         else:
-            s.raw(f'<circle cx="{cx}" cy="{y}" r="2" fill="{GRAY400}"/>')
-s.text(M + 26, FY + FH - 22,
-       f"{TOUCHES} handoffs on a file where nothing goes wrong. Every one ends with the same facts "
-       "typed somewhere new.", 13, 500, FG)
+            s.raw(f'<path d="M{x0+1} {y-4} l4 4 l8 -9" stroke="{GREEN}" stroke-width="1.8" '
+                  f'fill="none" stroke-linecap="round"/>')
+        s.text(x0 + 22, y, it, 12.5, 500 if col is AMBER else 400,
+               FG if col is AMBER else MUTED)
+s.line(M + 404, TY2 + 50, M + 404, TY2 + TH3 - 52, BORDER)
+s.text(M + 26, TY2 + TH3 - 26,
+       "It is the system of record, and the desk is the thing that records into it.", 12.5, 400, MUTED)
 
 # =========================================================================
-# WHAT ONE BAD DAY COSTS
+# WHAT A CLEAN FILE EARNS
 # =========================================================================
-CY, CH2 = 662, 200
-s.card(M, CY, 830, CH2)
-s.text(M + 26, CY + 32, "WHERE EACH COST LANDS", 10, 700, FAINT, ls=1.4)
-for lab, x0, col in (("PASSED TO THE CUSTOMER", M + 26, MUTED),
-                     ("ABSORBED BY THE FORWARDER", M + 400, AMBER)):
-    s.text(x0, CY + 62, lab, 9.5, 700, col, ls=1.2)
-s.line(M + 380, CY + 46, M + 380, CY + CH2 - 54, BORDER)
-for j, item in enumerate(["The carrier's surcharge", "The higher freight rate", "The later arrival date"]):
-    y = CY + 92 + j * 26
-    s.raw(f'<circle cx="{M+30}" cy="{y-4}" r="3" fill="none" stroke="{GRAY400}" stroke-width="1.3"/>')
-    s.text(M + 44, y, item, 12.5, 400, MUTED)
-for j, item in enumerate(["Storage while the box waits", "Re-booking and paperwork",
-                          "Clearing it into a new country"]):
-    y = CY + 92 + j * 26
-    s.raw(f'<circle cx="{M+404}" cy="{y-4}" r="3" fill="{AMBER}"/>')
-    s.text(M + 418, y, item, 12.5, 500, FG)
-s.text(M + 26, CY + CH2 - 26,
-       "Which side a line falls on is the contract. The forwarder argues it afterwards, on their own time.",
-       12.5, 400, MUTED)
-
 BX, BW = 950, W - M - 950
-s.card(BX, CY, BW, CH2, stroke=BORDER_STRONG)
-s.text(BX + 26, CY + 32, "ON ONE CONTAINER", 10, 700, AMBER, ls=1.4)
-BARS = [("What the forwarder earns", 127, FG), ("One day the box sits at the port", 185, AMBER),
-        ("Five days sitting", 926, AMBER)]
-BAR_X, BAR_MAX = BX + 26, BW - 200
-for j, (lab, val, col) in enumerate(BARS):
-    y = CY + 68 + j * 34
-    s.text(BAR_X, y, lab, 12.5, 500, FG)
-    s.raw(f'<rect x="{BAR_X+300}" y="{y-11}" width="{BAR_MAX*val/926*0.62:.0f}" height="14" '
-          f'rx="3" fill="{col}"/>')
-    s.raw(f'<text x="{BX+BW-26}" y="{y}" font-size="17" font-weight="600" fill="{col}" '
-          f'text-anchor="end" class="num">€{val:,}</text>')
-s.line(BAR_X, CY + CH2 - 62, BX + BW - 26, CY + CH2 - 62, BORDER)
-s.text(BAR_X, CY + CH2 - 36, "One bad day costs more than the box earns.", 16, 600, FG, ls=-0.3)
-s.text(BAR_X, CY + CH2 - 16, "K+N Sea FY25, CHF 136 EBIT/TEU at 1.07 · port storage $200/day at 1.08",
+s.card(BX, TY2, BW, TH3, stroke=BORDER_STRONG)
+s.text(BX + 26, TY2 + 34, "WHAT A CLEAN FILE EARNS", 10, 700, AMBER, ls=1.4)
+s.text(BX + BW - 26, TY2 + 34, "per container", 11, 400, FAINT, anchor="end")
+
+STEPS = [("Billed to the customer", 1913, GRAY400), ("Paid to the carrier", -1475, GRAY400),
+         ("Gross profit", 438, SURFACE_2), ("Running the desk", -311, GRAY400),
+         ("Left over", 127, AMBER)]
+SX2, SWID = BX + 26, BW - 52
+for j, (lab, val, col) in enumerate(STEPS):
+    y = TY2 + 64 + j * 25
+    last = j == len(STEPS) - 1
+    s.text(SX2, y, lab, 12.5, 600 if last else 400, FG if last else MUTED)
+    s.raw(f'<rect x="{SX2+250}" y="{y-11}" width="{abs(val)/1913*300:.0f}" height="14" rx="3" '
+          f'fill="{AMBER if last else (SURFACE_2 if val > 0 else GRAY400)}"/>')
+    s.raw(f'<text x="{SX2+SWID}" y="{y}" font-size="{16 if last else 13}" '
+          f'font-weight="600" fill="{AMBER if last else (FG if val>0 else FAINT)}" '
+          f'text-anchor="end" class="num">{"−" if val<0 else ""}€{abs(val):,}</text>')
+s.line(SX2, TY2 + TH3 - 54, BX + BW - 26, TY2 + TH3 - 54, BORDER)
+s.text(SX2, TY2 + TH3 - 30, "6.6% of what the customer paid.", 15, 600, FG)
+s.text(SX2, TY2 + TH3 - 10, "K+N Sea Logistics FY25 · CHF at 1.07 · gross profit from the 29% conversion rate",
        10, 400, FAINT, cls="mono")
 
-s.text(M, 908, "This is the day the agents are built for.", 24, 600, FG, ls=-0.5)
-s.footer("04 / THE LANE")
-s.write("slide-04-the-lane.svg")
+s.text(M, 906, "That is the good day.", 24, 600, FG, ls=-0.5)
+s.footer("04 / THE JOB 1/2")
+s.write("slide-04-the-job.svg")
