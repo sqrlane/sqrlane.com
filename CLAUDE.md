@@ -1260,6 +1260,8 @@ prototype is finished and nothing else is in scope:
 | `BUILD-GUIDE.md` | The copy-paste phase prompts — the spine of the build |
 | `README.md` | The front door — what it is, how to run it, the honest framing |
 | `LAB-NOTES-2026-08-28.md` | The witnessing day: TabPFN evaluated and won, 42→60, the timing question, what every live run found |
+| `RUNBOOK.md` | The operator's manual — start the board, trigger a scenario, tour the Workers, work the approval gate, run each agent alone |
+| `ROADMAP-PRE-DEPARTURE.md` | The next live agent: the Planner — pre-departure risk, carrier/route changes and hedging way in advance; leads via the record, never as a hub |
 | `trade-risk-agent-docs.zip` | Duplicate archive of the seven docs above; not a source of truth |
 
 ---
