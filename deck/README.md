@@ -121,6 +121,7 @@ chip · write`. Geometry is always explicit so a layout can be read off the code
 | `deckkit.py` | tokens, embedded fonts, primitives. The template. |
 | `render.py` | SVG → 2× PNG, with the Chromium viewport fix |
 | `build_slide_01..05.py` | one per slide; all import `deckkit` |
+| `build_slide_a1..a3.py` | the lab-notes appendix: the practice world, the TabPFN exam, the live read |
 | `CONTENT.md` | slide index, the sourced number bank, what each slide argues |
 | `SOURCES.md` | ~70 candidate signal sources by family, and the phase-two six |
 
@@ -133,6 +134,7 @@ chip · write`. Geometry is always explicit so a layout can be read off the code
 | 03 The Why | €4bn of desk work, and a seam neither category crosses |
 | 04 The How 1/2 | Answers problem one: the desk work does itself |
 | 05 The How 2/2 | Answers problem two: know early, while options still exist |
+| A1–A3 Lab notes | Appendix, one idea per slide: the grading problem and the practice world · TabPFN's win, status quo vs. after · the first full live read |
 
 **Each How slide answers one of slide 02's two problems by name.** That pairing
 is the spine of the deck. If a How slide stops answering its problem, it has
