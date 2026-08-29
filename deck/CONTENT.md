@@ -48,8 +48,8 @@ whatever palette and type the reference deck sets.
 > sizes the **software** opportunity bottom-up from business counts instead.
 
 ### Prototype facts (counted, not claimed)
-42 sources · 6 families · 13 Workers (3 live, 9 scripted, 1 demo connector) ·
-7 bookings · 4 scenarios · 8-day simulation · 8 test suites · ~14 model calls per cycle ·
+60 sources · 6 families · 14 Workers (3 live, 10 scripted, 1 demo connector) ·
+7 bookings · 4 scenarios · 8-day simulation · 10 test suites · ~14 model calls per cycle ·
 0 emails sent · 0 records written.
 
 ---

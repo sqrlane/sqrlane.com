@@ -1,7 +1,7 @@
 """roster.py - the scripted half of the Worker roster.
 
 Risk, Routing and Comms are real: they run live and their output is whatever the
-model and the news actually produced. The four Workers here are **not**. They
+model and the news actually produced. The ten Workers here are **not**. They
 replay authored data so the product surface looks complete, and every one of
 them is tagged SCRIPTED on screen.
 
@@ -23,9 +23,16 @@ that tag from this data rather than hard-coding it.
 
 from datetime import date, timedelta
 
-from src import route_advisor, tms
+from src import config, route_advisor, tms
 
 ROSTER = [
+    # The pre-departure Worker from ROADMAP-PRE-DEPARTURE.md, at rung two of its
+    # own proof ladder: an authored sweep, honestly tagged, like Inbox and
+    # Customs. It sits first among the scripted pills because leading is its
+    # whole design - it is the one Worker whose default state is looking ahead.
+    {"id": "planner", "name": "Planner Worker", "mode": "scripted",
+     "role": "Sweeps the forward book before departure - exposure on the horizon, "
+             "the last cheap moment to act, and the rebooking or hedge it implies"},
     {"id": "rate", "name": "Rate Worker", "mode": "scripted",
      "role": "Quote and rate lookups across the carriers on a lane"},
     {"id": "milestones", "name": "Milestones Worker", "mode": "scripted",
@@ -550,6 +557,395 @@ def customs_panel(shipment, decision, scenario_id):
     }
 
 
+# --- Planner ---------------------------------------------------------------
+# The pre-departure loop, scripted. ROADMAP-PRE-DEPARTURE.md is the design;
+# this is its rung two - an authored scenario showing the sweep, the priced
+# menu, the hedge, and the three-state answer, honestly tagged SCRIPTED like
+# Inbox and Customs. The forward book is authored (quotations and unshipped
+# bookings are earlier lifecycle states the demo connector does not model
+# yet), but every number quoted against a route - transit days, cost index -
+# is computed from routes.json at build time, and the Kaub tripwire quotes
+# the same threshold the risk monitor bands, so neither can drift from the
+# product's own data. Every sweep ends in one of exactly three states per
+# booking - act now, tripwire armed, or stand down - and stand-down is a
+# recorded answer with reasoning, never an omission.
+
+_FORWARD_BOOK = [
+    {"ref": "QUO-3101", "stage_label": "Quotation - nothing committed",
+     "lane": "Shanghai → Munich", "customer": "Munich machinery importer",
+     "routing": "R-HAM-STD", "alternate": "R-RTM-ALT", "etd_in_days": 21,
+     "horizon": "quote stage - every option still open"},
+    {"ref": "BKG-3102", "stage_label": "Booked - departs in 14 days",
+     "lane": "Ningbo → Basel", "customer": "Basel specialty chemicals",
+     "routing": "R-RTM-RHINE", "alternate": "R-RTM-RAIL", "etd_in_days": 14,
+     "horizon": "departure minus 14 - rebooking is still routine"},
+    {"ref": "BKG-3103", "stage_label": "Booked - departs in 4 days",
+     "lane": "Busan → Hamburg", "customer": "Hamburg distribution",
+     "routing": "R-HAM-STD", "alternate": "R-RTM-ALT", "etd_in_days": 4,
+     "horizon": "final 72 hours - cargo cut-off is tomorrow"},
+]
+
+_PLANNER_BATON = ("The Planner owns a booking until cargo cut-off; after that it "
+                  "belongs to the in-transit advisor. The hand-over is itself a "
+                  "write-back: the plan of record, hedges in place and tripwires "
+                  "still armed, inherited on the booking.")
+
+_STATE_LABEL = {"act_now": "ACT NOW", "tripwire_armed": "TRIPWIRE ARMED",
+                "stand_down": "STAND DOWN - recorded"}
+
+_DRAFT, _QUEUED = "DRAFT - not sent", "QUEUED - not written"
+
+
+def _proposal(kind, summary, status):
+    return {"kind": kind, "summary": summary, "status": status,
+            "approval_status": "awaiting_approval"}
+
+
+def _delta(routes, from_id, to_id):
+    """'+2 days, +8 index points' - computed from the route catalogue."""
+    a, b = routes.get(from_id, {}), routes.get(to_id, {})
+    days = b.get("transit_days", 0) - a.get("transit_days", 0)
+    cost = b.get("cost_index", 0) - a.get("cost_index", 0)
+    return (f"{days:+d} day{'' if abs(days) == 1 else 's'}, "
+            f"{cost:+d} index point{'' if abs(cost) == 1 else 's'}")
+
+
+def _planner_outcomes(scenario_id, routes):
+    """The authored sweep for one scenario: {ref: outcome}. The prose is the
+    screenplay; the route arithmetic inside it is computed, never typed."""
+    kaub = next(g for g in config.RHINE_GAUGES if g["station"] == "KAUB")
+    quiet = {
+        fb["ref"]: {
+            "state": "stand_down",
+            "exposure": "No - no active lane event touches this routing.",
+            "timing": "Nothing on the horizon to time against.",
+            "move": None, "menu": [], "proposals": [], "tripwire": None,
+            "reasoning": "The sweep found nothing on this booking's horizon. "
+                         "Recorded as a stand-down, not skipped.",
+        } for fb in _FORWARD_BOOK}
+
+    if scenario_id == "hamburg":
+        _, ham_pct, _ = _SURCHARGE["hamburg"]
+        return {
+            "QUO-3101": {
+                "state": "act_now",
+                "exposure": "Yes - the quoted routing discharges at Hamburg, and the "
+                            "carrier is already billing a congestion-recovery surcharge.",
+                "timing": "Now. A quote issued today at yesterday's price is mispriced "
+                          "the moment it is accepted.",
+                "move": "Price the risk into the quote",
+                "menu": [
+                    {"option": "Price the surcharge into the quote", "picked": True,
+                     "note": f"+{ham_pct} index points on the Hamburg routing, named as "
+                             f"a risk line, validity shortened"},
+                    {"option": "Quote via Rotterdam instead", "picked": False,
+                     "note": f"{_delta(routes, 'R-HAM-STD', 'R-RTM-ALT')} - pays the "
+                             f"alternate for a strike that should be over before any "
+                             f"sailing on this quote"},
+                    {"option": "Stand down", "picked": False,
+                     "note": "leaves the quote mispriced against a live surcharge"},
+                ],
+                "proposals": [
+                    _proposal("Quote risk line",
+                              f"Add the congestion-recovery surcharge (+{ham_pct} index "
+                              f"points) to QUO-3101 as a named risk line and shorten "
+                              f"validity to 7 days", _QUEUED),
+                ],
+                "tripwire": None,
+                "reasoning": "Quote-stage is the cheapest decision point on the board: "
+                             "nothing is committed, so pricing the risk in costs nothing "
+                             "and protects the margin if the backlog outlives the strike.",
+            },
+            "BKG-3102": {
+                "state": "stand_down",
+                "exposure": "No - this booking discharges at Rotterdam and moves inland "
+                            "by barge. Nothing on its routing touches Hamburg.",
+                "timing": "Not exposed, so there is nothing to time.",
+                "move": None, "menu": [], "proposals": [], "tripwire": None,
+                "reasoning": "Standing down is the answer, recorded with its reasoning. "
+                             "A sweep that acts on unexposed bookings is crying wolf.",
+            },
+            "BKG-3103": {
+                "state": "tripwire_armed",
+                "exposure": "Yes - it discharges at Hamburg. But it departs in 4 days "
+                            "and arrives in about five weeks; the walkout is expected "
+                            "to clear in 48-72 hours.",
+                "timing": "Wait, but manage the wait. Cargo cut-off is tomorrow - the "
+                          "last cheap moment. After cut-off this becomes the in-transit "
+                          "advisor's problem, at diversion prices.",
+                "move": "Arm a tripwire, hold the prepared rebooking",
+                "menu": [
+                    {"option": "Rebook to Rotterdam now", "picked": False,
+                     "note": f"{_delta(routes, 'R-HAM-STD', 'R-RTM-ALT')} paid for "
+                             f"certain, against a strike that should clear first"},
+                    {"option": "Tripwire, with the rebooking prepared", "picked": True,
+                     "note": "acts only if the strike extends, decided before cut-off"},
+                    {"option": "Stand down entirely", "picked": False,
+                     "note": "leaves tomorrow's cut-off to pass with no prepared answer"},
+                ],
+                "proposals": [
+                    _proposal("Prepared rebooking",
+                              f"Rebooking of BKG-3103 to R-RTM-ALT "
+                              f"({_delta(routes, 'R-HAM-STD', 'R-RTM-ALT')}), raised "
+                              f"only if the tripwire fires", _DRAFT),
+                    _proposal("Tripwire on the booking",
+                              "Condition written to BKG-3103: if the walkout is "
+                              "extended beyond its expected 72 hours before cargo "
+                              "cut-off, raise the prepared rebooking for approval",
+                              _QUEUED),
+                ],
+                "tripwire": {
+                    "condition": "the walkout is extended beyond its expected 72 hours "
+                                 "before this booking's cargo cut-off",
+                    "checked_by": "the Risk Monitor's ordinary runs - strike duration "
+                                  "is already on the event record",
+                    "prepared": "Rebooking to R-RTM-ALT, drafted and held",
+                },
+                "reasoning": "Acting now pays the alternate for certain against a "
+                             "disruption that should be gone before this box is at sea "
+                             "a week. Waiting unmanaged wastes the last cheap moment. "
+                             "The tripwire is the middle: the decision is prepared now "
+                             "and taken only if the facts move.",
+            },
+        }
+
+    if scenario_id == "redsea":
+        _, war_pct, _ = _SURCHARGE["redsea"]
+        return {
+            "QUO-3101": {
+                "state": "act_now",
+                "exposure": "Yes - the quoted routing transits the closed corridor. "
+                            "A Suez-basis price is a price for a route that is not "
+                            "sailing.",
+                "timing": "Now. The closure is expected to hold for weeks, longer than "
+                          "this quotation's whole life.",
+                "move": "Re-quote on the Cape basis",
+                "menu": [
+                    {"option": "Quote on the Cape routing", "picked": True,
+                     "note": f"{_delta(routes, 'R-HAM-STD', 'R-COGH-ALT')} - honest "
+                             f"about what will actually sail"},
+                    {"option": "Quote Suez plus war-risk surcharge", "picked": False,
+                     "note": f"+{war_pct} index points on a transit carriers have "
+                             f"suspended - a price for a route that is not on offer"},
+                ],
+                "proposals": [
+                    _proposal("Quotation re-priced",
+                              "QUO-3101 re-based to the Cape routing with the closure "
+                              "named, validity 5 days", _QUEUED),
+                ],
+                "tripwire": None,
+                "reasoning": "A quote is the one place the closure costs nothing yet. "
+                             "Re-basing it now is cheaper than winning the business on "
+                             "a routing that cannot be bought.",
+            },
+            "BKG-3102": {
+                "state": "act_now",
+                "exposure": "Yes - the sea leg transits the closed corridor, and the "
+                            "closure is expected to outlast this booking's departure.",
+                "timing": "Now, while space on Cape sailings is still bookable. Waiting "
+                          "for a reopening date nobody can name is not a plan.",
+                "move": "Split the shipment - the hedge only a forward booking has",
+                "menu": [
+                    {"option": "Split across two routings", "picked": True,
+                     "note": f"half on the first Cape sailing "
+                             f"({_delta(routes, 'R-RTM-RHINE', 'R-COGH-BSL')}) secures "
+                             f"the date; half held for a reopening keeps the cost down"},
+                    {"option": "Rebook everything to the Cape", "picked": False,
+                     "note": "pays the full premium on every container against a "
+                             "closure that could lift mid-voyage"},
+                    {"option": "Hold everything for reopening", "picked": False,
+                     "note": "bets the whole required-by date on a reopening nobody "
+                             "can time"},
+                ],
+                "proposals": [
+                    _proposal("Rebooking draft",
+                              "Half of BKG-3102 re-booked to the first Cape sailing "
+                              "(R-COGH-BSL); the balance held on the original booking",
+                              _DRAFT),
+                    _proposal("Customer advisory",
+                              "Advisory to the Basel customer: the split, both ETAs, "
+                              "and why the book is not betting on one reopening date",
+                              _DRAFT),
+                    _proposal("Plan of record",
+                              "The split written onto BKG-3102 as the plan of record, "
+                              "with this reasoning trail", _QUEUED),
+                ],
+                "tripwire": None,
+                "reasoning": "A split is a hedge, and hedges only exist before "
+                             "commitment. Half the cargo pays the Cape premium to make "
+                             "the date certain; the other half keeps the cheap routing "
+                             "if the corridor reopens. After departure this option is "
+                             "gone.",
+            },
+            "BKG-3103": {
+                "state": "act_now",
+                "exposure": "Yes - booked through the closed corridor, departing in "
+                            "4 days into a closure expected to hold for weeks.",
+                "timing": "Now. Cargo cut-off is tomorrow: the last moment this is a "
+                          "rebooking rather than a mid-ocean diversion.",
+                "move": "Rebook to the Cape before cut-off",
+                "menu": [
+                    {"option": "Rebook to the Cape routing", "picked": True,
+                     "note": f"{_delta(routes, 'R-HAM-STD', 'R-COGH-ALT')}, booked at "
+                             f"the counter today"},
+                    {"option": "Sail as booked", "picked": False,
+                     "note": "departs into a suspended transit and re-plans at sea, "
+                             "at diversion prices"},
+                ],
+                "proposals": [
+                    _proposal("Rebooking draft",
+                              f"BKG-3103 re-booked to R-COGH-ALT "
+                              f"({_delta(routes, 'R-HAM-STD', 'R-COGH-ALT')}) before "
+                              f"tomorrow's cut-off", _DRAFT),
+                    _proposal("Customer advisory",
+                              "Advisory to the Hamburg customer: revised routing and "
+                              "ETA, decided before departure rather than at sea",
+                              _DRAFT),
+                ],
+                "tripwire": None,
+                "reasoning": "The same reroute costs a rebooking fee today and a "
+                             "diversion after Friday. The whole point of the "
+                             "pre-departure sweep is to be the desk that notices "
+                             "before cut-off, not after.",
+            },
+        }
+
+    if scenario_id == "rhine":
+        return {
+            "QUO-3101": {
+                "state": "stand_down",
+                "exposure": "No - the quoted lane moves inland from Hamburg by rail "
+                            "and road. No barge leg, no Rhine exposure.",
+                "timing": "Not exposed, so there is nothing to time.",
+                "move": None, "menu": [], "proposals": [], "tripwire": None,
+                "reasoning": "Recorded stand-down. Low water moves barges, not this "
+                             "quote.",
+            },
+            "BKG-3102": {
+                "state": "tripwire_armed",
+                "exposure": "Yes - the inland leg is a Rhine barge to Basel. But the "
+                            "barge leg is about seven weeks away, and today's episode "
+                            "is expected to clear in one to three.",
+                "timing": "Wait, but manage the wait: low water is drought-fed and can "
+                          "persist past any forecast. The cheap moment lasts until the "
+                          "sea leg nears Rotterdam.",
+                "move": "Arm a gauge tripwire, hold the prepared re-mode",
+                "menu": [
+                    {"option": "Re-mode to rail now", "picked": False,
+                     "note": f"{_delta(routes, 'R-RTM-RHINE', 'R-RTM-RAIL')} paid for "
+                             f"certain, seven weeks before the barge would load"},
+                    {"option": "Gauge tripwire, re-mode prepared", "picked": True,
+                     "note": "decides on the river's own numbers, while rebooking the "
+                             "inland leg is still routine"},
+                ],
+                "proposals": [
+                    _proposal("Prepared re-mode",
+                              f"Inland leg of BKG-3102 re-booked from barge to rail "
+                              f"(R-RTM-RAIL, {_delta(routes, 'R-RTM-RHINE', 'R-RTM-RAIL')}), "
+                              f"raised only if the tripwire fires", _DRAFT),
+                    _proposal("Tripwire on the booking",
+                              f"Condition written to BKG-3102: if Kaub is still below "
+                              f"{kaub['high_cm']} cm ten days before the barge leg, "
+                              f"raise the prepared re-mode for approval", _QUEUED),
+                ],
+                "tripwire": {
+                    "condition": f"Kaub is still below {kaub['high_cm']} cm - the level "
+                                 f"barges stop loading full - ten days before the "
+                                 f"barge leg",
+                    "checked_by": "the Risk Monitor's ordinary runs - the Kaub gauge "
+                                  "is already read and banded every cycle",
+                    "prepared": "Re-mode of the inland leg to rail, drafted and held",
+                },
+                "reasoning": "Re-moding today pays the rail premium seven weeks early "
+                             "against a river that may recover. Ignoring it bets the "
+                             "delivery on rain. The tripwire is a condition over a "
+                             "reading the sources already band, so waiting stays a "
+                             "managed position instead of a forgotten one.",
+            },
+            "BKG-3103": {
+                "state": "stand_down",
+                "exposure": "No - discharges at Hamburg and moves inland by rail and "
+                            "road. No barge leg on this booking.",
+                "timing": "Not exposed, so there is nothing to time.",
+                "move": None, "menu": [], "proposals": [], "tripwire": None,
+                "reasoning": "Recorded stand-down. One exposed booking on the sweep "
+                             "does not make the other two exposed.",
+            },
+        }
+
+    # france, an unknown scenario, or no scenario at all: the quiet sweep.
+    # Finding nothing is a real answer, and it queues nothing.
+    return quiet
+
+
+def planner_panel(scenario_id, scenario):
+    """The pre-departure sweep. Board-level by design: the Planner is the one
+    Worker that looks across bookings rather than at the selected one."""
+    routes = route_advisor.load_routes()
+    today = date.today()
+    outcomes = _planner_outcomes(scenario_id, routes)
+
+    items = []
+    for fb in _FORWARD_BOOK:
+        etd = today + timedelta(days=fb["etd_in_days"])
+        route = routes.get(fb["routing"], {})
+        outcome = outcomes[fb["ref"]]
+        items.append({
+            "ref": fb["ref"],
+            "stage_label": fb["stage_label"],
+            "horizon": fb["horizon"],
+            "lane": fb["lane"],
+            "customer": fb["customer"],
+            "routing": fb["routing"],
+            "routing_description": route.get("description"),
+            "etd": etd.isoformat(),
+            # Same convention the Booking Worker uses: cut-off three days out.
+            "cutoff": (etd - timedelta(days=3)).isoformat(),
+            "state": outcome["state"],
+            "state_label": _STATE_LABEL[outcome["state"]],
+            "exposure": outcome["exposure"],
+            "timing": outcome["timing"],
+            "move": outcome["move"],
+            "menu": outcome["menu"],
+            "proposals": outcome["proposals"],
+            "tripwire": outcome["tripwire"],
+            "reasoning": outcome["reasoning"],
+        })
+
+    tally = {s: sum(1 for i in items if i["state"] == s)
+             for s in ("act_now", "tripwire_armed", "stand_down")}
+    exposed = [i for i in items if i["state"] != "stand_down"]
+
+    if scenario_id == "redsea":
+        portfolio = ("All three forward movements route through the same closed "
+                     "corridor inside one fortnight - concentration no per-booking "
+                     "view can see. The split on BKG-3102 is the hedge: the book "
+                     "does not bet everything on one reopening date.")
+    elif exposed:
+        portfolio = (f"{len(exposed)} of {len(items)} forward movements exposed - "
+                     f"no concentration across the book this sweep. A sweep that "
+                     f"finds one is allowed to say one.")
+    else:
+        portfolio = ("The forward book has no exposure to this event. A sweep that "
+                     "finds nothing says so, and queues nothing.")
+
+    return {
+        "headline": (f"{len(items)} forward bookings swept · {tally['act_now']} act "
+                     f"now · {tally['tripwire_armed']} tripwire armed · "
+                     f"{tally['stand_down']} standing down"),
+        "cadence": ("Swept daily and after any lane event · this sweep: "
+                    + ((scenario or {}).get("name") or "no lane event active")),
+        "items": items,
+        "portfolio": portfolio,
+        "baton": _PLANNER_BATON,
+        "note": ("An authored pre-departure scenario - the forward book and the "
+                 "sweep are scripted, like every Worker tagged this way. The route "
+                 "arithmetic is computed from the live catalogue. Nothing is "
+                 "booked, quoted or sent: every proposal is drafted or queued and "
+                 "waits for a person."),
+    }
+
+
 def tms_panel(shipment, decision, scenario_id, card=None):
     """One booking's view of the system of record.
 
@@ -597,6 +993,10 @@ def build(shipment, decision, scenario_id, board, scenario) -> dict:
         wid = worker["id"]
         if wid == "assistant":
             out[wid] = assistant_panel(shipment, decision, scenario_id, board, scenario)
+        elif wid == "planner":
+            # Board-level, not per-shipment: the Planner reads the forward book,
+            # so its sweep is the same whichever in-transit card is selected.
+            out[wid] = planner_panel(scenario_id, scenario)
         elif wid == "tms" and shipment:
             # The link needs the whole card, not just the decision: the drafted
             # emails are filed against the booking too, and they live there.

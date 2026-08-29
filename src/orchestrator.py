@@ -284,11 +284,16 @@ def run_cycle(*, live=True, inject=True, use_llm=True, verbose=False,
         "workers": [workers[w["id"]] for w in WORKERS] + [
             # The link is the one roster entry that reports the run rather than a
             # script: those counts are the bookings it read and the changes this
-            # cycle queued back against them.
+            # cycle queued back against them. The Planner's summary is the
+            # headline of its authored sweep - the tag still says scripted, and
+            # the counts are of the scripted content, not of live work.
             dict(w, status="ready", detail=[], seconds=None,
                  summary=(f"{link['bookings_read']} bookings in · "
                           f"{link['queued']} changes queued back"
                           if w["id"] == "tms" else
+                          ("authored sweep · " +
+                           cards[0]["roster"]["planner"]["headline"])
+                          if w["id"] == "planner" and cards else
                           "scripted — replays authored data"))
             for w in roster.ROSTER],
         "scenario": active_scenario,

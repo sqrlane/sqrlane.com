@@ -2,8 +2,11 @@
 
 *Direction set by the owner, 2026-08-28, out of the lab-notes discussion. This
 note captures the thesis and the design reasoning while both are fresh. It is
-a roadmap document: nothing in it exists yet, and nothing in it may be
-presented as existing.*
+a roadmap document. As of 2026-08-29, **rung two of the proof ladder is
+built**: the Planner is on the board as a scripted Worker (`src/roster.py`,
+guarded by `tests/test_the_planner_sweeps_before_departure.py`). Everything
+else here — the practice-world scoring, the live sweep, forecasts, market
+alternatives — still does not exist and may not be presented as existing.*
 
 ---
 
@@ -168,12 +171,17 @@ machinery at an earlier point in time.
    Planner policies against the answer key exactly as the in-transit
    policies were scored — same split hygiene, same anti-circularity guards,
    numbers stay in `ml/reports/`.
-2. **Scripted Worker second.** A `Planner` pill on the board, `SCR`-tagged
-   like its peers: an authored pre-departure scenario (the owner's example:
-   *departure in four days, a wildfire on the land leg with a high chance
-   of closure*) showing the sweep, the priced menu, the hedge, and the
-   cascade it initiates — honest about being authored, exactly like Inbox
-   and Customs today.
+2. **Scripted Worker second. ✅ Built 2026-08-29.** A `Planner` pill on the
+   board, scripted-tagged like its peers: an authored forward book of three
+   records (a quotation, a booking at departure minus 14, a booking inside
+   the final 72 hours) swept under each scenario into act-now / tripwire /
+   stand-down, with the priced menu, the split hedge under the Red Sea
+   closure, gauge and duration tripwires, and every proposal gated. The
+   owner's wildfire example stays available as the `france` scenario's quiet
+   sweep — under it the forward book honestly has no exposure, which is
+   itself the demonstration that the sweep does not cry wolf. Rung order
+   deliberately differs from this ladder: the showable Worker came first,
+   the practice-world scoring of Planner *policies* is still open.
 3. **Live third,** behind the integration wall, where the rate and schedule
    data lives.
 
