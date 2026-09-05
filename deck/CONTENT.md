@@ -215,7 +215,7 @@ the other is either hand-waving or a wall of text.
 
 *Layout* — Three equal boxes, each with a one-word head, one line, one proof chip.
 
-1. **Public** — The signals went free and keyless. `42 sources · 0 API keys · 0 cost`
+1. **Public** — The signals went free and keyless. `60 sources · 0 API keys · 0 cost`
 2. **Cheap** — Inference fell far enough to read all of them, every run. `~14 model calls per cycle`
 3. **Accountable** — A decision can now carry its own reasoning and a human gate. `every action queued, nothing sent`
 
@@ -244,7 +244,7 @@ entry is the entire product thesis and must be visually unmistakable.
    │ MONITOR  │   │ ADVISOR  │   │  AGENT   │   │   GATE    │
    │  LIVE    │   │  LIVE    │   │  LIVE    │   │  human    │
    └──────────┘   └──────────┘   └──────────┘   └───────────┘
-   42 sources     reroute/hold   carrier +      nothing sent
+   60 sources     reroute/hold   carrier +      nothing sent
    6 families     + reasoning    customer       nothing written
 ```
 
@@ -258,15 +258,15 @@ and that a human sits in it. Both are geometry, so draw them.
 ## S11 · The signal layer
 **A lane is not moved by news alone.**
 
-*Layout* — Six family columns, source counts as small stacked ticks so 42 is countable
+*Layout* — Six family columns, source counts as small stacked ticks so 60 is countable
 rather than asserted. Beneath, the classification split as a fork.
 
 | Family | n | Reads |
 |---|---|---|
-| News | 31 | wires, regional broadcasters, trade press |
-| River gauges | 3 | Rhine — Kaub, Duisburg, Emmerich |
-| Weather & sea state | 3 | port gusts, wave height |
-| Natural hazards | 2 | seismic, wildfire, storm |
+| News | 41 | wires, regional broadcasters, trade press |
+| Rivers | 7 | Rhine gauges (Kaub, Duisburg, Emmerich, Köln, Mainz, Maxau) + modelled flow |
+| Weather & sea state | 4 | port gusts, wave height, official warnings |
+| Natural hazards | 5 | seismic (×2), wildfire/hazard, storm, disaster alerts |
 | Government | 2 | tariff, sanctions, customs filings |
 | Reference rates | 1 | what a reroute is billed at |
 
@@ -274,9 +274,9 @@ The fork, set large:
 **Prose → the model.**  **Numbers → a threshold.**
 `a gust, a wave, a magnitude, a water level — costs nothing, cannot hallucinate`
 
-Footer: *Not one of the 42 is load-bearing. Any source can be down and the run still
+Footer: *Not one of the 60 is load-bearing. Any source can be down and the run still
 completes.*
-*Why* — "42 sources" is a claim; six families with counts and a classification rule is
+*Why* — "60 sources" is a claim; six families with counts and a classification rule is
 an architecture. And the fork pre-empts the obvious objection — that this is an LLM
 guessing at severity.
 
@@ -292,7 +292,7 @@ a message.
 | | Tag | Job | Produces |
 |---|---|---|---|
 | **TMS link** | `DEMO` | The only door to the book | bookings in · changes out |
-| **Risk Monitor** | `LIVE` | Reads 42 sources, classifies what moves a lane | an exception on the booking |
+| **Risk Monitor** | `LIVE` | Reads 60 sources, classifies what moves a lane | an exception on the booking |
 | **Route Advisor** | `LIVE` | Weighs slack vs added transit vs delay | discharge port · routing code · ETA |
 | **Comms Agent** | `LIVE` | Writes what a person would have written | two drafts on the communication log |
 
@@ -366,7 +366,7 @@ question every investor asks about agents. Same slide, both jobs.
 
 | **REAL** | **MODELLED** | **SYNTHETIC** |
 |---|---|---|
-| 42 live sources, read on every run | The TMS connector — both directions, one door, derived write-backs | The seven bookings |
+| 60 live sources, read on every run | The TMS connector — both directions, one door, derived write-backs | The seven bookings |
 | The model makes every decision | | The injected disruption |
 | The reasoning is recorded, per booking | *no vendor · no credential · no endpoint* | *so a disruption can be shown on demand* |
 
@@ -422,15 +422,19 @@ Suggested three, drawn from S15's own gap:
 | `slide-01-introduction.svg` | Introduction | A forwarder's product is a date; four things take it |
 | `slide-02-the-what.svg` | The What | Two problems: the work is manual, nothing watches the route |
 | `slide-03-the-why.svg` | The Why | EUR 4bn of desk work, and a seam neither category crosses |
-| `slide-04-the-how-1.svg` | The How 1/2 | Answers problem one: the desk work does itself |
-| `slide-05-the-how-2.svg` | The How 2/2 | Answers problem two: know early, while options exist |
+| `slide-04-the-job-1.svg` | The Job 1/2 | An ordinary file: forty-five days, seven parties, EUR 127 left over |
+| `slide-05-the-job-2.svg` | The Job 2/2 | "Ordinary" is already unreliable: 47 of 100 sailings arrive late, and who pays |
+| `slide-06-the-how-1.svg` | The How 1/2 | Answers problem one: the desk work does itself |
+| `slide-07-the-how-2.svg` | The How 2/2 | Answers problem two: know early, while options exist |
 | `slide-a1-lab-notes.svg` | Appendix · Lab notes 1/3 | Nobody could grade the calls; a practice world with an answer key fixes that |
 | `slide-a2-lab-notes.svg` | Appendix · Lab notes 2/3 | TabPFN wins the exam, status quo vs. after; its lesson ships, not the model |
 | `slide-a3-lab-notes.svg` | Appendix · Lab notes 3/3 | The first full live read: 47 of 60 answered, five faults found, four fixed |
 
-Each How slide answers one of slide 02's two problems by name. That pairing is
-the spine of the deck; if a How slide stops answering its problem, it has
-drifted.
+The Job slides sit between The Why and The How: they establish the cost of an
+ordinary file and an ordinary lane before the next two slides show what
+SQRlane changes about each. Each How slide answers one of slide 02's two
+problems by name. That pairing is the spine of the deck; if a How slide stops
+answering its problem, it has drifted.
 
 The three appendix slides retell `LAB-NOTES-2026-08-28.md` for a mixed room,
 one idea per slide. Every figure on them is counted from our own runs, the
