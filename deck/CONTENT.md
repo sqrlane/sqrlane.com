@@ -52,6 +52,27 @@ whatever palette and type the reference deck sets.
 7 bookings · 4 scenarios · 8-day simulation · 10 test suites · ~14 model calls per cycle ·
 0 emails sent · 0 records written.
 
+### Competitor figures (slide 03 only)
+
+| Figure | Value | Date | Source |
+|---|---|---|---|
+| Interos valuation | $1bn | 2024 | Interos press coverage |
+| Augment Series A | $85M | Sept 2025 | BusinessWire, PYMNTS, FreightWaves |
+| Nexcade pre-seed + seed | $8.5M ($2.5M + $6M) | Oct 2025 / Jul 2026 | tech.eu, The Loadstar, nexcade.ai |
+| 5U AI pre-seed | $3.2M | Jul 2026 | Air Cargo News, TechFundingNews |
+| Execution AI, last 12 months | **$96.7M** (Augment + Nexcade + 5U AI) | — | derived, see slide 03 source line |
+| Zauber's own round | real (Sept 2025), size not reliably reported | Sept 2025 | Dealroom, Seedtable (conflicting) — **not** folded into the $96.7M |
+
+This replaced a stale **$34M** that predated Augment's own $85M Series A —
+found while adding Zauber to the vendor list and reconciling the aggregate
+it sits beside. Checked 2026-09: none of `README.md`, `static/whitepaper.html`,
+`static/landing.html` or `static/index.html` name any of these companies
+alongside a figure — the competitive-landscape numbers are confined to this
+slide, so there was nothing stale to fix on those four surfaces. (The TMS
+partner names on the landing page and dashboard — CargoWise, Riege Scope,
+Descartes, Transporeon, TIMOCOM, AEB, DAKOSY, Portbase — are integration
+targets, not funded competitors, and carry no figures to drift.)
+
 ---
 
 # SECTION 1 — THE WHAT
