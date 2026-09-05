@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>About &mdash; SQRlane</title>
+<meta name="description" content="What is real in this build and what is not: the live source pull, decisions and drafts; the synthetic bookings and authored disruptions; and a TMS connector that is modelled rather than wired.">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3.5' fill='%23171717'/%3E%3Cpath d='M3 11.2h10M3 8h6.5M3 4.8h3.5' stroke='%23fff' stroke-width='1.7' stroke-linecap='round'/%3E%3C/svg%3E">
+
+<style>
+/* ==================================================================
+   SQRlane - about, and what is real here.
+
+   Same tokens, same self-hosted Geist and same nav as every other
+   SQRlane page - nothing here is fetched from another host, so bad
+   wifi cannot blank it. Light theme only: colour is spent on state,
+   never on decoration.
+   ================================================================== */
+
+@font-face{
+  font-family:"Geist";
+  src:url("/fonts/Geist-Variable.woff2") format("woff2-variations"),
+      url("/fonts/Geist-Variable.woff2") format("woff2");
+  font-weight:100 900; font-style:normal; font-display:swap;
+}
+@font-face{
+  font-family:"Geist Mono";
+  src:url("/fonts/GeistMono-Variable.woff2") format("woff2-variations"),
+      url("/fonts/GeistMono-Variable.woff2") format("woff2");
+  font-weight:100 900; font-style:normal; font-display:swap;
+}
+
+:root{
+  /* surfaces */
+  --bg:#fafafa;            /* background-200 */
+  --card:#ffffff;          /* background-100 */
+  --card-muted:#fafafa;
+
+  /* text */
+  --fg:#171717;            /* gray-1000 */
+  --muted:#4d4d4d;         /* gray-900 */
+  --faint:#8f8f8f;         /* gray-700 */
+
+  /* borders */
+  --border:#00000014;      /* gray-alpha-400 */
+  --border-strong:#00000024;
+
+  /* geist gray */
+  --gray-100:#f2f2f2; --gray-200:#ebebeb; --gray-300:#e6e6e6;
+  --gray-400:#dbdbdb; --gray-500:#c9c9c9; --gray-600:#a8a8a8;
+
+  /* accents - constant Geist scales */
+  --blue:#006bff;   --blue-100:#f0f7ff; --blue-400:#cae7ff;
+  --green:#107d32;  --green-100:#ecfdec; --green-400:#b9f5bc;
+  --amber:#aa4d00;  --amber-100:#fff6de; --amber-400:#ffdc73;
+  --red:#ea001d;    --red-100:#ffeeef;  --red-400:#ffd7d6;
+  /* One step darker than --red, same hue, and it exists for one reason:
+     --red on --red-100 measures 4.15:1, under the 4.5:1 a badge label
+     needs. This clears it at 4.84:1. Marks keep --red; only text moves. */
+  --red-ink:#d60019;
+
+  --r-sm:6px; --r-md:12px; --r-lg:16px;
+
+  --shadow-card:0 2px 2px rgba(0,0,0,.04);
+  /* One card shadow, and one lift for the single window mock in the hero.
+     A third step existed only so some cards could shout at the others. */
+  --shadow-lift:0 1px 1px rgba(0,0,0,.02),0 8px 16px -4px rgba(0,0,0,.04),
+                0 24px 32px -8px rgba(0,0,0,.06);
+  /* A ring and a halo, for the one card in a set that is the answer. The ring
+     is a 1px box-shadow rather than a border - the same thing Tailwind's ring-*
+     does, and bklit-ui is a shadcn registry - so the edge stays crisp while the
+     halo does the lifting. Zero-offset blur so the light sits *around* the card
+     instead of only under it; the last step grounds it. */
+  --shadow-ring:0 0 0 1px var(--border-strong),
+                0 0 26px rgba(0,0,0,.08),
+                0 12px 26px -10px rgba(0,0,0,.2);
+  --shadow-ring-hover:0 0 0 1px var(--border-strong),
+                0 0 30px rgba(0,0,0,.1),
+                0 16px 32px -12px rgba(0,0,0,.24);
+
+  --ease:cubic-bezier(.175,.885,.32,1.1);
+  --gutter:24px;
+  --maxw:1120px;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%; scroll-behavior:smooth; scroll-padding-top:88px}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font-family:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:16px; line-height:24px;
+  font-feature-settings:"rlig" 1,"calt" 1;
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+}
+::selection{background:color-mix(in srgb,var(--blue) 20%,transparent)}
+a{color:inherit; text-decoration:none}
+h1,h2,h3,h4,p{margin:0}
+.mono{font-family:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+      font-feature-settings:normal}
+.tabular{font-variant-numeric:tabular-nums}
+
+/* ---------- Geist type scale, extended upward for display sizes ---------- */
+.d1{font-size:64px; line-height:68px; letter-spacing:-3.2px; font-weight:600}
+.d2{font-size:44px; line-height:50px; letter-spacing:-2px;   font-weight:600}
+.h32{font-size:32px; line-height:40px; letter-spacing:-1.28px; font-weight:600}
+.h24{font-size:24px; line-height:32px; letter-spacing:-.96px;  font-weight:600}
+.h20{font-size:20px; line-height:28px; letter-spacing:-.4px;   font-weight:600}
+.h16{font-size:16px; line-height:24px; letter-spacing:-.32px;  font-weight:600}
+.h14{font-size:14px; line-height:20px; letter-spacing:-.28px;  font-weight:600}
+.copy18{font-size:18px; line-height:28px; letter-spacing:-.2px; color:var(--muted)}
+.copy16{font-size:16px; line-height:24px; color:var(--muted)}
+.copy14{font-size:14px; line-height:20px; color:var(--muted)}
+.copy13{font-size:13px; line-height:18px; color:var(--muted)}
+.lab12{font-size:12px; line-height:16px; font-weight:500}
+.eyebrow{font-size:11px; line-height:16px; font-weight:500; letter-spacing:.08em;
+         text-transform:uppercase; color:var(--faint)}
+
+/* ---------- layout ---------- */
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 var(--gutter)}
+.section{padding:72px 0; border-top:1px solid var(--border)}
+.section.flush{border-top:0}
+.head{max-width:660px}
+.head .eyebrow{margin-bottom:14px}
+.head p{margin-top:16px}
+
+/* ---------- primitives ---------- */
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:8px;
+     height:40px; padding:0 16px; border-radius:var(--r-sm); border:1px solid transparent;
+     font-size:14px; line-height:20px; font-weight:500; cursor:pointer;
+     transition:background .15s var(--ease), border-color .15s var(--ease),
+                transform .15s var(--ease), box-shadow .15s var(--ease);
+     white-space:nowrap; font-family:inherit}
+.btn-primary{background:var(--fg); color:#fff}
+.btn-primary:hover{background:#383838; transform:translateY(-1px);
+                   box-shadow:0 4px 10px -4px rgba(0,0,0,.25)}
+.btn-secondary{background:var(--card); color:var(--fg); border-color:var(--border-strong)}
+.btn-secondary:hover{background:var(--gray-100); transform:translateY(-1px)}
+.btn-lg{height:44px; padding:0 20px; font-size:15px}
+.btn svg{flex:none}
+
+.pill{display:inline-flex; align-items:center; gap:8px; height:28px; padding:0 12px;
+      border-radius:999px; background:var(--card); border:1px solid var(--border-strong);
+      font-size:12px; line-height:16px; font-weight:500; color:var(--muted);
+      box-shadow:var(--shadow-card)}
+.pill .dot{width:6px; height:6px; border-radius:50%; background:var(--green);
+           box-shadow:0 0 0 3px var(--green-100); flex:none}
+
+.chip{display:inline-flex; align-items:center; gap:5px; padding:2px 7px; border-radius:4px;
+      font-size:10px; line-height:16px; font-weight:600; letter-spacing:.05em;
+      text-transform:uppercase; background:var(--gray-100); color:var(--muted)}
+.chip.live{background:var(--green-100); color:var(--green)}
+.chip.synth{background:var(--amber-100); color:var(--amber)}
+.chip.blue{background:var(--blue-100); color:var(--blue)}
+.chip.red{background:var(--red-100); color:var(--red-ink)}
+.chip.plain{background:transparent; border:1px solid var(--border-strong); color:var(--faint)}
+
+.card{background:var(--card); border:1px solid var(--border); border-radius:var(--r-md);
+      box-shadow:var(--shadow-card)}
+.grid{display:grid; gap:16px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+
+/* ---------- top banner ---------- */
+.banner{background:var(--fg); color:#fff; font-size:13px; line-height:18px;
+        padding:9px 0; text-align:center}
+.banner .wrap{display:flex; align-items:center; justify-content:center; gap:10px;
+              flex-wrap:wrap}
+.banner b{font-weight:600}
+.banner span{color:#a8a8a8}
+
+/* ---------- nav ---------- */
+.nav{position:sticky; top:0; z-index:50; background:rgba(250,250,250,.82);
+     backdrop-filter:saturate(180%) blur(12px);
+     -webkit-backdrop-filter:saturate(180%) blur(12px);
+     border-bottom:1px solid var(--border)}
+.nav .wrap{height:64px; display:flex; align-items:center; gap:32px}
+.brand{display:flex; align-items:center; gap:10px}
+.mark{width:28px; height:28px; border-radius:var(--r-sm); background:var(--fg);
+      display:flex; align-items:center; justify-content:center; flex:none}
+.brand .name{font-size:16px; font-weight:600; letter-spacing:-.32px}
+.nav-links{display:flex; align-items:center; gap:4px; margin-left:8px}
+.nav-links a{padding:6px 10px; border-radius:var(--r-sm); font-size:14px; line-height:20px;
+             white-space:nowrap;
+             color:var(--muted); transition:background .15s var(--ease), color .15s var(--ease)}
+.nav-links a:hover{background:var(--gray-100); color:var(--fg)}
+.nav .right{margin-left:auto; display:flex; align-items:center; gap:10px}
+.nav .ghost{font-size:14px; color:var(--muted); padding:6px 10px; border-radius:var(--r-sm);
+            white-space:nowrap}
+.nav .ghost:hover{background:var(--gray-100); color:var(--fg)}
+
+
+/* ---------- page head (every page but home) ---------- */
+.phead{padding:64px 0 0}
+.phead .in{max-width:720px}
+.phead h1{margin-top:16px}
+.phead .copy18{margin-top:18px; max-width:60ch}
+.phead .goal{margin-top:22px; display:inline-flex; align-items:center; gap:9px;
+             padding:7px 13px 7px 11px; border-radius:999px; background:var(--card);
+             border:1px solid var(--border-strong); box-shadow:var(--shadow-card);
+             font-size:13px; line-height:18px; color:var(--muted)}
+.phead .goal b{font-weight:500; color:var(--fg)}
+
+/* ---------- closing bar ---------- */
+/* One ask, at the foot of every page that is not the home page. It is a bar
+   rather than a section so it cannot be mistaken for this page's content. */
+.closer{border-top:1px solid var(--border); background:var(--card); padding:44px 0}
+.closer .wrap{display:flex; align-items:center; gap:20px; flex-wrap:wrap}
+.closer .t{font-size:20px; line-height:28px; letter-spacing:-.4px; font-weight:600}
+.closer .s{font-size:14px; line-height:20px; color:var(--muted)}
+.closer .cta{margin-left:auto; display:flex; gap:10px; flex-wrap:wrap}
+@media (max-width:640px){
+  .closer .cta{margin-left:0; width:100%}
+  .closer .cta .btn{width:100%}
+}
+
+/* ---------- active nav item ---------- */
+.nav-links a.on{background:var(--gray-100); color:var(--fg)}
+
+
+/* ---------- the ledger ---------- */
+/* The page's one picture: three columns, and everything in the build sits in
+   exactly one of them. A disclaimer at the foot of a page is read by nobody;
+   a column heading is read by everyone. */
+.ledger{margin-top:36px; display:grid; gap:16px; grid-template-columns:repeat(3,1fr)}
+.led{padding:22px; border:1px solid var(--border); border-radius:var(--r-md);
+     background:var(--card); box-shadow:var(--shadow-card)}
+.led .h{display:flex; align-items:center; gap:9px}
+.led .h .t{font-size:15px; font-weight:600; letter-spacing:-.3px}
+.led ul{margin:16px 0 0; padding:0; list-style:none; display:flex; flex-direction:column;
+        gap:10px}
+.led li{position:relative; padding-left:18px; font-size:13.5px; line-height:20px;
+        color:var(--muted)}
+.led li::before{content:""; position:absolute; left:0; top:8px; width:6px; height:6px;
+                border-radius:50%; background:var(--gray-500)}
+.led.is-live{border-top:3px solid var(--green)}
+.led.is-live li::before{background:var(--green)}
+.led.is-synth{border-top:3px solid var(--amber)}
+.led.is-synth li::before{background:var(--amber)}
+.led.is-demo{border-top:3px solid var(--gray-600)}
+@media (max-width:900px){.ledger{grid-template-columns:1fr}}
+
+/* ---------- who it is for ---------- */
+.who-for{margin-top:34px; display:grid; gap:16px; grid-template-columns:1.15fr 1fr}
+.who-for .card{padding:24px}
+.who-for .k{font-size:11px; font-weight:500; letter-spacing:.07em; text-transform:uppercase;
+            color:var(--faint)}
+.who-for .v{margin-top:12px; font-size:20px; line-height:28px; letter-spacing:-.4px;
+            font-weight:600}
+.who-for p{margin-top:12px; font-size:13.5px; line-height:20px; color:var(--muted)}
+@media (max-width:820px){.who-for{grid-template-columns:1fr}}
+
+/* ---------- non-goals ---------- */
+.nots{margin-top:36px}
+.not{display:flex; gap:12px; padding:16px 18px; border:1px solid var(--border);
+     border-radius:var(--r-md); background:var(--card-muted)}
+.not svg{flex:none; margin-top:2px; color:var(--gray-600)}
+.not .k{font-size:14px; font-weight:500; letter-spacing:-.2px}
+.not .v{font-size:13px; line-height:19px; color:var(--muted); margin-top:3px}
+
+/* ---------- honest band ----------
+   The same card rule as everything else on the page - hairline border, 12px
+   radius, --shadow-card - which is bklit-ui's anatomy, it being a shadcn
+   registry. This panel used to carry a 3px black rule down its left edge, a
+   lifted shadow, the heavier border and the 16px radius: four kinds of
+   emphasis at once, on the quietest claim on the page. */
+.honest .panel{margin-top:28px; padding:32px; border-radius:var(--r-md); border:1px solid var(--border);
+               background:var(--card); box-shadow:var(--shadow-card)}
+.honest blockquote{margin:16px 0 0; max-width:52ch}
+/* Each chip stays welded to the words it labels - as a flat run they wrapped
+   apart, leaving "Synthetic" on one line and what it applies to on the next. */
+.honest .who{margin-top:20px; display:flex; gap:8px 24px; flex-wrap:wrap}
+.honest .who > span{display:inline-flex; align-items:center; gap:8px}
+.honest .panel > p{margin-top:18px; max-width:66ch}
+
+/* ---------- footer ---------- */
+.foot{border-top:1px solid var(--border); background:var(--card); padding:52px 0 34px}
+.foot .cols{display:grid; grid-template-columns:1.3fr 1fr 1fr 1fr 1.2fr; gap:32px}
+.foot ul.placeholder span{font-size:13.5px; color:var(--faint)}
+.foot .ph-note{margin-top:12px; font-size:11.5px; line-height:16px; color:var(--gray-600)}
+.foot .about{max-width:34ch}
+.foot .about p{margin-top:14px; font-size:13px; line-height:19px; color:var(--faint)}
+.foot h4{font-size:12px; font-weight:500; letter-spacing:.06em; text-transform:uppercase;
+         color:var(--faint); margin-bottom:14px}
+.foot ul{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:9px}
+.foot ul a{font-size:13.5px; color:var(--muted)}
+.foot ul a:hover{color:var(--fg)}
+.foot .bar{margin-top:44px; padding-top:20px; border-top:1px solid var(--border);
+           display:flex; gap:14px; align-items:center; flex-wrap:wrap;
+           font-size:12.5px; color:var(--faint)}
+.foot .bar .sp{margin-left:auto}
+
+/* ---------- responsive ---------- */
+@media (min-width:720px){
+  .row .meta{display:block}
+  .board-side{display:block}
+}
+/* The nav, in two steps rather than one cliff.
+
+   At full size the bar needs about 1100px: a 119px brand, seven links at
+   612px, and 257px of actions. The old rule kept every one of them until
+   860px and then dropped the links all at once, so the page scrolled
+   sideways across the whole band between - and every link added since made
+   that band wider.
+
+   So: tighten first - close the gaps and drop the ghost link, which the
+   footer carries anyway - and only hide the links once tightening is not
+   enough. Anything added to this nav shifts both numbers; the fix is to
+   re-measure, not to nudge them.
+
+   Re-measured after the TMS link was added: tightened, the bar holds one row
+   down to 928px and overflows at 926, so the links are hidden below 940. The
+   `nowrap` above is part of that measurement and not decoration - without it
+   flex does not overflow, it wraps "How it works" onto two lines inside its
+   own pill, which is worse than a scrollbar and invisible to a width probe
+   looking only at scrollWidth. */
+@media (max-width:1180px){
+  .nav .wrap{gap:18px}
+  .nav-links{gap:0; margin-left:0}
+  .nav-links a{padding:6px 8px}
+  .nav .ghost{display:none}
+}
+@media (max-width:940px){
+  .nav-links{display:none}
+}
+
+@media (max-width:1000px){
+  .d1{font-size:52px; line-height:56px; letter-spacing:-2.4px}
+  .feature{grid-template-columns:1fr; gap:32px}
+  .feature.flip .fig{order:0}
+  .foot .cols{grid-template-columns:1fr 1fr}
+  .foot .about{grid-column:1/-1}
+}
+@media (max-width:860px){
+  .g3,.g4{grid-template-columns:1fr 1fr}
+  .mini-stats{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:640px){
+  :root{--gutter:18px}
+  /* The honest note is the first thing on the page and must stay readable,
+     but four lines of black bar is too much weight above the fold. */
+  .banner{font-size:12px; line-height:17px; padding:8px 0; text-align:left}
+  .banner .wrap{gap:4px; justify-content:flex-start}
+  .section{padding:64px 0}
+  .hero{padding-top:60px}
+  .d1{font-size:38px; line-height:42px; letter-spacing:-1.6px}
+  .d2{font-size:30px; line-height:36px; letter-spacing:-1.2px}
+  .h32{font-size:26px; line-height:32px; letter-spacing:-1px}
+  .copy18{font-size:16px; line-height:25px}
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  /* One per row: nothing to align against, so the reserved slot is only padding. */
+  .wv-card .src{min-height:0}
+  /* Two 38px figures side by side do not fit a phone. Stacked, the border
+     between them has to move from the left edge to the top or the tinted
+     panel loses its boundary. */
+  .dec-cols{grid-template-columns:1fr}
+  .dec-col + .dec-col{border-left:0; border-top:1px solid var(--border)}
+  .dec-col .big{font-size:32px; line-height:36px; letter-spacing:-1.4px}
+  /* The header wraps to two lines here, and a chip pushed to the right edge of
+     a line of its own reads as detached from the lane it qualifies. */
+  .dec-h .r{margin-left:0}
+  /* Three gauges across a phone is three different baselines the moment one
+     name wraps to a second line. Full width each, and they line up again. */
+  .gauges .g-row{grid-template-columns:1fr; gap:22px}
+  .step{grid-template-columns:1fr; gap:10px}
+  .feature .claims li{grid-template-columns:1fr; gap:3px}
+  .feature .claims .k{line-height:18px}
+  .tbl .tr{grid-template-columns:1fr; gap:6px}
+  .tbl .th{display:none}
+  .honest .panel{padding:24px}
+  /* Stacked, a flat run leaves the two descriptions starting at different x
+     because "SYNTHETIC" is the wider chip. A two-column grid lines them up;
+     display:contents hands each pair's chip and words straight to the grid. */
+  .honest .who{display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:center}
+  .honest .who > span{display:contents}
+  /* ...but a grid item stretches, which blew "LIVE" out to the width of the
+     "SYNTHETIC" column. The chips size to their own text; the column still
+     lines the words up. */
+  .honest .who .chip{justify-self:start}
+  .shot{margin-top:38px}
+  .btn{width:100%}
+  .hero .cta,.final .cta{flex-direction:column}
+}
+
+</style>
+</head>
+<body>
+
+<!-- The honest framing goes at the very top, not in the small print. -->
+<div class="banner">
+  <div class="wrap">
+    <b>The risk detection is real</b>
+    <span>— it runs on live news. The shipments are synthetic, so a disruption
+    can be shown on demand.</span>
+  </div>
+</div>
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="/">
+      <span class="mark"><svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+        <path d="M3.2 14h13.6M3.2 10h8.6M3.2 6h4.6" stroke="#fff" stroke-width="2.1"
+              stroke-linecap="round"/></svg></span>
+      <span class="name">SQRlane</span>
+    </a>
+    <nav class="nav-links">
+      <a href="/product">Product</a>
+      <a href="/how-it-works">How it works</a>
+      <a href="/use-cases">Use cases</a>
+      <a href="/about" class="on">About</a>
+      <a href="/whitepaper">Whitepaper</a>
+    </nav>
+    <div class="right">
+      <a class="ghost" href="/app">Open the demo</a>
+      <a class="btn btn-primary" href="/#contact">Book a demo
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h13M12 5l7 7-7 7"/></svg></a>
+    </div>
+  </div>
+</header>
+
+<section class="phead">
+  <div class="wrap">
+    <div class="in rv">
+      <span class="eyebrow">About</span>
+      <h1 class="d2">Real where it earns credibility. Scripted where it has to be.</h1>
+      <p class="copy18">This is a working prototype, not a live product, and the difference is on screen rather than in the small print. Here is exactly which half is which.</p>
+      <!-- Each page states its own job. Five pages that all try to sell the
+           whole product are five pages nobody finishes. -->
+      <p class="goal"><span class="chip blue">This page</span> <b>what is real here, and what is not</b></p>
+    </div>
+  </div>
+</section>
+
+<section class="section honest" id="real">
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">The ledger</span>
+      <h2 class="h32">Everything in the build sits in one of three columns.</h2>
+    </div>
+
+    <div class="ledger rv">
+      <div class="led is-live">
+        <div class="h"><span class="chip live">Live</span><span class="t">Genuinely run</span></div>
+        <ul>
+          <li>The pull across sixty free, keyless sources</li>
+          <li>Classification &mdash; chokepoint, disruption type, severity</li>
+          <li>Every routing decision, and the reasoning under it</li>
+          <li>Both drafted emails, written per booking</li>
+          <li>The Rhine gauges on the how-it-works page</li>
+        </ul>
+      </div>
+      <div class="led is-synth">
+        <div class="h"><span class="chip synth">Synthetic</span><span class="t">Authored</span></div>
+        <ul>
+          <li>The seven bookings on the board</li>
+          <li>The four disruptions, so one can be shown on command</li>
+          <li>The candidate routes and their transit days</li>
+          <li>Ten of the fourteen Workers, each tagged on its own card</li>
+        </ul>
+      </div>
+      <div class="led is-demo">
+        <div class="h"><span class="chip">Demo connector</span><span class="t">Modelled, not wired</span></div>
+        <ul>
+          <li>The TMS the bookings are read from</li>
+          <li>Every change written back onto a booking</li>
+          <li>No vendor, no credential, no endpoint &mdash; a write-back is a
+              description of a change, and it stays one</li>
+        </ul>
+      </div>
+    </div>
+    <div class="panel rv">
+      <span class="eyebrow">What is real and what is not</span>
+      <blockquote class="h24">
+        “The risk detection is real — it runs against live news right now. The shipments are
+        synthetic, so I can show you a disruption on demand instead of waiting for one.”
+      </blockquote>
+      <div class="who">
+        <span><span class="chip live">Live</span>
+          <span class="copy14">news pull, classification, decisions, drafts</span></span>
+        <span><span class="chip synth">Synthetic</span>
+          <span class="copy14">the seven bookings and the injected Hamburg strike</span></span>
+        <span><span class="chip synth">Demo connector</span>
+          <span class="copy14">the TMS the bookings are read from and written back to</span></span>
+      </div>
+      <p class="copy14">
+        The injected strike uses the same event format as a live one, so it runs through the
+        real pipeline rather than around it. The TMS link is the same idea in reverse: one door
+        to the book, every decision written back onto the record it came from, but no TMS
+        contacted and nothing written. A demo, not a live product — the wall between the two is
+        integration and trust, and this connector stops at it.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="for">
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">Who it is for</span>
+      <h2 class="h32">The desk that is doing both halves by hand.</h2>
+    </div>
+    <div class="who-for rv">
+      <div class="card">
+        <p class="k">Modelled end user</p>
+        <p class="v">Head of Operations at a mid-size forwarder</p>
+        <p>DACH or Benelux, running the North Range corridors. Big enough that a Hamburg
+          strike touches several bookings at once; too small for the enterprise risk
+          platforms, which stop at the alert anyway.</p>
+      </div>
+      <div class="card">
+        <p class="k">The job it removes</p>
+        <p class="v">Re-keying the consequences, one booking at a time</p>
+        <p>Watching is narrower than the problem and reacting is slower than the problem.
+          The plank that eats the day is the second one: typing each decision into the
+          system of record by hand.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="not">
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">Scope</span>
+      <h2 class="h32">What it deliberately does not do.</h2>
+      <p class="copy18">Each of these is a decision, not a gap &mdash; and saying so is
+        cheaper than being found out.</p>
+    </div>
+    <div class="grid g2 nots rv">
+      <div class="not">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        <div><p class="k">No live TMS connection</p><p class="v">Working through the TMS is the design; the far end is not built. No vendor, no credential, no endpoint, and nothing is ever written.</p></div>
+      </div>
+      <div class="not">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        <div><p class="k">Nothing is sent</p><p class="v">No email library and no transport of any kind is imported anywhere in the app. A test parses every file and fails the build if one appears.</p></div>
+      </div>
+      <div class="not">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        <div><p class="k">No route optimisation</p><p class="v">Routes are pre-authored candidates. The agent chooses among them and justifies the choice; it does not compute them.</p></div>
+      </div>
+      <div class="not">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        <div><p class="k">No accuracy figures</p><p class="v">Nothing here has been measured against real freight, so no percentage is claimed anywhere on this site. An invented number is the one thing this project refuses to produce.</p></div>
+      </div>
+      <div class="not">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        <div><p class="k">No scheduler</p><p class="v">Button-triggered. For a demo, the magic has to happen on screen, on command &mdash; not in a background job nobody can see.</p></div>
+      </div>
+      <div class="not">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        <div><p class="k">No database</p><p class="v">JSON files and memory. There is nothing to install and nothing to migrate.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="closer">
+  <div class="wrap rv">
+    <div>
+      <p class="t">Seen enough to want a look at your own lanes?</p>
+      <p class="s">Half an hour, your corridors, your disruption.</p>
+    </div>
+    <div class="cta">
+      <a class="btn btn-primary btn-lg" href="/#contact">Book a demo
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h13M12 5l7 7-7 7"/></svg></a>
+      <a class="btn btn-secondary btn-lg" href="/whitepaper">Read the whitepaper</a>
+    </div>
+  </div>
+</section>
+
+<!-- ======================== FOOTER ======================== -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="cols">
+      <div class="about">
+        <a class="brand" href="/">
+          <span class="mark"><svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+        <path d="M3.2 14h13.6M3.2 10h8.6M3.2 6h4.6" stroke="#fff" stroke-width="2.1"
+              stroke-linecap="round"/></svg></span>
+          <span class="name">SQRlane</span>
+        </a>
+        <p>AI Agents for freight enterprises. A demo-grade prototype for freight forwarding — real
+          reasoning on synthetic shipments.</p>
+      </div>
+      <div>
+        <h4>Pages</h4>
+        <ul>
+          <li><a href="/product">Product</a></li>
+          <li><a href="/how-it-works">How it works</a></li>
+          <li><a href="/use-cases">Use cases</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Detail</h4>
+        <ul>
+          <li><a href="/how-it-works#sources">Data sources</a></li>
+          <li><a href="/about#real">What's real</a></li>
+          <li><a href="/whitepaper">Whitepaper</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Run it</h4>
+        <ul>
+          <li><a href="/app">Open the demo</a></li>
+          <li><a href="/api/health">Health check</a></li>
+          <li><a href="/api/initial">Initial board</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <!-- Placeholders. The address uses the reserved .example TLD so it
+             cannot be mistaken for a real inbox, and the two social entries
+             are plain text rather than dead links. -->
+        <ul class="placeholder">
+          <li><span>contact@sqrlane.example</span></li>
+          <li><span>LinkedIn</span></li>
+          <li><span>X</span></li>
+          <li><a href="/#contact">Book a demo</a></li>
+        </ul>
+        <p class="ph-note">Placeholders &mdash; nothing to write to yet.</p>
+      </div>
+    </div>
+    <div class="bar">
+      <span>Prototype. Drafts emails; sends nothing.</span>
+      <span class="sp">Set in Geist</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* Reveal on scroll. Everything is visible without JS - the class only ever
+   gets added, never removed, and .rv already renders if the observer never
+   runs (see the reduced-motion rule). */
+(function () {
+  var items = document.querySelectorAll(".rv");
+  if (!("IntersectionObserver" in window)) {
+    items.forEach(function (el) { el.classList.add("in"); });
+    return;
+  }
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+    });
+  }, { rootMargin: "0px 0px -8% 0px", threshold: 0.05 });
+  items.forEach(function (el) { io.observe(el); });
+})();
+</script>
+</body>
+</html>

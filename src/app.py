@@ -27,8 +27,17 @@ from src import config, llm, orchestrator, simulation
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 INDEX = STATIC_DIR / "index.html"        # the dashboard, served at /app
-LANDING = STATIC_DIR / "landing.html"    # the marketing page, served at /
+LANDING = STATIC_DIR / "landing.html"    # the front door, served at /
 PAPER = STATIC_DIR / "whitepaper.html"   # the technical whitepaper, served at /whitepaper
+
+# The four pages the front door hands off to. Each answers one question and
+# says which on itself, so none of them has to carry the whole pitch:
+#   product      - what you get
+#   how-it-works - how a decision is made
+#   use-cases    - when it fires, and what changes
+#   about        - what is real here, and what is not
+PAGES = {name: STATIC_DIR / f"{name}.html"
+         for name in ("product", "how-it-works", "use-cases", "about")}
 FONTS_DIR = STATIC_DIR / "fonts"         # Geist, self-hosted: no CDN, ever
 
 app = FastAPI(title="SQRlane",
@@ -61,6 +70,30 @@ def _page(path: Path, what: str):
 def landing():
     """The front door: what SQRlane is, and what is real about it."""
     return _page(LANDING, "Landing page")
+
+
+@app.get("/product")
+def product():
+    """What the desk gets: the roster, the write-back map, the approval gate."""
+    return _page(PAGES["product"], "Product page")
+
+
+@app.get("/how-it-works")
+def how_it_works():
+    """The mechanism: sixty sources in, one decision per booking out."""
+    return _page(PAGES["how-it-works"], "How it works page")
+
+
+@app.get("/use-cases")
+def use_cases():
+    """Four disruptions over one board, and the four different calls they force."""
+    return _page(PAGES["use-cases"], "Use cases page")
+
+
+@app.get("/about")
+def about():
+    """What is real here and what is not, and the desk it is modelled on."""
+    return _page(PAGES["about"], "About page")
 
 
 @app.get("/whitepaper")

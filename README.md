@@ -98,11 +98,20 @@ or go straight to **http://127.0.0.1:8000/app** and press **Inject Hamburg strik
 
 | Route | What |
 |---|---|
-| `/` | Landing page — what this is, and what is real about it |
+| `/` | Home — the gap, the loop in one picture, and four doors |
+| `/product` | The fourteen Workers, the write-back map, the approval gate |
+| `/how-it-works` | The mechanism: sixty sources in, one decision per booking out |
+| `/use-cases` | Four disruptions over one board, and the four calls they force |
+| `/about` | What is real here and what is not, and the desk it is modelled on |
+| `/whitepaper` | The technical paper |
 | `/app` | The dashboard. This is the demo, and the button lives here |
 | `/api/health` | What a running instance can actually see. First stop when a deploy misbehaves |
-| `/api/gauges` | Live Rhine water levels from PEGELONLINE. The landing page's one real number |
+| `/api/gauges` | Live Rhine water levels from PEGELONLINE. The one real number on /how-it-works |
 | `POST /run` | One cycle: refresh risk, decide, draft |
+
+Each page answers **one** question and says so on itself, in a chip under its
+headline. That is deliberate: five pages that all try to sell the whole product
+are five pages nobody finishes.
 
 For the AI key, pick one free provider and put it in `.env`:
 
@@ -171,7 +180,7 @@ oversight is the responsible design, not a missing feature.
 | **Signal layer** | `src/signals.py` | The structured half: port weather and sea state (Open-Meteo, Open-Meteo Marine), official weather warnings (DWD), river discharge (GloFAS via Open-Meteo Flood), seismic (USGS and EMSC), natural events and disaster alerts (NASA EONET, GDACS), trade filings (Federal Register), and the ECB's rates (Frankfurter) — with the US NWS, NOAA NHC and the Hong Kong Observatory read as context. Numbers are classified by threshold — no model call, and nothing to hallucinate. |
 | **Route Advisor** | `src/route_advisor.py` | Weighs schedule slack against added transit against expected disruption delay. Decides reroute / hold / no-action, and records the trail. |
 | **Comms Agent** | `src/comms_agent.py` | Drafts a carrier email and a customer email, in two deliberately different voices. Sends nothing. |
-| **Orchestrator** | `src/orchestrator.py` | The loop, plus `src/app.py` (FastAPI), `static/index.html` (the dashboard) and `static/landing.html` (the front page). |
+| **Orchestrator** | `src/orchestrator.py` | The loop, plus `src/app.py` (FastAPI), `static/index.html` (the dashboard) and the five marketing pages under `static/`. |
 
 Each Worker reports what it handled on every run — sources read, shipments triaged,
 drafts written, and how many came from the model rather than the deterministic
@@ -308,7 +317,7 @@ emits an event, and that a source which is down or has reshaped its response fai
 while the rest still read.
 
 `tests/test_the_pages_keep_their_promises.py` — **the pages say what they should and
-nothing they should not.** No language is named on the landing page or the dashboard (the
+nothing they should not.** No language is named on any marketing page or the dashboard (the
 edge is source proximity, and the whitepaper is the stated exception because it names
 where models come from); no period-over-period delta appears anywhere, because there is no
 history to compute one from; no reference product's Worker name appears, in copy or in a
@@ -335,7 +344,9 @@ src/      the components + llm.py (the only door to the AI provider) + config.py
           risk_monitor.py reads the prose, signals.py reads the instruments,
           httpget.py is the capped GET both of them share,
           tms.py is the only door to the book of bookings
-static/   landing.html - the front page  ·  index.html - the dashboard
+static/   landing.html - home  ·  product.html  ·  how-it-works.html
+          use-cases.html  ·  about.html  ·  whitepaper.html
+          index.html - the dashboard
           fonts/ - Geist Sans + Mono, self-hosted (no CDN, ever)
 tests/    the guards: nothing is ever sent, and every action goes through the TMS
 *.md      the planning docs; CLAUDE.md is the working summary
