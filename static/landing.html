@@ -744,28 +744,28 @@ h1,h2,h3,h4,p{margin:0}
   .ln + .ln::before{left:50%; top:-5px; margin:0 0 0 -5px; transform:rotate(135deg)}
 }
 
-/* ---------- the doors ---------- */
-/* Four pages, four questions. The home page answers none of them - it says
-   which page does, which is the only way five pages stay five pages instead of
-   five copies of the same pitch. */
-.doors{margin-top:34px; display:grid; gap:16px; grid-template-columns:repeat(4,1fr)}
-.door{display:flex; flex-direction:column; padding:22px; border:1px solid var(--border);
-      border-radius:var(--r-md); background:var(--card); box-shadow:var(--shadow-card);
-      transition:box-shadow .18s var(--ease), transform .18s var(--ease),
-                 border-color .18s var(--ease)}
-.door:hover{transform:translateY(-2px); border-color:var(--border-strong);
-            box-shadow:var(--shadow-lift)}
-.door .q{font-size:11px; line-height:16px; font-weight:500; letter-spacing:.07em;
-         text-transform:uppercase; color:var(--faint)}
-.door .t{margin-top:12px; font-size:18px; line-height:25px; letter-spacing:-.4px;
-         font-weight:600}
-.door .s{margin-top:9px; font-size:13px; line-height:19px; color:var(--muted)}
-.door .go{margin-top:18px; padding-top:14px; border-top:1px solid var(--border);
-          font-size:13px; font-weight:500; display:flex; align-items:center; gap:7px}
-.door .go svg{transition:transform .18s var(--ease)}
-.door:hover .go svg{transform:translateX(3px)}
-@media (max-width:1000px){.doors{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:560px){.doors{grid-template-columns:1fr}}
+/* ---------- the three numbers ---------- */
+/* Big figures, the way every B2B page does it - except that each of these can
+   be traced to code or committed data, and the note underneath says they are
+   run figures rather than customer outcomes. That note is the price of having
+   the band at all; do not trim it. */
+.kpi{background:var(--card)}
+.kgrid{margin-top:40px; display:grid; gap:16px; grid-template-columns:repeat(3,1fr)}
+.k{display:flex; flex-direction:column; padding:26px 24px 22px; border-radius:var(--r-md);
+   border:1px solid var(--border); background:var(--bg)}
+.kv{font-size:52px; line-height:56px; font-weight:600; letter-spacing:-2.6px;
+    font-variant-numeric:tabular-nums}
+/* The unit rides small beside the figure, so 23 and 46,500 stay the thing the
+   eye lands on rather than competing with "h" and "EUR". */
+.kv u{text-decoration:none; font-size:24px; font-weight:500; letter-spacing:-.8px;
+      color:var(--faint)}
+.kl{margin-top:10px; font-size:15px; line-height:22px; font-weight:600; letter-spacing:-.3px}
+.kd{margin-top:10px; font-size:13px; line-height:19px; color:var(--muted)}
+.kt{margin-top:auto; padding-top:16px; font-size:11px; line-height:16px; font-weight:500;
+    letter-spacing:.06em; text-transform:uppercase; color:var(--faint)}
+.knote{margin-top:22px; max-width:86ch; font-size:12.5px; line-height:19px; color:var(--faint)}
+.knote b{color:var(--fg); font-weight:500}
+@media (max-width:900px){.kgrid{grid-template-columns:1fr}}
 
 /* ---------- signup (a placeholder, and it says so) ---------- */
 .signup{border-top:1px solid var(--border); background:var(--card); padding:88px 0;
@@ -1570,49 +1570,68 @@ h1,h2,h3,h4,p{margin:0}
   </div>
 </section>
 
-<!-- ======================== THE DOORS ======================== -->
-<section class="section" id="more">
+<!-- ======================== THE THREE NUMBERS ======================== -->
+<!-- Three figures, and every one of them is counted or computed from a real
+     run - not a customer outcome, because there are no customers yet.
+
+     That distinction is the whole reason this band can exist at all. The
+     obvious version of it - "90% automated", "15x ROI", "+12% GP per TEU" -
+     would be invented on a prototype with no baseline, no history and nobody
+     using it, and inventing one is the single thing this project refuses. So
+     the band says what the system does on a run, the caption underneath says
+     exactly that, and each figure names where it comes from:
+
+       60      counted by risk_monitor.expected_sources() before anything is read
+       23h     derived from the event's own trail - 1380 minutes to the wires
+       46,500  cost_of() over each booking's authored terms, chosen vs doing nothing
+
+     If a number is ever added here that cannot be traced to code or committed
+     data, delete it rather than sourcing it. -->
+<section class="section kpi" id="kpi">
   <div class="wrap">
     <div class="head rv">
-      <span class="eyebrow">Where to next</span>
-      <h2 class="d2">Four questions, four pages.</h2>
+      <span class="eyebrow">On one run</span>
+      <h2 class="d2">Three numbers, all of them counted.</h2>
     </div>
-    <div class="doors rv">
-      <a class="door" href="/product">
-        <span class="q">What do I get?</span>
-        <span class="t">Product</span>
-        <span class="s">Fourteen Workers on the bookings you already have, and one queue where every action waits.</span>
-        <span class="go">Open <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5 12h13M12 5l7 7-7 7"/></svg></span>
-      </a>
-      <a class="door" href="/how-it-works">
-        <span class="q">How does it decide?</span>
-        <span class="t">How it works</span>
-        <span class="s">Sixty sources in, one decision per booking out &mdash; and why the numbers never reach the model.</span>
-        <span class="go">Open <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5 12h13M12 5l7 7-7 7"/></svg></span>
-      </a>
-      <a class="door" href="/use-cases">
-        <span class="q">When does it fire?</span>
-        <span class="t">Use cases</span>
-        <span class="s">The same seven bookings under four disruptions, and the four different calls they force.</span>
-        <span class="go">Open <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5 12h13M12 5l7 7-7 7"/></svg></span>
-      </a>
-      <a class="door" href="/about">
-        <span class="q">What is actually real?</span>
-        <span class="t">About</span>
-        <span class="s">Which half of this build runs live, which half is authored, and where the connector stops.</span>
-        <span class="go">Open <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5 12h13M12 5l7 7-7 7"/></svg></span>
-      </a>
+
+    <div class="kgrid rv">
+      <div class="k">
+        <p class="kv">60</p>
+        <p class="kl">sources read on every run</p>
+        <p class="kd">News, river gauges, port weather and sea state, seismic and natural
+          hazards, government filings and reference rates &mdash; six families, every one
+          free and keyless. Breadth is why a disruption lands here at all when it never
+          becomes a headline.</p>
+        <p class="kt">Six families &middot; no API keys</p>
+      </div>
+      <div class="k">
+        <p class="kv">23<u>h</u></p>
+        <p class="kl">ahead of the international wires</p>
+        <p class="kd">On the Hamburg strike a regional broadcaster carried it first and the
+          wires followed 1,380 minutes later. The lead is computed from that trail rather
+          than stored beside it, so the claim and the evidence for it cannot drift apart.</p>
+        <p class="kt">Derived, not asserted</p>
+      </div>
+      <div class="k">
+        <p class="kv"><u>EUR</u> 46,500</p>
+        <p class="kl">exposure avoided on that run</p>
+        <p class="kd">Freight premium, cost per day past the required-by date and deadline
+          breach, priced per booking from its own terms and set against doing nothing. One
+          of the seven contributes nothing: holding it was the least-bad option, not a
+          saving.</p>
+        <p class="kt">Hamburg strike &middot; synthetic bookings</p>
+      </div>
     </div>
+
+    <p class="knote">Every figure here is counted or computed from a run of the demo on
+      synthetic bookings, and each one names the scenario it belongs to &mdash; the same
+      board is EUR 614,600 under a Red Sea closure. <b>None of them is a customer
+      outcome.</b> There are no customers yet, so there is no conversion rate, no ROI and
+      no hours-saved figure on this page, and there will not be one until something has
+      actually been measured.</p>
   </div>
 </section>
+
 <!-- ================ BOOK A DEMO (CLOSER, PLACEHOLDER) ================ -->
 <!-- One closing block, not two. The page used to end on a final CTA and then a
      signup a screen later, both asking for the same thing in different words. -->
