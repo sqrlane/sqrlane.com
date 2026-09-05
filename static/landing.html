@@ -494,6 +494,26 @@ h1,h2,h3,h4,p{margin:0}
         color:var(--amber); background:var(--amber-100); padding:3px 7px; border-radius:4px;
         white-space:nowrap; flex:none}
 
+/* The finished mail. A composer rather than a row: header lines, the body in
+   the page's reading size, and one button. Everything about it says "ready to
+   go out", which is the claim - and the gate beside it says it has not. */
+.w-mailbox{border:1px solid var(--border); border-radius:var(--r-md);
+           background:var(--card); overflow:hidden}
+.w-mh{display:flex; align-items:center; gap:10px; padding:7px 13px;
+      border-bottom:1px solid var(--border)}
+/* The mail has to fit the pane without scrolling - the frame never changes
+   height, so anything past 392px is simply cut off and the Approve row is the
+   first thing to go. Measure before adding a paragraph. */
+.w-body{padding:11px 14px 2px}
+.w-body p{font-size:11.5px; line-height:17px; color:var(--muted); margin-bottom:7px}
+.w-body p:first-child{color:var(--fg)}
+.w-body .sig{color:var(--fg); font-weight:500}
+.w-mf{display:flex; align-items:center; gap:10px; padding:10px 13px;
+      border-top:1px solid var(--border); background:var(--card-muted)}
+.w-approve{margin-left:auto; height:26px; padding:0 12px; border-radius:var(--r-sm);
+           background:var(--fg); color:#fff; font-size:11.5px; font-weight:500;
+           display:inline-flex; align-items:center; white-space:nowrap}
+
 /* the write-back */
 .w-fields{display:flex; flex-direction:column; gap:6px}
 .w-f{display:grid; grid-template-columns:132px 1fr 18px 1fr; gap:8px; align-items:center;
@@ -939,8 +959,9 @@ h1,h2,h3,h4,p{margin:0}
     <h1 class="d1">AI Agents for freight enterprises.</h1>
 
     <p class="sub copy18">
-      Disruption hits. The agents catch it, decide, and act &mdash; inside your
-      <b style="color:var(--fg);font-weight:500">TMS</b>.
+      Agents that work your bookings &mdash; watch the lane, decide, write the mail,
+      put the change on the record in your
+      <b style="color:var(--fg);font-weight:500">TMS</b>. You approve.
     </p>
 
     <div class="cta">
@@ -1052,7 +1073,8 @@ h1,h2,h3,h4,p{margin:0}
           <!-- risk feed -->
           <div class="board-main win-pane" data-pane="risk">
             <div class="board-top">
-              <span class="h">Risk feed</span>
+              <span class="h">Risk Worker</span>
+              <span class="chip live">Live</span>
               <span class="chip red">1 active</span>
               <div class="r"><span class="w-mini">60 sources read</span></div>
             </div>
@@ -1080,9 +1102,10 @@ h1,h2,h3,h4,p{margin:0}
           <!-- the reasoning, and what each option costs -->
           <div class="board-main win-pane" data-pane="reasoning">
             <div class="board-top">
-              <span class="h">SHP-001 &middot; Automotive parts</span>
-              <span class="st-badge st-blue"><i></i>Rerouted &middot; RTM</span>
-              <div class="r"><span class="w-mini">Shanghai &rarr; Munich</span></div>
+              <span class="h">Routing Worker</span>
+              <span class="chip live">Live</span>
+              <span class="w-mini">SHP-001 &middot; Automotive parts</span>
+              <div class="r"><span class="st-badge st-blue"><i></i>Rerouted &middot; RTM</span></div>
             </div>
             <ol class="w-steps">
               <li><span class="k">02</span>R-HAM-STD passes SUEZ, REDSEA, HAM</li>
@@ -1106,24 +1129,42 @@ h1,h2,h3,h4,p{margin:0}
           <!-- the two drafts -->
           <div class="board-main win-pane" data-pane="drafts">
             <div class="board-top">
-              <span class="h">Approvals</span>
+              <span class="h">Comms Worker</span>
+              <span class="chip live">Live</span>
               <span class="chip">18 waiting</span>
               <div class="r"><span class="w-mini">nothing is sent</span></div>
             </div>
-            <div class="w-mail">
-              <div class="w-m">
-                <span class="w-to">Carrier</span>
-                <span class="w-subj">HLCU-2261188 &mdash; amend discharge to RTM</span>
+            <!-- The customer mail, verbatim from the run - signature block and
+                 all. A subject line only shows that drafting happened; the
+                 claim is that what comes out is sendable, and the only way to
+                 make that is to put it on screen. The carrier mail sits beside
+                 it as a second row because the two have different voices. -->
+            <div class="w-mailbox">
+              <div class="w-mh">
+                <span class="w-to">To</span>
+                <span class="w-subj">Katrin Vogel &middot; Bavaria Drivetrain GmbH</span>
                 <span class="w-gate">DRAFT &mdash; not sent</span>
               </div>
-              <div class="w-m">
-                <span class="w-to">Customer</span>
+              <div class="w-mh">
+                <span class="w-to">Subject</span>
                 <span class="w-subj">HLCU-2261188 Automotive parts &mdash; revised ETA 2026-09-22</span>
-                <span class="w-gate">DRAFT &mdash; not sent</span>
+              </div>
+              <div class="w-body">
+                <p>Dear Katrin Vogel,</p>
+                <p>An update on your automotive parts shipment HLCU-2261188: we are bringing it
+                  in through Rotterdam instead of Hamburg, which puts arrival at 2026-09-22
+                  &mdash; 2 days later than planned.</p>
+                <p>There is industrial action at Hamburg that we expect to hold cargo there for
+                  several days. Routing through Rotterdam costs less time than waiting for it
+                  to clear.</p>
+                <p>That still sits inside your required-by date of 2026-09-24.</p>
+                <p class="sig">Lena Brandt &middot; Head of Operations</p>
+              </div>
+              <div class="w-mf">
+                <span class="w-mini">Carrier mail drafted too &mdash; booking amendment, different voice</span>
+                <span class="w-approve">Approve &amp; send</span>
               </div>
             </div>
-            <p class="w-line">Two calls, two voices. Route codes are fine in the carrier mail
-              and flagged in the customer one.</p>
           </div>
 
           <!-- what goes back onto the booking -->
