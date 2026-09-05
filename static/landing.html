@@ -528,16 +528,34 @@ h1,h2,h3,h4,p{margin:0}
 
 /* the write-back */
 .w-fields{display:flex; flex-direction:column; gap:6px}
-.w-f{display:grid; grid-template-columns:132px 1fr 18px 1fr; gap:8px; align-items:center;
-     padding:9px 12px; border:1px solid var(--border); border-radius:var(--r-sm);
-     background:var(--card-muted);
-     font-family:"Geist Mono",ui-monospace,monospace; font-size:11px; line-height:16px}
+.w-f{display:grid; grid-template-columns:158px minmax(0,1fr) 16px minmax(0,1fr);
+     gap:8px; align-items:center; padding:8px 12px; border:1px solid var(--border);
+     border-radius:var(--r-sm); background:var(--card-muted);
+     font-size:11.5px; line-height:16px}
+/* A row with nothing changing has one value, not a from/to pair, so it needs
+   its own two-column track - dropped into the four-column one it lands in the
+   wrong cells and the label appears to float in a box of its own. */
+.w-f.flat{grid-template-columns:158px minmax(0,1fr)}
 .w-f .k{color:var(--faint)}
 .w-f .a{color:var(--muted); text-decoration:line-through; text-decoration-color:var(--gray-500)}
 .w-f .ar{color:var(--faint); text-align:center}
 .w-f .b{color:var(--fg); font-weight:500}
 .w-gateline{margin-top:12px; display:flex; align-items:center; gap:9px;
             font-size:11px; line-height:16px; color:var(--faint)}
+
+/* The section label above a group of fields, the way forwarding software
+   groups them - "Consol details", "Voyage", "Transport details". */
+.w-sec{margin-bottom:8px; font-size:10px; font-weight:600; letter-spacing:.07em;
+       text-transform:uppercase; color:var(--faint)}
+/* Our field name under the TMS label. Small, quiet, and the reason the row
+   reads as a mapping rather than as either system on its own. */
+.w-f .k u{display:block; text-decoration:none; margin-top:2px; font-size:9.5px;
+          line-height:13px; color:var(--gray-600); letter-spacing:0}
+/* Rows that are not changing sit flat and grey - an amendment screen where
+   every row looks equally important is one nobody can scan. */
+.w-f.flat{background:transparent; border-color:transparent}
+.w-f.flat .b{color:var(--muted); font-weight:400}
+.w-f.on{border-color:var(--blue-400); background:var(--blue-100)}
 
 /* the money */
 .w-money{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
@@ -751,8 +769,12 @@ h1,h2,h3,h4,p{margin:0}
    the band at all; do not trim it. */
 .kpi{background:var(--card)}
 .kgrid{margin-top:40px; display:grid; gap:16px; grid-template-columns:repeat(3,1fr)}
-.k{display:flex; flex-direction:column; padding:26px 24px 22px; border-radius:var(--r-md);
-   border:1px solid var(--border); background:var(--bg)}
+/* .kcard, not .k - the page already uses .k for the field label inside a TMS
+   write-back row, and a bare .k here reached into it and gave every label a
+   card's border, background and 26px of padding. Same trap as .mk/.sysmk on
+   the dashboard: grep a class before claiming it. */
+.kcard{display:flex; flex-direction:column; padding:26px 24px 22px; border-radius:var(--r-md);
+       border:1px solid var(--border); background:var(--bg)}
 .kv{font-size:52px; line-height:56px; font-weight:600; letter-spacing:-2.6px;
     font-variant-numeric:tabular-nums}
 /* The unit rides small beside the figure, so 23 and 46,500 stay the thing the
@@ -1187,20 +1209,44 @@ h1,h2,h3,h4,p{margin:0}
 
           <!-- what goes back onto the booking -->
           <div class="board-main win-pane" data-pane="tms">
+            <!-- The vocabulary here is the receiving system's, not ours. An
+                 operator reads "Last Discharge Port" and a UN/LOCODE, not
+                 port_of_discharge and a three-letter chokepoint id - so the
+                 row carries the TMS label with our own field name under it,
+                 which is what an integration screen actually shows.
+
+                 Labels and the code-en-dash-description pattern are taken from
+                 CargoWise's own training and certification material. The
+                 chrome is not: no public CargoWise operator screenshot exists
+                 to copy, so imitating its colours would be invention dressed
+                 as research. This stays a SQRlane screen speaking the
+                 operator's language.
+
+                 The codes are real UN/LOCODEs - CNSHA, DEHAM, NLRTM - and they
+                 are set in the UI sans rather than monospace. Reference codes
+                 in real forwarding software are distinguished by being
+                 uppercase and column-aligned, not by a typewriter face; the
+                 monospace instinct is a designer's, not an operator's. -->
             <div class="board-top">
               <span class="h">TMS link</span>
               <span class="chip live">connected</span>
-              <div class="r"><span class="w-mini">update_booking &middot; SHP-001</span></div>
+              <div class="r"><span class="w-mini">Consol &middot; HLCU-2261188 &middot; amendment pending</span></div>
             </div>
+            <p class="w-sec">Consol details</p>
             <div class="w-fields">
-              <div class="w-f"><span class="k">port_of_discharge</span>
-                <span class="a">HAM</span><span class="ar">&rarr;</span><span class="b">RTM</span></div>
-              <div class="w-f"><span class="k">routing_code</span>
-                <span class="a">R-HAM-STD</span><span class="ar">&rarr;</span><span class="b">R-RTM-ALT</span></div>
-              <div class="w-f"><span class="k">eta</span>
-                <span class="a">2026-09-20</span><span class="ar">&rarr;</span><span class="b">2026-09-22</span></div>
-              <div class="w-f"><span class="k">booking_status</span>
-                <span class="a">ON PLAN</span><span class="ar">&rarr;</span><span class="b">REROUTED</span></div>
+              <div class="w-f flat"><span class="k">Transport Mode<u>transport_mode</u></span>
+                <span class="b">SEA &ndash; Sea Freight</span></div>
+              <div class="w-f flat"><span class="k">First Load Port<u>port_of_loading</u></span>
+                <span class="b">CNSHA Shanghai</span></div>
+              <div class="w-f on"><span class="k">Last Discharge Port<u>port_of_discharge</u></span>
+                <span class="a">DEHAM Hamburg</span><span class="ar">&rarr;</span>
+                <span class="b">NLRTM Rotterdam</span></div>
+              <div class="w-f on"><span class="k">ETA<u>eta</u></span>
+                <span class="a">2026-09-20</span><span class="ar">&rarr;</span>
+                <span class="b">2026-09-22</span></div>
+              <div class="w-f on"><span class="k">Status<u>booking_status</u></span>
+                <span class="a">ON PLAN</span><span class="ar">&rarr;</span>
+                <span class="b">REROUTED</span></div>
             </div>
             <p class="w-gateline"><span class="w-gate">QUEUED &mdash; not written</span>
               awaiting approval &middot; nothing lands on the booking until you say so</p>
@@ -1595,7 +1641,7 @@ h1,h2,h3,h4,p{margin:0}
     </div>
 
     <div class="kgrid rv">
-      <div class="k">
+      <div class="kcard">
         <p class="kv">60</p>
         <p class="kl">sources read on every run</p>
         <p class="kd">News, river gauges, port weather and sea state, seismic and natural
@@ -1604,7 +1650,7 @@ h1,h2,h3,h4,p{margin:0}
           becomes a headline.</p>
         <p class="kt">Six families &middot; no API keys</p>
       </div>
-      <div class="k">
+      <div class="kcard">
         <p class="kv">23<u>h</u></p>
         <p class="kl">ahead of the international wires</p>
         <p class="kd">On the Hamburg strike a regional broadcaster carried it first and the
@@ -1612,7 +1658,7 @@ h1,h2,h3,h4,p{margin:0}
           than stored beside it, so the claim and the evidence for it cannot drift apart.</p>
         <p class="kt">Derived, not asserted</p>
       </div>
-      <div class="k">
+      <div class="kcard">
         <p class="kv"><u>EUR</u> 46,500</p>
         <p class="kl">exposure avoided on that run</p>
         <p class="kd">Freight premium, cost per day past the required-by date and deadline

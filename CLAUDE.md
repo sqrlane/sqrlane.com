@@ -409,6 +409,12 @@ was really a workflow:
 
 Two traps worth remembering, both found in a browser and invisible to a unit test:
 
+- **A bare one-or-two-letter class is a landmine, and this has now cost
+  twice.** `.k` was the field label inside a TMS write-back row; a new stat
+  card claimed `.k` too and gave every one of those labels a card's border,
+  background and 26px of padding. The card is `.kcard` now. Same failure as
+  `.mk`/`.sysmk` below - grep a class before claiming it, and prefer a
+  prefixed name over a short one.
 - **A shared class name silently reparents a dialog.** The shortcut sheet reused
   `.pal` for its geometry and took `keys` as its modifier — which collided with an
   existing `.keys{display:flex}` legend rule and laid the dialog's header and body
