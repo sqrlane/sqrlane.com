@@ -193,7 +193,8 @@ python -m src.orchestrator  --no-live         # the whole loop, no network
 ## Deploying to Vercel
 
 The repo is configured for it: `api/index.py` re-exports the same FastAPI app,
-and `vercel.json` rewrites every path to it, so `/` and `POST /run` both land on
+and `vercel.json` routes every path to it (`routes`, not `rewrites`, so nothing else in
+the checkout is ever served as a file), so `/` and `POST /run` both land on
 one function.
 
 1. In Vercel, **Add New → Project** and import this GitHub repo.

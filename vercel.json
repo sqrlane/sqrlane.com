@@ -6,7 +6,7 @@
       "includeFiles": "{data,static,src}/**"
     }
   },
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/api/index" }
+  "routes": [
+    { "src": "/(.*)", "dest": "/api/index" }
   ]
 }
