@@ -424,6 +424,105 @@ h1,h2,h3,h4,p{margin:0}
   .wk-cursor,.wk-scan,.wk-evt{display:none !important}
 }
 
+/* ---------- the mock's windows ---------- */
+/* The board is one view of six. The sidebar stays put and only the main pane
+   swaps, which is how the real dashboard behaves - swapping the whole frame
+   would read as six screenshots rather than one app being driven.
+
+   Panes are stacked and absolutely positioned so the frame never changes
+   height between them; a mock that reflows mid-play reads as a bug. The
+   height floor is the overview's, which is the tallest. */
+.board-panes{position:relative; flex:1; min-width:0; min-height:392px}
+/* The outgoing pane clears before the incoming one arrives. A plain
+   symmetric crossfade overlaps two dense text panes at half opacity each,
+   which reads as ghosting rather than as a transition - so out is quick and
+   in is delayed past it. */
+.win-pane{position:absolute; inset:0; opacity:0; pointer-events:none;
+          transform:translateX(14px);
+          transition:opacity .3s var(--ease), transform .45s var(--ease)}
+.win-pane.on{opacity:1; transform:none; pointer-events:auto;
+             transition:opacity .42s var(--ease) .2s, transform .5s var(--ease) .1s}
+/* Leaving goes the other way, so the run reads left-to-right. */
+.win-pane.out{transform:translateX(-14px)}
+
+.w-mini{font-size:10.5px; line-height:15px; color:var(--faint)}
+.w-sub{margin-top:16px; font-size:10px; font-weight:500; letter-spacing:.07em;
+       text-transform:uppercase; color:var(--faint)}
+.w-line{margin-top:12px; font-size:12px; line-height:18px; color:var(--muted)}
+.w-line b{color:var(--fg); font-weight:500}
+.w-foot{margin-top:10px; font-size:10.5px; line-height:15px; color:var(--gray-600)}
+
+/* risk */
+.w-evt{padding:13px 14px; border:1px solid var(--red-400); border-radius:var(--r-md);
+       background:var(--red-100)}
+.w-evt-h{display:flex; gap:9px; align-items:flex-start}
+.w-dot{width:7px; height:7px; border-radius:50%; background:var(--red); flex:none;
+       margin-top:5px; box-shadow:0 0 0 3px rgba(234,0,29,.15)}
+.w-evt-t{font-size:13px; line-height:19px; font-weight:500; letter-spacing:-.2px}
+.w-tags{margin-top:10px; display:flex; align-items:center; gap:6px; flex-wrap:wrap}
+.w-chips{margin-top:9px; display:flex; gap:6px; flex-wrap:wrap}
+.w-ref{font-family:"Geist Mono",ui-monospace,monospace; font-size:11px; padding:3px 8px;
+       border-radius:var(--r-sm); background:var(--card-muted); border:1px solid var(--border);
+       color:var(--muted)}
+
+/* reasoning */
+.w-steps{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:7px}
+.w-steps li{display:flex; gap:10px; font-size:12px; line-height:18px; color:var(--muted)}
+.w-steps .k{font-family:"Geist Mono",ui-monospace,monospace; font-size:10.5px;
+            color:var(--faint); flex:none; padding-top:1px}
+.w-cost{margin-top:16px; display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.w-opt{padding:12px 13px; border:1px solid var(--border); border-radius:var(--r-md);
+       background:var(--card-muted)}
+/* The option taken. Green because it is the answer, not because it is cheap -
+   on SHP-002 the answer is the expensive one. */
+.w-opt.win{border-color:var(--green-400); background:var(--green-100)}
+.w-opt .l{font-size:10.5px; line-height:15px; color:var(--faint)}
+.w-opt .v{margin-top:5px; font-size:19px; line-height:24px; font-weight:600;
+          letter-spacing:-.7px; font-variant-numeric:tabular-nums}
+.w-opt.win .v{color:var(--green)}
+.w-opt .n{margin-top:3px; font-size:10.5px; line-height:15px; color:var(--muted)}
+
+/* drafts */
+.w-mail{display:flex; flex-direction:column; gap:8px}
+.w-m{display:flex; align-items:center; gap:10px; padding:11px 13px; border:1px solid var(--border);
+     border-radius:var(--r-md); background:var(--card)}
+.w-to{font-size:10px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+      color:var(--faint); width:62px; flex:none}
+.w-subj{font-size:12px; line-height:17px; flex:1; min-width:0; overflow:hidden;
+        text-overflow:ellipsis; white-space:nowrap}
+.w-gate{font-size:9.5px; font-weight:600; letter-spacing:.05em; text-transform:uppercase;
+        color:var(--amber); background:var(--amber-100); padding:3px 7px; border-radius:4px;
+        white-space:nowrap; flex:none}
+
+/* the write-back */
+.w-fields{display:flex; flex-direction:column; gap:6px}
+.w-f{display:grid; grid-template-columns:132px 1fr 18px 1fr; gap:8px; align-items:center;
+     padding:9px 12px; border:1px solid var(--border); border-radius:var(--r-sm);
+     background:var(--card-muted);
+     font-family:"Geist Mono",ui-monospace,monospace; font-size:11px; line-height:16px}
+.w-f .k{color:var(--faint)}
+.w-f .a{color:var(--muted); text-decoration:line-through; text-decoration-color:var(--gray-500)}
+.w-f .ar{color:var(--faint); text-align:center}
+.w-f .b{color:var(--fg); font-weight:500}
+.w-gateline{margin-top:12px; display:flex; align-items:center; gap:9px;
+            font-size:11px; line-height:16px; color:var(--faint)}
+
+/* the money */
+.w-money{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+.w-mo{padding:14px 13px; border:1px solid var(--border); border-radius:var(--r-md);
+      background:var(--card-muted)}
+.w-mo .l{font-size:10.5px; line-height:15px; color:var(--faint)}
+.w-mo .v{margin-top:6px; font-size:20px; line-height:26px; font-weight:600;
+         letter-spacing:-.8px; font-variant-numeric:tabular-nums}
+.w-mo.keep{border-color:var(--green-400); background:var(--green-100)}
+.w-mo.keep .v{color:var(--green)}
+
+@media (max-width:860px){
+  .w-cost,.w-money{grid-template-columns:1fr}
+  .w-f{grid-template-columns:110px 1fr}
+  .w-f .ar{display:none}
+}
+
 /* ---------- source strip ---------- */
 /* The sources travel right to left as one continuous band. Three identical
    copies of the row sit side by side inside the track; the track slides left
@@ -839,7 +938,7 @@ h1,h2,h3,h4,p{margin:0}
         <span class="wk-scan" data-wk-scan aria-hidden="true"></span>
         <div class="frame-bar">
           <i></i><i></i><i></i>
-          <span class="url mono">sqrlane / overview</span>
+          <span class="url mono" data-wk-url>sqrlane / overview</span>
         </div>
         <div class="board">
           <aside class="board-side">
@@ -868,7 +967,8 @@ h1,h2,h3,h4,p{margin:0}
                 <path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0z"/><path d="M12 18v4"/></svg>
               TMS link<span class="n">12</span></div>
           </aside>
-          <div class="board-main">
+          <div class="board-panes" data-wins>
+          <div class="board-main win-pane on" data-pane="overview">
             <div class="board-top">
               <span class="h">Overview</span>
               <span class="chip live">Live</span>
@@ -912,6 +1012,151 @@ h1,h2,h3,h4,p{margin:0}
                 <span class="meta">5d slack</span>
                 <span class="st"><span class="st-badge st-green"><i></i>On plan</span></span></div>
             </div>
+          </div>
+
+          <!-- Every string, field name and figure in the five panes below is
+               taken from a real offline run of the orchestrator on the hamburg
+               scenario. Nothing here is written by hand, and nothing is
+               estimated: the euro figures are cost_of() arithmetic over the
+               bookings' own authored commercial terms. If the screenplay
+               changes, re-run and update these rather than adjusting them to
+               taste - a mock that drifts from the product is worse than no
+               mock. -->
+
+          <!-- risk feed -->
+          <div class="board-main win-pane" data-pane="risk">
+            <div class="board-top">
+              <span class="h">Risk feed</span>
+              <span class="chip red">1 active</span>
+              <div class="r"><span class="w-mini">60 sources read</span></div>
+            </div>
+            <div class="w-evt">
+              <div class="w-evt-h">
+                <span class="w-dot"></span>
+                <span class="w-evt-t">Warning strike at Port of Hamburg &mdash;
+                  union calls full-day walkout</span>
+              </div>
+              <div class="w-tags">
+                <span class="chip">strike</span><span class="chip red">high</span>
+                <span class="chip plain">HAM</span>
+                <span class="w-mini">NDR Hamburg &middot; regional broadcaster</span>
+              </div>
+              <p class="w-line">Terminal handling, gate operations and rail shunting stop for
+                the duration. Expected delay <b>3&ndash;5d</b>.</p>
+            </div>
+            <p class="w-sub">Bookings it moves</p>
+            <div class="w-chips">
+              <span class="w-ref">SHP-001</span><span class="w-ref">SHP-002</span>
+              <span class="w-ref">SHP-005</span>
+            </div>
+          </div>
+
+          <!-- the reasoning, and what each option costs -->
+          <div class="board-main win-pane" data-pane="reasoning">
+            <div class="board-top">
+              <span class="h">SHP-001 &middot; Automotive parts</span>
+              <span class="st-badge st-blue"><i></i>Rerouted &middot; RTM</span>
+              <div class="r"><span class="w-mini">Shanghai &rarr; Munich</span></div>
+            </div>
+            <ol class="w-steps">
+              <li><span class="k">02</span>R-HAM-STD passes SUEZ, REDSEA, HAM</li>
+              <li><span class="k">03</span>Exposed: HAM strike/high (3&ndash;5d)</li>
+              <li><span class="k">04</span>R-RTM-ALT: +2d transit, +8 cost index, discharges RTM</li>
+            </ol>
+            <div class="w-cost">
+              <div class="w-opt win">
+                <p class="l">Reroute via RTM</p>
+                <p class="v">EUR 2,304</p>
+                <p class="n">routing premium, nothing late</p>
+              </div>
+              <div class="w-opt">
+                <p class="l">Stay on plan</p>
+                <p class="v">EUR 31,500</p>
+                <p class="n">1d past the required-by date</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- the two drafts -->
+          <div class="board-main win-pane" data-pane="drafts">
+            <div class="board-top">
+              <span class="h">Approvals</span>
+              <span class="chip">18 waiting</span>
+              <div class="r"><span class="w-mini">nothing is sent</span></div>
+            </div>
+            <div class="w-mail">
+              <div class="w-m">
+                <span class="w-to">Carrier</span>
+                <span class="w-subj">HLCU-2261188 &mdash; amend discharge to RTM</span>
+                <span class="w-gate">DRAFT &mdash; not sent</span>
+              </div>
+              <div class="w-m">
+                <span class="w-to">Customer</span>
+                <span class="w-subj">HLCU-2261188 Automotive parts &mdash; revised ETA 2026-09-22</span>
+                <span class="w-gate">DRAFT &mdash; not sent</span>
+              </div>
+            </div>
+            <p class="w-line">Two calls, two voices. Route codes are fine in the carrier mail
+              and flagged in the customer one.</p>
+          </div>
+
+          <!-- what goes back onto the booking -->
+          <div class="board-main win-pane" data-pane="tms">
+            <div class="board-top">
+              <span class="h">TMS link</span>
+              <span class="chip synth">connected (demo)</span>
+              <div class="r"><span class="w-mini">update_booking &middot; SHP-001</span></div>
+            </div>
+            <div class="w-fields">
+              <div class="w-f"><span class="k">port_of_discharge</span>
+                <span class="a">HAM</span><span class="ar">&rarr;</span><span class="b">RTM</span></div>
+              <div class="w-f"><span class="k">routing_code</span>
+                <span class="a">R-HAM-STD</span><span class="ar">&rarr;</span><span class="b">R-RTM-ALT</span></div>
+              <div class="w-f"><span class="k">eta</span>
+                <span class="a">2026-09-20</span><span class="ar">&rarr;</span><span class="b">2026-09-22</span></div>
+              <div class="w-f"><span class="k">booking_status</span>
+                <span class="a">ON PLAN</span><span class="ar">&rarr;</span><span class="b">REROUTED</span></div>
+            </div>
+            <p class="w-gateline"><span class="w-gate">QUEUED &mdash; not written</span>
+              awaiting approval &middot; no TMS is contacted in this build</p>
+          </div>
+
+          <!-- and what the decisions were worth -->
+          <div class="board-main win-pane" data-pane="margin">
+            <div class="board-top">
+              <span class="h">Exposure on this run</span>
+              <span class="chip synth">Synthetic scenario</span>
+              <div class="r"><span class="w-mini">7 bookings &middot; Hamburg strike</span></div>
+            </div>
+            <div class="w-money">
+              <div class="w-mo">
+                <p class="l">Doing nothing</p>
+                <p class="v">EUR 141,100</p>
+              </div>
+              <div class="w-mo">
+                <p class="l">After the decisions</p>
+                <p class="v">EUR 94,600</p>
+              </div>
+              <div class="w-mo keep">
+                <p class="l">Exposure avoided</p>
+                <p class="v" data-wk-save>EUR 46,500</p>
+              </div>
+            </div>
+            <p class="w-line"><b>SHP-002 contributes nothing.</b> It is held, and the hold is
+              the least-bad option rather than a saving &mdash; the customer is in Hamburg and
+              rerouting adds a cold-chain transfer.</p>
+            <!-- Two rules from the data itself, and both are load-bearing. The
+                 bookings' commercial terms are authored, so this is what the system
+                 computes on synthetic records - never what a customer saved. And the
+                 sum is a function of which event is active (the same board is EUR
+                 614,600 under the Red Sea closure), so the scenario is named beside
+                 it rather than left off. No percentage is derivable from any of it
+                 and none is shown. -->
+            <p class="w-foot">Arithmetic from the run, over each booking's own authored terms:
+              freight premium, cost per day past the required-by date, deadline breach and
+              cold-chain transfer. Synthetic bookings, real reasoning &mdash; no estimate,
+              no probability, and the figure moves with the scenario.</p>
+          </div>
           </div>
         </div>
       </div>
@@ -1617,6 +1862,47 @@ h1,h2,h3,h4,p{margin:0}
     evt.classList.remove("on");
   }
 
+  /* --- the windows ----------------------------------------------------
+     The board is one view of six. After it settles, the mock walks the rest
+     of the loop the way a person would: the event that caused it, the
+     reasoning and what each option costs, the two drafts, the change queued
+     onto the booking, and what the run was worth.
+
+     The sidebar's active item and the frame's URL move with it. Both are
+     small, and both are the difference between "six panels" and "one app
+     being driven". */
+  var panes = [].slice.call(shot.querySelectorAll(".win-pane"));
+  var sideItems = [].slice.call(shot.querySelectorAll(".board-side .i"));
+  var urlEl = shot.querySelector("[data-wk-url]");
+
+  /* pane -> [sidebar index it lights, url it shows, how long it holds].
+     Overview's hold is 0 because its own animation decides when it is done. */
+  var WINDOWS = [
+    ["overview",  0, "sqrlane / overview",           0],
+    ["risk",      2, "sqrlane / risk",            4400],
+    ["reasoning", 1, "sqrlane / shipments/SHP-001", 6600],
+    ["drafts",    3, "sqrlane / approvals",        4600],
+    ["tms",       4, "sqrlane / tms-link",         5200],
+    ["margin",    4, "sqrlane / tms-link",         6800],
+  ];
+
+  function showPane(i) {
+    panes.forEach(function (el, n) {
+      el.classList.toggle("on", n === i);
+      el.classList.toggle("out", n < i);
+    });
+    var w = WINDOWS[i];
+    sideItems.forEach(function (el, n) { el.classList.toggle("on", n === w[1]); });
+    if (urlEl) urlEl.textContent = w[2];
+  }
+
+  async function walkWindows() {
+    for (var i = 1; i < WINDOWS.length; i++) {
+      showPane(i);
+      await wait(WINDOWS[i][3]);
+    }
+  }
+
   /* Plays when it is actually on screen, and loops with a long pause so it is
      not competing with the headline beside it. */
   var running = false;
@@ -1624,8 +1910,14 @@ h1,h2,h3,h4,p{margin:0}
     if (running) return;
     running = true;
     while (true) {
-      if (!document.hidden) await play();
-      await wait(5200);
+      if (!document.hidden) {
+        showPane(0);
+        await play();
+        await wait(1100);
+        await walkWindows();
+        showPane(0);
+      }
+      await wait(4200);
     }
   }
 
