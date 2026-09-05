@@ -1,6 +1,6 @@
 # SQRlane
 
-**Trade-lane risk, decided.**
+**AI Agents for freight enterprises.**
 
 **SQRlane runs on the bookings in a forwarder's TMS.** It is not another book to keep:
 the shipments are read out of the system of record, the Workers decide against those
