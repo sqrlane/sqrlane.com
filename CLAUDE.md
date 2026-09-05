@@ -103,8 +103,37 @@ it**, in plain language, at the end of every phase. Prefer obvious code over cle
 ## Current state
 
 **All five phases are built.** The demo runs end to end: `uvicorn src.app:app --reload`, then open
-http://127.0.0.1:8000 for the landing page and http://127.0.0.1:8000/app for the board with
+http://127.0.0.1:8000 for the home page and http://127.0.0.1:8000/app for the board with
 the button. `README.md` is the front door for anyone new.
+
+### The site is five pages, and each one has a job
+
+One long landing page was doing five jobs at once — it ran to seventeen screens,
+which is about twice the length of the marketing sites it is aimed alongside, and
+every section after the third was read by nobody. It is now five, and the rule that
+keeps them five rather than five copies of the same pitch is that **no page may
+answer another page's question**:
+
+| Page | The one thing it lands | Owns, exclusively |
+|---|---|---|
+| `/` | There is a gap, and this closes it | the hero, the sources ticker, the incumbent gap, the loop as **one picture with no explanation**, the four doors, the book-a-demo block |
+| `/product` | Fourteen Workers on one book, every action gated | the roster and its LIVE/SCRIPTED/DEMO tags, the write-back field map, the approval gate, the systems the connector points at |
+| `/how-it-works` | How a decision is actually made | prose-to-the-model vs numbers-to-a-threshold, the five stages, the live Rhine gauges, the source table |
+| `/use-cases` | Four disruptions, four different calls | the four scenarios and their board outcomes |
+| `/about` | What is real here and what is not | the live/synthetic/demo ledger, the honest quote, the modelled desk, the non-goals |
+
+Two things follow, and both are easy to undo by accident:
+
+- **The home page's loop diagram must stay a picture.** The moment it starts
+  explaining the stages, `/how-it-works` is doing nobody's work and a reader has no
+  reason to open it.
+- **Every page says its own job on itself**, in a chip under the headline
+  (`.goal` on the four; the hero copy on home). If a new section cannot be filed
+  under the page's stated job, it belongs on a different page.
+
+The pages are self-contained files as before — same tokens, same self-hosted Geist,
+same nav and footer, nothing loaded off-origin. `tests/test_the_pages_keep_their_promises.py`
+holds all seven served pages to every promise in it, not the three it used to.
 
 It is also **deployed on Vercel** and running against the live Groq key there.
 
@@ -540,7 +569,8 @@ desk actually runs — quoting, booking, shipment tracking, TMS data entry, invo
 reconciliation, and customs — is all present. The names are ours: **never** use the
 names the reference product ships (`Rate Manager`, `DocuMind`, `Track & Trace`,
 `Copilot`), and `tests/test_the_pages_keep_their_promises.py` fails on any of them appearing
-in the dashboard, the landing page, the whitepaper, the README, the roster source, the
+in the dashboard, any of the five marketing pages, the whitepaper, the README, the
+roster source, the
 served Worker names, or the run payload. It caught one of those names in a source
 *comment*, which is the level of paranoia this deserves.
 
@@ -561,7 +591,7 @@ Three of them earn their place by reacting to the decision rather than decoratin
 
 **Both pages name the systems the connector is built to point at** — CargoWise, Riege
 Scope, Descartes, Transporeon, TIMOCOM, AEB, DAKOSY, Portbase. On the landing page
-they are a second band below the workflow section, styled like the sources strip; on
+they are a band at the foot of `/product`, styled like the sources strip; on
 the dashboard they are a card in the **TMS link** view, under the connector summary.
 The dashboard's is a **grid, not a marquee** — a sliding band is a marketing device,
 and the dashboard is a working view. Same names, same tags, same disclaimer.
@@ -654,7 +684,11 @@ here too, because this is what the next session reads to find its way around.
 │   ├── geo.py                # the board on a map - derived from the run
 │   └── app.py                # FastAPI: serves the three pages + the API
 ├── static/
-│   ├── landing.html          # the front page (HTML+CSS+JS in one file)
+│   ├── landing.html          # home - the gap, the loop in one picture, four doors
+│   ├── product.html          # the roster, the write-back map, the approval gate
+│   ├── how-it-works.html     # the mechanism, and the live Rhine gauges
+│   ├── use-cases.html        # the four scenarios and the calls they force
+│   ├── about.html            # what is real here, who it is for, the non-goals
 │   ├── index.html            # the dashboard (HTML+CSS+JS in one file)
 │   ├── whitepaper.html       # the technical paper
 │   └── fonts/                # Geist Sans + Mono, self-hosted - never a CDN
@@ -672,8 +706,9 @@ here too, because this is what the next session reads to find its way around.
 │   ├── data/                 # sample committed; the full book is gitignored
 │   └── reports/              # evaluation.json / .md - synthetic-world numbers
 ├── tests/                    # ten suites, one per claim the demo makes out loud
-├── tools/build_rhine_map.py  # regenerates the landing page's corridor map
-├── scratch/genheat.py        # one-off generator for the landing heatmap
+├── tools/build_rhine_map.py  # DEAD - drew the corridor map that went with the
+│                             #   worked example when the site was split
+├── scratch/genheat.py        # DEAD - same, for that section's heatmap
 ├── docs/dashboard.png        # the README's screenshot
 └── risk_state.json           # written at runtime (gitignored)
 ```
@@ -906,8 +941,9 @@ claims were written and tested but unwitnessed. Most are now confirmed.
 
   The lesson is worth keeping: **any hard-coded model name is a scheduled outage.**
   Don't reintroduce one.
-- **PEGELONLINE is real, and it has now been witnessed.** The landing page's gauge
-  panel reads the three Rhine gauges on load. Confirmed against the live host from
+- **PEGELONLINE is real, and it has now been witnessed.** The gauge panel on
+  `/how-it-works` (it was on the landing page until the site was split) reads the
+  three Rhine gauges on load. Confirmed against the live host from
   the deployed instance: Kaub 73 cm, Duisburg-Ruhrort 167 cm, Emmerich 14 cm — two
   `restricted`, one `critical`, every one banded by the same `GAUGE_BANDS` table the
   risk monitor uses. A real third-party source was fetched, parsed and classified in
@@ -1054,10 +1090,11 @@ days and ordering exactly as the screenplay authored them.
 uvicorn src.app:app --reload      # then open http://127.0.0.1:8000
 ```
 
-`/` is the landing page, `/whitepaper` is the technical whitepaper and `/app` is the
-dashboard; all three are single self-contained files. `GET /api/initial` renders the calm five-green-cards board instantly; `POST /run`
+`/` is home; `/product`, `/how-it-works`, `/use-cases` and `/about` are the four pages
+it hands off to; `/whitepaper` is the technical paper and `/app` is the dashboard. All
+seven are single self-contained files carrying the same tokens, nav and footer. `GET /api/initial` renders the calm five-green-cards board instantly; `POST /run`
 is the button. `GET /api/gauges` reads the three reference Rhine gauges live from PEGELONLINE for
-the landing page's gauge panel (`config.LANDING_GAUGES` — the panel was designed for
+the gauge panel on `/how-it-works` (`config.LANDING_GAUGES` — the panel was designed for
 three; the monitor's live pull reads all six stations in `config.RHINE_GAUGES`, and both
 resolve against the one configured list so the two callers cannot band the same station
 apart) — cached for `GAUGE_CACHE_SECONDS` because the page is
@@ -1195,7 +1232,7 @@ structured sources keeping schema parity with the scripted ones and failing alon
 reroute having to be worth what it costs, including the board outcomes that pricing must
 not quietly move; the Planner's sweep ending in one of exactly three recorded states,
 every proposal gated, its tripwires quoting the thresholds the sources already band, and
-no two active scenarios sweeping to the same pattern; and the landing page's live gauges
+no two active scenarios sweeping to the same pattern; and the live gauges
 being banded exactly as the risk
 monitor bands them, so the two cannot disagree about the same number; and the ML layer
 staying prepared-not-wired — nothing in `src/` importing `ml/`, no ML dependency in the

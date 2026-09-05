@@ -1,9 +1,9 @@
-"""The Rhine gauges are the one genuinely live number on the landing page.
+"""The Rhine gauges are the one genuinely live number on /how-it-works.
 
 Two things have to hold, and neither is obvious from reading the code:
 
   1. A reading is classified into the same bands the risk monitor uses. If the
-     landing page said "normal" while the monitor was raising a medium-severity
+     page said "normal" while the monitor was raising a medium-severity
      event off the same number, one of them would be lying.
   2. The page survives the gauge being down. PEGELONLINE is a third-party
      service with no key and no SLA, and it is being read on a public page - so
@@ -158,7 +158,7 @@ class ReadingTheGauges(GaugeTestCase):
         payload = risk_monitor.read_rhine_gauges()
 
         self.assertTrue(payload["ok"])
-        # The default read is the landing panel's selection - the three
+        # The default read is the panel's own selection - the three
         # reference gauges - not the monitor's wider RHINE_GAUGES list.
         self.assertEqual(len(payload["gauges"]), len(config.LANDING_GAUGES))
         kaub = payload["gauges"][0]
@@ -185,8 +185,8 @@ class ReadingTheGauges(GaugeTestCase):
         self.assertEqual([g["station"] for g in payload["gauges"]],
                          config.LANDING_GAUGES)
 
-    def test_the_landing_default_and_the_wider_monitor_read_are_one_list(self):
-        """The landing panel was designed around three readings and keeps
+    def test_the_panel_default_and_the_wider_monitor_read_are_one_list(self):
+        """The panel was designed around three readings and keeps
         showing exactly the reference gauges; the monitor reads every gauge in
         RHINE_GAUGES. The split is a parameter over one configured list, so
         the two callers cannot carry different thresholds for a station."""

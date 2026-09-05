@@ -45,7 +45,17 @@ STATIC = ROOT / "static"
 LANDING = STATIC / "landing.html"
 DASHBOARD = STATIC / "index.html"
 WHITEPAPER = STATIC / "whitepaper.html"
-ALL_PAGES = (LANDING, DASHBOARD, WHITEPAPER)
+
+# The four pages the home page hands off to, each answering one question. They
+# are served, so they are held to every promise in this file - a guard that
+# covers three pages of a seven-page site is a guard with four holes in it.
+PRODUCT = STATIC / "product.html"
+HOW_IT_WORKS = STATIC / "how-it-works.html"
+USE_CASES = STATIC / "use-cases.html"
+ABOUT = STATIC / "about.html"
+
+MARKETING = (LANDING, PRODUCT, HOW_IT_WORKS, USE_CASES, ABOUT)
+ALL_PAGES = MARKETING + (DASHBOARD, WHITEPAPER)
 
 # Named languages. "English" is on the list for the same reason as the rest: the
 # benchmark is "the international wires", not a language, and the data keys that
@@ -78,9 +88,9 @@ def visible(page: Path) -> str:
 class TheEdgeIsProximityNotALanguage(unittest.TestCase):
     """The pitch never names a language, because the edge is not one."""
 
-    def test_the_landing_page_and_dashboard_name_no_language(self):
+    def test_no_marketing_page_or_the_dashboard_names_a_language(self):
         offences = []
-        for page in (LANDING, DASHBOARD):
+        for page in MARKETING + (DASHBOARD,):
             text = visible(page)
             for word in LANGUAGES:
                 for match in re.finditer(rf"\b{re.escape(word)}\b", text):
@@ -181,15 +191,13 @@ class TheWorkerNamesAreOurs(unittest.TestCase):
         from src import orchestrator, roster
 
         payload = orchestrator.run_cycle(live=False, inject=True, use_llm=False)
-        haystacks = {
-            "static/index.html": DASHBOARD.read_text(encoding="utf-8"),
-            "static/landing.html": LANDING.read_text(encoding="utf-8"),
-            "static/whitepaper.html": WHITEPAPER.read_text(encoding="utf-8"),
+        haystacks = {f"static/{p.name}": p.read_text(encoding="utf-8") for p in ALL_PAGES}
+        haystacks.update({
             "README.md": (ROOT / "README.md").read_text(encoding="utf-8"),
             "src/roster.py": (ROOT / "src" / "roster.py").read_text(encoding="utf-8"),
             "the served Worker names": " ".join(w["name"] for w in payload["workers"]),
             "the run payload": repr(payload),
-        }
+        })
         offences = [f"{where} contains {name!r}"
                     for where, hay in haystacks.items()
                     for name in BORROWED_NAMES if name in hay]
@@ -229,13 +237,9 @@ class TheProductHasOneName(unittest.TestCase):
         from src import orchestrator
 
         payload = orchestrator.run_cycle(live=False, inject=True, use_llm=False)
-        haystacks = {
-            "static/index.html": DASHBOARD.read_text(encoding="utf-8"),
-            "static/landing.html": LANDING.read_text(encoding="utf-8"),
-            "static/whitepaper.html": WHITEPAPER.read_text(encoding="utf-8"),
-            "README.md": (ROOT / "README.md").read_text(encoding="utf-8"),
-            "the run payload": repr(payload),
-        }
+        haystacks = {f"static/{p.name}": p.read_text(encoding="utf-8") for p in ALL_PAGES}
+        haystacks["README.md"] = (ROOT / "README.md").read_text(encoding="utf-8")
+        haystacks["the run payload"] = repr(payload)
         offences = [f"{where} still says {FORMER_PRODUCT_NAME!r}"
                     for where, hay in haystacks.items()
                     if FORMER_PRODUCT_NAME.lower() in hay.lower()]
@@ -269,21 +273,29 @@ class NamingASystemIsNotClaimingOne(unittest.TestCase):
     # the "TMS (demo connector)" further down, which meant the line could be
     # deleted from the band with the guard still green.
     WHERE_NAMED = {
-        "landing.html": ('<section class="strip targets">', "</section>"),
+        "product.html": ('<section class="strip targets">', "</section>"),
         "index.html": ("const SYSTEMS = [", "function connectionsView()"),
     }
 
     REQUIRED = ("None of these is connected", "no vendor, no credential, no endpoint",
                 "nothing is ever written")
 
-    def test_both_pages_say_none_of_the_named_systems_is_connected(self):
-        for page in (LANDING, DASHBOARD):
+    def test_every_page_that_names_a_system_disclaims_it(self):
+        # Every served page, not only the two that name them today: a vendor
+        # name that migrates to a page with no disclaimer is exactly how this
+        # stops being true, and naming the pages by hand would miss it.
+        for page in ALL_PAGES:
             html = page.read_text(encoding="utf-8")
             named = [n for n in NAMED_SYSTEMS if n in html]
-            opener, closer = self.WHERE_NAMED[page.name]
-            start = html.find(opener)
+            opener, closer = self.WHERE_NAMED.get(page.name, (None, None))
 
             with self.subTest(page=page.name):
+                if opener is None:
+                    self.assertEqual(named, [], f"{page.name} names " + ", ".join(named) +
+                                     " and has no block registered to disclaim them. Add "
+                                     "the block, or add the page to WHERE_NAMED.")
+                    continue
+                start = html.find(opener)
                 if start < 0:
                     self.assertEqual(named, [], f"{page.name} names " + ", ".join(named) +
                                      " but the block that disclaims them is gone.")
@@ -299,12 +311,16 @@ class NamingASystemIsNotClaimingOne(unittest.TestCase):
 
     def test_no_named_system_appears_in_the_sources_band(self):
         """The sources band is what the Risk Monitor reads. None of these is read."""
-        text = LANDING.read_text(encoding="utf-8")
-        start = text.find('<section class="strip">')
-        end = text.find("</section>", start)
-        self.assertGreater(start, 0, "The sources band moved - this check is now blind.")
-        band = text[start:end]
-        offences = [n for n in NAMED_SYSTEMS if n in band]
+        carriers = [p for p in MARKETING
+                    if '<section class="strip">' in p.read_text(encoding="utf-8")]
+        self.assertTrue(carriers, "No page carries the sources band - this check is blind.")
+
+        offences = []
+        for page in carriers:
+            text = page.read_text(encoding="utf-8")
+            start = text.find('<section class="strip">')
+            band = text[start:text.find("</section>", start)]
+            offences += [f"{page.name}: {n}" for n in NAMED_SYSTEMS if n in band]
         self.assertEqual(offences, [], "\n".join([
             "",
             "A system the connector only points at is listed in the sources band:",
