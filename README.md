@@ -105,6 +105,7 @@ or go straight to **http://127.0.0.1:8000/app** and press **Inject Hamburg strik
 | `/about` | What is real here and what is not, and the desk it is modelled on |
 | `/whitepaper` | The technical paper |
 | `/app` | The dashboard. This is the demo, and the button lives here |
+| `/video/<clip>` | The hero reel's clips, same-origin. 404 is fine — the hero renders without them |
 | `/api/health` | What a running instance can actually see. First stop when a deploy misbehaves |
 | `/api/gauges` | Live Rhine water levels from PEGELONLINE. The one real number on /how-it-works |
 | `POST /run` | One cycle: refresh risk, decide, draft |
@@ -348,6 +349,8 @@ static/   landing.html - home  ·  product.html  ·  how-it-works.html
           use-cases.html  ·  about.html  ·  whitepaper.html
           index.html - the dashboard
           fonts/ - Geist Sans + Mono, self-hosted (no CDN, ever)
+          video/ - the hero reel's clips; the .mp4s are gitignored,
+                   and the page renders fine without them
 tests/    the guards: nothing is ever sent, and every action goes through the TMS
 *.md      the planning docs; CLAUDE.md is the working summary
 ```

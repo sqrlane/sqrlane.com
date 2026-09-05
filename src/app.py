@@ -39,6 +39,7 @@ PAPER = STATIC_DIR / "whitepaper.html"   # the technical whitepaper, served at /
 PAGES = {name: STATIC_DIR / f"{name}.html"
          for name in ("product", "how-it-works", "use-cases", "about")}
 FONTS_DIR = STATIC_DIR / "fonts"         # Geist, self-hosted: no CDN, ever
+VIDEO_DIR = STATIC_DIR / "video"         # the hero reel; absent in a fresh checkout
 
 app = FastAPI(title="SQRlane",
               description="Demo prototype. Drafts emails; sends nothing.")
@@ -106,6 +107,28 @@ def whitepaper():
 def dashboard():
     """The demo itself. This is the page with the button."""
     return _page(INDEX, "Dashboard")
+
+
+@app.get("/video/{filename}")
+def video(filename: str):
+    """The hero reel's clips, served from static/video/.
+
+    Same-origin like everything else the pages load: the promise is that no
+    page fetches anything from another host, and a CDN-hosted background video
+    would break it for the sake of decoration.
+
+    404 is a supported answer, not a fault. The clips are licensed footage that
+    is not in the repository, so a fresh checkout has none - and the hero is
+    built to render exactly as it does today when they are missing. That is the
+    same rule the rest of the page follows: nothing on screen may depend on a
+    fetch that can fail.
+    """
+    # Resolve and confine to VIDEO_DIR so a crafted name cannot walk upward.
+    target = (VIDEO_DIR / filename).resolve()
+    if not target.is_file() or VIDEO_DIR.resolve() not in target.parents:
+        return JSONResponse(status_code=404, content={"error": "No such clip."})
+    return FileResponse(target, media_type="video/mp4", headers={
+        "Cache-Control": "public, max-age=86400"})
 
 
 @app.get("/fonts/{filename}")
