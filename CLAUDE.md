@@ -692,11 +692,12 @@ here too, because this is what the next session reads to find its way around.
 │   ├── index.html            # the dashboard (HTML+CSS+JS in one file)
 │   ├── whitepaper.html       # the technical paper
 │   ├── fonts/                # Geist Sans + Mono, self-hosted - never a CDN
-│   └── video/                # the hero reel's clips. The .mp4s are GITIGNORED
-│                             #   (the ones it was built against are watermarked
-│                             #   iStock comps); README.md there says what to
-│                             #   drop in. A checkout without them renders the
-│                             #   hero exactly as it does with them.
+│   └── video/                # the hero reel's clips, committed on the owner's
+│                             #   instruction. They are watermarked iStock comps
+│                             #   - licensed for layout evaluation, not for
+│                             #   publication - so replace them with licensed
+│                             #   files under the same names. A checkout without
+│                             #   them renders the hero exactly as it does with.
 ├── ml/                       # the ML layer - PREPARED, NOT WIRED. Nothing in
 │   │                         #   src/ imports it and the Vercel bundle excludes it
 │   ├── synth.py              # the synthetic TMS world - bookings, episodes,

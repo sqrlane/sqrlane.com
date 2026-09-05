@@ -31,14 +31,10 @@ ml/data/tms_synthetic_bookings.json
 .vercel
 .env*
 
-# The hero reel's footage. Deliberately not in the repository: the clips this
-# was built against are iStock comps - watermarked previews, licensed for
-# layout evaluation and not for publication - and committing them would put a
-# Getty watermark across the hero of a public site. The page treats their
-# absence as a supported state and renders without them; see
-# static/video/README.md for what to drop in and the one property the
-# footage has to have.
-static/video/*.mp4
-
-# Where the comps were downloaded to. Same reason.
+# The folder the reel's clips were downloaded into; the clips themselves live
+# in static/video/ and are committed.
 stock video for landing page/
+
+# The fourth clip, kept locally but not shipped: unused by the reel, and too
+# close to the page background to work on a light hero.
+static/video/04-control-room.mp4

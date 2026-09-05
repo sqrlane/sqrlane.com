@@ -6,10 +6,14 @@ page fetches nothing from another host — the same promise the self-hosted font
 keep, and `tests/test_the_pages_keep_their_promises.py` fails the build if a
 clip is ever pointed at a CDN.
 
-**The `.mp4` files here are gitignored.** A fresh checkout has none, and that is
-a supported state: `/video/...` answers 404, the reel never reveals itself, and
-the hero renders exactly as it does without it. Nothing on screen depends on a
-fetch that can fail.
+The three clips are committed. Their absence is still a supported state -
+`/video/...` answers 404, the reel never reveals itself, and the hero renders
+exactly as it does without it - so removing one breaks nothing.
+
+**These are iStock comp files and carry a Getty watermark.** They were
+committed on the owner's instruction, over a flagged objection: comps are
+licensed for layout evaluation, not publication, and the watermark is visible
+in the frame. Replace them with licensed downloads under the same filenames.
 
 ## What the page expects
 
@@ -26,9 +30,8 @@ any brightness composites correctly without a re-tune.
 
 ## Before putting footage here
 
-- **It has to be licensed for web use.** The clips this was built against were
-  iStock comps — watermarked previews, licensed for layout evaluation only.
-  They are why the ignore rule exists.
+- **It has to be licensed for web use.** What is here now is not: they are
+  iStock comps, watermarked, licensed for layout evaluation only.
 - **Keep them small.** These are decoration on a first screen that reads fine
   without them. Around 1–2 MB each, 720p or less, no audio track.
 - **Prefer footage that is not near-white.** The page background is `#fafafa`.
