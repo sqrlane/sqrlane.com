@@ -139,13 +139,6 @@ h1,h2,h3,h4,p{margin:0}
 .btn-lg{height:44px; padding:0 20px; font-size:15px}
 .btn svg{flex:none}
 
-.pill{display:inline-flex; align-items:center; gap:8px; height:28px; padding:0 12px;
-      border-radius:999px; background:var(--card); border:1px solid var(--border-strong);
-      font-size:12px; line-height:16px; font-weight:500; color:var(--muted);
-      box-shadow:var(--shadow-card)}
-.pill .dot{width:6px; height:6px; border-radius:50%; background:var(--green);
-           box-shadow:0 0 0 3px var(--green-100); flex:none}
-
 .chip{display:inline-flex; align-items:center; gap:5px; padding:2px 7px; border-radius:4px;
       font-size:10px; line-height:16px; font-weight:600; letter-spacing:.05em;
       text-transform:uppercase; background:var(--gray-100); color:var(--muted)}
@@ -558,8 +551,15 @@ h1,h2,h3,h4,p{margin:0}
    nothing fetched. A logo strip that half-loads in front of an audience
    looks broken, and this one cannot. */
 .strip{padding:34px 0; border-top:1px solid var(--border); background:var(--card)}
-.strip .lead{font-size:12px; line-height:16px; color:var(--faint); text-align:center;
-             margin-bottom:22px}
+/* The band's caption. It carries the live dot the hero pill used to - the
+   claim belongs over the sources it is about, not over the headline. The dot
+   is styled here rather than reused from .pill, whose rule is scoped to that
+   class and would leave an invisible empty span. */
+.strip .lead{font-size:12px; line-height:16px; color:var(--faint);
+             margin-bottom:22px; display:flex; align-items:center; gap:8px;
+             justify-content:center}
+.strip .lead .dot{width:6px; height:6px; border-radius:50%; background:var(--green);
+                  box-shadow:0 0 0 3px var(--green-100); flex:none}
 
 /* The viewport. overflow clips the band; the mask softens both ends so items
    arrive and leave rather than appearing at a hard edge. */
@@ -954,8 +954,6 @@ h1,h2,h3,h4,p{margin:0}
   </div>
 
   <div class="wrap">
-    <span class="pill"><span class="dot"></span>60 live sources across six families, no API keys</span>
-
     <h1 class="d1">AI Agents for freight enterprises.</h1>
 
     <p class="sub copy18">
@@ -1233,7 +1231,7 @@ h1,h2,h3,h4,p{margin:0}
 <!-- ======================== SOURCE STRIP ======================== -->
 <section class="strip">
   <div class="wrap">
-    <p class="lead">Sixty sources, keyless and in the open</p>
+    <p class="lead"><span class="dot"></span>60 live sources across six families, no API keys</p>
   </div>
 
   <!-- The marks, defined once and referenced by every copy of the row. They
