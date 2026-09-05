@@ -74,9 +74,13 @@ text{font-family:"Geist",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-se
 <text x="1654.0" y="513.68" font-size="13" font-weight="500" fill="#171717" text-anchor="middle">Augment</text>
 <rect x="1508" y="534" width="292" height="34" rx="6" fill="#f2f2f2" stroke="none"/>
 <text x="1654.0" y="555.68" font-size="13" font-weight="500" fill="#171717" text-anchor="middle">Nexcade</text>
+<rect x="1508" y="576" width="292" height="34" rx="6" fill="#f2f2f2" stroke="none"/>
+<text x="1654.0" y="597.68" font-size="13" font-weight="500" fill="#171717" text-anchor="middle">Zauber</text>
 <line x1="1508" y1="632" x2="1800" y2="632" stroke="#00000014" stroke-width="1"/>
-<text x="1508" y="684" font-size="30" font-weight="600" fill="#171717" letter-spacing="-0.9" class="num">$34M</text>
+<text x="1508" y="684" font-size="30" font-weight="600" fill="#171717" letter-spacing="-0.9" class="num">$96.7M</text>
 <text x="1508" y="708" font-size="12" font-weight="400" fill="#8f8f8f">raised in the last 12 months</text>
+<text x="1508" y="732" font-size="9.5" font-weight="400" fill="#8f8f8f" class="mono">Augment $85M · Nexcade $8.5M · 5U AI $3.2M</text>
+<text x="1508" y="748" font-size="9.5" font-weight="400" fill="#8f8f8f" class="mono">press releases · Zauber's round size undisclosed</text>
 <rect x="1066" y="232" width="380" height="580" rx="12" fill="#fdf3e3" stroke="#96580a3d"/>
 <text x="1090" y="272" font-size="11" font-weight="600" fill="#96580a" letter-spacing="1.4">THE SEAM</text>
 <text x="1090" y="332" font-size="46" font-weight="600" fill="#171717" letter-spacing="-1.6">DECIDE</text>
