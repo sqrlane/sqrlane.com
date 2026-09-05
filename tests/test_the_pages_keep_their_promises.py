@@ -274,6 +274,11 @@ class NamingASystemIsNotClaimingOne(unittest.TestCase):
     # deleted from the band with the guard still green.
     WHERE_NAMED = {
         "product.html": ('<section class="strip targets">', "</section>"),
+        # The home page names two of them among the apps a desk re-keys a
+        # decision into. Different point from the vendor strip - these are
+        # where the work is today, not what the connector points at - but the
+        # disclaimer is the same one and has to be in the same block.
+        "landing.html": ('<div class="apps rv" data-apps>', "</section>"),
         "index.html": ("const SYSTEMS = [", "function connectionsView()"),
     }
 

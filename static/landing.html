@@ -597,44 +597,70 @@ h1,h2,h3,h4,p{margin:0}
   .strip .strip-row.dup{display:none}
 }
 
-/* ---------- contrast cards (the gap) ---------- */
-.gap-grid{margin-top:40px}
-/* shadcn's card anatomy, which is what bklit-ui ships: hairline border, 12px
-   radius, one small shadow, and 24px of padding on every side. The rhythm
-   inside is set per element rather than by one flex gap - the number is an
-   eyebrow for the title and belongs closer to it than the body does. */
-.gap-card{padding:24px; border-radius:var(--r-md); border:1px solid var(--border);
-          background:var(--card); box-shadow:var(--shadow-card); display:flex;
-          flex-direction:column;
-          transition:box-shadow .18s var(--ease), border-color .18s var(--ease),
-                     transform .18s var(--ease)}
-.gap-card.dim{background:var(--card-muted); box-shadow:none}
-.gap-card .n{font-family:"Geist Mono",ui-monospace,monospace; font-size:11px;
-             font-variant-numeric:tabular-nums; letter-spacing:.06em; color:var(--faint);
-             margin-bottom:14px}
-.gap-card h3{margin-bottom:10px}
-.gap-card .copy14{margin-bottom:18px}
-.gap-card .stops{margin-top:auto; padding-top:16px; border-top:1px solid var(--border);
-                 font-size:12px; line-height:16px; color:var(--faint)}
+/* ---------- the apps a decision gets re-typed into ---------- */
+/* A field of tiles that come in on scroll, warmest first. The heat is the
+   argument: the work is not spread evenly across these, it piles up wherever
+   somebody has to key the same decision again. It replaced three cards that
+   made the same point in prose.
 
-/* The two that stop short lift a little when you point at them - enough to
-   read as one set of three rather than two greyed cards and a live one. */
-.gap-card.dim:hover{border-color:var(--border-strong); box-shadow:var(--shadow-card);
-                    transform:translateY(-1px)}
+   Marks are pictograms and the names do the identifying - drawing the real
+   logos would reproduce someone else's trademark, and on a page about a
+   connector a row of real marks reads as an integration list. Two of the names
+   here are systems the connector is built to point at, so the block carries
+   the same disclaimer the vendor strip does. */
+.apps{margin-top:40px; position:relative}
+/* The stroke lives on the <svg> that instances the symbol, never on the
+   <symbol> itself - styling the symbol does not reach the shadow content a
+   <use> creates, and every icon renders as a solid block. The sources strip
+   above does it the same way, on .mk. */
+.apsprite{position:absolute; width:0; height:0; overflow:hidden}
 
-/* The one that closes the loop. This used to be a black border, which is the
-   heaviest mark on the page spent on the quietest signal; a ring and a halo say
-   the same thing without shouting. Still exactly one kind of emphasis - the
-   card does not also get a heavier border, a tint and a bigger radius. */
-.gap-card.us{box-shadow:var(--shadow-ring); transform:translateY(-1px)}
-.gap-card.us:hover{box-shadow:var(--shadow-ring-hover); transform:translateY(-3px)}
-.gap-card.us .stops{color:var(--fg); font-weight:500}
+.apfield{position:relative; display:grid; gap:12px; padding:34px 26px;
+         grid-template-columns:repeat(5,1fr); border-radius:var(--r-lg);
+         border:1px solid var(--border); background:var(--card);
+         box-shadow:var(--shadow-card); overflow:hidden}
+/* The heat under the tiles. Warm toward the middle, gone at the edges - it is
+   a mood, not a measurement, so it carries no number and no legend. */
+.apfield::before{content:""; position:absolute; inset:0; pointer-events:none;
+  background:
+    radial-gradient(520px 260px at 42% 46%, rgba(234,0,29,.07), transparent 70%),
+    radial-gradient(420px 220px at 68% 58%, rgba(170,77,0,.06), transparent 72%)}
 
+.apt{position:relative; z-index:1; display:flex; flex-direction:column; gap:6px;
+     padding:15px 14px 16px; border-radius:var(--r-md); background:var(--card);
+     border:1px solid var(--border);
+     opacity:0; transform:translateY(10px) scale(.96);
+     transition:opacity .5s var(--ease), transform .5s var(--ease)}
+/* Staggered by position, so they arrive as a scatter rather than a wave. */
+.apps.in .apt{opacity:1; transform:none;
+              transition-delay:calc(var(--i, 0) * .085s)}
+.apt-m{width:30px; height:30px; border-radius:var(--r-sm); display:flex;
+       align-items:center; justify-content:center; background:var(--gray-100);
+       color:var(--muted)}
+.apt-m svg{width:17px; height:17px; fill:none; stroke:currentColor;
+           stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round}
+.apt-n{font-size:13px; font-weight:600; letter-spacing:-.2px}
+.apt-d{font-size:11px; line-height:16px; color:var(--faint)}
+/* Three steps of heat. Colour does the same job it does everywhere else here -
+   state, not decoration - and each tile says in words what it is for, so
+   nothing depends on seeing the tint. */
+.apt.heat-2{border-color:var(--red-400); background:var(--red-100)}
+.apt.heat-2 .apt-m{background:#fff; color:var(--red-ink)}
+.apt.heat-1{border-color:var(--amber-400); background:var(--amber-100)}
+.apt.heat-1 .apt-m{background:#fff; color:var(--amber)}
+
+.apnote{margin-top:14px; font-size:11.5px; line-height:17px; color:var(--faint);
+        max-width:78ch}
+.apline{margin-top:16px; font-size:16px; line-height:24px; color:var(--muted)}
+.apline b{color:var(--fg); font-weight:500}
+
+@media (max-width:1000px){.apfield{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:640px){
+  .apfield{grid-template-columns:repeat(2,1fr); padding:20px 14px}
+  .apt-d{display:none}
+}
 @media (prefers-reduced-motion:reduce){
-  .gap-card{transition:none}
-  .gap-card.dim:hover,
-  .gap-card.us,
-  .gap-card.us:hover{transform:none}
+  .apt{opacity:1; transform:none; transition:none}
 }
 
 
@@ -1345,51 +1371,92 @@ h1,h2,h3,h4,p{margin:0}
         a person.</p>
     </div>
 
-    <div class="grid g3 gap-grid rv">
-      <div class="gap-card dim">
-        <span class="n">01</span>
-        <h3 class="h20">Risk platforms</h3>
-        <p class="copy14">Everstream, Interos, Resilinc. They surface the event and score
-          it. Then it is your problem.</p>
-        <p class="stops">Stops at: <b>the alert</b></p>
-      </div>
-      <div class="gap-card dim">
-        <span class="n">02</span>
-        <h3 class="h20">Execution tools</h3>
-        <p class="copy14">The TMS and the visibility stack move the booking once someone
-          has decided it should move. They do not watch the world, and they do not decide.</p>
-        <p class="stops">Starts at: <b>the decision already made</b></p>
-      </div>
-      <div class="gap-card us">
-        <span class="n">03</span>
-        <h3 class="h20">SQRlane</h3>
-        <p class="copy14">Sits on the TMS you already run. Reads the event, triages the
-          book, decides per booking, explains it, drafts the emails, and writes the change
-          back onto the record. Both halves are priced for enterprise; the mid-size desk
-          this is modelled on joins them by hand.</p>
-        <p class="stops">Closes: <b>risk → reroute → comms → the TMS</b></p>
-      </div>
-    </div>
+    <!-- Where the work actually is. The tiles come in on scroll, hottest
+         first, over a field that warms toward the middle - the point being
+         that the load is not spread evenly, it piles up wherever a decision
+         has to be re-typed.
 
-    <div class="grid g2 rv" style="margin-top:34px">
-      <div class="not">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round"><path d="M4 12l5.5 5.5L20 7"/></svg>
-        <div><p class="k">It watches everything that moves a lane</p>
-          <p class="v">Not only headlines. Sixty free sources in six families — the wires
-            and the press next to the port, river gauges, weather and sea state, natural
-            hazards, government filings and the rate a reroute is billed at — read together on
-            every run, because a lane is not moved by news alone.</p></div>
+         The names identify; the marks are generic pictograms. See the note in
+         the sprite below, and the disclaimer under the field - two of these
+         are systems the connector is built to point at, and neither is
+         connected. -->
+    <div class="apps rv" data-apps>
+      <svg class="apsprite" aria-hidden="true" focusable="false"><defs>
+        <!-- Pictograms, not trademarks. Each one says what KIND of tool this
+             is - a mail client, a chat window, a spreadsheet, a container
+             system - and the name beside it does the identifying. Drawing the
+             real marks would reproduce someone else's trademark and, on a page
+             about a connector, would read as an integration none of these has.
+             The same convention the sources and vendor strips already use. -->
+        <symbol id="ap-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5 12 13l8.5-6.5"/></symbol>
+        <symbol id="ap-mail2" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M8 5v14"/></symbol>
+        <symbol id="ap-chat" viewBox="0 0 24 24"><path d="M4 5h16v10H9l-5 4z"/><path d="M8 9h8M8 12h5"/></symbol>
+        <symbol id="ap-team" viewBox="0 0 24 24"><circle cx="9" cy="9" r="3"/><circle cx="17" cy="10.5" r="2.2"/><path d="M3.5 19c.6-3 3-4.6 5.5-4.6s4.9 1.6 5.5 4.6M16 14.6c2 .2 3.6 1.6 4.1 4.4"/></symbol>
+        <symbol id="ap-phone" viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="2.6"/><path d="M10.5 5.6h3"/><circle cx="12" cy="18.2" r="1"/></symbol>
+        <symbol id="ap-grid" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="1.8"/><path d="M3.5 9h17M3.5 14.5h17M9.5 4v16"/></symbol>
+        <symbol id="ap-box" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="10" rx="1.4"/><path d="M7 7v10M11 7v10M15 7v10"/></symbol>
+        <symbol id="ap-swap" viewBox="0 0 24 24"><path d="M4 9h13l-3.2-3.2M20 15H7l3.2 3.2"/></symbol>
+        <symbol id="ap-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><path d="M12 3.6c2.8 2.4 2.8 14.4 0 16.8M12 3.6c-2.8 2.4-2.8 14.4 0 16.8M3.8 9h16.4M3.8 15h16.4"/></symbol>
+        <symbol id="ap-doc" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 12h6M9 15.5h6"/></symbol>
+      </defs></svg>
+
+      <div class="apfield">
+        <div class="apt heat-2" style="--i:0">
+          <span class="apt-m"><svg><use href="#ap-mail"/></svg></span>
+          <span class="apt-n">Gmail</span>
+          <span class="apt-d">carrier and customer mail</span>
+        </div>
+        <div class="apt heat-2" style="--i:1">
+          <span class="apt-m"><svg><use href="#ap-mail2"/></svg></span>
+          <span class="apt-n">Outlook</span>
+          <span class="apt-d">the other half of the mail</span>
+        </div>
+        <div class="apt heat-1" style="--i:2">
+          <span class="apt-m"><svg><use href="#ap-chat"/></svg></span>
+          <span class="apt-n">Slack</span>
+          <span class="apt-d">asking who has picked it up</span>
+        </div>
+        <div class="apt heat-1" style="--i:3">
+          <span class="apt-m"><svg><use href="#ap-team"/></svg></span>
+          <span class="apt-n">Teams</span>
+          <span class="apt-d">the same question, again</span>
+        </div>
+        <div class="apt heat-2" style="--i:4">
+          <span class="apt-m"><svg><use href="#ap-phone"/></svg></span>
+          <span class="apt-n">WhatsApp</span>
+          <span class="apt-d">the driver, the agent, the quay</span>
+        </div>
+        <div class="apt heat-2" style="--i:5">
+          <span class="apt-m"><svg><use href="#ap-grid"/></svg></span>
+          <span class="apt-n">Excel</span>
+          <span class="apt-d">the sheet that shadows the TMS</span>
+        </div>
+        <div class="apt heat-2" style="--i:6">
+          <span class="apt-m"><svg><use href="#ap-box"/></svg></span>
+          <span class="apt-n">CargoWise</span>
+          <span class="apt-d">where the booking actually lives</span>
+        </div>
+        <div class="apt heat-1" style="--i:7">
+          <span class="apt-m"><svg><use href="#ap-swap"/></svg></span>
+          <span class="apt-n">TIMOCOM</span>
+          <span class="apt-d">finding the truck</span>
+        </div>
+        <div class="apt heat-1" style="--i:8">
+          <span class="apt-m"><svg><use href="#ap-globe"/></svg></span>
+          <span class="apt-n">Carrier portals</span>
+          <span class="apt-d">one login per carrier</span>
+        </div>
+        <div class="apt heat-0" style="--i:9">
+          <span class="apt-m"><svg><use href="#ap-doc"/></svg></span>
+          <span class="apt-n">PDF</span>
+          <span class="apt-d">the bill of lading, re-typed</span>
+        </div>
       </div>
-      <div class="not">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round"><path d="M4 12l5.5 5.5L20 7"/></svg>
-        <div><p class="k">And then it does the TMS work — this is the big one</p>
-          <p class="v">Every decision comes back as the change it implies on the booking it
-            came from: the exception, the discharge port, the routing code, the revised ETA,
-            each drafted mail on the communication log. Queued against the record, named by
-            the agent that made it, waiting on one click. The desk stops re-typing.</p></div>
-      </div>
+      <p class="apnote">None of these is connected. SQRlane reads the booking through one
+        demo connector and writes nothing &mdash; no vendor, no credential, no endpoint, and
+        nothing is ever written. The marks are generic pictograms, not anyone's logo.</p>
+      <p class="apline">Every one of them is somewhere a decision gets typed again.
+        <b>That re-typing is the job SQRlane takes.</b></p>
     </div>
   </div>
 </section>
@@ -1584,6 +1651,23 @@ h1,h2,h3,h4,p{margin:0}
     });
   }, { rootMargin: "0px 0px -8% 0px", threshold: 0.05 });
   items.forEach(function (el) { io.observe(el); });
+})();
+
+/* The app field. The tiles are staggered off one class on the container, so
+   the whole scatter is one observer rather than ten, and it fires once - a
+   field that replays every time it scrolls back into view is a fidget. The
+   tiles are already visible without this (see the reduced-motion rule); the
+   class only ever gets added. */
+(function () {
+  var apps = document.querySelector("[data-apps]");
+  if (!apps) return;
+  if (!("IntersectionObserver" in window)) { apps.classList.add("in"); return; }
+  var io = new IntersectionObserver(function (es) {
+    es.forEach(function (e) {
+      if (e.isIntersecting) { apps.classList.add("in"); io.disconnect(); }
+    });
+  }, { threshold: 0.2 });
+  io.observe(apps);
 })();
 
 /* The hero reel. Four clips, one at a time, and the whole thing is optional:
