@@ -293,13 +293,20 @@ h1,h2,h3,h4,p{margin:0}
 
 /* ---------- product mock (a real-looking SQRlane board, in HTML) ------- */
 .shot{margin:56px auto 0; max-width:1000px; position:relative}
-.shot::after{content:""; position:absolute; left:6%; right:6%; bottom:-1px; height:150px;
-  background:linear-gradient(to bottom, transparent, var(--bg) 85%); pointer-events:none}
+/* The window is a preview of a screen that carries on below the fold, so it
+   fades out rather than ending on a border. The gradient underneath used to do
+   this alone, but it was inset 6% and stopped short of the frame's own bottom
+   edge - which left exactly the hairline it was meant to hide. The mask on the
+   frame is what actually removes it; the gradient stays to ground the shadow. */
+.shot::after{content:""; position:absolute; left:0; right:0; bottom:-1px; height:120px;
+  background:linear-gradient(to bottom, transparent, var(--bg) 92%); pointer-events:none}
 /* The one object on the page that is not a card: a browser window standing in
    for a screenshot. It keeps the lift and the 16px radius because flattening it
    turns the hero shot into an inline table - but the frame is a hairline now,
    like everything else. Being the only lifted thing is what makes it read. */
-.frame{background:var(--card); border:1px solid var(--border); border-radius:var(--r-lg);
+.frame{-webkit-mask-image:linear-gradient(to bottom, #000 74%, rgba(0,0,0,.4) 91%, transparent 100%);
+               mask-image:linear-gradient(to bottom, #000 74%, rgba(0,0,0,.4) 91%, transparent 100%);
+       background:var(--card); border:1px solid var(--border); border-radius:var(--r-lg);
        box-shadow:var(--shadow-lift); overflow:hidden; text-align:left}
 .frame-bar{height:38px; display:flex; align-items:center; gap:7px; padding:0 14px;
            border-bottom:1px solid var(--border); background:var(--card-muted)}
@@ -505,7 +512,19 @@ h1,h2,h3,h4,p{margin:0}
       border-top:1px solid var(--border); background:var(--card-muted)}
 .w-approve{margin-left:auto; height:26px; padding:0 12px; border-radius:var(--r-sm);
            background:var(--fg); color:#fff; font-size:11.5px; font-weight:500;
-           display:inline-flex; align-items:center; white-space:nowrap}
+           display:inline-flex; align-items:center; gap:7px; white-space:nowrap;
+           transition:background .25s var(--ease)}
+/* The spinner has no width until it is working, so the button does not sit
+   with a gap in it while idle. */
+.w-spin{width:0; height:11px; border-radius:50%; border:1.6px solid transparent;
+        border-top-color:#fff; border-right-color:#fff; opacity:0;
+        transition:width .2s var(--ease), opacity .2s var(--ease)}
+.w-approve.working .w-spin{width:11px; opacity:1; animation:w-spin .7s linear infinite}
+@keyframes w-spin{to{transform:rotate(360deg)}}
+.w-approve.done{background:var(--green)}
+@media (prefers-reduced-motion:reduce){
+  .w-spin{animation:none}
+}
 
 /* the write-back */
 .w-fields{display:flex; flex-direction:column; gap:6px}
@@ -1160,7 +1179,8 @@ h1,h2,h3,h4,p{margin:0}
               </div>
               <div class="w-mf">
                 <span class="w-mini">Carrier mail drafted too &mdash; booking amendment, different voice</span>
-                <span class="w-approve">Approve &amp; send</span>
+                <span class="w-approve" data-wk-approve>
+                  <i class="w-spin"></i><span data-wk-approve-t>Approve</span></span>
               </div>
             </div>
           </div>
@@ -2019,10 +2039,38 @@ h1,h2,h3,h4,p{margin:0}
     if (urlEl) urlEl.textContent = w[2];
   }
 
+  /* The approve button, taking a beat. A real one does not resolve instantly
+     and a mock that does reads as a picture rather than software.
+
+     It lands on "Approved", never "Sent". The same pane says nothing is sent
+     two lines above, and a mock that contradicts itself on one screen is worse
+     than one that is undramatic. */
+  var approve = shot.querySelector("[data-wk-approve]");
+  var approveT = shot.querySelector("[data-wk-approve-t]");
+
+  function resetApprove() {
+    if (!approve) return;
+    approve.classList.remove("working", "done");
+    approveT.textContent = "Approve";
+  }
+
+  async function pressApprove() {
+    if (!approve) return;
+    await wait(1500);
+    approve.classList.add("working");
+    approveT.textContent = "Approving";
+    await wait(1250);
+    approve.classList.remove("working");
+    approve.classList.add("done");
+    approveT.textContent = "Approved";
+  }
+
   async function walkWindows() {
     for (var i = 1; i < WINDOWS.length; i++) {
       showPane(i);
+      if (WINDOWS[i][0] === "drafts") pressApprove();
       await wait(WINDOWS[i][3]);
+      if (WINDOWS[i][0] === "drafts") resetApprove();
     }
   }
 
