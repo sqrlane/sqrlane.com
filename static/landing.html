@@ -773,7 +773,7 @@ h1,h2,h3,h4,p{margin:0}
    write-back row, and a bare .k here reached into it and gave every label a
    card's border, background and 26px of padding. Same trap as .mk/.sysmk on
    the dashboard: grep a class before claiming it. */
-.kcard{display:flex; flex-direction:column; padding:26px 24px 22px; border-radius:var(--r-md);
+.kcard{display:flex; flex-direction:column; padding:28px 24px 26px; border-radius:var(--r-md);
        border:1px solid var(--border); background:var(--bg)}
 .kv{font-size:52px; line-height:56px; font-weight:600; letter-spacing:-2.6px;
     font-variant-numeric:tabular-nums}
@@ -781,11 +781,9 @@ h1,h2,h3,h4,p{margin:0}
    eye lands on rather than competing with "h" and "EUR". */
 .kv u{text-decoration:none; font-size:24px; font-weight:500; letter-spacing:-.8px;
       color:var(--faint)}
-.kl{margin-top:10px; font-size:15px; line-height:22px; font-weight:600; letter-spacing:-.3px}
-.kd{margin-top:10px; font-size:13px; line-height:19px; color:var(--muted)}
-.kt{margin-top:auto; padding-top:16px; font-size:11px; line-height:16px; font-weight:500;
-    letter-spacing:.06em; text-transform:uppercase; color:var(--faint)}
-.knote{margin-top:22px; max-width:86ch; font-size:12.5px; line-height:19px; color:var(--faint)}
+.kl{margin-top:12px; font-size:15px; line-height:22px; font-weight:600; letter-spacing:-.3px}
+.kd{margin-top:6px; font-size:13px; line-height:19px; color:var(--muted)}
+.knote{margin-top:20px; font-size:12.5px; line-height:19px; color:var(--faint)}
 .knote b{color:var(--fg); font-weight:500}
 @media (max-width:900px){.kgrid{grid-template-columns:1fr}}
 
@@ -1617,22 +1615,17 @@ h1,h2,h3,h4,p{margin:0}
 </section>
 
 <!-- ======================== THE THREE NUMBERS ======================== -->
-<!-- Three figures, and every one of them is counted or computed from a real
-     run - not a customer outcome, because there are no customers yet.
+<!-- Big figure, short label, one line. The shape every B2B page uses.
+     The difference is that each of these can be traced:
 
-     That distinction is the whole reason this band can exist at all. The
-     obvious version of it - "90% automated", "15x ROI", "+12% GP per TEU" -
-     would be invented on a prototype with no baseline, no history and nobody
-     using it, and inventing one is the single thing this project refuses. So
-     the band says what the system does on a run, the caption underneath says
-     exactly that, and each figure names where it comes from:
+       60      counted by expected_sources() before anything is read
+       23h     the event's own trail - 1,380 minutes to the wires
+       46,500  cost_of() over each booking's authored terms
 
-       60      counted by risk_monitor.expected_sources() before anything is read
-       23h     derived from the event's own trail - 1380 minutes to the wires
-       46,500  cost_of() over each booking's authored terms, chosen vs doing nothing
-
-     If a number is ever added here that cannot be traced to code or committed
-     data, delete it rather than sourcing it. -->
+     The one line under the band is not decoration. These are run figures on
+     synthetic bookings, not customer results, and the scenario has to travel
+     with the euro figure because the same board is EUR 614,600 under a Red Sea
+     closure. Keep it short, keep it there. -->
 <section class="section kpi" id="kpi">
   <div class="wrap">
     <div class="head rv">
@@ -1643,38 +1636,23 @@ h1,h2,h3,h4,p{margin:0}
     <div class="kgrid rv">
       <div class="kcard">
         <p class="kv">60</p>
-        <p class="kl">sources read on every run</p>
-        <p class="kd">News, river gauges, port weather and sea state, seismic and natural
-          hazards, government filings and reference rates &mdash; six families, every one
-          free and keyless. Breadth is why a disruption lands here at all when it never
-          becomes a headline.</p>
-        <p class="kt">Six families &middot; no API keys</p>
+        <p class="kl">live sources, every run</p>
+        <p class="kd">Six families, no API keys.</p>
       </div>
       <div class="kcard">
         <p class="kv">23<u>h</u></p>
-        <p class="kl">ahead of the international wires</p>
-        <p class="kd">On the Hamburg strike a regional broadcaster carried it first and the
-          wires followed 1,380 minutes later. The lead is computed from that trail rather
-          than stored beside it, so the claim and the evidence for it cannot drift apart.</p>
-        <p class="kt">Derived, not asserted</p>
+        <p class="kl">ahead of the wires</p>
+        <p class="kd">Computed from the event's own trail.</p>
       </div>
       <div class="kcard">
         <p class="kv"><u>EUR</u> 46,500</p>
-        <p class="kl">exposure avoided on that run</p>
-        <p class="kd">Freight premium, cost per day past the required-by date and deadline
-          breach, priced per booking from its own terms and set against doing nothing. One
-          of the seven contributes nothing: holding it was the least-bad option, not a
-          saving.</p>
-        <p class="kt">Hamburg strike &middot; synthetic bookings</p>
+        <p class="kl">exposure avoided</p>
+        <p class="kd">Priced per booking against doing nothing.</p>
       </div>
     </div>
 
-    <p class="knote">Every figure here is counted or computed from a run of the demo on
-      synthetic bookings, and each one names the scenario it belongs to &mdash; the same
-      board is EUR 614,600 under a Red Sea closure. <b>None of them is a customer
-      outcome.</b> There are no customers yet, so there is no conversion rate, no ROI and
-      no hours-saved figure on this page, and there will not be one until something has
-      actually been measured.</p>
+    <p class="knote">From one run on the Hamburg strike, over synthetic bookings.
+      <b>Not customer results</b> &mdash; there are none yet.</p>
   </div>
 </section>
 
