@@ -706,9 +706,10 @@ here too, because this is what the next session reads to find its way around.
 │   ├── data/                 # sample committed; the full book is gitignored
 │   └── reports/              # evaluation.json / .md - synthetic-world numbers
 ├── tests/                    # ten suites, one per claim the demo makes out loud
-├── tools/build_rhine_map.py  # DEAD - drew the corridor map that went with the
-│                             #   worked example when the site was split
-├── scratch/genheat.py        # DEAD - same, for that section's heatmap
+├── tools/build_rhine_map.py  # regenerates the whitepaper's corridor plate.
+│                             #   NOT dead: it also drew the landing page's map,
+│                             #   which went when the site was split, but the
+│                             #   paper's first figure is still its output
 ├── docs/dashboard.png        # the README's screenshot
 └── risk_state.json           # written at runtime (gitignored)
 ```
@@ -1165,8 +1166,8 @@ matches. With preset `Other` and no build step, "uploaded" means the whole check
 minus `.vercelignore` — so `/src/config.py`, `/tests/...` and the pitch-deck SVGs all
 answered 200 on the live domain (found 2026-09-05; `.env` was never uploaded, so no key
 was exposed). Legacy `routes` are evaluated *before* the filesystem, which is why the
-catch-all uses them. `.vercelignore` now also drops `tests/`, `ml/`, `deck/`, `scratch/`
-and `tools/` — none is imported by `src/` — so they never leave the machine. **After any
+catch-all uses them. `.vercelignore` now also drops `tests/`, `ml/`, `deck/`, `tools/`
+and `.claude/` — none is imported by `src/` — so they never leave the machine. **After any
 deploy, `GET /src/config.py` must 404.** `routes` cannot coexist with `rewrites`,
 `redirects`, `headers` or `cleanUrls`; if one of those is ever needed it has to be
 expressed inside `routes` too.
