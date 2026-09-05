@@ -7,3 +7,12 @@ trade-risk-agent-docs.zip
 __pycache__/
 risk_state.json
 .env
+
+# Not runtime. Nothing in src/ imports any of these, so they have no business
+# on the deployment at all - and until vercel.json switched from `rewrites` to
+# `routes`, every file uploaded here was also served as a public static file.
+tests/
+ml/
+deck/
+scratch/
+tools/

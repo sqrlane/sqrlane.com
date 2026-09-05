@@ -627,7 +627,7 @@ here too, because this is what the next session reads to find its way around.
 ├── .env                      # runtime AI key — NEVER committed
 ├── .gitignore                # must list .env, __pycache__/, .venv/, risk_state.json
 ├── requirements.txt
-├── vercel.json               # rewrites every path to the function; lists includeFiles
+├── vercel.json               # routes every path to the function; lists includeFiles
 ├── api/index.py              # re-exports the same FastAPI app for Vercel
 ├── data/
 │   ├── shipments.json        # the book: seven bookings, aged forward at load time
@@ -1115,11 +1115,33 @@ Two things the deck settled that the earlier draft had wrong:
 
 ### Deployed on Vercel
 
-`api/index.py` re-exports the same FastAPI app; `vercel.json` rewrites every path to it
+`api/index.py` re-exports the same FastAPI app; `vercel.json` routes every path to it
 and lists `includeFiles` so `data/` and `static/` are bundled (the Python builder traces
 imports, not data files). Two serverless facts are handled in `config.py`: the app
 directory is read-only, so `risk_state.json` goes to the temp directory; and functions
 have a hard timeout, so the live pull drops to 10s and the classifier cap to 16 items.
+
+**`routes`, not `rewrites` — and the difference was a private repo served in public.**
+Vercel evaluates `rewrites` *after* its filesystem: every file uploaded with the
+deployment is served as a static asset first, and the rewrite fires only when nothing
+matches. With preset `Other` and no build step, "uploaded" means the whole checkout
+minus `.vercelignore` — so `/src/config.py`, `/tests/...` and the pitch-deck SVGs all
+answered 200 on the live domain (found 2026-09-05; `.env` was never uploaded, so no key
+was exposed). Legacy `routes` are evaluated *before* the filesystem, which is why the
+catch-all uses them. `.vercelignore` now also drops `tests/`, `ml/`, `deck/`, `scratch/`
+and `tools/` — none is imported by `src/` — so they never leave the machine. **After any
+deploy, `GET /src/config.py` must 404.** `routes` cannot coexist with `rewrites`,
+`redirects`, `headers` or `cleanUrls`; if one of those is ever needed it has to be
+expressed inside `routes` too.
+
+**`"framework": null` is load-bearing too.** Vercel's FastAPI preset treats the app as a
+"backend framework project" and applies the catch-all *as a path rewrite*: the app is
+handed `/api/index` whatever was requested, so FastAPI answers `{"detail":"Not Found"}`
+on every path — the 404-everything `sqrlane-com` sat in for ten days (its build log even
+warns: *internal rewrites in backend framework projects now route requests using the
+rewritten destination path*). Pinning the preset to none in `vercel.json` means it cannot
+drift in the dashboard, and the classic Python builder hands the function the original
+path — which `/api/health` reports back as `path_seen_by_app`.
 
 `GROQ_API_KEY` lives in Vercel's environment variables. **Adding it requires a redeploy** —
 Vercel bakes env vars in at deploy time, so an existing deployment will not pick it up.
@@ -1137,7 +1159,8 @@ Two things a fresh project needs, and both have caused a 404 already:
 - **`GROQ_API_KEY` must be set, then redeployed.** Vercel bakes env vars in at deploy
   time, so an existing deployment will not pick one up.
 
-Check `Root Directory` is empty and the framework preset is `Other`; either one pointed
+Check `Root Directory` is empty and the framework preset is `Other` (`vercel.json` now pins
+the preset, so only the root directory is still a dashboard setting); either one pointed
 elsewhere 404s every path. `/api/health` is the first thing to open once it answers.
 
 Deploy for sharing a link; run `uvicorn` locally for a demo you are presenting.

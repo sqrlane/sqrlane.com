@@ -28,3 +28,5 @@ tools/.ne-cache/
 # reproducible from its seed (python -m ml.synth --bookings 6000 --seed 7),
 # so only the 50-record sample beside it is committed.
 ml/data/tms_synthetic_bookings.json
+.vercel
+.env*
