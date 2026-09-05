@@ -1,8 +1,8 @@
 # Signal sources — the exhaustive catalogue
 
-Everything SQRlane could read, grouped by family. **Live today** is what the 42
+Everything SQRlane could read, grouped by family. **Live today** is what the 60
 actually are; everything else is a candidate. Nothing here goes on a slide until
-it is wired and answering — the deck says "42 live today, the rest are phase
+it is wired and answering — the deck says "60 live today, the rest are phase
 two" for exactly that reason.
 
 Legend: **F** free/keyless · **K** free but needs a key · **€** paid

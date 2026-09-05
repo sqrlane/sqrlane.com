@@ -1,183 +1,152 @@
 #!/usr/bin/env python3
 """
-Slide 04 - THE HOW (1/2).  Emits deck/slide-04-the-how-1.svg.
+Slide 04 - THE JOB (1/2).  Emits deck/slide-04-the-job-1.svg.
 
-Answers problem one from slide 02: the work is manual. Three parts -
+Sits between slide 03 (The Why) and slide 06 (The How 1/2, formerly numbered
+04 before this slide and its pair were added). Argues what the desk actually
+does on an ordinary file, before any disruption: forty-five days end to end,
+seven parties re-contacted at every stage, and six euros of margin left over
+per hundred billed once the TMS has been re-typed into by hand.
 
-  a dashboard mock, drawn from docs/dashboard.png so it is the real product
-  the desk-work table, one row per job that used to be typed
-  a parallel lane diagram: the agents run at once, each waiting only for the
-  fact it needs, and every open loop closed by another agent rather than a person
+  top     one file, Shanghai to Munich, and the handoffs it takes to close it
+  bottom  what the TMS holds vs. what it does not, beside what a clean file
+          actually earns once every hour on that bar has been paid for
 
-Roles are verbatim from src/roster.py; the tags are what they are today.
+Source: K+N (Kuehne+Nagel) Sea Logistics FY25 segment disclosure, the same
+filing "The Why" already cites for the sector's economics.
 """
 from deckkit import *
 
-GREEN, GREEN_BG = "#0f7b3f", "#e7f5ec"
-BLUE, BLUE_BG = "#006bff", "#e8f1ff"
+GREEN = "#0f7b3f"
 
 s = Slide()
-s.header("04 — THE HOW (1/2)",
-         "The desk work does itself.",
-         "The same six systems. Nobody re-types anything between them any more.")
+s.header("04 — THE JOB (1/2)",
+         "Forty-five days, seven parties, €127.",
+         "The TMS just stores the booking, it does not decide or move things for the forwarders. "
+         "More than 40% of the day is spent coordinating between channels and systems.")
 
 # =========================================================================
-# THE PRODUCT, AS IT LOOKS
+# ONE FILE, END TO END + WHO THE FORWARDER TALKS TO
 # =========================================================================
-DX, DY, DW, DH = M, 216, 830, 354
-s.card(DX, DY, DW, DH, fill=CARD, stroke=BORDER_STRONG)
-s.raw(f'<rect x="{DX}" y="{DY}" width="{DW}" height="38" rx="{RMD}" fill="{SURFACE}"/>')
-s.raw(f'<rect x="{DX}" y="{DY+26}" width="{DW}" height="12" fill="{SURFACE}"/>')
-s.line(DX, DY + 38, DX + DW, DY + 38, BORDER)
-s.text(DX + 16, DY + 25, "SQRlane / Overview", 11.5, 500, MUTED)
-s.card(DX + DW - 150, DY + 8, 134, 22, fill=FG, stroke="none", rx=R)
-s.text(DX + DW - 83, DY + 23, "Inject Hamburg strike", 9.5, 600, CARD, anchor="middle")
+TY, TH = 216, 424
+s.card(M, TY, CW, TH, stroke=BORDER_STRONG)
+tx = M + 32
+s.text(tx, TY + 34, "ONE FILE, END TO END", 10, 700, FAINT, ls=1.4)
+s.text(tx + 220, TY + 34, "Shanghai to Munich", 12, 400, MUTED)
+s.raw(f'<text x="{W-M-32}" y="{TY+38}" font-size="20" font-weight="600" fill="{FG}" '
+      f'text-anchor="end" class="num">45 days</text>')
 
-# sidebar
-SBW = 116
-s.line(DX + SBW, DY + 38, DX + SBW, DY + DH, BORDER)
-s.raw(f'<rect x="{DX+14}" y="{DY+52}" width="14" height="14" rx="4" fill="{FG}"/>')
-s.text(DX + 34, DY + 63, "SQRlane", 10, 600, FG)
-for j, (nav, n) in enumerate((("Overview", ""), ("Shipments", "7"), ("Risk feed", "1"),
-                              ("Approvals", "18"), ("Map", "7"), ("Simulation", ""),
-                              ("TMS link", "12"))):
-    y = DY + 88 + j * 22
-    if j == 0:
-        s.card(DX + 8, y - 11, SBW - 16, 19, fill=SURFACE, stroke="none", rx=4)
-    s.text(DX + 14, y, nav, 9.5, 600 if j == 0 else 400, FG if j == 0 else MUTED)
-    if n:
-        s.text(DX + SBW - 14, y, n, 9, 500, FAINT, anchor="end", cls="mono")
+# the clock: seven bands across 45 days, only the two that matter labelled
+BX, BW_, BY = tx, CW - 64, TY + 76
+s.text(tx, TY + 60, "the clock", 11, 500, MUTED)
+DAYS = [2, 3, 2, 2, 32, 2, 2]   # sums to 45
+assert sum(DAYS) == 45
+cx = BX
+for i, d in enumerate(DAYS):
+    w = BW_ * d / 45
+    big = d == 32
+    fill = SURFACE_2 if big else SURFACE
+    s.raw(f'<rect x="{cx:.1f}" y="{BY}" width="{w:.1f}" height="24" '
+          f'fill="{fill}" stroke="{CARD}" stroke-width="2"/>')
+    if d in (3, 32):
+        s.text(cx + w / 2, BY + 16, f"{d}d", 11.5 if not big else 13, 600, FG, anchor="middle")
+    cx += w
+s.text(BX, BY + 42, "opens", 10.5, 400, FAINT)
+s.text(BX + BW_, BY + 42, "closes", 10.5, 400, FAINT, anchor="end")
 
-CXX = DX + SBW + 18
-s.text(CXX, DY + 62, "WORKERS", 8.5, 700, FAINT, ls=1.2)
-PILLS = [("Risk", "LIVE"), ("Routing", "LIVE"), ("Comms", "LIVE"), ("Rate", "SCR"),
-         ("Milestones", "SCR"), ("Docs", "SCR"), ("Inbox", "SCR"), ("RFQ", "SCR"),
-         ("Booking", "SCR"), ("Invoice", "SCR"), ("Customs", "SCR"), ("TMS Link", "DEMO"),
-         ("Assistant", "SCR")]
-px_, py_ = CXX, DY + 72
-for name, tag in PILLS:
-    w = len(name) * 5.4 + 42
-    if px_ + w > DX + DW - 18:
-        px_, py_ = CXX, py_ + 26
-    live = tag == "LIVE"
-    s.card(px_, py_, w, 21, fill=CARD, stroke=BORDER_STRONG, rx=R)
-    s.text(px_ + 8, py_ + 14, name, 9, 500, FG)
-    s.text(px_ + w - 8, py_ + 14, tag, 7.5, 700, GREEN if live else FAINT, anchor="end")
-    px_ += w + 6
+# the touchpoint grid
+GY = BY + 84
+s.text(tx, GY, "WHO THE FORWARDER TALKS TO", 10, 700, AMBER, ls=1.3)
+s.text(tx + 300, GY, "every dot is a mail, a portal login or a call", 11, 400, FAINT)
+s.text(W - M - 32, GY, "and not an exhaustive list", 10.5, 400, FAINT, anchor="end")
 
-STATS = [("Bookings", "7", "4 on plan · 12 queued back", "3 actioned", BLUE, BLUE_BG),
-         ("Risk events", "1", "Hamburg strike, high", "live", GREEN, GREEN_BG),
-         ("Deadlines at risk", "1", "customer date missed", "breach", "#ea001d", "#feecec"),
-         ("Awaiting approval", "18", "6 drafts · 12 TMS changes", "held", AMBER, AMBER_BG)]
-SW_ = (DW - SBW - 36 - 3 * 10) / 4
-for j, (lab, val, sub, chip, col, bg) in enumerate(STATS):
-    x = CXX + j * (SW_ + 10)
-    s.card(x, DY + 152, SW_, 92, fill=CARD, stroke=BORDER)
-    s.text(x + 12, DY + 174, lab, 8.5, 500, MUTED)
-    s.chip(x + SW_ - 12 - 54, DY + 163, 54, 15, chip, fs=7, fill=bg, col=col, weight=700)
-    s.raw(f'<text x="{x+12}" y="{DY+212}" font-size="26" font-weight="600" fill="{FG}" '
-          f'class="num">{val}</text>')
-    s.text(x + 12, DY + 232, sub, 8, 400, FAINT)
-
-s.card(CXX, DY + 254, DW - SBW - 36, 68, fill=CARD, stroke=BORDER)
-s.text(CXX + 12, DY + 274, "Board outcome", 9.5, 600, FG)
-for j, (lab, n, col) in enumerate((("Rerouted", 2, BLUE), ("Held", 1, AMBER), ("On plan", 4, GREEN))):
-    x = CXX + 12 + j * 150
-    s.raw(f'<circle cx="{x+5}" cy="{DY+298}" r="4" fill="{col}"/>')
-    s.text(x + 16, DY + 302, lab, 9.5, 400, MUTED)
-    s.text(x + 96, DY + 302, str(n), 9.5, 600, FG, cls="mono")
-s.text(DX + DW - 18, DY + 302, "7 shipments · last run 12:00", 8.5, 400, FAINT, anchor="end")
-
-# =========================================================================
-# WHAT USED TO BE TYPED
-# =========================================================================
-TX2, TW2 = 950, W - M - 950
-s.card(TX2, DY, TW2, DH)
-s.raw(f'<rect x="{TX2}" y="{DY}" width="{TW2}" height="38" rx="{RMD}" fill="{SURFACE}"/>')
-s.raw(f'<rect x="{TX2}" y="{DY+26}" width="{TW2}" height="12" fill="{SURFACE}"/>')
-s.line(TX2, DY + 38, TX2 + TW2, DY + 38, BORDER)
-tx = TX2 + 24
-s.text(tx, DY + 24, "What used to be typed", 11.5, 500, MUTED)
-s.text(TX2 + TW2 - 24, DY + 24, "scripted today · src/roster.py", 10, 400, FAINT,
-       anchor="end", cls="mono")
-
-s.text(tx, DY + 66, "WHAT ARRIVES", 9, 700, FAINT, ls=1.2)
-s.text(tx + 250, DY + 66, "AGENT", 9, 700, FAINT, ls=1.2)
-s.text(tx + 380, DY + 66, "WHAT LANDS ON THE BOOKING", 9, 700, FAINT, ls=1.2)
-s.line(tx, DY + 78, TX2 + TW2 - 24, DY + 78, BORDER_STRONG)
-ROWS = [("A rate request", "RFQ", "Quote on the file"),
-        ("Carrier or customer mail", "Inbox", "Reply on the comms log"),
-        ("A bill of lading, an invoice", "Docs", "Fields on the booking"),
-        ("A change to the booking", "Booking", "Amendment, for approval"),
-        ("The carrier's invoice", "Invoice", "Discrepancy, flagged"),
-        ("A new country of entry", "Customs", "Escalation, not a filing"),
-        ("Every one of the above", "TMS Link", "One queued change, gated")]
-for j, (a, ag, l) in enumerate(ROWS):
-    y = DY + 110 + j * 38
-    last = j == len(ROWS) - 1
-    if last:
-        s.card(tx - 10, y - 21, TW2 - 28, 32, fill=SURFACE, stroke="none", rx=R)
-    s.text(tx, y, a, 12.5, 500, FG)
-    s.text(tx + 250, y, ag, 12.5, 600, FG)
-    s.text(tx + 380, y, l, 12.5, 400, MUTED)
+STAGES = ["Enquiry", "Quote", "Book", "Docs", "In transit", "Customs", "Delivery", "Invoice"]
+PARTIES = [
+    ("Customer",       [0, 1, 1, 1, 1, 0, 1, 1], ["email", "phone", "WhatsApp"]),
+    ("Shipping line",  [0, 1, 1, 1, 1, 0, 0, 1], ["portal", "EDI", "email"]),
+    ("Origin agent",   [0, 0, 1, 1, 0, 0, 0, 0], ["email", "WhatsApp"]),
+    ("Port terminal",  [0, 0, 0, 1, 1, 1, 0, 0], ["portal"]),
+    ("Haulier",        [0, 1, 0, 0, 0, 0, 1, 1], ["phone", "WhatsApp"]),
+    ("Customs broker", [0, 0, 0, 1, 0, 1, 1, 0], ["email", "portal"]),
+    ("Consignee",      [0, 0, 0, 0, 1, 1, 1, 1], ["email", "phone"]),
+]
+RLX = tx + 152
+COLW = 118
+RCHX = RLX + len(STAGES) * COLW + 20
+s.line(tx, GY + 20, RCHX + 210, GY + 20, BORDER)
+for c, lab in enumerate(STAGES):
+    s.text(RLX + c * COLW + COLW / 2, GY + 16, lab, 9.5, 600, FAINT, anchor="middle")
+s.text(RCHX, GY + 16, "REACHED ON", 9.5, 600, FAINT)
+row_h = 26
+for r, (party, dots, channels) in enumerate(PARTIES):
+    ry = GY + 40 + r * row_h
+    s.text(tx, ry + 4, party, 12, 500, FG)
+    for c, big in enumerate(dots):
+        cxp = RLX + c * COLW + COLW / 2
+        s.raw(f'<circle cx="{cxp}" cy="{ry}" r="{5 if big else 2.2}" '
+              f'fill="{AMBER if big else GRAY400}"/>')
+    s.text(RCHX, ry + 4, " · ".join(channels), 10, 500, AMBER if channels else FAINT)
+sep_y = GY + 40 + len(PARTIES) * row_h + 6
+s.line(tx, sep_y, W - M - 32, sep_y, BORDER)
+s.text(tx, sep_y + 26,
+       "26 handoffs, seven parties, five channels, before Teams, SMS, a carrier's own portal "
+       "or whatever this customer happens to prefer.", 13, 400, MUTED)
 
 # =========================================================================
-# THE WORKFLOW, AS THE APP SHOWS IT
+# WHERE THE TMS SITS  /  WHAT A CLEAN FILE EARNS
 # =========================================================================
-LY, LH = 594, 286
-s.card(DX, LY, DW, LH, stroke=BORDER_STRONG)
-s.raw(f'<rect x="{DX}" y="{LY}" width="{DW}" height="34" rx="{RMD}" fill="{SURFACE}"/>')
-s.raw(f'<rect x="{DX}" y="{LY+22}" width="{DW}" height="12" fill="{SURFACE}"/>')
-s.line(DX, LY + 34, DX + DW, LY + 34, BORDER)
-for k in range(3):
-    s.raw(f'<circle cx="{DX+18+k*13}" cy="{LY+17}" r="3.5" fill="{GRAY400}"/>')
-s.text(DX + 68, LY + 21, "SQRlane / Shipments / SHP-001", 11, 500, MUTED)
-s.text(DX + DW - 16, LY + 21, "activity", 10, 400, FAINT, anchor="end", cls="mono")
+BY2, BH2 = TY + TH + 28, 260
+BW2 = (CW - 32) / 2
+BX1, BX2 = M, M + BW2 + 32
 
-FLOW = [("09:12", "Inbox", "carrier mail read, linked to SHP-001", GREEN),
-        ("09:12", "Docs", "B/L fields extracted onto the booking", GREEN),
-        ("09:13", "Booking", "amendment drafted for the carrier", GREEN),
-        ("09:13", "Customs", "entry checked, B/L reissue flagged", AMBER),
-        ("09:13", "Invoice", "surcharge reconciled against the rate", GREEN),
-        ("09:14", "TMS Link", "4 changes queued, awaiting approval", FG)]
-for j, (ts, who, what, col) in enumerate(FLOW):
-    y = LY + 62 + j * 33
-    s.text(DX + 20, y, ts, 10.5, 400, FAINT, cls="mono")
-    s.raw(f'<circle cx="{DX+78}" cy="{y-4}" r="4" fill="{col}"/>')
-    if j < len(FLOW) - 1:
-        s.line(DX + 78, y + 2, DX + 78, y + 25, GRAY400, 1.2)
-    s.text(DX + 94, y, who, 12.5, 600, FG)
-    s.text(DX + 190, y, what, 12.5, 400, MUTED)
-    s.chip(DX + DW - 20 - 62, y - 13, 62, 19, "done" if col is not FG else "queued",
-           fs=9, fill=SURFACE, col=MUTED, weight=600)
+s.card(BX1, BY2, BW2, BH2)
+b1x = BX1 + 28
+s.text(b1x, BY2 + 34, "WHERE THE TMS SITS", 10, 700, FAINT, ls=1.4)
+colw = (BW2 - 56) / 2
+s.text(b1x, BY2 + 66, "IT HOLDS", 11, 700, MUTED, ls=1)
+s.text(b1x + colw, BY2 + 66, "IT DOES NOT", 11, 700, AMBER, ls=1)
+HOLDS = ["The booking and its dates", "The rate that was agreed", "The documents on file"]
+NOTS = ["Watch anything", "Decide anything", "Type itself"]
+for i, t in enumerate(HOLDS):
+    y = BY2 + 96 + i * 28
+    s.raw(f'<path d="M{b1x} {y-4} l4 4.5 l9 -10" stroke="{GREEN}" stroke-width="2" '
+          f'fill="none" stroke-linecap="round" stroke-linejoin="round"/>')
+    s.text(b1x + 22, y, t, 12.5, 400, FG)
+for i, t in enumerate(NOTS):
+    y = BY2 + 96 + i * 28
+    xx = b1x + colw
+    s.raw(f'<path d="M{xx} {y-8} l9 9 M{xx+9} {y-8} l-9 9" stroke="{AMBER}" stroke-width="1.8" '
+          f'stroke-linecap="round"/>')
+    s.text(xx + 22, y, t, 12.5, 400, FG)
+s.line(b1x, BY2 + BH2 - 56, BX1 + BW2 - 28, BY2 + BH2 - 56, BORDER)
+s.text(b1x, BY2 + BH2 - 32, "It is the system of record, and the desk is the thing that", 12.5, 400, MUTED)
+s.text(b1x, BY2 + BH2 - 14, "records into it.", 12.5, 400, MUTED)
+
+s.card(BX2, BY2, BW2, BH2)
+b2x = BX2 + 28
+s.text(b2x, BY2 + 34, "WHAT A CLEAN FILE EARNS", 10, 700, AMBER, ls=1.4)
+s.text(BX2 + BW2 - 28, BY2 + 34, "per container", 10, 400, FAINT, anchor="end")
+ROWS = [("Billed to the customer", 1913, 1913, "100.0%", FG, 600),
+        ("Paid to the carrier", -1475, 1475, "-77.1%", MUTED, 400),
+        ("Gross profit", 438, 438, "22.9%", FG, 600),
+        ("Running the desk", -311, 311, "-16.3%", MUTED, 400),
+        ("Left over", 127, 127, "6.6%", AMBER, 700)]
+barx, barw = b2x + 210, BW2 - 210 - 150
+for i, (lab, signed, mag, pct, col, wt) in enumerate(ROWS):
+    y = BY2 + 60 + i * 28
+    s.text(b2x, y, lab, 12, 500 if lab == "Left over" else 400, col if lab == "Left over" else FG)
+    s.raw(f'<rect x="{barx}" y="{y-11}" width="{barw}" height="13" rx="4" fill="{SURFACE}"/>')
+    s.raw(f'<rect x="{barx}" y="{y-11}" width="{barw*mag/1913:.0f}" height="13" rx="4" '
+          f'fill="{AMBER if lab=="Left over" else (GRAY400 if signed<0 else FG)}"/>')
+    s.raw(f'<text x="{BX2+BW2-28-58}" y="{y}" font-size="13" font-weight="{wt}" fill="{col}" '
+          f'text-anchor="end" class="num">{"-" if signed<0 else ""}€{abs(signed):,}</text>')
+    s.text(BX2 + BW2 - 28, y, pct, 12, 600 if lab == "Left over" else 400, col, anchor="end")
+s.line(b2x, BY2 + BH2 - 56, BX2 + BW2 - 28, BY2 + BH2 - 56, BORDER)
+s.text(b2x, BY2 + BH2 - 32, "Six euros and change on every hundred billed.", 13, 600, FG)
+s.text(b2x, BY2 + BH2 - 14, "K+N Sea Logistics FY25 · CHF at 1.07 · gross profit from the 29% conversion rate",
+       10.5, 400, FAINT, cls="mono")
 
 # =========================================================================
-# AND THEY RUN AT ONCE - the same claim, a sixth of the space
-# =========================================================================
-s.card(TX2, LY, TW2, LH)
-s.text(TX2 + 24, LY + 34, "AND THEY RUN AT ONCE", 10, 700, AMBER, ls=1.4)
-LANES = [("Inbox", 0, 5, "starts at once"), ("Docs", 0, 4, "starts at once"),
-         ("RFQ", 0, 3, "starts at once"), ("Booking", 3, 7, "waits for the fields"),
-         ("Invoice", 4, 8, "waits for the agreed rate"), ("Customs", 6, 10, "waits for the new port")]
-L0, LWU = TX2 + 116, 380 / 10
-for j, (name, a, b, why) in enumerate(LANES):
-    y = LY + 62 + j * 24
-    s.text(TX2 + 24, y + 9, name, 10.5, 400, MUTED)
-    s.raw(f'<rect x="{L0}" y="{y+3}" width="{10*LWU}" height="11" rx="3" fill="{SURFACE}"/>')
-    s.raw(f'<rect x="{L0 + a*LWU}" y="{y+3}" width="{(b-a)*LWU}" height="11" rx="3" fill="{AMBER}"/>')
-    s.raw(f'<circle cx="{L0 + b*LWU + 14}" cy="{y+8}" r="5.5" fill="{GREEN_BG}"/>')
-    s.raw(f'<path d="M{L0 + b*LWU + 11} {y+8} l2.2 2.2 l5 -5" stroke="{GREEN}" '
-          f'stroke-width="1.6" fill="none" stroke-linecap="round"/>')
-    s.text(L0 + 400 + 30, y + 12, why, 11, 400, FAINT)
-
-s.line(TX2 + 24, LY + 212, TX2 + TW2 - 24, LY + 212, BORDER)
-s.text(TX2 + 24, LY + 240, "A bar starts when the fact it needs exists, and ends", 13, 500, FG)
-s.text(TX2 + 24, LY + 260, "when its output is on the booking. Nothing waits for", 13, 400, MUTED)
-s.text(TX2 + 24, LY + 280, "a person until the single approval at the end.", 13, 400, MUTED)
-
-s.text(M, 926, "Six systems, one record. The re-typing is gone.", 24, 600, FG, ls=-0.5)
-s.raw(f'<text x="{W-M}" y="922" font-size="30" font-weight="600" fill="{FG}" '
-      f'text-anchor="end" class="num">40%</text>')
-s.text(W - M, 944, "of the day, back", 12, 400, FAINT, anchor="end")
-s.footer("04 / THE HOW 1/2")
-s.write("slide-04-the-how-1.svg")
+s.text(M, BY2 + BH2 + 40, "That is the good day.", 24, 600, FG, ls=-0.5)
+s.footer("04 / THE JOB 1/2")
+s.write("slide-04-the-job-1.svg")

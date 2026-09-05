@@ -74,7 +74,7 @@ def strip(x, w, states, on=FG):
         s.text(sx, TY + 178, v, 9.5, 600 if lit else 500, on if lit else FAINT, ls=0.4, cls="mono")
 
 
-def side(x, label, verb, line, vendors, states, big, big_label):
+def side(x, label, verb, line, vendors, states, big, big_label, source_lines=()):
     s.card(x, TY, W1, TH)
     tx = x + 24
     s.text(tx, TY + 40, label, 11, 600, FAINT, ls=1.4)
@@ -87,15 +87,24 @@ def side(x, label, verb, line, vendors, states, big, big_label):
     s.raw(f'<text x="{tx}" y="{TY+452}" font-size="30" font-weight="600" fill="{FG}" '
           f'letter-spacing="-0.9" class="num">{esc(big)}</text>')
     s.text(tx, TY + 476, big_label, 12, 400, FAINT)
+    for i, ln in enumerate(source_lines):
+        s.text(tx, TY + 500 + i * 16, ln, 9.5, 400, FAINT, cls="mono")
 
 
 side(C1, "RISK PLATFORMS", "Watch, then stop.", "Never touch the booking.",
      ["Everstream", "Interos", "Resilinc"], [1, 0, 0, 0],
      "$1bn", "Interos valuation, 2024")
 
+# Derived: Augment $85M Series A (Sept 2025) + Nexcade $8.5M pre-seed/seed
+# (Oct 2025 + Jul 2026) + 5U AI $3.2M pre-seed (Jul 2026) = $96.7M, all
+# inside the trailing 12 months. Zauber's own round (Sept 2025) is real but
+# its size is not reliably reported, so it is named as a vendor without
+# being added to the sum - never invent the missing number.
 side(C3, "EXECUTION AI", "Act, once you decide.", "Never touch risk.",
-     ["5U AI", "Augment", "Nexcade"], [0, 0, 1, 1],
-     "$34M", "raised in the last 12 months")
+     ["5U AI", "Augment", "Nexcade", "Zauber"], [0, 0, 1, 1],
+     "$96.7M", "raised in the last 12 months",
+     source_lines=["Augment $85M · Nexcade $8.5M · 5U AI $3.2M",
+                    "press releases · Zauber's round size undisclosed"])
 
 # -- the seam itself -------------------------------------------------------
 s.card(C2, TY, W2, TH, fill=AMBER_BG, stroke="#96580a3d")
