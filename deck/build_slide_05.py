@@ -18,9 +18,9 @@ constant) - the same reuse slide 07's map already relies on.
 from deckkit import *
 import json, re
 
-_H = (ROOT / "static" / "index.html").read_text()
+_H = (ROOT / "static" / "index.html").read_text(encoding="utf-8")
 COAST = re.search(r'const COAST\s*=\s*"([^"]+)"', _H).group(1)
-GEO = json.loads((ROOT / "data" / "geo.json").read_text())
+GEO = json.loads((ROOT / "data" / "geo.json").read_text(encoding="utf-8"))
 FR = GEO["_frame"]
 
 

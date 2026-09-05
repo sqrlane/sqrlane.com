@@ -79,7 +79,7 @@ targets, not funded competitors, and carry no figures to drift.)
 
 ## S01 · Cover
 **SQRlane**
-Trade-lane risk, decided.
+AI Agents for freight enterprises.
 `Agents that watch the lane, decide the booking, and do the TMS work.`
 
 *Layout* — Full bleed. Wordmark at optical centre-left. One rule beneath. Bottom band:

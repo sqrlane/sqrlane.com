@@ -6,7 +6,7 @@ Guidance for Claude Code working in this repository.
 
 ## What this project is
 
-**SQRlane** ("Trade-lane risk, decided") — a demo-grade AI-agent prototype for freight
+**SQRlane** ("AI Agents for freight enterprises") — a demo-grade AI-agent prototype for freight
 forwarding. The product name and identity are our own: **never borrow 5U AI's name,
 colours, taglines or Worker names**, and never invent a metric — no traction, accuracy or
 percentage claims. Real reasoning on synthetic shipments is the honest pitch, and a

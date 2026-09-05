@@ -19,9 +19,9 @@ import json, re
 
 # The coastline the product itself draws, reused verbatim so the deck's map and
 # the dashboard's map are the same geometry rather than two hand-drawn guesses.
-_H = (ROOT / "static" / "index.html").read_text()
+_H = (ROOT / "static" / "index.html").read_text(encoding="utf-8")
 COAST = re.search(r'const COAST\s*=\s*"([^"]+)"', _H).group(1)
-GEO = json.loads((ROOT / "data" / "geo.json").read_text())
+GEO = json.loads((ROOT / "data" / "geo.json").read_text(encoding="utf-8"))
 FR = GEO["_frame"]
 
 
