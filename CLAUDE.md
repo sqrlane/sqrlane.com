@@ -1134,6 +1134,15 @@ deploy, `GET /src/config.py` must 404.** `routes` cannot coexist with `rewrites`
 `redirects`, `headers` or `cleanUrls`; if one of those is ever needed it has to be
 expressed inside `routes` too.
 
+**`"framework": null` is load-bearing too.** Vercel's FastAPI preset treats the app as a
+"backend framework project" and applies the catch-all *as a path rewrite*: the app is
+handed `/api/index` whatever was requested, so FastAPI answers `{"detail":"Not Found"}`
+on every path — the 404-everything `sqrlane-com` sat in for ten days (its build log even
+warns: *internal rewrites in backend framework projects now route requests using the
+rewritten destination path*). Pinning the preset to none in `vercel.json` means it cannot
+drift in the dashboard, and the classic Python builder hands the function the original
+path — which `/api/health` reports back as `path_seen_by_app`.
+
 `GROQ_API_KEY` lives in Vercel's environment variables. **Adding it requires a redeploy** —
 Vercel bakes env vars in at deploy time, so an existing deployment will not pick it up.
 
@@ -1150,7 +1159,8 @@ Two things a fresh project needs, and both have caused a 404 already:
 - **`GROQ_API_KEY` must be set, then redeployed.** Vercel bakes env vars in at deploy
   time, so an existing deployment will not pick one up.
 
-Check `Root Directory` is empty and the framework preset is `Other`; either one pointed
+Check `Root Directory` is empty and the framework preset is `Other` (`vercel.json` now pins
+the preset, so only the root directory is still a dashboard setting); either one pointed
 elsewhere 404s every path. `/api/health` is the first thing to open once it answers.
 
 Deploy for sharing a link; run `uvicorn` locally for a demo you are presenting.
