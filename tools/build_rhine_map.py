@@ -1,14 +1,18 @@
-"""build_rhine_map.py - regenerate the Rhine corridor map on the landing page.
+"""build_rhine_map.py - regenerate the Rhine corridor map in the whitepaper.
 
 Not part of the app. Nothing imports it and it never runs at request time: the
-map it produces is pasted into static/landing.html as inline SVG, which is why
-the page fetches no tile, no key and no map service.
+map it produces is pasted into static/whitepaper.html as inline SVG, which is
+why the page fetches no tile, no key and no map service.
+
+It used to feed the landing page's worked example too. That section went when
+the site was split into five pages; the paper's corridor plate is the one
+figure it still draws, and that plate is built with --plain.
 
 Run it when the frame, the gauges or the traced routes need to change:
 
     python3 tools/build_rhine_map.py            # needs network, once
     python3 tools/build_rhine_map.py --plain    # without the gauge readings
-    # then paste the printed <svg> over the one in static/landing.html
+    # then paste the printed <svg> over the one in static/whitepaper.html
 
 Geometry is Natural Earth via its public GitHub mirror:
   ne_50m_admin_0_countries       national outlines
@@ -23,8 +27,10 @@ commented where it happens:
   * The rail alternate is offset off the water so it can be seen, and tapered
     back to zero at the two ports it genuinely shares with the barge.
   * The two solid legs are emitted with pathLength="1" and the alternate is
-    emitted twice, because the landing page draws them on and runs a flow
-    pulse down the alternate. Both are inert without that page's CSS.
+    emitted twice, for a draw-on and a flow pulse down the alternate. The page
+    that ran those went when the site was split, so nothing styles them today -
+    they stay because both are inert without that CSS and cost one attribute
+    and one path, and re-deriving them later would mean re-tracing the route.
 """
 
 import json, math, os, sys, urllib.request
@@ -232,12 +238,12 @@ def stack(k, lines, dx, dy, anchor=None):
     x, y = pt[k]
     return "".join(T(x+dx, y+dy+13*i, s, cls, anchor) for i, (s, cls) in enumerate(lines))
 
-# --plain drops the gauge readings. They are the authored scenario's numbers,
-# and the whitepaper uses this map to evidence a claim about geography - which
-# lanes and chokepoints are modelled - not about water levels. Carrying
-# centimetre readings into a technical paper, away from the "Synthetic
-# scenario" label that sits beside them on the landing page, is exactly how an
-# authored figure starts being read as a live one.
+# --plain drops the gauge readings, and the whitepaper's plate is built with
+# it. They are the authored scenario's numbers, and the paper uses this map to
+# evidence a claim about geography - which lanes and chokepoints are modelled -
+# not about water levels. Carrying centimetre readings into a technical paper,
+# away from the "Synthetic scenario" label that used to sit beside them, is
+# exactly how an authored figure starts being read as a live one.
 PLAIN = "--plain" in sys.argv
 
 if PLAIN:
@@ -272,10 +278,9 @@ svg = f'''<svg class="corridor" viewBox="0 0 {W:.0f} {H}" role="img" aria-label=
           <!-- the alternate first, so the river draws over it -->
           <path class="leg-alt" pathLength="1" d="{p['rail']}"/>
 
-          <!-- the same line once more, carrying the flow pulse the landing page
-               runs along it. It is inert anywhere the page does not style it:
-               stroke="none" is a presentation attribute, and any stylesheet
-               rule outranks one. -->
+          <!-- the same line once more, to carry a flow pulse. Nothing styles
+               it today, and it is inert anywhere that is true: stroke="none" is
+               a presentation attribute, and any stylesheet rule outranks one. -->
           <path class="leg-flow" pathLength="1" fill="none" stroke="none" d="{p['rail']}"/>
 
           <!-- the barge route is the river itself, drawn in its two reaches -->
