@@ -545,8 +545,18 @@ queue a person never sees is not a gate.
 
 `src/tms.py` imports `json`, `datetime` and `config` — and nothing else. There is no
 client, no credential and no endpoint: a write-back is a dict describing a change, and it
-stays a dict. Never present the connector as a live TMS link; it says `connected (demo)`
-everywhere it is surfaced, and a test asserts that.
+stays a dict. Never present the connector as a live TMS link.
+
+**Where that is disclosed changed on 2026-09-05, on the owner's instruction, and the
+rule is now about the page rather than the element.** `src/tms.py` and the dashboard
+still say `connected (demo)` on every operation, and
+`tests/test_tms_is_the_system_of_record.py` asserts it — that has not moved. What moved
+is the landing page's hero mock: it depicts the product, so it shows `connected` like the
+product would, and the disclosure sits in the black banner at the top of the page instead
+(`the TMS link is a demo connector … nothing is ever written`). **The banner is now
+load-bearing.** Delete that clause and the page starts claiming an integration this build
+does not have, with nothing else on the page to correct it. No test catches that — the
+guards read `src/` and the payload, not the mock — so it is on whoever edits the banner.
 
 **`tests/test_signals_read_wide_and_fail_soft.py` holds what breadth costs.** Forty-two
 sources is sixty things that can be down, slow or reshaped in front of an audience, so it

@@ -336,6 +336,36 @@ class NamingASystemIsNotClaimingOne(unittest.TestCase):
         ]))
 
 
+class TheDemoConnectorIsDisclosedSomewhere(unittest.TestCase):
+    """The home page must say the TMS link is a demo connector, somewhere.
+
+    It used to say it inside the hero mock, on the connector chip. The mock now
+    depicts the product and shows `connected`, which is right for a mock and
+    wrong for a page with nothing else - so the disclosure moved to the banner
+    at the top. That makes one clause in one element load-bearing: delete it and
+    the page claims a TMS integration this build does not have.
+
+    Nothing else would catch that. The guards in
+    tests/test_tms_is_the_system_of_record.py read src/ and the run payload, not
+    the marketing copy, so they stay green while the page starts lying.
+    """
+
+    def test_the_home_page_discloses_the_connector(self):
+        html = LANDING.read_text(encoding="utf-8")
+        banner = html[html.index('<div class="banner">'):html.index("</header>")]
+        flat = " ".join(banner.split())
+
+        self.assertIn("demo connector", flat, "\n".join([
+            "",
+            "The home page no longer says the TMS link is a demo connector.",
+            "",
+            "The hero mock shows `connected` because a mock depicts the product. That is",
+            "only honest while the banner carries the disclosure - without it the page is",
+            "claiming an integration this build does not have, and no other guard here",
+            "reads the marketing copy.",
+        ]))
+
+
 class NothingLoadsFromOffOrigin(unittest.TestCase):
     """No CDN, no web font, no tile server. The pages carry their own assets."""
 
