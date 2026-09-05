@@ -339,6 +339,13 @@ class NothingLoadsFromOffOrigin(unittest.TestCase):
         r'<link[^>]+href=["\']([^"\']+)',
         r'<img[^>]+src=["\']([^"\']+)',
         r'<iframe[^>]+src=["\']([^"\']+)',
+        # <video>/<source> are here because the hero carries a background reel
+        # now. A CDN-hosted clip is the easiest way to break the promise this
+        # class exists for, and nothing above would have caught one. data-src
+        # counts too: the reel sets src from it, so an off-origin URL parked
+        # there is an off-origin fetch one frame later.
+        r'<video[^>]+(?:src|data-src)=["\']([^"\']+)',
+        r'<source[^>]+src=["\']([^"\']+)',
         r'url\(\s*["\']?([^)"\']+)',
         r'@import\s+["\']([^"\']+)',
     )

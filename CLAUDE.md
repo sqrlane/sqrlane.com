@@ -691,7 +691,12 @@ here too, because this is what the next session reads to find its way around.
 │   ├── about.html            # what is real here, who it is for, the non-goals
 │   ├── index.html            # the dashboard (HTML+CSS+JS in one file)
 │   ├── whitepaper.html       # the technical paper
-│   └── fonts/                # Geist Sans + Mono, self-hosted - never a CDN
+│   ├── fonts/                # Geist Sans + Mono, self-hosted - never a CDN
+│   └── video/                # the hero reel's clips. The .mp4s are GITIGNORED
+│                             #   (the ones it was built against are watermarked
+│                             #   iStock comps); README.md there says what to
+│                             #   drop in. A checkout without them renders the
+│                             #   hero exactly as it does with them.
 ├── ml/                       # the ML layer - PREPARED, NOT WIRED. Nothing in
 │   │                         #   src/ imports it and the Vercel bundle excludes it
 │   ├── synth.py              # the synthetic TMS world - bookings, episodes,
@@ -1300,6 +1305,24 @@ Scope creep is the failure mode here. None of these are in this build:
 - **Fail soft in front of an audience.** If a live source is slow or down, run the injected scenario
   anyway and show a small note. Never crash the demo.
 - **Never commit `.env`.** If it's about to be staged, stop.
+- **The hero reel is decoration, and decoration may not be load-bearing.** The home
+  page plays three clips behind the hero, one at a time. Every part of it is
+  additive: the markup renders nothing when the clips are absent, the script
+  reveals the band only after a clip has actually produced a frame (a 404 and a
+  codec the browser refuses both look like success until you wait for `playing`),
+  a clip that will not load is skipped, `prefers-reduced-motion` and a metered
+  connection opt out entirely, and only the clip on screen is fetched. **Never
+  let anything on that first screen depend on a clip arriving.**
+
+  Two things were measured rather than eyeballed, and both are in the CSS
+  comments. The wash over the footage uses partial alphas at every stop — one
+  opaque `var(--bg)` stop paints the reel out completely, which is what the
+  first version did. And each clip's opacity is computed at runtime from its
+  own first frame, because the four supplied clips ran 113 to 179 mean
+  luminance against a 250 page: at any single opacity the dark one shouted and
+  the bright one was invisible. Measuring rather than hand-tuning is also what
+  lets the footage be swapped without a re-tune. A clip over ~160 luminance
+  cannot carry this hero at all; one was dropped for that reason.
 - **Both pages are set in Geist**, served from `static/fonts/` — the same typographic
   scale the dashboard's colour tokens came from, so the two pages read as one product.
   Self-hosted, never a CDN: an external font request is one more thing that can fail in
