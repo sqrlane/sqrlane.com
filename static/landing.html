@@ -356,6 +356,74 @@ h1,h2,h3,h4,p{margin:0}
 .st-amber{background:var(--amber-100); color:var(--amber)}
 .st-red{background:var(--red-100); color:var(--red-ink)}
 
+/* ---------- the hero board, playing ---------- */
+/* The mock used to be a still of the finished board. It now plays the loop:
+   calm, the strike goes in, the risk lands, the rows triage one at a time,
+   the counters and the sidebar catch up. Same anatomy as the Worker panels on
+   /product - markup revealed step by step under a drawn cursor, no video file
+   and no player, so it costs no request and cannot buffer.
+
+   The finished state is what is in the HTML. The script rewinds to calm and
+   plays forward, which is what makes the no-JS and reduced-motion cases
+   correct for free. */
+.shot .frame{position:relative}
+
+.wk-cursor{position:absolute; z-index:6; top:0; left:0; opacity:0;
+           transform:translate(-50%,-50%) scale(.9); pointer-events:none;
+           transition:opacity .35s var(--ease),
+                      transform 1.05s cubic-bezier(.4,.02,.2,1)}
+.wk-cursor svg{display:block; fill:var(--fg); stroke:#fff; stroke-width:1.4;
+               filter:drop-shadow(0 2px 4px rgba(0,0,0,.28))}
+.wk-cursor.on{opacity:1}
+/* The press. A ring that expands once under the pointer, the same gesture the
+   real board's buttons make. */
+.wk-cursor::after{content:""; position:absolute; left:2px; top:2px; width:10px; height:10px;
+                  border-radius:50%; border:2px solid var(--fg); opacity:0;
+                  transform:scale(.4)}
+.wk-cursor.tap::after{animation:wk-tap .5s var(--ease)}
+@keyframes wk-tap{
+  0%{opacity:.5; transform:scale(.4)}
+  100%{opacity:0; transform:scale(2.6)}
+}
+
+/* The sweep across the rows while the advisor is working. Not a spinner: a
+   spinner says "wait", and the point of this beat is that something is being
+   read. */
+.wk-scan{position:absolute; left:0; right:0; height:64px; z-index:4; opacity:0;
+         pointer-events:none;
+         background:linear-gradient(to bottom, transparent,
+                    color-mix(in srgb, var(--blue) 9%, transparent) 45%, transparent)}
+.wk-scan.on{opacity:1; transition:transform 1.5s linear, opacity .3s var(--ease)}
+
+/* The button being pressed. */
+.board .fake-btn{transition:transform .12s var(--ease), filter .12s var(--ease)}
+.board .fake-btn.press{transform:translateY(1px); filter:brightness(1.7)}
+
+/* A row landing on its decision. The badge swaps text and colour, so it gets
+   one short lift to say the change was made rather than always having been
+   there. */
+.board .row{transition:background .45s var(--ease)}
+.board .row.settling{background:color-mix(in srgb, var(--blue) 5%, transparent)}
+.board .st-badge{transition:opacity .3s var(--ease), transform .3s var(--ease)}
+.board .st-badge.swap{opacity:0; transform:translateY(-3px)}
+
+/* The event, arriving. It comes in over the stats row rather than pushing the
+   board down - a mock that reflows mid-play reads as a bug. */
+.wk-evt{position:absolute; z-index:5; left:50%; top:52px; transform:translate(-50%,-8px);
+        display:flex; align-items:center; gap:9px; padding:8px 13px;
+        border-radius:999px; background:var(--card); border:1px solid var(--red-400);
+        box-shadow:var(--shadow-lift); font-size:11.5px; line-height:16px;
+        color:var(--fg); white-space:nowrap; opacity:0;
+        transition:opacity .4s var(--ease), transform .4s var(--ease)}
+.wk-evt.on{opacity:1; transform:translate(-50%,0)}
+.wk-evt b{font-weight:500}
+.wk-evt .d{width:6px; height:6px; border-radius:50%; background:var(--red);
+           box-shadow:0 0 0 3px var(--red-100); flex:none}
+
+@media (prefers-reduced-motion:reduce){
+  .wk-cursor,.wk-scan,.wk-evt{display:none !important}
+}
+
 /* ---------- source strip ---------- */
 /* The sources travel right to left as one continuous band. Three identical
    copies of the row sit side by side inside the track; the track slides left
@@ -759,8 +827,16 @@ h1,h2,h3,h4,p{margin:0}
     </div>
 
     <!-- A rendering of the actual board, drawn in HTML so it stays sharp. -->
-    <div class="shot">
+    <div class="shot" data-walk>
       <div class="frame">
+        <!-- The pointer. Drawn, not a cursor image: it has to be visible on
+             a light board and to sit above the rows it points at. -->
+        <span class="wk-cursor" data-wk-cursor aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18">
+            <path d="M5 2.5l13.2 8.1-5.7 1.1-2.6 5.3z"/>
+          </svg>
+        </span>
+        <span class="wk-scan" data-wk-scan aria-hidden="true"></span>
         <div class="frame-bar">
           <i></i><i></i><i></i>
           <span class="url mono">sqrlane / overview</span>
@@ -1396,6 +1472,171 @@ h1,h2,h3,h4,p{margin:0}
   });
 
   advance();
+})();
+
+/* The hero board, playing the loop.
+
+   The board in the HTML is the *finished* state, so a reader with no JS - or
+   one who has asked for less motion - gets the correct board and this script
+   simply never runs. It reads that finished state, rewinds the board to calm,
+   and plays forward to it. Nothing here invents a number: every value it
+   lands on was already on the page.
+
+   It plays once when the mock first comes into view, then loops with a long
+   pause. A hero that animates forever while someone is trying to read the
+   headline beside it is noise. */
+(function () {
+  var shot = document.querySelector("[data-walk]");
+  if (!shot) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  var frame  = shot.querySelector(".frame");
+  var cursor = shot.querySelector("[data-wk-cursor]");
+  var scan   = shot.querySelector("[data-wk-scan]");
+  var btn    = shot.querySelector(".fake-btn");
+  var rows   = [].slice.call(shot.querySelectorAll(".row"));
+  var stats  = [].slice.call(shot.querySelectorAll(".mini-stats .v"));
+  var side   = [].slice.call(shot.querySelectorAll(".board-side .n"));
+  if (!btn || !rows.length) return;
+
+  /* --- remember where it ends up, then rewind ------------------------- */
+  var FINAL = rows.map(function (r) {
+    var b = r.querySelector(".st-badge");
+    return { el: b, cls: b.className, text: b.textContent };
+  });
+  var STATS = stats.map(function (v) { return v.textContent.trim(); });
+  var SIDE  = side.map(function (n) { return n.textContent.trim(); });
+
+  var CALM_BADGE = '<i></i>On plan';
+  function calm() {
+    FINAL.forEach(function (f) {
+      f.el.className = "st-badge st-green";
+      f.el.innerHTML = CALM_BADGE;
+    });
+    /* Bookings read out of the TMS is the one figure that does not move - the
+       book is the same size before and after. The other three start empty
+       because nothing has been decided yet. */
+    stats.forEach(function (v, i) { if (i > 0) v.textContent = i === 3 ? "0/3" : "0"; });
+    side.forEach(function (n, i) { n.textContent = i === 0 ? SIDE[0] : "0"; });
+    rows.forEach(function (r) { r.classList.remove("settling"); });
+  }
+
+  /* --- small helpers -------------------------------------------------- */
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  function moveTo(el, dx, dy) {
+    var f = frame.getBoundingClientRect(), t = el.getBoundingClientRect();
+    cursor.style.transform = "translate(-50%,-50%) scale(1)";
+    cursor.style.left = (t.left - f.left + t.width / 2 + (dx || 0)) + "px";
+    cursor.style.top  = (t.top  - f.top  + t.height / 2 + (dy || 0)) + "px";
+  }
+
+  /* Counting is done in steps rather than by setting the number, because the
+     figure ticking is what makes it read as work happening rather than as a
+     slide changing. */
+  function countTo(el, target) {
+    var m = /^(\d+)/.exec(target);
+    if (!m) { el.textContent = target; return; }
+    var end = +m[1], suffix = target.slice(m[1].length), at = 0;
+    var step = setInterval(function () {
+      at += 1;
+      el.textContent = at + suffix;
+      if (at >= end) clearInterval(step);
+    }, Math.max(60, 420 / Math.max(end, 1)));
+  }
+
+  var evt = document.createElement("span");
+  evt.className = "wk-evt";
+  evt.innerHTML = '<span class="d"></span><b>Warning strike &mdash; Port of Hamburg</b>' +
+                  ' &middot; caught from a regional source';
+  frame.appendChild(evt);
+
+  /* --- the run -------------------------------------------------------- */
+  async function play() {
+    calm();
+    evt.classList.remove("on");
+    cursor.classList.remove("on", "tap");
+    scan.classList.remove("on");
+    await wait(700);
+
+    // the pointer arrives and presses the trigger
+    moveTo(btn, 0, 0);
+    cursor.classList.add("on");
+    await wait(1250);
+    cursor.classList.add("tap");
+    btn.classList.add("press");
+    await wait(180);
+    btn.classList.remove("press");
+    await wait(320);
+    cursor.classList.remove("tap");
+
+    // the event lands, and the risk feed counts it
+    evt.classList.add("on");
+    countTo(side[1], SIDE[1]);
+    await wait(1150);
+
+    // the advisor reads the board
+    var top = rows[0].getBoundingClientRect().top - frame.getBoundingClientRect().top;
+    scan.style.transition = "none";
+    scan.style.transform = "translateY(" + top + "px)";
+    scan.classList.add("on");
+    await wait(40);
+    scan.style.transition = "transform 1.5s linear, opacity .3s var(--ease)";
+    scan.style.transform = "translateY(" + (top + rows.length * 26) + "px)";
+    await wait(1500);
+    scan.classList.remove("on");
+
+    // then each decision lands on its own booking, in board order
+    for (var i = 0; i < FINAL.length; i++) {
+      var f = FINAL[i];
+      if (f.cls === "st-badge st-green") continue;      // nothing changed here
+      moveTo(rows[i], 118, 0);
+      f.el.classList.add("swap");
+      rows[i].classList.add("settling");
+      await wait(240);
+      f.el.className = f.cls + " swap";
+      f.el.textContent = f.text;
+      f.el.innerHTML = '<i></i>' + f.text;
+      await wait(30);
+      f.el.classList.remove("swap");
+      await wait(520);
+      rows[i].classList.remove("settling");
+    }
+
+    // the counters catch up with what was decided
+    cursor.classList.remove("on");
+    countTo(stats[1], STATS[1]);
+    await wait(260);
+    countTo(stats[2], STATS[2]);
+    await wait(260);
+    stats[3].textContent = STATS[3];
+    countTo(side[2], SIDE[2]);                          // approvals waiting
+    await wait(260);
+    countTo(side[3], SIDE[3]);                          // changes queued to the TMS
+    await wait(2600);
+    evt.classList.remove("on");
+  }
+
+  /* Plays when it is actually on screen, and loops with a long pause so it is
+     not competing with the headline beside it. */
+  var running = false;
+  async function loop() {
+    if (running) return;
+    running = true;
+    while (true) {
+      if (!document.hidden) await play();
+      await wait(5200);
+    }
+  }
+
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { io.disconnect(); loop(); } });
+    }, { threshold: 0.25 });
+    io.observe(shot);
+  } else {
+    loop();
+  }
 })();
 
 /* The source band. One row is written in the HTML; two hidden copies are
