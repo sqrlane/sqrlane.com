@@ -641,9 +641,17 @@ h1,h2,h3,h4,p{margin:0}
        it carries the band on its own rather than needing to be pushed. Swap
        the file and the script re-measures; nothing here is tuned to this
        particular clip by hand. -->
+  <!-- ?v=2 is a one-time cache break, not decoration. This clip's bytes
+       changed while its filename stayed the same, and until 2026-09-06 this
+       route answered `max-age=86400` with nothing to revalidate against - so
+       every browser that had already fetched the old file was pinned to it for
+       a day and could not be reached by fixing the header. A new URL is the
+       only thing that reaches them. The route revalidates now, so this should
+       never be needed again; if a clip is ever swapped under the same name
+       anyway, bump the number rather than trusting the cache. -->
   <div class="reel" data-reel aria-hidden="true">
     <video class="reel-v" muted playsinline loop preload="none"
-           data-src="/video/06-assembly-line.mp4"
+           data-src="/video/06-assembly-line.mp4?v=2"
            data-label="An automotive assembly line"></video>
     <div class="reel-wash"></div>
   </div>

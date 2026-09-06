@@ -114,6 +114,21 @@ directory is ever trimmed.
 
   Keep replacements under about **130** and none of this arises.
 
+## If a clip changes but its filename does not
+
+Bump the `?v=` on that page's `data-src`. Until 2026-09-06 this route answered
+`max-age=86400` with nothing to revalidate against, so a browser that had
+already fetched a clip was pinned to its copy for a day - a header fix cannot
+reach an entry that is already stored, only a new URL can. Two clips hit this
+(`04-control-room.mp4` when it was graded darker, `06-assembly-line.mp4` when
+it was re-encoded) and both carry `?v=2` for that reason.
+
+`src/app.py` now serves `max-age=0, must-revalidate` and answers
+`If-None-Match` itself, so a changed clip is picked up on the next load and
+this should not be needed again. It is here because it was, once, and the
+symptom is confusing: the file on the server is correct, curl proves it, and
+the page still shows the old footage.
+
 ## Changing which clips play
 
 The `<video class="reel-v">` elements at the top of `static/landing.html`'s
