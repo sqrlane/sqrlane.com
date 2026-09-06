@@ -331,7 +331,12 @@ h1,h2,h3,h4,p{margin:0}
 /* ---------- closing bar ---------- */
 /* One ask, at the foot of every page that is not the home page. It is a bar
    rather than a section so it cannot be mistaken for this page's content. */
-.closer{border-top:1px solid var(--border); background:var(--card); padding:44px 0;
+/* 88px rather than the 44px this bar carried before the clip went behind it.
+   The band is as tall as the block, so padding is the only thing that decides
+   how much footage there is to see - at 44px the clip was a 136px letterbox
+   and read as a texture rather than a picture. 88px doubles it to 224px, which
+   is the same height the landing page's closer gives its own clip. */
+.closer{border-top:1px solid var(--border); background:var(--card); padding:88px 0;
         position:relative; overflow:hidden}
 .closer .wrap{display:flex; align-items:center; gap:20px; flex-wrap:wrap;
               position:relative; z-index:1}
@@ -373,8 +378,8 @@ h1,h2,h3,h4,p{margin:0}
    frames of the loop, at five widths (the rule below takes over under 1024):
 
                1280    1024     900     768     375    floor
-       title   12.36   12.35   12.56   12.19   11.55    3.0 (large)
-       sub      5.75    5.59    5.70    5.36    5.19    4.5
+       title   12.36   12.30   12.55   12.43   11.47    3.0 (large)
+       sub      5.75    5.55    5.62    5.56    4.95    4.5
 
    At 1280 the title's box ends at 28.7% and the subtitle's at 34.2%, and the
    buttons do not start until 66.9% - that corridor between 34% and 67% is why
