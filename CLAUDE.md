@@ -531,6 +531,51 @@ threshold when it is only a grid, so that one detail is deliberately not copied.
 Direct labels are selective — only the shipment whose delay exceeds its slack — because
 a number on every bar goes unread.
 
+### The corridor map is real geography, generated not drawn
+
+The Rhine piece on the landing page and the plate in the whitepaper are the
+same map: national outlines from Natural Earth 50m, the river's course from the
+10m centrelines, projected once by `tools/build_rhine_map.py` and pasted in as
+inline SVG. **Nothing is fetched at page load** — no tile, no key, no map
+service — for the same reason the fonts are self-hosted, and both pages are
+asserted to make zero off-origin requests.
+
+It replaced a straight vertical line with the gauges hung off it. The line
+carried the numbers but not the geography, and the geography is the argument:
+Kaub binds because the river bends west through a gorge and shallows there,
+which a straight line cannot show.
+
+`tools/` is build-time only. Nothing in `src/` imports it and it never runs at
+request time; it exists because 12 KB of inlined path data with no generator
+cannot be adjusted by anyone later. Running it reproduces what is in the page
+byte-for-byte, and a change that breaks that has broken the map.
+
+Four things in it are decisions, not mechanics, and each is commented where it
+happens:
+
+- **Natural Earth names the Rhine in three pieces**, one of them `Rhin` in
+  French for the Upper Rhine. Matching only `Rhine` and `Rhein` silently drops
+  Karlsruhe to Basel — the whole southern half of the corridor.
+- **The corridor ends at Basel; the river does not.** Untruncated, the traced
+  route carries on east up the High Rhine, which nothing here sails.
+- **The alternate is offset along the local normal, never in x.** An x-only
+  shift does nothing where the corridor runs east-west, which is exactly the
+  Rotterdam–Emmerich stretch — the two routes sat on top of each other there.
+  The offset tapers to zero at the two ports both routes genuinely share.
+- **The projection carries a cos(latitude) correction** that `geo.py`'s world
+  map does without. At corridor scale, plain equirectangular stretches
+  everything east-west and the Netherlands comes out visibly too wide.
+
+**Only two inland routes are drawn, because only two exist.** SHP-006's third
+route reaches Basel over the same overland leg and differs only at sea, so the
+caption says so rather than inventing a third line for it.
+
+The whitepaper's copy is built with `--plain`, which drops the gauge readings.
+Those are the authored scenario's numbers, and on the landing page they sit
+beside a `Synthetic scenario` label. Carried into a technical paper away from
+that label, they would start being read as live measurements. **Never move an
+authored reading somewhere its label does not follow.**
+
 ### The workflow layer — inbound comms, RFQs and the TMS link
 
 The Comms Agent covers *outbound*. Two scripted Workers and the TMS link cover the
@@ -749,10 +794,10 @@ here too, because this is what the next session reads to find its way around.
 │   └── reports/              # evaluation.json / .md - synthetic-world numbers
 ├── tests/                    # eleven suites, one per claim the demo makes out loud
 ├── tools/
-│   ├── build_rhine_map.py    # regenerates the whitepaper's corridor plate.
-│   │                         #   NOT dead: it also drew the landing page's map,
-│   │                         #   which went when the site was split, but the
-│   │                         #   paper's first figure is still its output
+│   ├── build_rhine_map.py    # regenerates the corridor map. NOT dead, and not
+│   │                         #   only the paper's: the landing page and the
+│   │                         #   whitepaper carry the same two path elements,
+│   │                         #   byte-identical, both its output
 │   ├── build_pitch_pptx.js   # the deck as a PowerPoint, with layout checks
 │   └── build_slides.py       # the rebuilt deck: SVG slides + pitch.html
 ├── docs/
@@ -1144,6 +1189,116 @@ and customer voices, so prefer the former.
 Diagnose it from the card: a `template` badge now prints the reason underneath.
 That instrumentation is what found this after three rounds of wrong guesses; a
 fallback that does not say why is a dead end.
+
+### The corridor map is real geography, generated not drawn
+
+The Rhine piece on the landing page and the plate in the whitepaper are the
+same map: national outlines from Natural Earth 50m, the river's course from the
+10m centrelines, projected once by `tools/build_rhine_map.py` and pasted in as
+inline SVG. **Nothing is fetched at page load** — no tile, no key, no map
+service — for the same reason the fonts are self-hosted, and both pages are
+asserted to make zero off-origin requests.
+
+It replaced a straight vertical line with the gauges hung off it. The line
+carried the numbers but not the geography, and the geography is the argument:
+Kaub binds because the river bends west through a gorge and shallows there,
+which a straight line cannot show.
+
+`tools/` is build-time only. Nothing in `src/` imports it and it never runs at
+request time; it exists because 12 KB of inlined path data with no generator
+cannot be adjusted by anyone later. Running it reproduces what is in the page
+byte-for-byte, and a change that breaks that has broken the map.
+
+Four things in it are decisions, not mechanics, and each is commented where it
+happens:
+
+- **Natural Earth names the Rhine in three pieces**, one of them `Rhin` in
+  French for the Upper Rhine. Matching only `Rhine` and `Rhein` silently drops
+  Karlsruhe to Basel — the whole southern half of the corridor.
+- **The corridor ends at Basel; the river does not.** Untruncated, the traced
+  route carries on east up the High Rhine, which nothing here sails.
+- **The alternate is offset along the local normal, never in x.** An x-only
+  shift does nothing where the corridor runs east-west, which is exactly the
+  Rotterdam–Emmerich stretch — the two routes sat on top of each other there.
+  The offset tapers to zero at the two ports both routes genuinely share.
+- **The projection carries a cos(latitude) correction** that `geo.py`'s world
+  map does without. At corridor scale, plain equirectangular stretches
+  everything east-west and the Netherlands comes out visibly too wide.
+
+**Only two inland routes are drawn, because only two exist.** SHP-006's third
+route reaches Basel over the same overland leg and differs only at sea, so the
+caption says so rather than inventing a third line for it.
+
+The whitepaper's copy is built with `--plain`, which drops the gauge readings.
+Those are the authored scenario's numbers, and on the landing page they sit
+beside a `Synthetic scenario` label. Carried into a technical paper away from
+that label, they would start being read as live measurements. **Never move an
+authored reading somewhere its label does not follow.**
+
+### The workflow layer — inbound comms, RFQs and the TMS link
+
+The Comms Agent covers *outbound*. Three scripted Workers cover the rest of the
+desk a disruption actually lands on:
+
+- **Inbox Worker** — inbound carrier and customer mail, triaged: intent classified,
+  linked to the booking, and a reply drafted. Which mail arrives is derived from the
+  decision the Route Advisor made, so a reroute produces an omit-notice and a status
+  chase, a hold produces berth options, and an on-plan booking produces a routine
+  milestone with **no reply drafted at all**. Answering everything would be showing
+  volume rather than judgement.
+- **RFQ Worker** — an inbound rate request read into structured fields, priced against
+  the lane with the active scenario's surcharge, and answered with a drafted quote.
+- **TMS Link** (`src/tms.py`) — a **demo connector**. It models the field mapping and
+  turns each actioned decision into the booking change it implies (discharge port,
+  routing code, ETA, or a hold status). A shipment left on plan produces no write-back,
+  which is a real answer rather than an omission.
+
+**None of it sends, and none of it writes.** A drafted reply, a drafted quote and a
+queued write-back are all outbound actions, so all three sit behind the same approval
+gate as an email — `DRAFT - not sent` and `QUEUED - not written`, both
+`awaiting_approval`. `tests/test_comms_agent_sends_nothing.py` now checks all of them:
+the original checks only ever looked at `card["drafts"]`, which none of these appear in.
+
+`src/tms.py` imports nothing but `datetime`. There is no client, no credential and no
+endpoint — a write-back is a dict describing a change, and it stays a dict. Never
+present the connector as a live TMS link; it says `connected (demo)` everywhere it is
+surfaced, and a test asserts that.
+
+**The roster covers the desk, under our own names.** The function set a forwarding
+desk actually runs — quoting, booking, shipment tracking, TMS data entry, invoice
+reconciliation, and customs — is all present. The names are ours: **never** use the
+names the reference product ships (`Rate Manager`, `DocuMind`, `Track & Trace`,
+`Copilot`), and `verify_product.py` fails on any of them appearing in the dashboard,
+the README, the roster source, the served Worker names, or the run payload. It caught
+one of those names in a source *comment*, which is the level of paranoia this deserves.
+
+Three of them earn their place by reacting to the decision rather than decorating:
+
+- **Booking Worker** — the carrier booking, and the amendment the decision forces: a
+  reroute is a change of discharge port, a hold is a hold at the load port, an on-plan
+  booking needs no amendment at all. An amendment is an outbound action, so it is
+  `DRAFT - not sent` / `awaiting_approval` like an email.
+- **Invoice Worker** — reconciles the carrier invoice against the rate agreed. It only
+  bites under a disruption: the carrier bills a surcharge that was never quoted, and the
+  discrepancy is the finding. With no disruption every line matches and it says so.
+- **Customs Worker** — the one that only exists because of the reroute. Moving the
+  discharge port moves the **country of entry** (HAM → RTM is Germany → Netherlands), so a
+  different EORI and clearance agent apply and the bill of lading has to be reissued. It
+  **escalates rather than files**, which is the honest behaviour and matches how these
+  systems are supposed to treat a novel exception.
+
+**The connection point** is its own view in the sidebar under `System`, not just a Worker
+chip: connector name, `connected (demo)`, bookings synced, changes queued, the field
+mapping table, and every queued write-back with the change it describes. All of it from
+`src/tms.py`, which still imports nothing but `datetime`.
+
+**The topbar bell** carries the real pending-approval count and shows a dot only when
+something is actually waiting — a permanent badge would be decoration. Clicking it opens
+Approvals, and a test asserts the bell and the Approvals count agree.
+
+Drafts sit behind a **human-approval gate**: `awaiting_approval` → *Approve* →
+`approved`. Approval is a state change in the browser and nothing else — there is no
+transport anywhere in `src/` for it to trigger, and a test asserts that.
 
 ### The dataset ages itself
 
