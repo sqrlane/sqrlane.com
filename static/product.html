@@ -274,6 +274,22 @@ h1,h2,h3,h4,p{margin:0}
        either side of it, so it gives up no more footage than the contrast
        actually costs.
 
+   The vertical gradient is the cheap one and it was set too heavy at first.
+   Every piece of type in this header sits between its two edges, so opening it
+   from 18%/74% to 8%/92% changed no contrast ratio at all - copy stayed at
+   5.69, headline at 13.97 - while showing 19% more footage, measured as mean
+   departure from the page's own 250 across the band. That is the lever to
+   reach for when this reads too washed out: the horizontal gradient is what
+   protects the copy and every point it gives up is paid for, the vertical one
+   only softens two edges nothing is written on. Easing the horizontal instead
+   was measured and is a bad trade - .56/.76/.82 buys 1% more footage for a
+   whole point of copy contrast, down to 4.71.
+
+   What the vertical stops cannot become is nothing. At 8%/92% the footage
+   dissolves over 29px at the top and 25px at the bottom; take those to zero
+   and it starts and stops on a hard line, which reads as a clipped image
+   rather than a background.
+
    Opaque var(--bg) stops belong at the outside ends of both gradients and
    nowhere else. At the ends they are what makes the footage dissolve into the
    page; anywhere in the middle one of them paints the band out completely,
@@ -284,23 +300,24 @@ h1,h2,h3,h4,p{margin:0}
     linear-gradient(to right, var(--bg) 0%, var(--bg) 18%,
                     rgba(250,250,250,.88) 60%, rgba(250,250,250,.34) 74%,
                     rgba(250,250,250,0) 88%),
-    linear-gradient(to bottom, var(--bg) 0%, rgba(250,250,250,0) 18%,
-                    rgba(250,250,250,0) 74%, var(--bg) 99%)}
+    linear-gradient(to bottom, var(--bg) 0%, rgba(250,250,250,0) 8%,
+                    rgba(250,250,250,0) 92%, var(--bg) 99%)}
 
 /* Narrow: the copy column is the whole column, so there is nothing to the
    right of it for a left-weighted wash to spare - at 375 both the headline and
    the body copy run to 95% of the band, where the version above has let the
    footage all the way back in. So on a phone the veil goes nearly flat: the
    footage survives as a ghost in the dark parts of the frame, the bright parts
-   wash out, and the copy measures 6.34:1 at the worst frame (headline 13.50,
-   chip 15.75). The vertical gradient is deliberately unchanged - it is still
-   what holds the eyebrow row clean and dissolves the two edges. */
+   wash out, and the copy measures 6.36:1 at the worst frame (headline 13.70,
+   chip 15.75). The vertical gradient is deliberately the same 8%/92% as above
+   - it is what dissolves the two edges, and none of this page's type sits
+   near them at either width. */
 @media (max-width:640px){
   .reel-wash{background:
     linear-gradient(to right, var(--bg) 0%, var(--bg) 24%,
                     rgba(250,250,250,.90) 56%, rgba(250,250,250,.84) 100%),
-    linear-gradient(to bottom, var(--bg) 0%, rgba(250,250,250,0) 18%,
-                    rgba(250,250,250,0) 74%, var(--bg) 99%)}
+    linear-gradient(to bottom, var(--bg) 0%, rgba(250,250,250,0) 8%,
+                    rgba(250,250,250,0) 92%, var(--bg) 99%)}
 }
 
 /* No motion, no video: the script never asks for the clip and the header
