@@ -49,10 +49,14 @@ enough. Re-measure, do not assume.
   iStock comps, watermarked, licensed for layout evaluation only.
 - **Keep them small.** These are decoration on a first screen that reads fine
   without them. Around 1–2 MB each, 720p or less, no audio track.
-  `06-assembly-line.mp4` is 3.3 MB, over that guideline - it is fetched only
-  after `load` and only when the connection is not metered, so it costs the
-  first screen nothing, but it is the one to re-encode first if this directory
-  ever needs to shrink.
+  `06-assembly-line.mp4` arrived as a 3.3 MB source and was re-encoded to
+  1.3 MB (`-c:v libx264 -crf 31 -preset slow -an -movflags +faststart`) to sit
+  in that band with the rest. Nothing measurable changed: same 768x432, same
+  13.8s, first-frame luminance 112.3 -> 112.2, so the opacity the script
+  derives is the same 0.715 and the page's contrast ratios moved by hundredths.
+  Worth doing rather than shipping the source - these are served **through the
+  serverless function**, not off a CDN, so every megabyte is one the function
+  has to stream.
 - **Prefer footage that is not near-white.** The page background is `#fafafa`.
   `04-control-room.mp4` measures 176 mean luminance against that 250, so even
   at the landing hero's opacity ceiling it composites to within a few points of

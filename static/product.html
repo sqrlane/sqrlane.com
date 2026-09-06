@@ -255,20 +255,22 @@ h1,h2,h3,h4,p{margin:0}
    the 4.5 floor, with everything else comfortably clear. The body copy is
    always what pays first here.
 
-   Measured at 1280, worst pixel behind each element's box and worst frame
-   across the clip's whole 13.8s - it loops, so a ratio taken from whichever
-   frame happened to be on screen is not a measurement of anything:
+   Measured at 1280, worst pixel behind each text LINE - per-line Range rects,
+   not the max-width block box - and worst frame across the clip's whole 13.8s.
+   It loops, so a ratio taken from whichever frame happened to be on screen is
+   not a measurement of anything:
 
      * full var(--bg) holds to 18% across. That is the eyebrow - the lightest
        type on the page at #8f8f8f, and 3.10:1 on plain background before any
        of this. Its box only reaches 12% across, so the clean strip returns it
        to exactly the 3.10 it had, at the cost of a strip of footage the
        right-hand side never needed.
-     * everything else keeps a wide margin through the wash: headline 10.50:1
-       (17.18 on plain background), body copy 5.14:1 (8.10), goal chip 16.87:1
-       (17.18). The clip is unusually steady - the copy runs 5.14 to 5.62
-       across the loop - which is the same flatness that let it be measured at
-       112 luminance in the first place. The .88 stop sits at 60% rather than
+     * everything else keeps a wide margin through the wash: headline 13.89:1
+       (17.18 on plain background), body copy 5.67:1 (8.10), goal chip 16.87:1
+       (17.18) - and the chip only nominally, since it sits on an opaque
+       var(--card) that the footage never reaches. The clip is unusually
+       steady, which is the same flatness that let it be measured at 112
+       luminance in the first place. The .88 stop sits at 60% rather than
        /how-it-works' 44% because the copy's box runs to 64%; it is the
        leftmost position that clears the floor, searched against the stops
        either side of it, so it gives up no more footage than the contrast
@@ -277,7 +279,7 @@ h1,h2,h3,h4,p{margin:0}
    The vertical gradient is the cheap one and it was set too heavy at first.
    Every piece of type in this header sits between its two edges, so opening it
    from 18%/74% to 8%/92% changed no contrast ratio at all - copy stayed at
-   5.69, headline at 13.97 - while showing 19% more footage, measured as mean
+   5.67, headline at 13.89 - while showing 19% more footage, measured as mean
    departure from the page's own 250 across the band. That is the lever to
    reach for when this reads too washed out: the horizontal gradient is what
    protects the copy and every point it gives up is paid for, the vertical one
