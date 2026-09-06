@@ -48,7 +48,11 @@ RISK_STATE_FILE = Path(_state_dir) / "risk_state.json"
 # --- AI provider -----------------------------------------------------------
 # Read by llm.py and nowhere else. Swap providers by editing LLM_PROVIDER in .env.
 
-LLM_PROVIDER = os.getenv("LLM_PROVIDER", "groq").strip().lower()
+# "hf" and "huggingface" name the same provider; accept either spelling rather
+# than failing on a plausible one.
+_PROVIDER_ALIASES = {"huggingface": "hf", "hugging-face": "hf", "hf-router": "hf"}
+_provider_requested = os.getenv("LLM_PROVIDER", "groq").strip().lower()
+LLM_PROVIDER = _PROVIDER_ALIASES.get(_provider_requested, _provider_requested)
 
 # Set LLM_MODEL in .env to pin a specific model. Left empty (the default), the
 # model is discovered at runtime - see GROQ_MODEL_PREFERENCES below.
@@ -83,6 +87,46 @@ GROQ_MODEL_PREFERENCES = [
 GROQ_MODEL_EXCLUDE = ("whisper", "tts", "guard", "embed", "moderation", "rerank")
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
+
+# --- Hugging Face Inference Providers (the router) -------------------------
+# One token in front of many upstream backends (Groq, Together, Fireworks,
+# Cerebras and others), behind an OpenAI-compatible endpoint. It is a SIBLING to
+# Groq here, not a replacement: the useful property is that a rate limit on one
+# backend becomes a routing choice instead of a wall, which is the failure this
+# demo actually hits - the last drafts of a cycle falling back to a template.
+#
+# Model ids here are hub repo paths ("meta-llama/Llama-3.3-70B-Instruct"), not a
+# provider's serving alias. That is the same "no hard-coded model name" rule seen
+# from a better angle, because a repo path does not get renamed the way an alias
+# does - but the model is still resolved at runtime, for the same reason.
+#
+# Pin one upstream backend by suffixing the model id:  ...-Instruct:groq
+HF_API_TOKEN = (os.getenv("HF_TOKEN", "") or os.getenv("HF_API_TOKEN", "")).strip()
+HF_BASE_URL = os.getenv(
+    "HF_BASE_URL", "https://router.huggingface.co/v1").strip().rstrip("/")
+
+# A preference order among whatever the token actually offers, exactly like the
+# Groq list above - not a pin, and not a claim that these are available.
+# NOTE: this list has never been checked against the live catalogue, because the
+# build sandbox blocks the host. Discovery is what does the real work; if none of
+# these are offered, llm.py picks the most capable chat model the token does have.
+HF_MODEL_PREFERENCES = [
+    "meta-llama/Llama-3.3-70B-Instruct",
+    "Qwen/Qwen2.5-72B-Instruct",
+    "deepseek-ai/DeepSeek-V3-0324",
+    "mistralai/Mistral-Small-24B-Instruct-2501",
+    "meta-llama/Llama-3.1-8B-Instruct",
+    "Qwen/Qwen2.5-7B-Instruct",
+]
+
+# The router lists image, video and audio models alongside chat ones, so the
+# exclusions have to be wider than Groq's. This is the coarse half of the filter;
+# llm.py also drops any entry whose stated task is not a text task.
+HF_MODEL_EXCLUDE = GROQ_MODEL_EXCLUDE + (
+    "flux", "stable-diffusion", "sdxl", "kontext", "controlnet",
+    "text-to-image", "text-to-video", "image-to-", "wan-ai/",
+)
+
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434").strip()
 
