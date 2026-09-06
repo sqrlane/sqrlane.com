@@ -8,7 +8,7 @@ page fetches anything from another host — the same promise the self-hosted fon
 keep, and `tests/test_the_pages_keep_their_promises.py` fails the build if a
 clip is ever pointed at a CDN.
 
-All seven clips are committed. `04-control-room.mp4` was not, until
+All six clips are committed. `04-control-room.mp4` was not, until
 2026-09-06: `.gitignore` carried an explicit rule for it, written when the clip
 was genuinely unused ("unused by the reel, and too close to the page background
 to work on a light hero"), and nobody removed the rule when `/how-it-works` was
@@ -20,9 +20,9 @@ check `git ls-files static/video/` says so. Their absence is still a supported s
 `/video/...` answers 404, the band never reveals itself, and every page renders
 exactly as they do without it - so removing one breaks nothing.
 
-**These are watermarked comp files** - 01 to 04, 06 and 07 are iStock comps
-carrying a Getty mark, 05 is a Filmsupply comp carrying a FILMSUPPLY mark across
-the centre of frame. They were
+**These are watermarked comp files** - 01 to 04 and 06 are iStock comps carrying
+a Getty mark, 05 is a Filmsupply comp carrying a FILMSUPPLY mark across the
+centre of frame. They were
 committed on the owner's instruction, over a flagged objection: comps are
 licensed for layout evaluation, not publication, and the watermark is visible
 in the frame. Replace them with licensed downloads under the same filenames.
@@ -35,42 +35,21 @@ in the frame. Replace them with licensed downloads under the same filenames.
 | `02-terminal-queue.mp4` | trucks queued at a terminal | the landing hero |
 | `03-road-corridor.mp4` | a road corridor from the air | the landing hero |
 | `04-control-room.mp4` | an operations desk at a data wall (**graded darker**) | `/how-it-works` |
-| `05-port-aerial.mp4` | an aerial view of a container port | — **unused** since 2026-09-06 |
+| `05-port-aerial.mp4` | an aerial view of a container port | the landing closer |
 | `06-assembly-line.mp4` | robot arms working a car body down a line | `/product` |
-| `07-ship-at-sea.mp4` | a laden container ship from directly above | the landing closer |
 
 Drop files with those names in and they play. Nothing else needs changing: every
 block measures the clip's own first frame and works out the opacity that puts it
 at a fixed weight behind the copy, so replacement footage of any brightness
 composites correctly without a re-tune.
 
-**The opacity re-tunes itself; the wash does not.** The landing closer's wash
-was measured against `05-port-aerial.mp4` originally - its lower half is held
-clean because that clip, at the opacity the script gives it, dropped the block's
+**The opacity re-tunes itself; the wash does not.** The landing closer's wash was
+measured against `05-port-aerial.mp4` specifically - its lower half is held clean
+because that clip, at the opacity the script gives it, dropped the block's
 `.note` to 2.32:1 from 3.23:1, and the note is the line disclaiming that the form
 is not wired to anything. Replace that clip with a brighter one and the wash is
 heavier than it needs to be; replace it with a darker one and it may not be
 enough. Re-measure, do not assume.
-
-**That stopped being true on 2026-09-06, deliberately.** The footage now runs
-the full height of the block, so the note and links are over it like everything
-else, and the disclaimer had to go from `--faint` to `--muted` to survive there.
-It was not a preference: a search over ~970 wash shapes found **zero** that held
-the note at its old 3.23:1 with any footage behind it. Showing footage there and
-keeping that line at `--faint` are genuinely exclusive.
-
-The trade came out well - the disclaimer reads **6.39:1** over the footage
-against the 3.23:1 it had on clean card, so the line the page is most obliged to
-keep readable got clearer, not fainter. Measured at 375 / 768 / 1024 / 1280:
-headline 7.44 / 7.38 / 7.70 / 7.73, copy 6.11 / 5.95 / 5.89 / 5.75, note 6.30 /
-6.41 / 6.42 / 6.39, links 5.57 / 6.23 / 6.29 / 6.29 - nothing under 5.5, against
-a 4.5 floor, while showing about 2.7x the footage it started with.
-
-**Do not put `.note` back to `--faint` while a clip runs behind it.**
-
-`05-port-aerial.mp4` is kept but no longer referenced by any page. It is the
-one Filmsupply comp here, and it is the obvious candidate to delete if this
-directory is ever trimmed.
 
 ## Before putting footage here
 

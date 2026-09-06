@@ -835,78 +835,48 @@ h1,h2,h3,h4,p{margin:0}
    wash meets the section. The hero's copy of this does not hit that, because
    the hero sits on var(--bg) itself.
 
-   THE FOOTAGE NOW RUNS THE FULL HEIGHT OF THE BLOCK, AND THAT COST SOMETHING
-   SPECIFIC. It used to stop at 62%, above `.note` - the line saying the form
-   is wired to nothing, the block's own honesty disclaimer - because at
-   --faint (#8f8f8f, 3.23:1 on clean card) that line cannot survive footage
-   behind it. That was not a guess either time: a search over ~970 wash shapes
-   with the clip running to the bottom found **zero** that held the note at
-   3.23 while showing any footage there. The two things are genuinely
-   exclusive.
+   THE VERTICAL GRADIENT GOES OPAQUE AT 62% AND THAT IS THE LOAD-BEARING PART.
+   The footage runs behind the headline and the copy and stops above the note.
+   It is not a taste decision: `.note` is #8f8f8f, the lightest type in the
+   block, and it is the line saying the form is not wired to anything - the
+   block's own honesty disclaimer. Measured over this clip it fell to 2.32:1,
+   from 3.23:1 on plain background, and no arrangement of the radial got it
+   back: at 0.601 opacity a clip this dark needs a near-opaque veil under that
+   line to return it, and near-opaque is the same as not showing footage there
+   at all. So the footage stops instead, and the note and the links keep
+   exactly the contrast they had - 3.23 and 8.45, unchanged to two decimals.
 
-   So the note went to --muted (#4d4d4d) instead, and the footage was let
-   through. That is the trade, stated plainly: the disclaimer is heavier on
-   the page than it was, and it is also far more legible than it was -
-   6.39:1 over the footage against the 3.23:1 it had on clean card. For the
-   one line on this page that exists to stop a reader over-believing the
-   product, heavier and clearer is the right direction. **Do not put .note
-   back to --faint while the clip runs behind it** - that combination was
-   measured and does not work.
-
-   What replaced the 62% stop as the protection is the radial, moved down and
-   grown to cover the whole text column rather than just the top of it
-   (34% -> 52% centre, 290 -> 345 vertical radius). Every line in the block is
-   now inside it.
-
-   Measured against the composite of the current clip - 8 frames across its
-   20.25 seconds, drawn object-fit:cover at the --v-op the page derives
-   (0.682-0.685 across widths, from ~107 mean luminance), both gradients
-   applied, worst pixel per text line - at four widths:
+   Measured against the composite of this clip - 13 frames across its 16
+   seconds, drawn object-fit:cover at --v-op 0.613, both gradients applied,
+   worst pixel per text box - at four widths:
 
                  375px   768px   1024px   1280px    floor
-       headline    7.44    7.38     7.70     7.73      3.0 (large)
-       body copy   6.11    5.95     5.89     5.75      4.5
-       note        6.30    6.41     6.42     6.39      4.5
-       links       5.57    6.23     6.29     6.29      4.5
+       headline   12.31   10.68     6.71     8.95      3.0 (large)
+       body copy   6.17    5.90     5.84     5.85      4.5
+       note        3.23    3.23     3.23     3.23      its own 3.23
+       links       8.45    8.45     8.45     8.45      its own 8.45
 
-   Nothing is under 5.5, which is a wider margin than the block had before
-   even though it shows about 2.7x the footage (mean departure from the
-   block's own 255 across the band: 21.5 originally, 36.2 after the first
-   easing, 57.9 now at 1280). The opacity is the figure the browser's own
-   canvas produced from the first frame, not a prediction.
+   0.613 is the figure the browser's own canvas produced from the first frame,
+   not a prediction: the offline model said 0.601 off a Lanczos downsample and
+   the two were reconciled rather than assumed equal. The note and the links
+   are width- and opacity-independent by construction - they sit below the
+   footage, on clean card.
 
-   The easing was done in three passes and the order is the useful part,
-   because the first two cost nothing:
-
-     * the top fade ended at 16% and the headline does not start until 16.8%,
-       so it was veiling a strip nothing is written on. 16% -> 4% showed 20%
-       more footage and moved no ratio by a hundredth.
-     * the bottom ramp began at 44% and the copy ends at 47.5%, so it was
-       starting under live type for no reason. 44% -> 52%, another 8%, also
-       free.
-     * only then does it cost - the radial's own stops, and finally letting
-       the footage past the note at the price of that line's colour.
-
-   So if this ever needs to move again, check what is actually written where
-   before touching a stop: twice now the cheap gain was a veil sitting over
-   blank space.
-
-   One rule covers all four widths. A narrow override was written first and
-   then deleted: at 375 the radial is already wider than the band, so the veil
-   goes flat there on its own and the hand-written version only made it
-   heavier.
+   One rule covers all four. A narrow override was written first and then
+   deleted: at 375 the radial is already wider than the band, so the veil goes
+   flat there on its own and the hand-written version only made it heavier.
 
    Opaque stops belong at the two ends of the vertical gradient and nowhere
    else. One in the middle of the radial paints the clip out completely, which
    is what the first version of the hero reel did. Re-measure before moving
-   any of it. */
+   any of it - the note has no margin to give, by construction. */
 .signup-reel-wash{position:absolute; inset:0;
   background:
-    radial-gradient(700px 345px at 50% 52%, rgba(255,255,255,.84) 0%,
-                    rgba(255,255,255,.72) 50%, rgba(255,255,255,.16) 78%,
+    radial-gradient(760px 290px at 50% 34%, rgba(255,255,255,.84) 0%,
+                    rgba(255,255,255,.72) 50%, rgba(255,255,255,.18) 78%,
                     rgba(255,255,255,0) 100%),
-    linear-gradient(to bottom, var(--card) 0%, rgba(255,255,255,0) 4%,
-                    rgba(255,255,255,0) 94%, var(--card) 100%)}
+    linear-gradient(to bottom, var(--card) 0%, rgba(255,255,255,0) 16%,
+                    rgba(255,255,255,0) 44%, var(--card) 62%)}
 
 /* No motion, no video: the script never asks for the clip and the block
    renders on plain background, which is what it did before. */
@@ -924,28 +894,14 @@ h1,h2,h3,h4,p{margin:0}
               font-family:inherit; font-size:15px; line-height:20px}
 .signup input::placeholder{color:var(--faint)}
 .signup input:focus{outline:2px solid var(--blue); outline-offset:-2px; background:var(--card)}
-/* --muted, not --faint, and that is a consequence of the footage running the
-   full height of the block rather than stopping above this line. At --faint
-   (#8f8f8f, 3.23:1 on clean card) nothing could carry footage behind it: a
-   search over ~970 wash shapes found zero that held 3.23 with any footage
-   there at all, which is exactly why the wash used to stop. At --muted it
-   measures 6.35:1 over the footage - nearly double what it had before - so
-   the line this block is most obliged to keep readable ended up more
-   readable, not less. Do not put it back to --faint while the clip runs
-   behind it. */
 .signup .note{margin:16px auto 0; max-width:56ch; font-size:12.5px; line-height:18px;
-              color:var(--muted)}
+              color:var(--faint)}
 .signup .walk{margin-top:26px; font-size:14px; line-height:20px; color:var(--muted)}
 .signup .walk a{border-bottom:1px solid var(--border-strong); padding-bottom:1px}
 .signup .walk a:hover{border-color:var(--fg); color:var(--fg)}
 
 /* ---------- footer ---------- */
-/* No border-top, and only on this page. Everywhere else the footer sits under
-   plain card and the rule is what separates them. Here the closer above it
-   runs footage to its own bottom edge, so a hairline across that is a rule
-   drawn through the picture - and it is not needed, because the footage
-   already ends where the footer starts. */
-.foot{background:var(--card); padding:52px 0 34px}
+.foot{border-top:1px solid var(--border); background:var(--card); padding:52px 0 34px}
 .foot .cols{display:grid; grid-template-columns:1.3fr 1fr 1fr 1fr 1.2fr; gap:32px}
 .foot ul.placeholder span{font-size:13.5px; color:var(--faint)}
 .foot .ph-note{margin-top:12px; font-size:11.5px; line-height:16px; color:var(--gray-600)}
@@ -1792,19 +1748,15 @@ h1,h2,h3,h4,p{margin:0}
 <!-- One closing block, not two. The page used to end on a final CTA and then a
      signup a screen later, both asking for the same thing in different words. -->
 <section class="signup" id="contact">
-  <!-- The background clip. A laden container ship underway, seen from
-       directly above - the ask above it is "see it run on a lane you actually
-       run", and this is a lane. At 106 mean luminance against a 250 page the
-       script settles it at 0.681, where the port aerial it replaced sat at
-       0.613 from 88; the composite is 152 either way, because that is what
-       the measurement is for. Nothing here is tuned to this particular clip
-       by hand - swap the file and it re-measures. The wash under it is a
-       different matter and is not automatic: see the note on
-       .signup-reel-wash. -->
+  <!-- The background clip. An aerial of a container port, which is the thing
+       the whole page has been talking about, arriving under the ask. It is
+       the darkest of the five at 88 mean luminance against a 250 page, so the
+       script pushes it back further than the others rather than any of this
+       being tuned to it by hand - swap the file and it re-measures. -->
   <div class="signup-reel" data-signup-reel aria-hidden="true">
     <video class="signup-reel-v" muted playsinline loop preload="none"
-           data-src="/video/07-ship-at-sea.mp4"
-           data-label="A container ship at sea, seen from above"></video>
+           data-src="/video/05-port-aerial.mp4"
+           data-label="An aerial view of a container port"></video>
     <div class="signup-reel-wash"></div>
   </div>
 
