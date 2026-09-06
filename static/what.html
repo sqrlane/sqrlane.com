@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SQRlane — The What</title>
+<meta name="description" content="The problem SQRlane solves: European freight forwarding still runs on people doing the data work by hand.">
+
+<!-- The What section, on its own. Built from the problem brief in
+     docs/problem-brief.md, so every third-party figure on these slides is one
+     that survived being checked, and the ones that did not are not here.
+
+     The CSS, the keyboard navigation and the loop diagram are lifted verbatim
+     from static/deck.html rather than rewritten, so the two pages cannot drift
+     apart on layout, snapping behaviour or the diagram itself. If you change
+     one, change it there and copy it here. -->
+<style>
+@font-face{
+  font-family:"Geist";
+  src:url("/fonts/Geist-Variable.woff2") format("woff2-variations"),
+      url("/fonts/Geist-Variable.woff2") format("woff2");
+  font-weight:100 900; font-style:normal; font-display:swap;
+}
+@font-face{
+  font-family:"Geist Mono";
+  src:url("/fonts/GeistMono-Variable.woff2") format("woff2-variations"),
+      url("/fonts/GeistMono-Variable.woff2") format("woff2");
+  font-weight:100 900; font-style:normal; font-display:swap;
+}
+
+/* Monochrome on purpose. The other pages carry Geist's accent scales; a deck
+   read from the back of a room does not need them, and every colour left in is
+   one more thing competing with the sentence on the slide. Greys are the same
+   Geist steps the product uses, so the deck and the product are one lineage. */
+:root{
+  --paper:#fafafa;
+  --card:#ffffff;
+  --ink:#171717;
+  --ink-2:#4d4d4d;
+  --ink-3:#8f8f8f;
+  --rule:#00000014;
+  --rule-2:#00000024;
+  --g-100:#f2f2f2; --g-200:#ebebeb; --g-300:#e6e6e6; --g-400:#dbdbdb; --g-600:#a8a8a8;
+  --r:6px; --r-md:12px;
+  --shadow:0 2px 2px rgba(0,0,0,.04);
+  --pad:clamp(28px, 5vw, 88px);
+}
+
+*{box-sizing:border-box; margin:0; padding:0}
+
+body{
+  font-family:"Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  background:var(--paper); color:var(--ink);
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  font-feature-settings:"tnum" 1;
+}
+
+/* ---------- the deck: a snapping scroller, one slide per screen ---------- */
+.deck{
+  height:100svh; overflow-y:scroll; scroll-snap-type:y mandatory;
+  scroll-behavior:smooth;
+}
+.slide{
+  min-height:100svh; scroll-snap-align:start;
+  display:flex; flex-direction:column; justify-content:center;
+  padding:clamp(32px,5vh,80px) var(--pad);
+  border-bottom:1px solid var(--rule);
+}
+.slide > *{width:100%; max-width:1080px; margin-inline:auto}
+
+/* Mandatory snapping traps a reader on any slide taller than the viewport, and
+   a short laptop in landscape is exactly where that happens. Below these sizes
+   the deck is a plain scrolling document instead. */
+@media (max-height:620px), (max-width:820px){
+  .deck{scroll-snap-type:none; height:auto; overflow:visible}
+  .slide{min-height:auto; padding-block:clamp(48px,9vh,72px)}
+}
+
+/* ---------- type ---------- */
+.eyebrow{
+  font-family:"Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size:11px; font-weight:500; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-3); display:flex; align-items:center; gap:12px; margin-bottom:clamp(14px,2.4vh,22px);
+}
+.eyebrow::after{content:""; flex:1; height:1px; background:var(--rule)}
+.eyebrow b{font-weight:500; color:var(--ink)}
+
+h1{
+  font-size:clamp(44px,7vw,88px); font-weight:500; letter-spacing:-.04em;
+  line-height:1; margin-bottom:24px;
+}
+h2{
+  font-size:clamp(24px,min(3.6vw,5.2vh),46px); font-weight:500; letter-spacing:-.028em;
+  line-height:1.08; max-width:20ch; margin-bottom:20px;
+}
+h2.wide{max-width:26ch}
+h2 + .grid, h2 + .rows{margin-top:clamp(16px,2.6vh,28px)}
+h3{font-size:clamp(13.5px,1.7vh,15px); font-weight:550; letter-spacing:-.01em;
+   margin-bottom:clamp(4px,.9vh,8px)}
+
+.lead{
+  font-size:clamp(15px,min(1.45vw,2.1vh),20px); line-height:1.55; color:var(--ink-2);
+  max-width:64ch;
+}
+.lead + .lead{margin-top:14px}
+.lead .src{display:block; margin-top:6px}
+.lead strong{color:var(--ink); font-weight:550}
+p.small{font-size:clamp(12.5px,1.6vh,14px); line-height:1.55; color:var(--ink-2)}
+
+.mono{font-family:"Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace}
+
+/* Where a third-party figure came from. Every number on a WHAT or WHY slide
+   carries one of these; a stat with no source on it is a stat nobody can check. */
+.src{
+  font-family:"Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size:10.5px; line-height:1.5; letter-spacing:.01em; color:var(--ink-3);
+}
+.note{
+  margin-top:auto; padding-top:clamp(16px,2.6vh,26px);
+  font-family:"Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size:clamp(10px,1.3vh,11px); line-height:1.55; color:var(--ink-3); max-width:88ch;
+}
+
+/* ---------- pieces ---------- */
+.grid{display:grid; gap:clamp(10px,1.5vh,16px); margin-top:clamp(18px,3vh,28px)}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+@media (max-width:900px){ .g2,.g3,.g4{grid-template-columns:1fr} }
+
+.card{
+  background:var(--card); border:1px solid var(--rule); border-radius:var(--r-md);
+  padding:clamp(14px,min(2vw,2.4vh),26px); box-shadow:var(--shadow);
+  display:flex; flex-direction:column; gap:clamp(6px,1.2vh,10px);
+}
+.card.flat{background:transparent; box-shadow:none; border-color:var(--rule-2)}
+.card.fill{background:var(--ink); border-color:var(--ink); color:#fff}
+.card.fill .n,.card.fill h3{color:#fff}
+.card.fill .l,.card.fill .src,.card.fill p{color:#c9c9c9}
+
+/* A figure and what it is. The number is set in mono so a column of them lines
+   up on the decimal instead of drifting. */
+.n{
+  font-family:"Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size:clamp(24px,min(3.4vw,5vh),44px); font-weight:500; letter-spacing:-.035em;
+  line-height:1; color:var(--ink);
+}
+.n small{font-size:.5em; letter-spacing:-.01em; color:var(--ink-3); font-weight:450;
+         white-space:nowrap}
+.l{font-size:clamp(12px,1.55vh,13.5px); line-height:1.5; color:var(--ink-2); flex:1}
+
+.tag{
+  display:inline-flex; align-items:center; align-self:flex-start; gap:6px;
+  font-family:"Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size:10px; font-weight:500; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-2); background:var(--g-100); border:1px solid var(--rule);
+  border-radius:var(--r); padding:4px 8px;
+}
+.tag.dark{background:var(--ink); border-color:var(--ink); color:#fff}
+/* On a filled card the dark tag is dark-on-dark, so its chip disappears and it
+   reads as loose text beside two neighbours that are chips. Give it an edge. */
+.card.fill .tag{background:#ffffff1a; border-color:#ffffff33; color:#fff}
+
+ul.ticks{list-style:none; display:flex; flex-direction:column; gap:clamp(6px,1.1vh,10px)}
+ul.ticks li{
+  font-size:clamp(12.5px,1.65vh,14.5px); line-height:1.5; color:var(--ink-2);
+  padding-left:20px; position:relative;
+}
+ul.ticks li::before{
+  content:""; position:absolute; left:0; top:.62em;
+  width:8px; height:1px; background:var(--g-600);
+}
+ul.ticks li strong{color:var(--ink); font-weight:550}
+
+/* A row of label/value pairs separated by hairlines - used for the market
+   ladder and the field-level detail, where a table would be too much furniture. */
+.rows{border-top:1px solid var(--rule); margin-top:26px}
+.row{
+  display:grid; grid-template-columns:minmax(90px,120px) minmax(0,1fr) minmax(0,1.1fr);
+  gap:clamp(12px,2vw,32px); align-items:baseline;
+  padding:clamp(10px,1.7vh,16px) 0; border-bottom:1px solid var(--rule);
+}
+@media (max-width:820px){ .row{grid-template-columns:1fr; gap:6px} }
+.row .k{
+  font-family:"Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3);
+}
+.row .v{font-size:clamp(18px,2vw,26px); font-weight:500; letter-spacing:-.02em}
+.row .d{font-size:13.5px; line-height:1.55; color:var(--ink-2)}
+/* Inside a row the citation is a span, so it runs on from the sentence and
+   reads as part of it. It is a separate claim about provenance; give it its
+   own line. */
+.row .d .src{display:block; margin-top:5px}
+
+/* Anything the founders must supply. Rendered as a visible slot rather than a
+   plausible sentence: a placeholder that reads like real copy is how an invented
+   bio or an invented number gets presented by accident. */
+.slot{
+  display:inline-block; border:1px dashed var(--rule-2); border-radius:var(--r);
+  background:var(--g-100); color:var(--ink-3);
+  font-family:"Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size:.86em; letter-spacing:.02em; padding:1px 7px;
+}
+
+.stack{display:flex; flex-direction:column; gap:6px}
+.hr{height:1px; background:var(--rule); margin:clamp(14px,2.6vh,24px) 0}
+
+/* ---------- chrome ---------- */
+.bar{position:fixed; top:0; left:0; height:2px; background:var(--ink); width:0; z-index:20;
+     transition:width .18s linear}
+.count{
+  position:fixed; right:clamp(16px,3vw,32px); bottom:clamp(16px,3vh,28px); z-index:20;
+  font-family:"Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size:11px; letter-spacing:.1em; color:var(--ink-3);
+  background:rgba(250,250,250,.86); backdrop-filter:blur(6px);
+  border:1px solid var(--rule); border-radius:var(--r); padding:5px 9px;
+}
+.count b{color:var(--ink); font-weight:500}
+.brand{
+  position:fixed; left:clamp(16px,3vw,32px); bottom:clamp(16px,3vh,28px); z-index:20;
+  font-family:"Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size:11px; letter-spacing:.08em; color:var(--ink-3);
+}
+@media (max-height:620px), (max-width:820px){ .count,.brand,.bar{display:none} }
+
+/* ---------- print: one slide per page, chrome off ---------- */
+@page{size:A4 landscape; margin:0}
+@media print{
+  body{background:#fff}
+  .deck{height:auto; overflow:visible; scroll-snap-type:none}
+  .slide{
+    min-height:auto; height:100vh; break-after:page; page-break-after:always;
+    border-bottom:0; box-shadow:none;
+  }
+  .slide:last-child{break-after:auto; page-break-after:auto}
+  .chrome,.bar,.count,.brand{display:none !important}
+  .card{box-shadow:none}
+}
+</style>
+</head>
+<body>
+<div class="bar" id="bar"></div>
+<div class="brand chrome">SQRlane · the what</div>
+<div class="count chrome"><b id="cur">01</b> / <span id="tot">6</span></div>
+
+<main class="deck" id="deck">
+
+<!-- ===================== 01 · THE CLAIM ===================== -->
+<section class="slide">
+  <div>
+    <div class="eyebrow"><b>01 &nbsp;What</b> <span>The status quo is manual, and it is expensive</span></div>
+    <h2 class="wide">European freight forwarding still runs on people doing the data work by hand.</h2>
+    <p class="lead">
+      The category has no product problem. It has a <strong>labour problem that nobody has
+      priced</strong>.
+    </p>
+    <div class="grid g3">
+      <div class="card fill">
+        <div class="n">&euro;3.4bn<small>&nbsp;a year</small></div>
+        <div class="l">the annual labour value of the work being done by hand across the European market.</div>
+        <div class="src">SQRlane analysis</div>
+      </div>
+      <div class="card">
+        <div class="n">19,000<small>+ firms</small></div>
+        <div class="l">European forwarding, logistics and customs companies, employing over a million staff.</div>
+        <div class="src">CLECAT</div>
+      </div>
+      <div class="card">
+        <div class="n">213<small>&nbsp;named</small></div>
+        <div class="l">companies in the beachhead, out of 1,479 in the full ICP. A finite list, not a segment estimate.</div>
+        <div class="src">SQRlane analysis</div>
+      </div>
+    </div>
+    <p class="lead" style="margin-top:24px">
+      We are not displacing a competing tool. <strong>We are displacing spreadsheets and
+      hours</strong> &mdash; a harder sale to start, and a far larger one to finish.
+    </p>
+  </div>
+</section>
+
+<!-- ===================== 02 · THE WORK ===================== -->
+<section class="slide">
+  <div>
+    <div class="eyebrow"><b>01 &nbsp;What</b> <span>What the work actually is</span></div>
+    <h2 class="wide">Three jobs, done by hand, on every single shipment.</h2>
+    <div class="grid g3">
+      <div class="card">
+        <div class="tag">01</div>
+        <h3>Quoting</h3>
+        <p class="small">
+          Rates rebuilt by hand for every enquiry, across carriers that publish nothing in a
+          common format.
+        </p>
+      </div>
+      <div class="card">
+        <div class="tag">02</div>
+        <h3>Track and trace</h3>
+        <p class="small">
+          Status chased by email and phone, then retyped into the system so the customer can
+          be told.
+        </p>
+      </div>
+      <div class="card">
+        <div class="tag">03</div>
+        <h3>Documents and exceptions</h3>
+        <p class="small">
+          Every mismatch escalates to a person, because the system that spots it cannot
+          resolve it.
+        </p>
+      </div>
+    </div>
+    <div class="grid g2" style="margin-top:20px">
+      <div class="card flat">
+        <div class="n" style="font-size:clamp(20px,min(2.6vw,3.8vh),32px)">~30 parties<small>&nbsp;·&nbsp; 200+ interactions</small></div>
+        <div class="l">for one refrigerated shipment from East Africa to Europe.</div>
+        <div class="src">Maersk shipment trace, 2014</div>
+      </div>
+      <div class="card flat">
+        <h3>And that was 2014</h3>
+        <p class="small">
+          Before team chat and messaging apps became operational infrastructure in freight.
+          The interactions have not reduced. <strong>The channels carrying them have
+          multiplied.</strong>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 03 · WHERE THE HOURS GO ===================== -->
+<section class="slide">
+  <div>
+    <div class="eyebrow"><b>01 &nbsp;What</b> <span>Where the hours actually go</span></div>
+    <h2 class="wide">Sixty percent of the day is spent carrying information, not deciding anything.</h2>
+    <div class="grid g2">
+      <div class="card fill">
+        <div class="n">60<small>%</small></div>
+        <div class="l">
+          of the working day goes to coordination &mdash; chasing status, searching for
+          information, switching between apps. Only 40% goes to the skilled work.
+        </div>
+        <div class="src">Asana, Anatomy of Work Index 2022</div>
+      </div>
+      <div class="card">
+        <h3>The five things that eat it</h3>
+        <ul class="ticks">
+          <li><strong>Finding it.</strong> Which app, whose thread, which version.</li>
+          <li><strong>Retyping it.</strong> Into the system, by hand.</li>
+          <li><strong>Deciding what is true.</strong> Three places, three versions.</li>
+          <li><strong>Switching.</strong> Around 25 times a day, across ten apps.</li>
+          <li><strong>One person holding it.</strong> They take leave and the shipment stalls.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="lead" style="margin-top:22px">
+      Coordination that needs <strong>judgement</strong> &mdash; negotiating a rate, deciding a
+      reroute &mdash; is what the forwarder sells. Coordination that only <strong>carries
+      information</strong> from one place to another is not. We take the second.
+    </p>
+    <p class="note">
+      The third one is the only one that costs money rather than time. A surcharge agreed in a
+      chat that never reaches the invoice is paid by the forwarder.
+    </p>
+  </div>
+</section>
+
+<!-- ===================== 04 · SCATTERED ===================== -->
+<section class="slide">
+  <div>
+    <div class="eyebrow"><b>01 &nbsp;What</b> <span>Why the record is never right</span></div>
+    <h2 class="wide">A booking&rsquo;s true state is assembled in someone&rsquo;s head. The system holds an old, partial copy.</h2>
+    <div class="grid g3">
+      <div class="card">
+        <div class="n">under 40<small>%</small></div>
+        <div class="l">of freight forwarders use a forwarding management system at all. Only 23% have digitised three quarters of their processes.</div>
+        <div class="src">Magaya, State of Digitization in Freight Forwarding 2025 &mdash; survey of 71 forwarders, November 2024</div>
+      </div>
+      <div class="card">
+        <div class="n">1,300<small>+ a day</small></div>
+        <div class="l">emails filed by hand by one chartering desk, before they changed how it worked.</div>
+        <div class="src">Viterra, via Sedna</div>
+      </div>
+      <div class="card">
+        <div class="n">~10<small>&nbsp;apps</small></div>
+        <div class="l">and about 25 switches between them, per person per day &mdash; costing four hours a week just re-orienting. Roughly 9% of the working year.</div>
+        <div class="src">Asana, Anatomy of Work Index 2022</div>
+      </div>
+    </div>
+    <p class="lead" style="margin-top:24px">
+      The booking is agreed over email. The rate is amended in a chat. The carrier sends an
+      exception notice somewhere else again. <strong>None of it reaches the record on its
+      own.</strong> A person carries it across, one message at a time.
+    </p>
+  </div>
+</section>
+
+<!-- ===================== 05 · WHY IT PERSISTS ===================== -->
+<section class="slide">
+  <div>
+    <div class="eyebrow"><b>01 &nbsp;What</b> <span>Who has it, and why it persists</span></div>
+    <h2>Nobody has fixed it because hiring works.</h2>
+    <div class="grid g3">
+      <div class="card">
+        <div class="tag">01</div>
+        <h3>The substitute is headcount, not software</h3>
+        <p class="small">
+          They add people when volume grows, because there is nothing on the market that does
+          the work.
+        </p>
+      </div>
+      <div class="card">
+        <div class="tag">02</div>
+        <h3>There is often nothing to integrate with</h3>
+        <p class="small">
+          Most forwarders have no system of record to connect to. And the channels the work
+          lives in are conversations, not systems &mdash; so nobody connected them.
+        </p>
+      </div>
+      <div class="card fill">
+        <div class="tag dark">03</div>
+        <h3>So cost scales with volume</h3>
+        <p class="small">
+          Winning a bigger customer means hiring against it. <strong>The margin problem gets
+          worse exactly when the business gets better.</strong>
+        </p>
+      </div>
+    </div>
+    <p class="lead" style="margin-top:24px">
+      That last line is the whole problem. It is not an efficiency story &mdash;
+      <strong>it is a ceiling on the business</strong>, and it is the version a finance
+      director acts on.
+    </p>
+  </div>
+</section>
+
+<!-- ===================== 06 · THE SHAPE OF THE FIX ===================== -->
+<section class="slide">
+  <div>
+    <div class="eyebrow"><b>01 &nbsp;What</b> <span>The shape of the fix</span></div>
+    <h2 class="wide">Read the record, decide against it, and put the answer back on it.</h2>
+    <svg viewBox="0 0 980 244" role="img" aria-labelledby="loopttl"
+         style="width:100%; height:auto; display:block; margin:36px 0 8px">
+      <title id="loopttl">Read the booking out of the TMS, watch the lane, decide, draft the mail,
+        and queue the change back onto the same booking for a person to approve.</title>
+      <defs>
+        <marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L8 4 L0 8 z" fill="#8f8f8f"/>
+        </marker>
+        <marker id="ahd" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L8 4 L0 8 z" fill="#171717"/>
+        </marker>
+      </defs>
+
+      <g font-family="Geist, sans-serif">
+        <rect x="6"   y="34" width="168" height="72" rx="8" fill="#171717"/>
+        <text x="90"  y="66" text-anchor="middle" font-size="15" font-weight="550" fill="#ffffff">TMS</text>
+        <text x="90"  y="86" text-anchor="middle" font-size="11" font-family="Geist Mono, monospace" fill="#a8a8a8">read the book</text>
+
+        <rect x="206" y="34" width="168" height="72" rx="8" fill="#ffffff" stroke="#00000024"/>
+        <text x="290" y="66" text-anchor="middle" font-size="15" font-weight="550" fill="#171717">Watch</text>
+        <text x="290" y="86" text-anchor="middle" font-size="11" font-family="Geist Mono, monospace" fill="#8f8f8f">42 sources, six families</text>
+
+        <rect x="406" y="34" width="168" height="72" rx="8" fill="#ffffff" stroke="#00000024"/>
+        <text x="490" y="66" text-anchor="middle" font-size="15" font-weight="550" fill="#171717">Decide</text>
+        <text x="490" y="86" text-anchor="middle" font-size="11" font-family="Geist Mono, monospace" fill="#8f8f8f">reroute · hold · on plan</text>
+
+        <rect x="606" y="34" width="168" height="72" rx="8" fill="#ffffff" stroke="#00000024"/>
+        <text x="690" y="66" text-anchor="middle" font-size="15" font-weight="550" fill="#171717">Draft</text>
+        <text x="690" y="86" text-anchor="middle" font-size="11" font-family="Geist Mono, monospace" fill="#8f8f8f">carrier · customer</text>
+
+        <rect x="806" y="34" width="168" height="72" rx="8" fill="#171717"/>
+        <text x="890" y="66" text-anchor="middle" font-size="15" font-weight="550" fill="#ffffff">TMS</text>
+        <text x="890" y="86" text-anchor="middle" font-size="11" font-family="Geist Mono, monospace" fill="#a8a8a8">queued, not written</text>
+
+        <g stroke="#8f8f8f" stroke-width="1.25" fill="none" marker-end="url(#ah)">
+          <path d="M180 70 L196 70"/>
+          <path d="M380 70 L396 70"/>
+          <path d="M580 70 L596 70"/>
+          <path d="M780 70 L796 70"/>
+        </g>
+
+        <g stroke="#171717" stroke-width="1.5" fill="none">
+          <path d="M890 110 L890 162 Q890 172 880 172 L615 172"/>
+          <path d="M365 172 L100 172 Q90 172 90 162 L90 118" marker-end="url(#ahd)"/>
+        </g>
+        <text x="490" y="176" text-anchor="middle" font-size="11.5" font-weight="500" fill="#171717">
+          every action, back onto the same booking
+        </text>
+
+        <text x="490" y="210" text-anchor="middle" font-size="11.5" font-family="Geist Mono, monospace" fill="#8f8f8f">
+          exception flag · discharge port · routing code · revised ETA · communication log
+        </text>
+        <text x="490" y="232" text-anchor="middle" font-size="11.5" font-family="Geist Mono, monospace" fill="#171717">
+          QUEUED — not written. Waiting on a person.
+        </text>
+      </g>
+    </svg>
+    <p class="lead" style="margin-top:18px">
+      Every hour above is spent carrying something from one place to the record. So the fix is
+      not another place to look. It is <strong>the carrying done for you, and the answer
+      landing on the booking it came from</strong> &mdash; with a person approving it.
+    </p>
+    <p class="note">That is the How. This section only had to establish that the carrying is the cost.</p>
+  </div>
+</section>
+
+</main>
+
+<script>
+/* Deck navigation. Arrow keys, space and PageUp/PageDown move a slide at a time;
+   Home and End jump to the ends. Everything else is native scrolling, so the
+   deck still works with the keyboard untouched, on a trackpad, and in print. */
+(function () {
+  var deck = document.getElementById("deck");
+  var slides = Array.prototype.slice.call(deck.querySelectorAll(".slide"));
+  var cur = document.getElementById("cur");
+  var tot = document.getElementById("tot");
+  var bar = document.getElementById("bar");
+  var i = 0;
+
+  tot.textContent = String(slides.length).padStart(2, "0");
+
+  function paint() {
+    cur.textContent = String(i + 1).padStart(2, "0");
+    bar.style.width = ((i + 1) / slides.length * 100) + "%";
+  }
+
+  function goTo(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides[i].scrollIntoView({ behavior: "smooth", block: "start" });
+    paint();
+  }
+
+  /* Which slide is on screen, so scrolling by hand keeps the counter honest.
+     Half the viewport is the threshold - a slide is "current" once most of it
+     is showing, which is what a reader would say too. */
+  if ("IntersectionObserver" in window) {
+    var seen = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { i = slides.indexOf(e.target); paint(); }
+      });
+    }, { threshold: 0.5 });
+    slides.forEach(function (s) { seen.observe(s); });
+  }
+
+  document.addEventListener("keydown", function (e) {
+    /* Any modifier is the browser's, not ours. */
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    var k = e.key;
+    if (k === "ArrowRight" || k === "ArrowDown" || k === "PageDown" || k === " ") {
+      e.preventDefault(); goTo(i + 1);
+    } else if (k === "ArrowLeft" || k === "ArrowUp" || k === "PageUp") {
+      e.preventDefault(); goTo(i - 1);
+    } else if (k === "Home") {
+      e.preventDefault(); goTo(0);
+    } else if (k === "End") {
+      e.preventDefault(); goTo(slides.length - 1);
+    }
+  });
+
+  paint();
+})();
+</script>
+</body>
+</html>

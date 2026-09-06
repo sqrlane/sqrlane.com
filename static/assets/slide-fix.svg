@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none">
+  <!-- SQRlane - the shape of the fix, 1920x1080. The loop is placed from
+       static/assets/sqrlane-loop.svg and re-set in Geist; edit the asset,
+       not this copy. Regenerate with: python3 tools/build_slides.py -->
+  <rect id="background" x="0" y="0" width="1920" height="1080" fill="#FFFFFF"/>
+ <g id="brand">
+  <rect id="brand-mark" x="1714.88" y="36" width="38" height="38" rx="8" fill="#000000"/>
+  <path id="brand-lanes" d="M1726.50 59.34h14.77 M1726.50 55.00h9.34 M1726.50 50.66h4.99" stroke="#FFFFFF" stroke-width="2.28" stroke-linecap="round"/>
+  <text id="brand-wordmark" x="1766.88" y="64" font-family="Geist" font-size="26" font-weight="600" fill="#000000" letter-spacing="-0.520">SQRlane</text>
+ </g>
+ <g id="title">
+  <text id="title-line-1" x="48" y="88" font-family="Geist" font-size="58.9" font-weight="400" fill="#000000">Read the booking, watch the lane,</text>
+  <text id="title-line-2" x="48" y="151.4" font-family="Geist" font-size="58.9" font-weight="400" fill="#000000">decide — and write it back</text>
+ </g>
+  <text id="subtitle" x="48" y="200.6" font-family="Geist" font-size="24.6" font-weight="400" fill="#797972">One loop. It opens and closes on the same record, and every action on it waits for a person.</text>
+  <rect id="divider" x="48" y="237.6" width="1824" height="1" fill="#000000"/>
+ <g id="loop" transform="translate(-27.73 282.2) scale(1.64621)">
+  
+  
+
+  <!-- Figma notes, for whoever edits this next:
+       · Arrowheads are drawn as real paths, not <marker>. Figma's importer drops
+         markers, so a marker-based arrow imports as a bare line.
+       · Every fill and stroke is an inline attribute. Figma flattens or loses
+         <style> blocks, so nothing here depends on CSS.
+       · Text is live <text>, not outlines, so it stays editable. Font is Inter,
+         which Figma ships with.
+       · Each id becomes the Figma layer name. Groups nest the way you would
+         want to click through them. -->
+
+  <g id="SQRlane loop">
+
+    <g id="Nodes">
+      <g id="Node 1 — TMS read">
+        <rect x="46" y="60" width="196" height="96" rx="10" fill="#171717"/>
+        <text x="144" y="104" text-anchor="middle" font-family="Geist" font-size="22" font-weight="600" fill="#FFFFFF">TMS</text>
+        <text x="144" y="128" text-anchor="middle" font-family="Geist" font-size="13" font-weight="400" fill="#9A9A9A">read the book</text>
+      </g>
+
+      <g id="Node 2 — Watch">
+        <rect x="274" y="60" width="196" height="96" rx="10" fill="#FFFFFF" stroke="#E2E2E2" stroke-width="1.5"/>
+        <text x="372" y="104" text-anchor="middle" font-family="Geist" font-size="22" font-weight="600" fill="#171717">Watch</text>
+        <text x="372" y="128" text-anchor="middle" font-family="Geist" font-size="13" font-weight="400" fill="#8F8F8F">42 sources, six families</text>
+      </g>
+
+      <g id="Node 3 — Decide">
+        <rect x="502" y="60" width="196" height="96" rx="10" fill="#FFFFFF" stroke="#E2E2E2" stroke-width="1.5"/>
+        <text x="600" y="104" text-anchor="middle" font-family="Geist" font-size="22" font-weight="600" fill="#171717">Decide</text>
+        <text x="600" y="128" text-anchor="middle" font-family="Geist" font-size="13" font-weight="400" fill="#8F8F8F">reroute · hold · on plan</text>
+      </g>
+
+      <g id="Node 4 — Draft">
+        <rect x="730" y="60" width="196" height="96" rx="10" fill="#FFFFFF" stroke="#E2E2E2" stroke-width="1.5"/>
+        <text x="828" y="104" text-anchor="middle" font-family="Geist" font-size="22" font-weight="600" fill="#171717">Draft</text>
+        <text x="828" y="128" text-anchor="middle" font-family="Geist" font-size="13" font-weight="400" fill="#8F8F8F">carrier · customer</text>
+      </g>
+
+      <g id="Node 5 — TMS write">
+        <rect x="958" y="60" width="196" height="96" rx="10" fill="#171717"/>
+        <text x="1056" y="104" text-anchor="middle" font-family="Geist" font-size="22" font-weight="600" fill="#FFFFFF">TMS</text>
+        <text x="1056" y="128" text-anchor="middle" font-family="Geist" font-size="13" font-weight="400" fill="#9A9A9A">queued, not written</text>
+      </g>
+    </g>
+
+    <g id="Flow arrows">
+      <g id="Arrow 1-2">
+        <path d="M250 108 L262 108" stroke="#8F8F8F" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M262 103 L272 108 L262 113 Z" fill="#8F8F8F"/>
+      </g>
+      <g id="Arrow 2-3">
+        <path d="M478 108 L490 108" stroke="#8F8F8F" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M490 103 L500 108 L490 113 Z" fill="#8F8F8F"/>
+      </g>
+      <g id="Arrow 3-4">
+        <path d="M706 108 L718 108" stroke="#8F8F8F" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M718 103 L728 108 L718 113 Z" fill="#8F8F8F"/>
+      </g>
+      <g id="Arrow 4-5">
+        <path d="M934 108 L946 108" stroke="#8F8F8F" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M946 103 L956 108 L946 113 Z" fill="#8F8F8F"/>
+      </g>
+    </g>
+
+    <!-- The return leg is the whole point of the diagram, so it is drawn in ink
+         rather than grey. Both ends say TMS: the loop closes where it opened. -->
+    <g id="Return path">
+      <!-- Broken into two segments with a gap for the label, rather than laying an
+           opaque rectangle over one continuous line. A backing rect has to guess
+           the slide colour and shows as a faint box the moment it guesses wrong;
+           a gap is correct on any background. -->
+      <path id="Return path right" d="M1056 156 L1056 224 Q1056 236 1044 236 L760 236" stroke="#171717" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path id="Return path left" d="M440 236 L156 236 Q144 236 144 224 L144 174" stroke="#171717" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path id="Return arrowhead" d="M137 174 L144 160 L151 174 Z" fill="#171717"/>
+      <text id="Return label" x="600" y="241" text-anchor="middle" font-family="Geist" font-size="13" font-weight="500" fill="#171717">every action, back onto the same booking</text>
+    </g>
+
+    <g id="Payload">
+      <text x="600" y="284" text-anchor="middle" font-family="Geist" font-size="12.5" font-weight="400" letter-spacing="0.06em" fill="#8F8F8F">exception flag · discharge port · routing code · revised ETA · communication log</text>
+      <text x="600" y="316" text-anchor="middle" font-family="Geist" font-size="14.5" font-weight="600" letter-spacing="0.02em" fill="#171717">QUEUED — not written. Waiting on a person.</text>
+    </g>
+
+  </g>
+</g>
+  <text id="tail-1" x="48" y="861.641" font-family="Geist" font-size="19" font-weight="400" fill="#797972">Risk, decision, communication and the record — closed in one place, with the reasoning kept and nothing sent or written until a person approves it.</text>
+ <g id="footer">
+  <text id="footer-kicker" x="48" y="1034.4" font-family="Geist" font-size="12.4" font-weight="400" fill="#797972" letter-spacing="0.394">THE LOOP OPENS AND CLOSES IN THE SAME PLACE</text>
+  <text id="footer-page" x="1872" y="1034.4" font-family="Geist" font-size="13.1" font-weight="400" fill="#797972" letter-spacing="-0.064" text-anchor="end">02 / 02</text>
+ </g>
+</svg>

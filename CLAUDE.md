@@ -713,6 +713,8 @@ here too, because this is what the next session reads to find its way around.
 │   ├── geo.py                # the board on a map - derived from the run
 │   └── app.py                # FastAPI: serves the three pages + the API
 ├── static/
+│   ├── assets/               # the loop and two slides as standalone,
+│   │                         #   editable SVGs - for Figma and the deck
 │   ├── landing.html          # home - the gap, the loop in one picture, four doors
 │   ├── product.html          # the roster, the write-back map, the approval gate
 │   ├── how-it-works.html     # the mechanism, and the live Rhine gauges
@@ -720,6 +722,11 @@ here too, because this is what the next session reads to find its way around.
 │   ├── about.html            # what is real here, who it is for, the non-goals
 │   ├── index.html            # the dashboard (HTML+CSS+JS in one file)
 │   ├── whitepaper.html       # the technical paper
+│   ├── deck.html             # the pitch deck - what / why / how / team
+│   ├── what.html             # the What section on its own, 6 slides
+│   ├── pitch.html            # GENERATED - the rebuilt deck, from
+│   │                         #   tools/build_slides.py. Edit the builder,
+│   │                         #   never this file
 │   ├── fonts/                # Geist Sans + Mono, self-hosted - never a CDN
 │   └── video/                # the hero reel's clips, committed on the owner's
 │                             #   instruction. They are watermarked iStock comps
@@ -741,11 +748,19 @@ here too, because this is what the next session reads to find its way around.
 │   ├── data/                 # sample committed; the full book is gitignored
 │   └── reports/              # evaluation.json / .md - synthetic-world numbers
 ├── tests/                    # ten suites, one per claim the demo makes out loud
-├── tools/build_rhine_map.py  # regenerates the whitepaper's corridor plate.
-│                             #   NOT dead: it also drew the landing page's map,
-│                             #   which went when the site was split, but the
-│                             #   paper's first figure is still its output
-├── docs/dashboard.png        # the README's screenshot
+├── tools/
+│   ├── build_rhine_map.py    # regenerates the whitepaper's corridor plate.
+│   │                         #   NOT dead: it also drew the landing page's map,
+│   │                         #   which went when the site was split, but the
+│   │                         #   paper's first figure is still its output
+│   ├── build_pitch_pptx.js   # the deck as a PowerPoint, with layout checks
+│   └── build_slides.py       # the rebuilt deck: SVG slides + pitch.html
+├── docs/
+│   ├── dashboard.png         # the README's screenshot
+│   ├── slide-problem.png     # what slide-problem.svg renders to
+│   ├── slide-fix.png         # what slide-fix.svg renders to
+│   ├── problem-brief.md      # the problem, with every figure graded by source
+│   └── replit-deck-prompt.md # the deck, as a prompt for a fresh Replit build
 └── risk_state.json           # written at runtime (gitignored)
 ```
 
@@ -1128,7 +1143,11 @@ uvicorn src.app:app --reload      # then open http://127.0.0.1:8000
 
 `/` is home; `/product`, `/how-it-works`, `/use-cases` and `/about` are the four pages
 it hands off to; `/whitepaper` is the technical paper and `/app` is the dashboard. All
-seven are single self-contained files carrying the same tokens, nav and footer. `GET /api/initial` renders the calm five-green-cards board instantly; `POST /run`
+seven are single self-contained files carrying the same tokens, nav and footer.
+Beside them sit the deck pages, which argue the pitch to a room rather than
+answering a visitor's question: `/deck` is the pitch deck, `/what` is its What
+section on its own, and `/pitch` is the rebuilt deck - **generated** by
+`tools/build_slides.py`, so edit the builder and not `static/pitch.html`. `GET /api/initial` renders the calm five-green-cards board instantly; `POST /run`
 is the button. `GET /api/gauges` reads the three reference Rhine gauges live from PEGELONLINE for
 the gauge panel on `/how-it-works` (`config.LANDING_GAUGES` — the panel was designed for
 three; the monitor's live pull reads all six stations in `config.RHINE_GAUGES`, and both
@@ -1150,6 +1169,146 @@ python -m src.route_advisor --inject --shipment SHP-002
 python -m src.comms_agent  --inject
 python -m src.orchestrator --no-live      # the whole loop, no network
 ```
+
+### The pitch deck
+
+`/deck` is the investor deck, served from `static/deck.html` and **deliberately not linked
+from the landing nav** - it is the thing you hand to a room, not a page for whoever wanders
+onto the site. Four sections: what the problem is, why it is worth solving, how the loop
+works, and who is building it.
+
+Three rules it holds, all of them the project's own:
+
+- **Every third-party figure carries its source on the slide,** and every one of them comes
+  from `docs/problem-brief.md` rather than from a search: Maersk's 2014 shipment trace,
+  CLECAT's membership scope, Asana's Anatomy of Work Index, Magaya's 2024 survey of 71
+  forwarders, Viterra via Sedna, and Transport Intelligence's market sizing. No figure appears without
+  one - and where a figure has not been confirmed against its publication it stays a
+  visible slot rather than a plausible guess. **No figure about SQRlane appears at all** - there is no traction, accuracy or
+  performance claim in it, because none has been measured.
+- **Every placeholder looks like one.** Founder names, bios, the ACV and the ask are dashed
+  grey monospace slots (`.slot`), never plausible filler. A placeholder that reads like real
+  copy is how an invented founder ends up on screen.
+- **It is inside the off-origin rule.** The deck is the one page guaranteed to be opened on
+  somebody else's wifi, so it is in `ALL_PAGES` in
+  `tests/test_the_pages_keep_their_promises.py`. It stays outside the language and
+  named-systems rules: it cites research by name and names the incumbents it is positioned
+  against, neither of which the product pages do.
+
+**Spacing is sized against viewport height as well as width, and that is not cosmetic.**
+Sized against width alone, three slides overran a 1280x720 projector - the standard
+presenting resolution - while a 1920x1080 monitor had room to spare. Under
+`scroll-snap-type: y mandatory` an overrunning slide is not merely tall, it is *unreachable*:
+the snap pulls you off it before you reach the bottom. Every vertical measure now takes the
+smaller of a width- and a height-derived size (`clamp(24px, min(3.6vw, 5.2vh), 46px)`), and
+below 620px tall the deck stops snapping and becomes an ordinary document. Measure all three
+resolutions in a browser after touching the deck's CSS; no unit test sees this.
+
+Print gives exactly one page per slide (`@page { size: A4 landscape }`), so the deck exports
+to a 14-page PDF from the browser with nothing else installed. `docs/replit-deck-prompt.md`
+is the same deck written as a single prompt, for rebuilding it outside this repo.
+
+**`/what` is the What section on its own**, six slides, built from
+`docs/problem-brief.md` so every third-party figure on it is one that survived being
+checked. It exists separately because the problem is the half that gets rebuilt most
+often and the half that goes into Figma on its own, and it ends on the loop diagram as
+the handover into the How. Its CSS, its keyboard navigation and its loop SVG are lifted
+verbatim from `deck.html` rather than rewritten, so the two cannot drift apart on layout
+or on the diagram. **Change one, change both** - the deck's own What slides are the same
+five, transplanted.
+
+**The What section was rebuilt once, and the reason is worth keeping.** It used to argue
+from BASF's EUR 250m and McKinsey's "45% of a year's profit". Both are the *cargo owner's*
+loss, and using a shipper's pain to argue a forwarder's pain is a joint that breaks under
+one good question. The section now argues only from costs that land on the forwarder's own
+accounts. Those four sources are gone from the deck entirely, including from its footer -
+a sources line that credits research the deck no longer shows is its own kind of untruth.
+
+### The deck's slides, as editable SVGs
+
+`tools/build_slides.py` writes `static/assets/slide-problem.svg` (01, the problem) and
+`static/assets/slide-fix.svg` (02, the loop) as 1920x1080 vectors, built to be opened in
+Figma and edited by hand rather than regenerated. Every line is its own named text layer,
+every rule and panel a named rectangle, and there is **no `<style>` block** - Figma's
+importer is reliable with inline presentation attributes and is not with CSS classes.
+
+Slide 01 argues from two columns, and the pairing is the argument: **what the work
+actually is** (quoting, track and trace, documents) against **what keeps moving the lane**
+(fuel and cost, tariffs and trade policy, geopolitics and labour, climate and weather).
+Manual work is only expensive because the world keeps re-triggering it. The right-hand
+column carries no numbers, because none of those four has a figure that survived
+`docs/problem-brief.md`'s grading - the mechanism is the claim.
+
+Four things about the pair are load-bearing:
+
+- **The font is named `Geist` alone, with no fallback stack.** Figma reads a
+  comma-separated `font-family` as one literal font name and then reports it missing on
+  every layer; a bare name resolves, and Geist is in Figma's Google Fonts library. This is
+  the opposite of the rule for the web pages, where the stack is the safety net.
+- **The build measures every string and fails if one overruns its box.** SVG text does
+  not wrap - a line that outgrows its column does not reflow, it runs silently into the
+  next column, and nobody sees it until the file is open in Figma. So each string is
+  measured against the real Geist metrics in `static/fonts/` and the build stops, naming
+  the line and the overrun in pixels. Same discipline as `build_pitch_pptx.js`, for the
+  same reason: a layout fault no validator catches. Confirmed by lengthening a line and
+  watching it fail - it caught a 6.8px overrun.
+- **The loop is read from `static/assets/sqrlane-loop.svg`, never copied into the
+  builder.** One source of truth: edit the asset and slide 02 moves with it. Only the
+  font is rewritten on the way in - the standalone asset stays Inter because it travels
+  on its own and Figma ships Inter, but a slide carrying two typefaces reads as a mistake.
+  It is placed on its **measured ink box, not its viewBox**: the diagram sits inside a
+  1200x360 frame with slack on every side, so centring on the frame leaves it visibly
+  off-centre. The ink box is computed from the asset's rects, paths and text so it
+  re-centres itself if the diagram is redrawn.
+- **The headline figure carries whose number it is.** The reference slide labels EUR 3.4bn
+  only `PER YEAR`. Ours adds `SQRLANE ANALYSIS` under it, because that figure is our own
+  estimate and not a third party's - the deck's rule is that every figure names its source,
+  and an unattributed number in a sourced deck reads as though someone else produced it.
+
+**The same slides are also a page.** `static/pitch.html`, served at `/pitch`, inlines
+those SVGs verbatim into a snapping one-slide-per-screen deck with keyboard navigation
+and one-slide-per-page print. It is **generated by the same builder** rather than
+re-implemented in HTML, which is the whole point: there is one description of each slide,
+and the page a room sees cannot drift from the file that goes into Figma. Three
+consequences worth knowing:
+
+- **Ids are namespaced on the way into the page, and only there.** Two slides in one
+  document would otherwise collide on `background`, `title` and the rest, and the loop
+  asset carries ids with spaces in them, which an SVG file tolerates and HTML does not.
+  The standalone SVGs keep the short ids, because those become the Figma layer names.
+  `_scope_ids` refuses to run if the markup ever references an id (`url(#…)`, `href="#…"`),
+  because rewriting one half of such a pair renders the page blank.
+- **The page number is derived from the deck, never typed.** A hard-coded `01 / 08` on a
+  two-slide deck is wrong the moment a slide is added, and it is the kind of wrong nobody
+  notices until it is on a projector.
+- **There is no fixed counter or brand chrome.** Each artboard already carries the mark
+  and its own page number, and at 16:9 the stage fills enough of the viewport that fixed
+  corners land on top of them. Driven in a browser at 1280x720 and 1920x1080: both slides
+  sit fully inside the viewport, so neither is unreachable under mandatory snapping.
+
+**Why the loop is not on the problem slide.** It was asked for there, and it does not fit:
+the diagram is 3.3:1, so in that slide's free band it can only be ~230px tall, which
+scales its sub-labels ("42 sources, six families", "reroute · hold · on plan") to about
+10px - under the slide's own 12.4px floor and unreadable projected. On its own slide it
+runs the full 1824px measure and those labels land near 21px. **If a later slide tries to
+inline the loop again, check the resulting label size before anything else.**
+
+The geometry - 48px margins, two 884px columns, the baseline grid - is lifted from the
+reference deck the slides were modelled on. A short title pulls everything under it up by
+whole title lines, which is what the reference does (its two-line slides sit exactly 63.4px
+higher), so `masthead()` returns the divider's y rather than fixing it.
+`docs/slide-problem.png` and `docs/slide-fix.png` are what they render to.
+
+**`tools/build_pitch_pptx.js` builds the same deck as a PowerPoint file** - 18 slides, four
+dark section dividers between the light content, Arial and Courier New because the reader's
+PowerPoint renders the fonts and those two ship everywhere. It carries its own layout
+checks, and they are the point: it estimates every text box's wrapped height and fails the
+build if the text cannot fit its shape, or if content is placed above a wrapped title's
+bottom. **Both faults shipped in the first render and neither is visible to the OOXML
+validator** - `validate.py` passed a deck whose title ran underneath the cards and whose
+card bodies spilled past their borders. The estimator is deliberately conservative: it
+over-counts a line rather than under-counts, so its errors cost a little white space
+instead of clipping a sentence.
 
 ### The whitepaper page
 
@@ -1394,6 +1553,7 @@ prototype is finished and nothing else is in scope:
 | `LAB-NOTES-2026-08-28.md` | The witnessing day: TabPFN evaluated and won, 42→60, the timing question, what every live run found |
 | `RUNBOOK.md` | The operator's manual — start the board, trigger a scenario, tour the Workers, work the approval gate, run each agent alone |
 | `ROADMAP-PRE-DEPARTURE.md` | The next live agent: the Planner — pre-departure risk, carrier/route changes and hedging way in advance; leads via the record, never as a hub |
+| `docs/problem-brief.md` | The problem the deck argues, with every figure graded A/B/C by how well it is sourced — and the rejected ones named so they do not creep back |
 | `trade-risk-agent-docs.zip` | Duplicate archive of the seven docs above; not a source of truth |
 
 ---

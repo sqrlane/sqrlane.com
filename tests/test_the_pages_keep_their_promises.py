@@ -54,8 +54,20 @@ HOW_IT_WORKS = STATIC / "how-it-works.html"
 USE_CASES = STATIC / "use-cases.html"
 ABOUT = STATIC / "about.html"
 
+# The deck pages. The deck is inside the off-origin and one-name rules and
+# outside the language rule, which is scoped to MARKETING: it cites third-party
+# market research by name, and it names the incumbents it is positioned
+# against, neither of which the marketing pages do. It is also the one page
+# guaranteed to be opened on somebody else's wifi, in a room, which is exactly
+# the failure the off-origin rule exists for.
+# /pitch is generated (tools/build_slides.py) but guarded like any other page:
+# a generated file is exactly the kind that quietly grows a CDN link.
+DECK = STATIC / "deck.html"
+WHAT = STATIC / "what.html"
+PITCH = STATIC / "pitch.html"
+
 MARKETING = (LANDING, PRODUCT, HOW_IT_WORKS, USE_CASES, ABOUT)
-ALL_PAGES = MARKETING + (DASHBOARD, WHITEPAPER)
+ALL_PAGES = MARKETING + (DASHBOARD, WHITEPAPER, DECK, WHAT, PITCH)
 
 # Named languages. "English" is on the list for the same reason as the rest: the
 # benchmark is "the international wires", not a language, and the data keys that
@@ -280,6 +292,14 @@ class NamingASystemIsNotClaimingOne(unittest.TestCase):
         # disclaimer is the same one and has to be in the same block.
         "landing.html": ('<div class="apps rv" data-apps>', "</section>"),
         "index.html": ("const SYSTEMS = [", "function connectionsView()"),
+        # The deck names them for a different reason than the pages above: not
+        # as what the connector points at, but as the execution category it is
+        # positioned against ("deeply embedded, and staying"). The block is the
+        # whole Why slide, so the names in the third card and the note under the
+        # grid are checked together - the note is the only thing standing
+        # between four familiar vendor names on a pitch slide and a room that
+        # reads them as an integration list.
+        "deck.html": ('<div class="eyebrow"><b>02 &nbsp;Why</b>', "</section>"),
     }
 
     REQUIRED = ("None of these is connected", "no vendor, no credential, no endpoint",
