@@ -52,14 +52,21 @@ is not wired to anything. Replace that clip with a brighter one and the wash is
 heavier than it needs to be; replace it with a darker one and it may not be
 enough. Re-measure, do not assume.
 
-That held up when the closer was swapped to `07-ship-at-sea.mp4` on 2026-09-06.
-Because the wash stops the footage above the note, the note and the links are
-**clip-independent by construction** and read 3.23 and 8.45 whatever plays;
-only the headline and body copy sit over footage, and only they moved. The wash
-was then eased to show the clip more clearly, which is where those two spent
-their margin: headline 11.28 / 8.81 / 9.16 / 9.13 and copy 5.70 / 5.10 / 5.01 /
-5.06 at 375 / 768 / 1024 / 1280, against floors of 3.0 and 4.5. The note and
-links did not move at all, because the footage never reaches them.
+**That stopped being true on 2026-09-06, deliberately.** The footage now runs
+the full height of the block, so the note and links are over it like everything
+else, and the disclaimer had to go from `--faint` to `--muted` to survive there.
+It was not a preference: a search over ~970 wash shapes found **zero** that held
+the note at its old 3.23:1 with any footage behind it. Showing footage there and
+keeping that line at `--faint` are genuinely exclusive.
+
+The trade came out well - the disclaimer reads **6.39:1** over the footage
+against the 3.23:1 it had on clean card, so the line the page is most obliged to
+keep readable got clearer, not fainter. Measured at 375 / 768 / 1024 / 1280:
+headline 7.44 / 7.38 / 7.70 / 7.73, copy 6.11 / 5.95 / 5.89 / 5.75, note 6.30 /
+6.41 / 6.42 / 6.39, links 5.57 / 6.23 / 6.29 / 6.29 - nothing under 5.5, against
+a 4.5 floor, while showing about 2.7x the footage it started with.
+
+**Do not put `.note` back to `--faint` while a clip runs behind it.**
 
 `05-port-aerial.mp4` is kept but no longer referenced by any page. It is the
 one Filmsupply comp here, and it is the obvious candidate to delete if this
