@@ -103,7 +103,7 @@ text{{font-family:"Geist",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-s
         self.p.append(f'<path d="M{M+4.5} {base-1}h9 M{M+4.5} {base-5}h6 M{M+4.5} {base-9}h3.5" '
                       f'stroke="{CARD}" stroke-width="1.5" stroke-linecap="round"/>')
         self.text(M + 28, base, "SQRlane", 13, 600, FG)
-        self.text(M + 92, base, "AI Agents for freight enterprises.", 12, 400, FAINT)
+        self.text(M + 92, base, "AI Agents for freight forwarders.", 12, 400, FAINT)
         self.text(W - M, base, right, 11.5, 500, FAINT, anchor="end", ls=1.2, cls="mono")
 
     def chip(self, x, y, w, h, label, fs=11.5, fill=SURFACE, stroke="none", col=MUTED, weight=500):
