@@ -331,8 +331,92 @@ h1,h2,h3,h4,p{margin:0}
 /* ---------- closing bar ---------- */
 /* One ask, at the foot of every page that is not the home page. It is a bar
    rather than a section so it cannot be mistaken for this page's content. */
-.closer{border-top:1px solid var(--border); background:var(--card); padding:44px 0}
-.closer .wrap{display:flex; align-items:center; gap:20px; flex-wrap:wrap}
+.closer{border-top:1px solid var(--border); background:var(--card); padding:44px 0;
+        position:relative; overflow:hidden}
+.closer .wrap{display:flex; align-items:center; gap:20px; flex-wrap:wrap;
+              position:relative; z-index:1}
+
+/* ---------- the closer's background clip ---------- */
+/* Same treatment as the landing page's sign-up block: one clip, revealed only
+   once it is genuinely producing frames, at an opacity computed from its own
+   first frame, under a wash measured against this block's own type.
+
+   The class names are prefixed, and that is not tidiness. This page already
+   owns .reel / .reel-v / .reel-wash for the page-head clip at the top, and
+   its script takes the first [data-reel] it finds. Reusing either would give
+   this block the header's geometry and hand the header's script the wrong
+   element - the same collision static/video/README.md records for the landing
+   page's closer.
+
+   All of it is additive: no file, no band, and the bar renders exactly as it
+   did before. */
+.closer-reel{display:none; position:absolute; inset:0; z-index:0;
+             overflow:hidden; pointer-events:none}
+.closer-reel.on{display:block}
+.closer-reel-v{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+               opacity:0; transition:opacity 1.1s var(--ease)}
+.closer-reel-v.on{opacity:var(--v-op, .68)}
+
+/* Stops are white, not var(--bg). This block's ground is var(--card) at
+   #ffffff, and 250-grey stops over a white band leave a dirty halo where the
+   wash meets the section - the landing closer hit exactly this.
+
+   The shape follows the layout rather than the landing page's radial, because
+   the layout is different: the type is left-aligned in one short row and the
+   two buttons are right-aligned. The buttons carry their own opaque
+   backgrounds, so footage behind them costs their labels nothing - which
+   means the right-hand side can be left almost clear and the wash only has to
+   hold the left column. That is why this is a left-weighted pair like
+   /how-it-works' header, not a centred radial like the landing closer's.
+
+   Measured over this clip, worst pixel behind each text line across eight
+   frames of the loop, at five widths (the rule below takes over under 1024):
+
+               1280    1024     900     768     375    floor
+       title   12.36   12.35   12.56   12.19   11.55    3.0 (large)
+       sub      5.75    5.59    5.70    5.36    5.19    4.5
+
+   At 1280 the title's box ends at 28.7% and the subtitle's at 34.2%, and the
+   buttons do not start until 66.9% - that corridor between 34% and 67% is why
+   the wash can fall away as fast as it does.
+
+   The left stop is .72 rather than opaque, which is the difference between
+   this reading like a bar with a picture next to it and a bar with a picture
+   behind it. Searched against 738 combinations: it shows 60% more footage
+   than an opaque left strip and still leaves the subtitle a point and a
+   quarter clear of the 4.5 floor. */
+.closer-reel-wash{position:absolute; inset:0;
+  background:
+    linear-gradient(to right, rgba(255,255,255,.72) 0%, rgba(255,255,255,.72) 34%,
+                    rgba(255,255,255,.30) 42%, rgba(255,255,255,0) 62%),
+    linear-gradient(to bottom, #fff 0%, rgba(255,255,255,0) 3%,
+                    rgba(255,255,255,0) 97%, #fff 100%)}
+
+/* Narrower than 1024 the corridor closes and the veil has to go nearly flat.
+   The subtitle is a fixed string ~438px wide, so as the band narrows it takes
+   up a larger fraction of it and reaches further into the part of the gradient
+   that has already fallen away. Measured with the rule above still applied:
+   5.52:1 at 1024, 3.76:1 at 900 - under the floor, with the title and the
+   buttons still perfectly fine. The subtitle is what pays here, at every width.
+
+   So below 1024 the footage survives as a ghost in the dark parts of the frame
+   and the bright parts wash out, which is the same answer /how-it-works and
+   the page head above both arrive at. One rule covers 1023 down to 375: the
+   worst case is the narrowest, and at 375 it measures title 11.50:1 and
+   subtitle 5.11:1. */
+@media (max-width:1023px){
+  .closer-reel-wash{background:
+    linear-gradient(to right, rgba(255,255,255,.80) 0%, rgba(255,255,255,.70) 40%,
+                    rgba(255,255,255,.62) 80%, rgba(255,255,255,.62) 100%),
+    linear-gradient(to bottom, #fff 0%, rgba(255,255,255,0) 3%,
+                    rgba(255,255,255,0) 97%, #fff 100%)}
+}
+
+/* Asked for no motion: the script never fetches the clip and the bar is the
+   bar it has always been. */
+@media (prefers-reduced-motion:reduce){
+  .closer-reel{display:none !important}
+}
 .closer .t{font-size:20px; line-height:28px; letter-spacing:-.4px; font-weight:600}
 .closer .s{font-size:14px; line-height:20px; color:var(--muted)}
 .closer .cta{margin-left:auto; display:flex; gap:10px; flex-wrap:wrap}
@@ -900,6 +984,17 @@ h1,h2,h3,h4,p{margin:0}
     Naming them says where the read path is pointed, not what it has reached.</p>
 </section>
 <section class="closer">
+  <!-- A laden container ship underway, seen from directly above. It sits under
+       the last ask on the page for the same reason the landing page's closer
+       carries footage: the bar is the handover, and a still one reads as the
+       end of a document rather than an invitation. -->
+  <div class="closer-reel" data-closer-reel aria-hidden="true">
+    <video class="closer-reel-v" muted playsinline loop preload="none"
+           data-src="/video/07-ship-at-sea.mp4"
+           data-label="A container ship at sea, seen from above"></video>
+    <div class="closer-reel-wash"></div>
+  </div>
+
   <div class="wrap rv">
     <div>
       <p class="t">It is a demo connector today.</p>
@@ -1060,6 +1155,98 @@ h1,h2,h3,h4,p{margin:0}
   /* Nothing decodes while the tab is in the background. The src guard matters:
      without it, coming back to a tab that was hidden before `start()` ran would
      call play() on an element with no source. */
+  document.addEventListener("visibilitychange", function () {
+    if (!vid.src) return;
+    if (document.hidden) { try { vid.pause(); } catch (e) {} }
+    else play();
+  });
+})();
+
+/* The closer's background clip. Separate from the page-head reel above on
+   purpose: that one is the first thing on the page and is fetched on load,
+   this one is the last and should not be fetched until it is nearly in view.
+   Folding them together would mean one of those two behaviours losing.
+
+   Every part of it is optional - no file, no band, and the bar renders exactly
+   as it did before. The band is revealed only once the clip is genuinely
+   producing frames, never when the element is created or the src is set: a 404
+   and a codec the browser refuses both look like success until `playing`. */
+(function () {
+  var reel = document.querySelector("[data-closer-reel]");
+  if (!reel) return;
+
+  /* A megabyte of decoration for a bar that reads perfectly without it is the
+     wrong trade on a slow link. */
+  var conn = navigator.connection || {};
+  if (conn.saveData || /(^|-)2g$/.test(conn.effectiveType || "")) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  var vid = reel.querySelector(".closer-reel-v");
+  if (!vid) return;
+
+  /* The clip is faded to land at a fixed weight behind the type, whatever it
+     is footage of. Measuring it rather than hand-tuning a number is what lets
+     the footage be replaced without a re-tune. */
+  var TARGET = 152, PAGE = 250;
+  function normalise(v) {
+    var lum;
+    try {
+      var c = document.createElement("canvas");
+      c.width = 32; c.height = 18;
+      var x = c.getContext("2d");
+      x.drawImage(v, 0, 0, 32, 18);
+      var d = x.getImageData(0, 0, 32, 18).data, sum = 0;
+      for (var k = 0; k < d.length; k += 4) {
+        sum += 0.2126 * d[k] + 0.7152 * d[k + 1] + 0.0722 * d[k + 2];
+      }
+      lum = sum / (d.length / 4);
+    } catch (e) {
+      return;                       // leave the CSS fallback in place
+    }
+    if (lum >= PAGE - 1) return;    // a clip brighter than the page: leave it
+    var op = (PAGE - TARGET) / (PAGE - lum);
+    v.style.setProperty("--v-op", Math.max(0.3, Math.min(1, op)).toFixed(3));
+  }
+
+  vid.addEventListener("playing", function () {
+    reel.classList.add("on");
+    vid.classList.add("on");
+  }, { once: true });
+
+  function play() {
+    var p = vid.play();
+    if (p && p.catch) p.catch(function () {});
+  }
+
+  function start() {
+    if (vid.src) return;                       // only ever once
+    vid.src = vid.getAttribute("data-src");
+    if (vid.readyState >= 2) normalise(vid);
+    else vid.addEventListener("loadeddata", function () { normalise(vid); }, { once: true });
+    play();
+  }
+
+  /* Watch the SECTION, never .closer-reel itself. The reel is display:none
+     until a frame has played, so it has no box, and an element with no box
+     never intersects anything - the observer would sit there forever, the clip
+     would never be fetched, and the band would never appear. */
+  var host = reel.closest("section") || reel.parentElement;
+  if ("IntersectionObserver" in window && host) {
+    var io2 = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (e.isIntersecting) { io2.disconnect(); start(); }
+      });
+    }, { rootMargin: "300px 0px" });
+    io2.observe(host);
+  } else if (document.readyState === "complete") {
+    start();
+  } else {
+    window.addEventListener("load", start, { once: true });
+  }
+
+  /* Nothing decodes while the tab is in the background. The src guard matters:
+     without it, returning to a tab hidden before start() ran would call play()
+     on an element with no source. */
   document.addEventListener("visibilitychange", function () {
     if (!vid.src) return;
     if (document.hidden) { try { vid.pause(); } catch (e) {} }
