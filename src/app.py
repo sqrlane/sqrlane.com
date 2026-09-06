@@ -15,12 +15,13 @@ Start it:
     then open http://127.0.0.1:8000
 """
 
+import hashlib
 import os
 import time
 from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from pydantic import BaseModel
 
 from src import config, llm, orchestrator, simulation
@@ -147,8 +148,18 @@ def dashboard():
     return _page(INDEX, "Dashboard")
 
 
+# A clip is identified by what it contains, not by when it was asked for. The
+# filenames are deliberately stable - static/video/README.md's whole contract is
+# "drop a file in under that name and it plays" - so the bytes behind a name do
+# change, and a cache that cannot tell is a cache that serves the wrong film.
+def _clip_etag(target: Path) -> str:
+    st = target.stat()
+    return '"%s"' % hashlib.md5(
+        f"{st.st_mtime_ns}-{st.st_size}".encode()).hexdigest()
+
+
 @app.get("/video/{filename}")
-def video(filename: str):
+def video(filename: str, request: Request):
     """The hero reel's clips, served from static/video/.
 
     Same-origin like everything else the pages load: the promise is that no
@@ -160,13 +171,35 @@ def video(filename: str):
     built to render exactly as it does today when they are missing. That is the
     same rule the rest of the page follows: nothing on screen may depend on a
     fetch that can fail.
+
+    **These revalidate, and that is not a detail.** This route used to answer
+    `max-age=86400` with nothing to check it against, which cost twice in one
+    afternoon: a truncated response from a cold function got pinned in a
+    browser for a day and failed the element on every load afterwards, and a
+    replaced clip went on showing the old footage to anyone with a warm cache.
+    Both are the same bug - a stable URL whose content changes, cached
+    unconditionally.
+
+    So the browser is told to revalidate every time (`max-age=0`) and this
+    route answers `If-None-Match` itself. Starlette's FileResponse sends an
+    ETag but does not honour one, so without the check below "revalidate"
+    would mean re-sending the whole clip on every page view rather than a
+    bodiless 304.
+
+    `s-maxage` keeps Vercel's edge cache doing its job in front of that - each
+    deployment gets its own cache, so a deploy is already the purge.
     """
     # Resolve and confine to VIDEO_DIR so a crafted name cannot walk upward.
     target = (VIDEO_DIR / filename).resolve()
     if not target.is_file() or VIDEO_DIR.resolve() not in target.parents:
         return JSONResponse(status_code=404, content={"error": "No such clip."})
+    cache = "public, max-age=0, s-maxage=86400, must-revalidate"
+    etag = _clip_etag(target)
+    if request.headers.get("if-none-match") == etag:
+        return Response(status_code=304,
+                        headers={"Cache-Control": cache, "ETag": etag})
     return FileResponse(target, media_type="video/mp4", headers={
-        "Cache-Control": "public, max-age=86400"})
+        "Cache-Control": cache, "ETag": etag})
 
 
 @app.get("/fonts/{filename}")

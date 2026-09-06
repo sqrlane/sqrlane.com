@@ -8,7 +8,15 @@ page fetches anything from another host — the same promise the self-hosted fon
 keep, and `tests/test_the_pages_keep_their_promises.py` fails the build if a
 clip is ever pointed at a CDN.
 
-All six clips are committed. Their absence is still a supported state -
+All six clips are committed. `04-control-room.mp4` was not, until
+2026-09-06: `.gitignore` carried an explicit rule for it, written when the clip
+was genuinely unused ("unused by the reel, and too close to the page background
+to work on a light hero"), and nobody removed the rule when `/how-it-works` was
+later wired to it. So that page referenced a clip the deployment never
+contained and its reel had **never once rendered in production** - `/video/
+04-control-room.mp4` answered 404 on the live domain while rendering locally,
+which is the hardest version of this bug to notice. If a page is given a clip,
+check `git ls-files static/video/` says so. Their absence is still a supported state -
 `/video/...` answers 404, the band never reveals itself, and every page renders
 exactly as they do without it - so removing one breaks nothing.
 
@@ -26,7 +34,7 @@ in the frame. Replace them with licensed downloads under the same filenames.
 | `01-container-yard.mp4` | a container yard from above | the landing hero |
 | `02-terminal-queue.mp4` | trucks queued at a terminal | the landing hero |
 | `03-road-corridor.mp4` | a road corridor from the air | the landing hero |
-| `04-control-room.mp4` | an operations desk at a data wall | `/how-it-works` |
+| `04-control-room.mp4` | an operations desk at a data wall (**graded darker**) | `/how-it-works` |
 | `05-port-aerial.mp4` | an aerial view of a container port | the landing closer |
 | `06-assembly-line.mp4` | robot arms working a car body down a line | `/product` |
 
@@ -57,15 +65,33 @@ enough. Re-measure, do not assume.
   Worth doing rather than shipping the source - these are served **through the
   serverless function**, not off a CDN, so every megabyte is one the function
   has to stream.
-- **Prefer footage that is not near-white.** The page background is `#fafafa`.
-  `04-control-room.mp4` measures 176 mean luminance against that 250, so even
-  at the landing hero's opacity ceiling it composites to within a few points of
-  plain background — a dead beat between two darker clips, which is why it was
-  cut from the rotation. Under about 160 is safe **for the landing hero**. It
-  is fine on `/how-it-works`, where it is the only clip and has nothing to
-  match: that page raises the ceiling to 1 and lets its wash carry the
-  contrast instead. A clip that has to sit in the rotation still needs to be
-  under 160.
+- **Prefer footage that is not near-white.** The page background is `#fafafa`,
+  and the scripts aim every clip at a composite of 152 against that 250. A clip
+  brighter than 152 cannot get there at all: the derived opacity is capped at
+  1, and capping it does not darken anything — it only stops the arithmetic
+  asking for more than opaque.
+
+  `04-control-room.mp4` is the worked example. It arrived at **176** mean
+  luminance, was cut from the landing rotation for reading as a dead beat
+  between two darker clips, and then sat on `/how-it-works` compositing at 176
+  where it was supposed to be 152 — a header that looked like it had no
+  background at all. Raising that page's ceiling to 1 had not fixed it and
+  could not.
+
+  **The fix for a bright clip is to grade the file, not to push the opacity.**
+  It is stored darkened:
+
+  ```
+  ffmpeg -i <source> -an -vf eq=gamma=0.45          -c:v libx264 -crf 31 -preset slow -pix_fmt yuv420p          -movflags +faststart 04-control-room.mp4
+  ```
+
+  That took it from 170 to 116 YAVG (112 as the browser measures it through a
+  canvas), so the script now derives 0.716 and the composite lands on 152 like
+  every other clip. **Grade in the file, never in CSS** — the opacity is
+  computed by drawing the clip to a canvas, and a CSS `filter` is invisible
+  there, so the page would size its opacity against a brightness nobody sees.
+
+  Keep replacements under about **130** and none of this arises.
 
 ## Changing which clips play
 

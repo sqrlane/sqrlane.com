@@ -34,7 +34,3 @@ ml/data/tms_synthetic_bookings.json
 # The folder the reel's clips were downloaded into; the clips themselves live
 # in static/video/ and are committed.
 stock video for landing page/
-
-# The fourth clip, kept locally but not shipped: unused by the reel, and too
-# close to the page background to work on a light hero.
-static/video/04-control-room.mp4

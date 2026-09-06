@@ -230,8 +230,8 @@ h1,h2,h3,h4,p{margin:0}
         opacity:0; transition:opacity 1.1s var(--ease)}
 /* At the opacity the script worked out from the clip's own first frame. A
    fixed value cannot survive the footage being replaced: measured across the
-   four clips in static/video/, mean frame luminance runs 113 to 182 out of
-   255, so against a 250-luminance page the darkest lands twice as hard as the
+   clips in static/video/, mean frame luminance runs 93 to 124 out of 255, so
+   against a 250-luminance page the darkest lands about a third harder than the
    brightest. The CSS value here is only the fallback for a failed
    measurement. */
 .reel-v.on{opacity:var(--v-op, .85)}
@@ -259,11 +259,14 @@ h1,h2,h3,h4,p{margin:0}
        returns it to exactly the 3.10 it had, and costs a strip of footage the
        right-hand side never needed.
      * everything else keeps a wide margin through the wash, measured on this
-       clip at 1280: headline 10.10:1 (17.18 on plain background), body copy
-       6.32:1 (8.10), goal chip 16.73:1 (17.18). The two mid stops sit at 44%
-       and 66% because the headline's first line runs to 55% and the first
-       line of copy to 64% - move them left and it is the body copy that pays
-       first.
+       clip at 1280, worst pixel behind each text line across eight frames of
+       the loop: headline 8.02:1 (17.18 on plain background), body copy 5.04:1
+       (8.10). Those were 10.10 and 6.32 while the clip was still ungraded -
+       darkening it to carry the band is exactly what spent the difference,
+       and the remaining margin over the 4.5 floor is the reason it was
+       affordable. The two mid stops sit at 44% and 66% because the headline's
+       first line runs to 58% and the first line of copy to 64% - move them
+       left and it is the body copy that pays first.
 
    Opaque `var(--bg)` stops belong at the outside ends of both gradients and
    nowhere else. At the ends they are what makes the footage dissolve into the
@@ -280,15 +283,23 @@ h1,h2,h3,h4,p{margin:0}
 
 /* Narrow: the copy column is the whole column, so there is nothing to the
    right of it for a left-weighted wash to spare. Measured at 375, the version
-   above drops the body copy to 3.81:1 - under the 4.5 floor - because the last
-   words of each line reach 89% of the band. So on a phone the veil goes nearly
-   flat: the footage survives as a ghost in the dark parts of the frame, the
-   bright parts wash out, and the copy comes back to 7.41:1. The vertical gradient is
-   deliberately unchanged - it is still what holds the eyebrow row clean and
+   above drops the body copy under the 4.5 floor, because the last words of
+   each line reach 91% of the band. So on a phone the veil goes nearly flat:
+   the footage survives as a ghost in the dark parts of the frame, the bright
+   parts wash out, and the copy comes back to 6.77:1 (headline 14.10).
+
+   The clean strip is 30% here rather than the 18% above, and that is measured
+   too: at 375 the eyebrow's own box reaches 29% of the band, so a 24% strip -
+   what this rule carried until the clip was graded darker - left its last
+   letters on open footage and cost it 3.03:1 against the 3.10 it has on plain
+   background. The whole point of the strip is that the eyebrow pays nothing,
+   so it has to be wider than the word is.
+
+   The vertical gradient is deliberately unchanged - it is still what
    dissolves the two edges. */
 @media (max-width:640px){
   .reel-wash{background:
-    linear-gradient(to right, var(--bg) 0%, var(--bg) 24%,
+    linear-gradient(to right, var(--bg) 0%, var(--bg) 30%,
                     rgba(250,250,250,.90) 56%, rgba(250,250,250,.84) 100%),
     linear-gradient(to bottom, var(--bg) 0%, rgba(250,250,250,0) 20%,
                     rgba(250,250,250,0) 72%, var(--bg) 99%)}
@@ -625,14 +636,19 @@ h1,h2,h3,h4,p{margin:0}
 </header>
 
 <section class="phead">
-  <!-- The background clip. An operations desk at a data wall - the one piece
-       of footage in static/video/ that the landing reel could not use, because
-       at 176 mean luminance against a 250 page it composited to within a few
-       points of plain background and read as a dead beat between two darker
-       clips. On its own, on this page, there is nothing for it to be a dead
-       beat against, so it sits at the opacity ceiling and carries the band by
-       itself. Swap the file and the script re-measures; nothing here is tuned
-       to this particular clip by hand. -->
+  <!-- The background clip. An operations desk at a data wall. It arrived at
+       176 mean luminance against a 250 page, which is far too bright to be a
+       background: the opacity the script derives is capped at 1, so it never
+       reached the 152 the formula was aiming for and the band read as an empty
+       header with a faint smudge in it. The file in static/video/ is a
+       darkened grade of it (ffmpeg eq=gamma=0.45, 170 -> 116 YAVG), which
+       lands it at 112 as the browser measures it - so the script now resolves
+       0.716 and the composite hits 152 exactly, like every other clip. The
+       grade is baked into the file rather than applied in CSS on purpose: the
+       script measures the clip's own frame through a canvas, and a CSS filter
+       is invisible to that, so the opacity would be computed from a brightness
+       nobody sees. Swap the file and the script re-measures; nothing here is
+       tuned to this particular clip by hand. -->
   <div class="reel" data-reel aria-hidden="true">
     <video class="reel-v" muted playsinline loop preload="none"
            data-src="/video/04-control-room.mp4"
@@ -959,10 +975,15 @@ h1,h2,h3,h4,p{margin:0}
      The ceiling is 1 here and .85 on the landing page, and the difference is
      not an oversight. There, clips rotate and each has to arrive at the same
      weight as the last, so one too bright to reach TARGET has to be dropped
-     rather than pushed - which is exactly what happened to this one. Here
-     there is a single clip and nothing for it to match, so the only question
-     is whether the type still reads over it. It does: under the copy the wash
-     alone puts the composite past 230 against near-black Geist. */
+     rather than pushed. Here there is a single clip and nothing for it to
+     match, so the only question is whether the type still reads over it.
+
+     The ceiling is also not a fix, which this clip proved. It arrived at 176
+     and the formula asked for 1.32; clamping that to 1 does not make a bright
+     clip land on TARGET, it just stops the arithmetic being absurd - the
+     composite stayed at 176 and the band read as empty. A clip that cannot
+     reach TARGET has to be graded darker in the file, not pushed harder here.
+     See the comment on the <video> element. */
   var TARGET = 152, PAGE = 250;
   function normalise(v) {
     var lum;
