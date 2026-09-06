@@ -940,7 +940,12 @@ h1,h2,h3,h4,p{margin:0}
 .signup .walk a:hover{border-color:var(--fg); color:var(--fg)}
 
 /* ---------- footer ---------- */
-.foot{border-top:1px solid var(--border); background:var(--card); padding:52px 0 34px}
+/* No border-top, and only on this page. Everywhere else the footer sits under
+   plain card and the rule is what separates them. Here the closer above it
+   runs footage to its own bottom edge, so a hairline across that is a rule
+   drawn through the picture - and it is not needed, because the footage
+   already ends where the footer starts. */
+.foot{background:var(--card); padding:52px 0 34px}
 .foot .cols{display:grid; grid-template-columns:1.3fr 1fr 1fr 1fr 1.2fr; gap:32px}
 .foot ul.placeholder span{font-size:13.5px; color:var(--faint)}
 .foot .ph-note{margin-top:12px; font-size:11.5px; line-height:16px; color:var(--gray-600)}
