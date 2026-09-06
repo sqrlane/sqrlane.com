@@ -839,28 +839,36 @@ h1,h2,h3,h4,p{margin:0}
    The footage runs behind the headline and the copy and stops above the note.
    It is not a taste decision: `.note` is #8f8f8f, the lightest type in the
    block, and it is the line saying the form is not wired to anything - the
-   block's own honesty disclaimer. Measured over this clip it fell to 2.32:1,
-   from 3.23:1 on plain background, and no arrangement of the radial got it
-   back: at 0.601 opacity a clip this dark needs a near-opaque veil under that
-   line to return it, and near-opaque is the same as not showing footage there
-   at all. So the footage stops instead, and the note and the links keep
-   exactly the contrast they had - 3.23 and 8.45, unchanged to two decimals.
+   block's own honesty disclaimer. Measured over the port aerial this block
+   carried first, it fell to 2.32:1 from 3.23:1 on plain background, and no
+   arrangement of the radial got it back: at that opacity a clip needs a
+   near-opaque veil under that line to return it, and near-opaque is the same
+   as not showing footage there at all. So the footage stops instead, and the
+   note and the links keep exactly the contrast they had - 3.23 and 8.45,
+   unchanged to two decimals.
 
-   Measured against the composite of this clip - 13 frames across its 16
-   seconds, drawn object-fit:cover at --v-op 0.613, both gradients applied,
-   worst pixel per text box - at four widths:
+   That is also why this survived the clip being swapped. The note and the
+   links are width- AND clip-independent by construction: they sit below the
+   footage, on clean card, so they read 3.23 and 8.45 whatever is playing.
+   Only the headline and the copy are over footage, and only they move.
+
+   Measured against the composite of the current clip - 8 frames across its
+   20.25 seconds, drawn object-fit:cover at the --v-op the page derives
+   (0.684-0.689 across widths, from 106.7-107.7 mean luminance), both
+   gradients applied, worst pixel per text line - at four widths:
 
                  375px   768px   1024px   1280px    floor
-       headline   12.31   10.68     6.71     8.95      3.0 (large)
-       body copy   6.17    5.90     5.84     5.85      4.5
+       headline   13.00   11.82    12.06    12.02      3.0 (large)
+       body copy   6.27    6.05     5.98     6.00      4.5
        note        3.23    3.23     3.23     3.23      its own 3.23
        links       8.45    8.45     8.45     8.45      its own 8.45
 
-   0.613 is the figure the browser's own canvas produced from the first frame,
-   not a prediction: the offline model said 0.601 off a Lanczos downsample and
-   the two were reconciled rather than assumed equal. The note and the links
-   are width- and opacity-independent by construction - they sit below the
-   footage, on clean card.
+   The headline is steadier across widths than it was under the port aerial
+   (12.31 / 10.68 / 6.71 / 8.95) because that clip put surf and quay-side
+   concrete behind the type at some widths and open water at others. This one
+   is a ship on open sea from directly above, so what sits behind the headline
+   barely changes with the crop. The opacity is the figure the browser's own
+   canvas produced from the first frame, not a prediction.
 
    One rule covers all four. A narrow override was written first and then
    deleted: at 375 the radial is already wider than the band, so the veil goes
@@ -1748,15 +1756,19 @@ h1,h2,h3,h4,p{margin:0}
 <!-- One closing block, not two. The page used to end on a final CTA and then a
      signup a screen later, both asking for the same thing in different words. -->
 <section class="signup" id="contact">
-  <!-- The background clip. An aerial of a container port, which is the thing
-       the whole page has been talking about, arriving under the ask. It is
-       the darkest of the five at 88 mean luminance against a 250 page, so the
-       script pushes it back further than the others rather than any of this
-       being tuned to it by hand - swap the file and it re-measures. -->
+  <!-- The background clip. A laden container ship underway, seen from
+       directly above - the ask above it is "see it run on a lane you actually
+       run", and this is a lane. At 106 mean luminance against a 250 page the
+       script settles it at 0.681, where the port aerial it replaced sat at
+       0.613 from 88; the composite is 152 either way, because that is what
+       the measurement is for. Nothing here is tuned to this particular clip
+       by hand - swap the file and it re-measures. The wash under it is a
+       different matter and is not automatic: see the note on
+       .signup-reel-wash. -->
   <div class="signup-reel" data-signup-reel aria-hidden="true">
     <video class="signup-reel-v" muted playsinline loop preload="none"
-           data-src="/video/05-port-aerial.mp4"
-           data-label="An aerial view of a container port"></video>
+           data-src="/video/07-ship-at-sea.mp4"
+           data-label="A container ship at sea, seen from above"></video>
     <div class="signup-reel-wash"></div>
   </div>
 

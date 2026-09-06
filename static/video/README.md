@@ -8,7 +8,7 @@ page fetches anything from another host — the same promise the self-hosted fon
 keep, and `tests/test_the_pages_keep_their_promises.py` fails the build if a
 clip is ever pointed at a CDN.
 
-All six clips are committed. `04-control-room.mp4` was not, until
+All seven clips are committed. `04-control-room.mp4` was not, until
 2026-09-06: `.gitignore` carried an explicit rule for it, written when the clip
 was genuinely unused ("unused by the reel, and too close to the page background
 to work on a light hero"), and nobody removed the rule when `/how-it-works` was
@@ -20,9 +20,9 @@ check `git ls-files static/video/` says so. Their absence is still a supported s
 `/video/...` answers 404, the band never reveals itself, and every page renders
 exactly as they do without it - so removing one breaks nothing.
 
-**These are watermarked comp files** - 01 to 04 and 06 are iStock comps carrying
-a Getty mark, 05 is a Filmsupply comp carrying a FILMSUPPLY mark across the
-centre of frame. They were
+**These are watermarked comp files** - 01 to 04, 06 and 07 are iStock comps
+carrying a Getty mark, 05 is a Filmsupply comp carrying a FILMSUPPLY mark across
+the centre of frame. They were
 committed on the owner's instruction, over a flagged objection: comps are
 licensed for layout evaluation, not publication, and the watermark is visible
 in the frame. Replace them with licensed downloads under the same filenames.
@@ -35,21 +35,35 @@ in the frame. Replace them with licensed downloads under the same filenames.
 | `02-terminal-queue.mp4` | trucks queued at a terminal | the landing hero |
 | `03-road-corridor.mp4` | a road corridor from the air | the landing hero |
 | `04-control-room.mp4` | an operations desk at a data wall (**graded darker**) | `/how-it-works` |
-| `05-port-aerial.mp4` | an aerial view of a container port | the landing closer |
+| `05-port-aerial.mp4` | an aerial view of a container port | — **unused** since 2026-09-06 |
 | `06-assembly-line.mp4` | robot arms working a car body down a line | `/product` |
+| `07-ship-at-sea.mp4` | a laden container ship from directly above | the landing closer |
 
 Drop files with those names in and they play. Nothing else needs changing: every
 block measures the clip's own first frame and works out the opacity that puts it
 at a fixed weight behind the copy, so replacement footage of any brightness
 composites correctly without a re-tune.
 
-**The opacity re-tunes itself; the wash does not.** The landing closer's wash was
-measured against `05-port-aerial.mp4` specifically - its lower half is held clean
-because that clip, at the opacity the script gives it, dropped the block's
+**The opacity re-tunes itself; the wash does not.** The landing closer's wash
+was measured against `05-port-aerial.mp4` originally - its lower half is held
+clean because that clip, at the opacity the script gives it, dropped the block's
 `.note` to 2.32:1 from 3.23:1, and the note is the line disclaiming that the form
 is not wired to anything. Replace that clip with a brighter one and the wash is
 heavier than it needs to be; replace it with a darker one and it may not be
 enough. Re-measure, do not assume.
+
+That held up when the closer was swapped to `07-ship-at-sea.mp4` on 2026-09-06.
+Because the wash stops the footage above the note, the note and the links are
+**clip-independent by construction** and read 3.23 and 8.45 whatever plays;
+only the headline and body copy sit over footage, and only they moved (headline
+13.00 / 11.82 / 12.06 / 12.02 and copy 6.27 / 6.05 / 5.98 / 6.00 at
+375 / 768 / 1024 / 1280, against floors of 3.0 and 4.5). The headline is
+steadier across widths than under the port aerial, which put surf and concrete
+behind the type at some crops and open water at others.
+
+`05-port-aerial.mp4` is kept but no longer referenced by any page. It is the
+one Filmsupply comp here, and it is the obvious candidate to delete if this
+directory is ever trimmed.
 
 ## Before putting footage here
 
