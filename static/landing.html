@@ -783,7 +783,94 @@ h1,h2,h3,h4,p{margin:0}
 
 /* ---------- signup (a placeholder, and it says so) ---------- */
 .signup{border-top:1px solid var(--border); background:var(--card); padding:88px 0;
-        text-align:center}
+        text-align:center; position:relative; overflow:hidden}
+/* The copy has to sit above the clip. Without this the band paints over it. */
+.signup > .wrap{position:relative; z-index:1}
+
+/* ---------- the closer's background clip ---------- */
+/* One clip behind the sign-up block, treated as the hero reel and the
+   /how-it-works header are: pushed back rather than dimmed, under a light
+   wash heaviest where the copy sits, so near-black Geist keeps its contrast.
+
+   The prefix is not decoration. This page already owns .reel/.reel-v/
+   .reel-wash for the hero, whose rule is height:440px and inset:0 0 auto -
+   reusing the name would have given this band the hero's height and left the
+   section's lower half uncovered. Two classes one letter apart have cost this
+   repo twice already (.k/.kcard, .mk/.sysmk); a full prefix is cheaper than
+   finding out again.
+
+   All of it is additive: .signup-reel is display:none until the clip has
+   genuinely produced a frame, so a checkout without the file renders this
+   section exactly as it did before. */
+.signup-reel{display:none; position:absolute; inset:0; z-index:0;
+             overflow:hidden; pointer-events:none}
+.signup-reel.on{display:block}
+.signup-reel-v{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+               opacity:0; transition:opacity 1.1s var(--ease)}
+/* At the opacity the script measured from the clip's own first frame; the
+   value here is only the fallback for a failed measurement. */
+.signup-reel-v.on{opacity:var(--v-op, .6)}
+
+/* The wash, and its shape was measured rather than chosen.
+
+   This block's copy is centred, so it starts from the hero's radial rather
+   than the left-weighted pair on /how-it-works - the type is in the middle,
+   so the protection belongs in the middle and the footage stays free at the
+   sides.
+
+   Stops are white, not var(--bg). This section's ground is var(--card) at
+   #ffffff, and 250-grey stops over a white band leave a dirty halo where the
+   wash meets the section. The hero's copy of this does not hit that, because
+   the hero sits on var(--bg) itself.
+
+   THE VERTICAL GRADIENT GOES OPAQUE AT 62% AND THAT IS THE LOAD-BEARING PART.
+   The footage runs behind the headline and the copy and stops above the note.
+   It is not a taste decision: `.note` is #8f8f8f, the lightest type in the
+   block, and it is the line saying the form is not wired to anything - the
+   block's own honesty disclaimer. Measured over this clip it fell to 2.32:1,
+   from 3.23:1 on plain background, and no arrangement of the radial got it
+   back: at 0.601 opacity a clip this dark needs a near-opaque veil under that
+   line to return it, and near-opaque is the same as not showing footage there
+   at all. So the footage stops instead, and the note and the links keep
+   exactly the contrast they had - 3.23 and 8.45, unchanged to two decimals.
+
+   Measured against the composite of this clip - 13 frames across its 16
+   seconds, drawn object-fit:cover at --v-op 0.613, both gradients applied,
+   worst pixel per text box - at four widths:
+
+                 375px   768px   1024px   1280px    floor
+       headline   12.31   10.68     6.71     8.95      3.0 (large)
+       body copy   6.17    5.90     5.84     5.85      4.5
+       note        3.23    3.23     3.23     3.23      its own 3.23
+       links       8.45    8.45     8.45     8.45      its own 8.45
+
+   0.613 is the figure the browser's own canvas produced from the first frame,
+   not a prediction: the offline model said 0.601 off a Lanczos downsample and
+   the two were reconciled rather than assumed equal. The note and the links
+   are width- and opacity-independent by construction - they sit below the
+   footage, on clean card.
+
+   One rule covers all four. A narrow override was written first and then
+   deleted: at 375 the radial is already wider than the band, so the veil goes
+   flat there on its own and the hand-written version only made it heavier.
+
+   Opaque stops belong at the two ends of the vertical gradient and nowhere
+   else. One in the middle of the radial paints the clip out completely, which
+   is what the first version of the hero reel did. Re-measure before moving
+   any of it - the note has no margin to give, by construction. */
+.signup-reel-wash{position:absolute; inset:0;
+  background:
+    radial-gradient(760px 290px at 50% 34%, rgba(255,255,255,.84) 0%,
+                    rgba(255,255,255,.72) 50%, rgba(255,255,255,.18) 78%,
+                    rgba(255,255,255,0) 100%),
+    linear-gradient(to bottom, var(--card) 0%, rgba(255,255,255,0) 16%,
+                    rgba(255,255,255,0) 44%, var(--card) 62%)}
+
+/* No motion, no video: the script never asks for the clip and the block
+   renders on plain background, which is what it did before. */
+@media (prefers-reduced-motion:reduce){
+  .signup-reel{display:none !important}
+}
 .signup p.copy18{margin:18px auto 0; max-width:50ch}
 /* Deliberately not a <form>. There is no element that can submit and no
    handler that transmits, which is the same discipline as the Comms Agent:
@@ -1649,6 +1736,18 @@ h1,h2,h3,h4,p{margin:0}
 <!-- One closing block, not two. The page used to end on a final CTA and then a
      signup a screen later, both asking for the same thing in different words. -->
 <section class="signup" id="contact">
+  <!-- The background clip. An aerial of a container port, which is the thing
+       the whole page has been talking about, arriving under the ask. It is
+       the darkest of the five at 88 mean luminance against a 250 page, so the
+       script pushes it back further than the others rather than any of this
+       being tuned to it by hand - swap the file and it re-measures. -->
+  <div class="signup-reel" data-signup-reel aria-hidden="true">
+    <video class="signup-reel-v" muted playsinline loop preload="none"
+           data-src="/video/05-port-aerial.mp4"
+           data-label="An aerial view of a container port"></video>
+    <div class="signup-reel-wash"></div>
+  </div>
+
   <div class="wrap rv">
     <h2 class="d2">See it run on a lane you actually run.</h2>
     <p class="copy18">Half an hour, your corridors, your disruption. Leave an address and
@@ -1742,6 +1841,117 @@ h1,h2,h3,h4,p{margin:0}
     });
   }, { rootMargin: "0px 0px -8% 0px", threshold: 0.05 });
   items.forEach(function (el) { io.observe(el); });
+})();
+
+/* The closer's background clip. One clip behind the sign-up block, and every
+   part of it is optional: if the file is not there - a fresh checkout has
+   none - nothing is shown and the block is the block it has always been.
+
+   Separate from the hero reel above on purpose. That one rotates four clips
+   on a timer and is the first thing on the page; this is one clip, far below
+   the fold, and it should not be fetched until it is nearly in view. Folding
+   them together would mean one of those two behaviours losing.
+
+   The band is only revealed once the clip is genuinely producing frames,
+   never when the element is created or the src is set: a 404 and a codec the
+   browser refuses both look like success until you wait for `playing`. */
+(function () {
+  var reel = document.querySelector("[data-signup-reel]");
+  if (!reel) return;
+
+  /* A megabyte of decoration for a block that reads perfectly without it is
+     the wrong trade on a slow link. */
+  var conn = navigator.connection || {};
+  if (conn.saveData || /(^|-)2g$/.test(conn.effectiveType || "")) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  var vid = reel.querySelector(".signup-reel-v");
+  if (!vid) return;
+
+  /* The clip is faded to land at a fixed weight behind the copy, whatever it
+     is footage of. Measuring it rather than hand-tuning a number is what lets
+     the footage be replaced without a re-tune.
+
+     The ceiling is 1, as on /how-it-works and unlike the hero's .85: the hero
+     rotates, so every clip there has to arrive at the same weight as the last
+     and one too bright to reach TARGET has to be dropped rather than pushed.
+     Here there is a single clip with nothing to match, so the only question is
+     whether the type still reads over it. */
+  var TARGET = 152, PAGE = 250;
+  function normalise(v) {
+    var lum;
+    try {
+      var c = document.createElement("canvas");
+      c.width = 32; c.height = 18;
+      var x = c.getContext("2d");
+      x.drawImage(v, 0, 0, 32, 18);
+      var d = x.getImageData(0, 0, 32, 18).data, sum = 0;
+      for (var k = 0; k < d.length; k += 4) {
+        sum += 0.2126 * d[k] + 0.7152 * d[k + 1] + 0.0722 * d[k + 2];
+      }
+      lum = sum / (d.length / 4);
+    } catch (e) {
+      return;                       // leave the CSS fallback in place
+    }
+    if (lum >= PAGE - 1) return;    // a clip brighter than the page: leave it
+    var op = (PAGE - TARGET) / (PAGE - lum);
+    v.style.setProperty("--v-op", Math.max(0.3, Math.min(1, op)).toFixed(3));
+  }
+
+  /* The reveal, once, and only from a clip that is actually playing. A clip
+     that will not load never fires this, .signup-reel is never revealed, and
+     the block renders as though it had never been asked for. */
+  vid.addEventListener("playing", function () {
+    reel.classList.add("on");
+    vid.classList.add("on");
+  }, { once: true });
+
+  function play() {
+    var p = vid.play();
+    if (p && p.catch) p.catch(function () {});
+  }
+
+  function start() {
+    if (vid.src) return;                       // only ever once
+    vid.src = vid.getAttribute("data-src");
+    if (vid.readyState >= 2) normalise(vid);
+    else vid.addEventListener("loadeddata", function () { normalise(vid); }, { once: true });
+    play();
+  }
+
+  /* Not fetched until the block is near. This is the last thing on the page;
+     downloading it during the first screen would put it in front of the hero
+     reel and the fonts, which are what a visitor is actually waiting for.
+     Without IntersectionObserver it simply starts on load - the old
+     behaviour, and no worse than the hero's.
+
+     Watch the SECTION, never .signup-reel itself. The reel is display:none
+     until a frame has played, so it has no box, and an element with no box
+     never intersects anything - the observer would sit there forever, the
+     clip would never be fetched, and the band would never appear. The section
+     is always laid out, so it is the thing with a position on the page. */
+  var host = reel.closest("section") || reel.parentElement;
+  if ("IntersectionObserver" in window && host) {
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (e.isIntersecting) { io.disconnect(); start(); }
+      });
+    }, { rootMargin: "300px 0px" });
+    io.observe(host);
+  } else if (document.readyState === "complete") {
+    start();
+  } else {
+    window.addEventListener("load", start, { once: true });
+  }
+
+  /* Nothing decodes while the tab is in the background. The src guard matters:
+     without it, returning to a tab hidden before start() ran would call play()
+     on an element with no source. */
+  document.addEventListener("visibilitychange", function () {
+    if (!vid.src) return;
+    if (document.hidden) { try { vid.pause(); } catch (e) {} }
+    else play();
+  });
 })();
 
 /* The app field. The tiles are staggered off one class on the container, so
