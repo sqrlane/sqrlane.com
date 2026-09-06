@@ -300,9 +300,6 @@ h1,h2,h3,h4,p{margin:0}
 .frame-bar{height:38px; display:flex; align-items:center; gap:7px; padding:0 14px;
            border-bottom:1px solid var(--border); background:var(--card-muted)}
 .frame-bar i{width:9px; height:9px; border-radius:50%; background:var(--gray-400); flex:none}
-.frame-bar .url{margin-left:12px; font-size:11px; color:var(--faint);
-                background:var(--card); border:1px solid var(--border); border-radius:999px;
-                padding:2px 12px}
 .board{display:flex; min-height:392px}
 .board-side{width:186px; flex:none; border-right:1px solid var(--border); padding:12px 10px;
             display:none}
@@ -318,8 +315,6 @@ h1,h2,h3,h4,p{margin:0}
 .board-top{display:flex; align-items:center; gap:10px; margin-bottom:14px}
 .board-top .h{font-size:14px; font-weight:600; letter-spacing:-.28px}
 .board-top .r{margin-left:auto; display:flex; gap:8px; align-items:center}
-.fake-btn{height:28px; padding:0 11px; border-radius:var(--r-sm); background:var(--fg);
-          color:#fff; font-size:12px; font-weight:500; display:flex; align-items:center; gap:6px}
 .mini-stats{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px}
 .ms{border:1px solid var(--border); border-radius:var(--r-sm); padding:10px 11px;
     background:var(--card)}
@@ -383,10 +378,6 @@ h1,h2,h3,h4,p{margin:0}
          background:linear-gradient(to bottom, transparent,
                     color-mix(in srgb, var(--blue) 9%, transparent) 45%, transparent)}
 .wk-scan.on{opacity:1; transition:transform 1.5s linear, opacity .3s var(--ease)}
-
-/* The button being pressed. */
-.board .fake-btn{transition:transform .12s var(--ease), filter .12s var(--ease)}
-.board .fake-btn.press{transform:translateY(1px); filter:brightness(1.7)}
 
 /* A row landing on its decision. The badge swaps text and colour, so it gets
    one short lift to say the change was made rather than always having been
@@ -1010,7 +1001,6 @@ h1,h2,h3,h4,p{margin:0}
         <span class="wk-scan" data-wk-scan aria-hidden="true"></span>
         <div class="frame-bar">
           <i></i><i></i><i></i>
-          <span class="url mono" data-wk-url>sqrlane / overview</span>
         </div>
         <div class="board">
           <aside class="board-side">
@@ -1044,9 +1034,6 @@ h1,h2,h3,h4,p{margin:0}
             <div class="board-top">
               <span class="h">Overview</span>
               <span class="chip live">Live</span>
-              <div class="r">
-                <span class="fake-btn">Inject Hamburg strike</span>
-              </div>
             </div>
             <div class="mini-stats">
               <div class="ms"><div class="l">Bookings from the TMS</div><div class="v tabular">7</div></div>
@@ -1899,11 +1886,10 @@ h1,h2,h3,h4,p{margin:0}
   var frame  = shot.querySelector(".frame");
   var cursor = shot.querySelector("[data-wk-cursor]");
   var scan   = shot.querySelector("[data-wk-scan]");
-  var btn    = shot.querySelector(".fake-btn");
   var rows   = [].slice.call(shot.querySelectorAll(".row"));
   var stats  = [].slice.call(shot.querySelectorAll(".mini-stats .v"));
   var side   = [].slice.call(shot.querySelectorAll(".board-side .n"));
-  if (!btn || !rows.length) return;
+  if (!rows.length) return;
 
   /* --- remember where it ends up, then rewind ------------------------- */
   var FINAL = rows.map(function (r) {
@@ -1965,17 +1951,6 @@ h1,h2,h3,h4,p{margin:0}
     scan.classList.remove("on");
     await wait(700);
 
-    // the pointer arrives and presses the trigger
-    moveTo(btn, 0, 0);
-    cursor.classList.add("on");
-    await wait(1250);
-    cursor.classList.add("tap");
-    btn.classList.add("press");
-    await wait(180);
-    btn.classList.remove("press");
-    await wait(320);
-    cursor.classList.remove("tap");
-
     // the event lands, and the risk feed counts it
     evt.classList.add("on");
     countTo(side[1], SIDE[1]);
@@ -1996,7 +1971,11 @@ h1,h2,h3,h4,p{margin:0}
     for (var i = 0; i < FINAL.length; i++) {
       var f = FINAL[i];
       if (f.cls === "st-badge st-green") continue;      // nothing changed here
+      /* The pointer is revealed on the first booking it actually visits. It
+         used to arrive to press the trigger; with no trigger to press, its
+         first job is following the decisions down the board. */
       moveTo(rows[i], 118, 0);
+      cursor.classList.add("on");
       f.el.classList.add("swap");
       rows[i].classList.add("settling");
       await wait(240);
@@ -2029,22 +2008,20 @@ h1,h2,h3,h4,p{margin:0}
      reasoning and what each option costs, the two drafts, the change queued
      onto the booking, and what the run was worth.
 
-     The sidebar's active item and the frame's URL move with it. Both are
-     small, and both are the difference between "six panels" and "one app
-     being driven". */
+     The sidebar's active item moves with it. It is small, and it is the
+     difference between "six panels" and "one app being driven". */
   var panes = [].slice.call(shot.querySelectorAll(".win-pane"));
   var sideItems = [].slice.call(shot.querySelectorAll(".board-side .i"));
-  var urlEl = shot.querySelector("[data-wk-url]");
 
-  /* pane -> [sidebar index it lights, url it shows, how long it holds].
+  /* pane -> [sidebar index it lights, how long it holds].
      Overview's hold is 0 because its own animation decides when it is done. */
   var WINDOWS = [
-    ["overview",  0, "sqrlane / overview",           0],
-    ["risk",      2, "sqrlane / risk",            4400],
-    ["reasoning", 1, "sqrlane / shipments/SHP-001", 6600],
-    ["drafts",    3, "sqrlane / approvals",        4600],
-    ["tms",       4, "sqrlane / tms-link",         5200],
-    ["margin",    4, "sqrlane / tms-link",         6800],
+    ["overview",  0,    0],
+    ["risk",      2, 4400],
+    ["reasoning", 1, 6600],
+    ["drafts",    3, 4600],
+    ["tms",       4, 5200],
+    ["margin",    4, 6800],
   ];
 
   function showPane(i) {
@@ -2054,7 +2031,6 @@ h1,h2,h3,h4,p{margin:0}
     });
     var w = WINDOWS[i];
     sideItems.forEach(function (el, n) { el.classList.toggle("on", n === w[1]); });
-    if (urlEl) urlEl.textContent = w[2];
   }
 
   /* The approve button, taking a beat. A real one does not resolve instantly
@@ -2087,7 +2063,7 @@ h1,h2,h3,h4,p{margin:0}
     for (var i = 1; i < WINDOWS.length; i++) {
       showPane(i);
       if (WINDOWS[i][0] === "drafts") pressApprove();
-      await wait(WINDOWS[i][3]);
+      await wait(WINDOWS[i][2]);
       if (WINDOWS[i][0] === "drafts") resetApprove();
     }
   }
