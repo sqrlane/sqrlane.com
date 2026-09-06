@@ -192,7 +192,8 @@ h1,h2,h3,h4,p{margin:0}
 
 
 /* ---------- page head (every page but home) ---------- */
-.phead{padding:64px 0 0}
+.phead{padding:64px 0 0; position:relative}
+.phead .wrap{position:relative; z-index:1}
 .phead .in{max-width:720px}
 .phead h1{margin-top:16px}
 .phead .copy18{margin-top:18px; max-width:60ch}
@@ -201,6 +202,103 @@ h1,h2,h3,h4,p{margin:0}
              border:1px solid var(--border-strong); box-shadow:var(--shadow-card);
              font-size:13px; line-height:18px; color:var(--muted)}
 .phead .goal b{font-weight:500; color:var(--fg)}
+
+/* ---------- the page-head reel ---------- */
+/* One clip behind this page's header block, treated exactly as the landing
+   hero's reel is: pushed back rather than dimmed, with a light wash over it
+   that is heaviest where the copy sits, so near-black Geist keeps every point
+   of contrast it had. The one thing a background may not do is cost the
+   headline its legibility.
+
+   What is uniform between the two pages is the treatment, not a pixel height.
+   The band is inset:0 on .phead, so it is exactly as tall as the header block
+   and stops on #split's own border - no magic number to re-measure when the
+   headline rewraps, and nothing to collide with below. object-fit:cover holds
+   the framing at every width, and the wash is written in percentages so it
+   covers the same proportion of a 336px band here as it does of a 440px one
+   there.
+
+   All of it is additive. .reel is display:none until a clip has genuinely
+   produced a frame - not when the element is created and not when the src is
+   set, because a 404 and a codec the browser refuses both look like success
+   until you wait for `playing`. A checkout without the file renders this page
+   exactly as it did before the reel existed. */
+.reel{display:none; position:absolute; inset:0; z-index:0;
+      overflow:hidden; pointer-events:none}
+.reel.on{display:block}
+.reel-v{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+        opacity:0; transition:opacity 1.1s var(--ease)}
+/* At the opacity the script worked out from the clip's own first frame. A
+   fixed value cannot survive the footage being replaced: measured across the
+   four clips in static/video/, mean frame luminance runs 113 to 182 out of
+   255, so against a 250-luminance page the darkest lands twice as hard as the
+   brightest. The CSS value here is only the fallback for a failed
+   measurement. */
+.reel-v.on{opacity:var(--v-op, .85)}
+
+/* The wash, and it is shaped differently from the landing hero's on purpose.
+   There the copy is centred, so a radial centred with it protects the type and
+   lets the footage out at every edge. Here the header is left-aligned and
+   fills four fifths of the band's height - so a radial big enough to cover the
+   column either leaves the eyebrow on open footage or, pulled wide enough to
+   reach it, washes out the whole band including the side with no text on it.
+   Measured both ways before landing on this one.
+
+   So the wash is decomposed instead: one gradient across, protecting the
+   column the words are in, and one down, dissolving the band into the page at
+   top and bottom. The horizontal one does the contrast work at every height,
+   which is what the radial could not do; the vertical one only softens the two
+   edges, which is what stops the footage starting and stopping on a hard line.
+
+   Two numbers here are measured, not taste:
+
+     * full `var(--bg)` holds to 18% across. That is the eyebrow - the
+       lightest type on the page at #8f8f8f, and 3.10:1 on plain background
+       before any of this. Over open footage it measured 2.17:1, and no
+       arrangement of a radial got it past 2.8. Holding the first fifth clean
+       returns it to exactly the 3.10 it had, and costs a strip of footage the
+       right-hand side never needed.
+     * everything else keeps a wide margin through the wash, measured on this
+       clip at 1280: headline 10.10:1 (17.18 on plain background), body copy
+       6.32:1 (8.10), goal chip 16.73:1 (17.18). The two mid stops sit at 44%
+       and 66% because the headline's first line runs to 55% and the first
+       line of copy to 64% - move them left and it is the body copy that pays
+       first.
+
+   Opaque `var(--bg)` stops belong at the outside ends of both gradients and
+   nowhere else. At the ends they are what makes the footage dissolve into the
+   page; anywhere in the middle one of them paints the band out completely,
+   which is what the first version of the landing reel did. Re-measure before
+   moving any of it. */
+.reel-wash{position:absolute; inset:0;
+  background:
+    linear-gradient(to right, var(--bg) 0%, var(--bg) 18%,
+                    rgba(250,250,250,.88) 44%, rgba(250,250,250,.34) 66%,
+                    rgba(250,250,250,0) 82%),
+    linear-gradient(to bottom, var(--bg) 0%, rgba(250,250,250,0) 20%,
+                    rgba(250,250,250,0) 72%, var(--bg) 99%)}
+
+/* Narrow: the copy column is the whole column, so there is nothing to the
+   right of it for a left-weighted wash to spare. Measured at 375, the version
+   above drops the body copy to 3.81:1 - under the 4.5 floor - because the last
+   words of each line reach 89% of the band. So on a phone the veil goes nearly
+   flat: the footage survives as a ghost in the dark parts of the frame, the
+   bright parts wash out, and the copy comes back to 7.41:1. The vertical gradient is
+   deliberately unchanged - it is still what holds the eyebrow row clean and
+   dissolves the two edges. */
+@media (max-width:640px){
+  .reel-wash{background:
+    linear-gradient(to right, var(--bg) 0%, var(--bg) 24%,
+                    rgba(250,250,250,.90) 56%, rgba(250,250,250,.84) 100%),
+    linear-gradient(to bottom, var(--bg) 0%, rgba(250,250,250,0) 20%,
+                    rgba(250,250,250,0) 72%, var(--bg) 99%)}
+}
+
+/* No motion, no video: the script never asks for the clip and the header
+   renders on plain background, which is what it did before. */
+@media (prefers-reduced-motion:reduce){
+  .reel{display:none !important}
+}
 
 /* ---------- closing bar ---------- */
 /* One ask, at the foot of every page that is not the home page. It is a bar
@@ -527,6 +625,21 @@ h1,h2,h3,h4,p{margin:0}
 </header>
 
 <section class="phead">
+  <!-- The background clip. An operations desk at a data wall - the one piece
+       of footage in static/video/ that the landing reel could not use, because
+       at 176 mean luminance against a 250 page it composited to within a few
+       points of plain background and read as a dead beat between two darker
+       clips. On its own, on this page, there is nothing for it to be a dead
+       beat against, so it sits at the opacity ceiling and carries the band by
+       itself. Swap the file and the script re-measures; nothing here is tuned
+       to this particular clip by hand. -->
+  <div class="reel" data-reel aria-hidden="true">
+    <video class="reel-v" muted playsinline loop preload="none"
+           data-src="/video/04-control-room.mp4"
+           data-label="An operations desk at a data wall"></video>
+    <div class="reel-wash"></div>
+  </div>
+
   <div class="wrap">
     <div class="in rv">
       <span class="eyebrow">How it works</span>
@@ -814,6 +927,99 @@ h1,h2,h3,h4,p{margin:0}
 </footer>
 
 <script>
+/* The page-head reel. One clip behind the header block, and every part of it
+   is optional: if the file is not there - a fresh checkout has none - nothing
+   is shown and the header is the header it has always been.
+
+   The order of operations is the part that is easy to get wrong. The band is
+   only revealed once the clip is genuinely producing frames, never when the
+   element is created or the src is set. Reveal early and a missing file
+   leaves a grey slab under the headline, which is worse than showing
+   nothing. */
+(function () {
+  var reel = document.querySelector("[data-reel]");
+  if (!reel) return;
+
+  /* Several megabytes of decoration to render a first screen that reads
+     perfectly without it is the wrong trade on a slow link, so the reel sits
+     out entirely when the browser says the connection is metered or slow, and
+     whenever the visitor has asked for less motion. */
+  var conn = navigator.connection || {};
+  if (conn.saveData || /(^|-)2g$/.test(conn.effectiveType || "")) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  var vid = reel.querySelector(".reel-v");
+  if (!vid) return;
+
+  /* The clip is faded to sit at a fixed weight behind the copy, whatever it is
+     footage of. TARGET is where the composite should land against the page's
+     own 250; measuring the clip rather than hand-tuning a number is what lets
+     the footage be replaced without a re-tune.
+
+     The ceiling is 1 here and .85 on the landing page, and the difference is
+     not an oversight. There, clips rotate and each has to arrive at the same
+     weight as the last, so one too bright to reach TARGET has to be dropped
+     rather than pushed - which is exactly what happened to this one. Here
+     there is a single clip and nothing for it to match, so the only question
+     is whether the type still reads over it. It does: under the copy the wash
+     alone puts the composite past 230 against near-black Geist. */
+  var TARGET = 152, PAGE = 250;
+  function normalise(v) {
+    var lum;
+    try {
+      var c = document.createElement("canvas");
+      c.width = 32; c.height = 18;
+      var x = c.getContext("2d");
+      x.drawImage(v, 0, 0, 32, 18);
+      var d = x.getImageData(0, 0, 32, 18).data, sum = 0;
+      for (var k = 0; k < d.length; k += 4) {
+        sum += 0.2126 * d[k] + 0.7152 * d[k + 1] + 0.0722 * d[k + 2];
+      }
+      lum = sum / (d.length / 4);
+    } catch (e) {
+      return;                       // leave the CSS fallback in place
+    }
+    if (lum >= PAGE - 1) return;    // a clip brighter than the page: leave it
+    var op = (PAGE - TARGET) / (PAGE - lum);
+    v.style.setProperty("--v-op", Math.max(0.3, Math.min(1, op)).toFixed(3));
+  }
+
+  /* The reveal, once, and only from a clip that is actually playing. A clip
+     that will not load never fires this, .reel is never revealed, and the
+     header renders as though the reel had never been asked for. */
+  vid.addEventListener("playing", function () {
+    reel.classList.add("on");
+    vid.classList.add("on");
+  }, { once: true });
+
+  function play() {
+    var p = vid.play();
+    if (p && p.catch) p.catch(function () {});
+  }
+
+  /* The fetch waits for load. A megabyte of decoration has no business
+     competing with the self-hosted fonts or with /api/gauges, which is the one
+     thing on this page that is actually read - a header that arrives a beat
+     late costs nothing, a gauge panel that does looks broken. */
+  function start() {
+    vid.src = vid.getAttribute("data-src");
+    if (vid.readyState >= 2) normalise(vid);
+    else vid.addEventListener("loadeddata", function () { normalise(vid); }, { once: true });
+    play();
+  }
+  if (document.readyState === "complete") start();
+  else window.addEventListener("load", start, { once: true });
+
+  /* Nothing decodes while the tab is in the background. The src guard matters:
+     without it, coming back to a tab that was hidden before `start()` ran would
+     call play() on an element with no source. */
+  document.addEventListener("visibilitychange", function () {
+    if (!vid.src) return;
+    if (document.hidden) { try { vid.pause(); } catch (e) {} }
+    else play();
+  });
+})();
+
 /* Reveal on scroll. Everything is visible without JS - the class only ever
    gets added, never removed, and .rv already renders if the observer never
    runs (see the reduced-motion rule). */

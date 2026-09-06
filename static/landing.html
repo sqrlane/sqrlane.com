@@ -226,8 +226,8 @@ h1,h2,h3,h4,p{margin:0}
 
 /* ---------- hero background reel ---------- */
 /* Four clips behind the hero, one at a time. Borrowed anatomy: a full-bleed
-   muted loop under the pitch, advancing on its own, with ticks that say how
-   many there are. What is not borrowed is the dark scrim over white type -
+   muted loop under the pitch, advancing on its own. What is not borrowed
+   is the dark scrim over white type -
    this page is light, its type is near-black, and the one thing a background
    may not do is cost the headline its contrast.
 
@@ -239,8 +239,7 @@ h1,h2,h3,h4,p{margin:0}
    .reel is display:none until the script finds a clip that will actually
    play. That is deliberate - an empty black band is worse than no band. */
 /* Height stops just above the board mock. Losing the caption line under the
-   buttons shortened the hero, and at the old 560 the ticks ended up behind
-   the mock - measure .shot's top before changing this. */
+   buttons shortened the hero - measure .shot's top before changing this. */
 .reel{display:none; position:absolute; inset:0 0 auto; height:440px; z-index:0;
       overflow:hidden; pointer-events:none}
 .reel.on{display:block}
@@ -272,18 +271,8 @@ h1,h2,h3,h4,p{margin:0}
     linear-gradient(to bottom, rgba(250,250,250,.30) 0%, rgba(250,250,250,0) 26%,
                     rgba(250,250,250,.62) 84%, var(--bg) 100%)}
 
-/* Ticks, bottom-centre: one per clip, the current one filled. They are the
-   only part of the reel a reader is meant to notice, and only if they look. */
-.reel-ticks{position:absolute; left:0; right:0; bottom:26px; display:flex;
-            justify-content:center; gap:6px}
-.reel-tick{width:22px; height:3px; border-radius:999px; background:var(--border-strong);
-           overflow:hidden}
-.reel-tick i{display:block; height:100%; width:0; background:var(--fg); opacity:.45}
-.reel-tick.on i{width:100%; transition:width var(--reel-hold, 7s) linear}
-
 @media (max-width:640px){
   .reel{height:340px}
-  .reel-ticks{bottom:18px}
 }
 /* No motion, no video: the script never requests a clip, and the hero's own
    gradient carries the band on its own. */
@@ -989,7 +978,6 @@ h1,h2,h3,h4,p{margin:0}
              data-src="/video/03-road-corridor.mp4" data-label="A road corridor, seen from the air"></video>
     </div>
     <div class="reel-wash"></div>
-    <div class="reel-ticks" data-reel-ticks></div>
   </div>
 
   <div class="wrap">
@@ -1798,13 +1786,6 @@ h1,h2,h3,h4,p{margin:0}
   var vids = [].slice.call(reel.querySelectorAll(".reel-v"));
   if (!vids.length) return;
 
-  var ticks = reel.querySelector("[data-reel-ticks]");
-  ticks.innerHTML = vids.map(function () {
-    return '<span class="reel-tick"><i></i></span>';
-  }).join("");
-  var tickEls = [].slice.call(ticks.children);
-  reel.style.setProperty("--reel-hold", (HOLD / 1000) + "s");
-
   var at = -1, timer = null, started = false;
 
   function load(v) {
@@ -1851,12 +1832,6 @@ h1,h2,h3,h4,p{margin:0}
     if (playing && playing.catch) playing.catch(function () {});
 
     vids.forEach(function (o, n) { o.classList.toggle("on", n === i); });
-    /* Restart each tick's fill from zero, which needs the class off for a
-       frame or the transition does not re-run. */
-    tickEls.forEach(function (t, n) {
-      t.classList.remove("on");
-      if (n === i) requestAnimationFrame(function () { t.classList.add("on"); });
-    });
 
     /* Pause what is off screen. Four videos decoding at once for one that is
        visible is battery spent on nothing. */
