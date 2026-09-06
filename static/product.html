@@ -984,9 +984,23 @@ h1,h2,h3,h4,p{margin:0}
     </div>
   </div>
 
-  <p class="note"><b>None of these is connected.</b> The link in this build is a demo
-    connector &mdash; no vendor, no credential, no endpoint, and nothing is ever written.
-    Naming them says where the read path is pointed, not what it has reached.</p>
+  <!-- A disclaimer stood here until 2026-09-06 and was removed on the owner's
+       instruction, over a flagged objection. It is quoted in full in that
+       commit message, and deliberately NOT quoted here: the guard for it is a
+       substring search over the raw file, so writing the sentence into a
+       comment turns the guard green while the page shows nothing. That was
+       tried, by accident, and it worked - which is the more useful half of
+       this note.
+
+       What the removal means: this block names eight real companies under a
+       heading saying the product is built to run on them, and no longer says
+       anywhere in the block that none of them is wired up. The nearest
+       correction left is the closing bar immediately below, which calls the
+       link a demo connector - a weaker statement, in a different section.
+
+       The rule itself is untouched everywhere else. Only this block is
+       exempt, by name, in tests/test_the_pages_keep_their_promises.py. Restore
+       the paragraph and delete that exemption together. -->
 </section>
 <section class="closer">
   <!-- A laden container ship underway, seen from directly above. It sits under

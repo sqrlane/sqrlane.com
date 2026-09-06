@@ -305,6 +305,23 @@ class NamingASystemIsNotClaimingOne(unittest.TestCase):
     REQUIRED = ("None of these is connected", "no vendor, no credential, no endpoint",
                 "nothing is ever written")
 
+    # Pages whose block is allowed to name systems without disclaiming them.
+    #
+    # product.html was added on 2026-09-06 on the owner's instruction, after the
+    # objection below was put to them and they confirmed. It is a real hole and
+    # is written down rather than papered over: that page names eight real
+    # companies under "Built to run on the systems the desk already has" and no
+    # longer says in that block that none of them is wired up. The closing bar
+    # below it still calls the link a demo connector, which is the only thing
+    # now standing in for the removed line, and it is weaker and in a different
+    # section.
+    #
+    # This set exists so the removal is a named exemption rather than a deleted
+    # rule. Every other page is still held to it, and a NEW page that starts
+    # naming systems still fails until someone decides otherwise in writing.
+    # Emptying this set restores the guard for product.html.
+    DISCLAIMER_WAIVED = {"product.html"}
+
     def test_every_page_that_names_a_system_disclaims_it(self):
         # Every served page, not only the two that name them today: a vendor
         # name that migrates to a page with no disclaimer is exactly how this
@@ -326,6 +343,8 @@ class NamingASystemIsNotClaimingOne(unittest.TestCase):
                                      " but the block that disclaims them is gone.")
                     continue
                 self.assertTrue(named, f"{page.name} has the block but names nothing.")
+                if page.name in self.DISCLAIMER_WAIVED:
+                    continue                      # see DISCLAIMER_WAIVED above
                 block = " ".join(html[start:html.find(closer, start)].split())
                 for required in self.REQUIRED:
                     self.assertIn(required, block,
