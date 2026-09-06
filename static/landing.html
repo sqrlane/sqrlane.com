@@ -571,10 +571,24 @@ h1,h2,h3,h4,p{margin:0}
 /* The band's caption. It carries the live dot the hero pill used to - the
    claim belongs over the sources it is about, not over the headline. The dot
    is styled here rather than reused from .pill, whose rule is scoped to that
-   class and would leave an invisible empty span. */
+   class and would leave an invisible empty span.
+
+   Given a button's shape - .btn-secondary's fill, border and shadow - so the
+   claim reads as one object over the band rather than as a caption floating
+   above it. It stops at the shape: no hover, no pointer, no transition. It
+   is a statement of what the strip below is, not a control, and this page
+   has just finished taking two dead controls out of the hero mock for
+   exactly that reason. Anything that moves under the cursor promises a
+   click this has no way to honour.
+
+   width:fit-content is what makes it a pill rather than a full-width bar -
+   the box has to shrink to the text before a border means anything. */
 .strip .lead{font-size:12px; line-height:16px; color:var(--faint);
-             margin-bottom:22px; display:flex; align-items:center; gap:8px;
-             justify-content:center}
+             margin:0 auto 22px; width:fit-content;
+             display:flex; align-items:center; gap:8px;
+             height:32px; padding:0 15px; border-radius:999px;
+             background:var(--bg); border:1px solid var(--border-strong);
+             box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .strip .lead .dot{width:6px; height:6px; border-radius:50%; background:var(--green);
                   box-shadow:0 0 0 3px var(--green-100); flex:none}
 
