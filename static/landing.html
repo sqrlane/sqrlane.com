@@ -324,6 +324,8 @@ h1,h2,h3,h4,p{margin:0}
 .rows{border:1px solid var(--border); border-radius:var(--r-sm); overflow:hidden}
 .row{display:flex; align-items:center; gap:12px; padding:10px 12px;
      border-bottom:1px solid var(--border); background:var(--card)}
+.row.on{background:var(--gray-100)}
+.row.on .id,.row.on .meta{color:var(--muted)}
 .row:last-child{border-bottom:0}
 .row .id{font-family:"Geist Mono",ui-monospace,monospace; font-size:11.5px; color:var(--faint);
          width:64px; flex:none}
@@ -632,6 +634,16 @@ h1,h2,h3,h4,p{margin:0}
              margin:22px auto 0; max-width:78ch; padding:0 var(--gutter)}
 .strip .note b{color:var(--muted); font-weight:600}
 .strip .sprite{position:absolute; width:0; height:0; overflow:hidden}
+
+/* ---- the playhead ----
+   The band is already sliding, so the scroll moves a position in it rather
+   than an index into it: whatever source sits under that line is lit, which
+   keeps the lit one always a source the reader can actually see. Colour only,
+   and no lift - this band is 60 pixels of quiet under the hero, and a source
+   that jumped out of the row would be louder than the band is meant to be. */
+.strip .src,.strip .src .mk{transition:color .3s var(--ease)}
+.strip .src.on{color:var(--fg)}
+.strip .src.on .mk{color:var(--fg)}
 
 /* Asked for no motion, the band becomes what it was before: the same list,
    centred, wrapped, standing still. */
@@ -1841,6 +1853,127 @@ h1,h2,h3,h4,p{margin:0}
     });
   }, { rootMargin: "0px 0px -8% 0px", threshold: 0.05 });
   items.forEach(function (el) { io.observe(el); });
+})();
+
+/* ---------- the blocks that follow the scroll ----------
+   Two of them - the board in the hero and the sources band - put a playhead
+   through a sequence, driven by where the reader has scrolled to rather than
+   by a timer of ours. They share their plumbing and nothing else: what to
+   measure, and what to do with it, is each one's own business below.
+
+   There were four. The escalation timeline and the fall heatmap went with the
+   sections that carried them when the site became five pages, and their blocks
+   went with them rather than being left pointing at markup that is not there:
+   follow() no-ops on a missing element, so dead machinery here would sit
+   commented and inert and read as if it still did something.
+
+   Three things none of them does. None dims anything - the resting state of
+   every one of these blocks is exactly what it was before, so nothing is ever
+   harder to read for not having been reached yet. None runs on a clock. And
+   none runs at all for a reader who has asked for reduced motion. */
+(function () {
+
+  /* Run update() while el is on screen and the reader is moving. The handler
+     is passive and measures only inside a frame the browser gave us, so a
+     scroll costs one rect read per block per frame at worst. Returns a poke,
+     for a caller that needs to re-run it for its own reasons.
+
+     everyFrame is for a block that moves on its own as well: it keeps asking
+     for the next frame instead of waiting to be scrolled, and stops the
+     moment the block leaves the screen. Only the sources band needs it. */
+  function follow(el, update, everyFrame) {
+    if (!el || !("IntersectionObserver" in window)) return function () {};
+    if (window.matchMedia &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return function () {};
+    }
+    var live = false, queued = false;
+    function run() {
+      queued = false;
+      if (!live) return;
+      update();
+      if (everyFrame) queue();
+    }
+    function queue() { if (!queued) { queued = true; requestAnimationFrame(run); } }
+    new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { live = e.isIntersecting; });
+      queue();
+    }, { threshold: 0 }).observe(el);
+    window.addEventListener("scroll", queue, { passive: true });
+    window.addEventListener("resize", queue);
+    return queue;
+  }
+
+  /* Only one thing is ever lit in each block, so both switch the same way. */
+  function light(list, was, now) {
+    if (now === was) return was;
+    if (was > -1 && list[was]) list[was].forEach(function (el) { el.classList.remove("on"); });
+    if (now > -1 && list[now]) list[now].forEach(function (el) { el.classList.add("on"); });
+    return now;
+  }
+
+  /* A list read down at eye level: whichever entry the reading line - a little
+     above the middle of the screen - is sitting on is the one lit, and it
+     hands over as the block moves up. The board in the hero is read this
+     way - a list whose order is the point, because it is the triage pass the
+     orchestrator makes: down the book, one booking at a time. */
+  function readDown(list) {
+    if (!list || !list.children.length) return;
+    var items = Array.prototype.map.call(list.children, function (el) { return [el]; });
+    var cur = -1;
+    follow(list, function () {
+      var line = window.innerHeight * 0.45, at = -1;
+      /* the last entry the line has passed the top of - so exactly one is lit
+         once the block is reached, including in the gaps between entries. */
+      for (var i = 0; i < items.length; i++) {
+        if (items[i][0].getBoundingClientRect().top <= line) at = i;
+      }
+      cur = light(items, cur, at);
+    });
+  }
+
+  /* 1. The board in the hero: each booking in turn, which is the triage pass
+     the orchestrator makes on a run - down the book, one at a time. */
+  readDown(document.querySelector(".shot .rows"));
+
+  /* 2. The sources band, where the band's own motion changes the shape of the
+     thing. The other three sequences stand still, so the scroll can pick an
+     index into them. This one is sliding, and an index into a sliding list
+     would spend a third of its time pointing at a source that is off screen.
+
+     So what the scroll moves here is a line - a position in the band - and
+     whatever source is under it is the one lit. The lit source is therefore
+     always one the reader can see, and each is lit in turn twice over: as the
+     reader scrolls the line across the band, and as the band carries the next
+     source into it. That second half is why this block re-reads every frame
+     while it is on screen; the others only move when the reader does.
+
+     Asking the page what is at a point, rather than working it out from the
+     track's offset, is what keeps this short: the band is transformed, cloned
+     three times and masked at both ends, and a hit test is right about all of
+     that for free. */
+  (function () {
+    var view = document.querySelector(".strip .strip-view");
+    if (!view) return;
+    var lit = null;
+    follow(view, function () {
+      var r = view.getBoundingClientRect(), vh = window.innerHeight;
+      var p = Math.max(0, Math.min(1, (vh - r.top) / (vh + r.height)));
+      /* .18 to .82 keeps the line clear of the masked ends, where a source is
+         faded out and lighting it would look like nothing happened. */
+      var el = document.elementFromPoint(r.left + r.width * (0.18 + 0.64 * p),
+                                         r.top + r.height / 2);
+      var src = el && el.closest ? el.closest(".src") : null;
+      /* Between two sources there is only the gap, and the hit test finds
+         nothing of ours there. Holding the last one lit is what stops the
+         band blinking off every 44 pixels. */
+      if (!src || src === lit) return;
+      if (lit) lit.classList.remove("on");
+      lit = src;
+      src.classList.add("on");
+    }, true);
+  })();
+
 })();
 
 /* The closer's background clip. One clip behind the sign-up block, and every
