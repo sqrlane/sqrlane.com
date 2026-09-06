@@ -16,12 +16,21 @@ python3 build_slide_04.py          # writes slide-04-the-how-1.svg
 python3 render.py slide-04-the-how-1.svg   # writes ...-preview.png at 2x
 ```
 
-`render.py` shells out to the bundled Chromium. **Its one non-obvious job:** the
+`render.py` shells out to a headless Chrome. It finds one itself — a bundled
+Playwright build, else Chrome/Chromium/Edge on `PATH` or in the usual install
+location — so it runs on a laptop as well as in the sandbox. `python3 render.py
+--which` prints the browser it picked, and `DECK_CHROME=/path/to/chrome`
+overrides the search. **Its one non-obvious job:** the
 headless viewport is 87px shorter than `--window-size`, so it over-sizes the
 window and crops back. Without that the bottom 87px of every slide is silently
 missing from the preview — which hid a clipped footer for two rounds.
 
 Always render and *look* at the result. Text overflowing a card does not raise.
+The tool cannot tell you everything: it once reported ten successful renders
+having written nothing at all, because Chrome exits 0 when it cannot write the
+screenshot and the previous PNG was still sitting there. It now checks the file
+was written *on this run*, but the habit is the real guard — the previews had
+been stale for ten commits and every render said it had worked.
 
 ---
 
