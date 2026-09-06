@@ -55,11 +55,11 @@ enough. Re-measure, do not assume.
 That held up when the closer was swapped to `07-ship-at-sea.mp4` on 2026-09-06.
 Because the wash stops the footage above the note, the note and the links are
 **clip-independent by construction** and read 3.23 and 8.45 whatever plays;
-only the headline and body copy sit over footage, and only they moved (headline
-13.00 / 11.82 / 12.06 / 12.02 and copy 6.27 / 6.05 / 5.98 / 6.00 at
-375 / 768 / 1024 / 1280, against floors of 3.0 and 4.5). The headline is
-steadier across widths than under the port aerial, which put surf and concrete
-behind the type at some crops and open water at others.
+only the headline and body copy sit over footage, and only they moved. The wash
+was then eased to show the clip more clearly, which is where those two spent
+their margin: headline 11.28 / 8.81 / 9.16 / 9.13 and copy 5.70 / 5.10 / 5.01 /
+5.06 at 375 / 768 / 1024 / 1280, against floors of 3.0 and 4.5. The note and
+links did not move at all, because the footage never reaches them.
 
 `05-port-aerial.mp4` is kept but no longer referenced by any page. It is the
 one Filmsupply comp here, and it is the obvious candidate to delete if this
